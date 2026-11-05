@@ -62,6 +62,17 @@ final class PiperVoiceLab: ObservableObject {
 
     // Piper model config is authoritative. The upstream index currently
     // reports 2,306 for LibriTTS-R, but the actual model config has 904.
+    // Show source-documented dataset speaker IDs, never speculative real names.
+    // The Piper config maps LibriTTS-R reader identifiers to numerical model IDs.
+    func displayName(for id: Int) -> String {
+        guard let bytes = try? Data(contentsOf: configURL),
+              let root = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any],
+              let mapping = root["speaker_id_map"] as? [String: Int],
+              let reader = mapping.first(where: { $0.value == id })?.key
+        else { return "LibriTTS reader (Piper ID \(id))" }
+        return "LibriTTS reader \(reader)"
+    }
+
     private var configSpeakerCount: Int? {
         guard let data = try? Data(contentsOf: configURL),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -177,7 +188,7 @@ final class PiperVoiceLab: ObservableObject {
         busy = true
         defer { busy = false }
         do {
-            status = "Generating \(PiperVoiceNames.label(for: speakerID)) with local Piper..."
+            status = "Generating \(displayName(for: speakerID)) with local Piper..."
             let wav = try await synthesize(words, speaker: speakerID)
             let audio = try AVAudioPlayer(contentsOf: wav)
             guard audio.duration > 0.2, audio.prepareToPlay() else {
@@ -189,7 +200,7 @@ final class PiperVoiceLab: ObservableObject {
             avPlayer = audio
             latestOutput = wav
             _ = audio.play()
-            status = "\(PiperVoiceNames.label(for: speakerID)) generated decodable WAV (Piper ID \(speakerID)). Listen to confirm distinctness."
+            status = "\(displayName(for: speakerID)) generated decodable WAV (Piper ID \(speakerID)). Listen to confirm distinctness."
         } catch { status = "Piper generation failed: \(error.localizedDescription)" }
     }
 
@@ -313,28 +324,6 @@ final class PiperVoiceLab: ObservableObject {
 }
 
 
-// These are fictional UI aliases, not verified identities, voice qualities,
-// or the names of LibriTTS speakers. Keep the mapping stable across releases.
-private enum PiperVoiceNames {
-    static let given = [
-        "Avery", "Blair", "Casey", "Dakota", "Ellis",
-        "Finley", "Harper", "Indigo", "Jules", "Kai",
-        "Lane", "Morgan", "Noel", "Oakley", "Parker",
-        "Quinn", "Reese", "Rowan", "Sage", "Taylor",
-        "Uma", "Val", "Wren", "Yael", "Zuri"
-    ]
-    static let nature = [
-        "Cedar", "Willow", "Juniper", "River", "Meadow",
-        "Aspen", "Clover", "Orchid", "Maple", "Briar",
-        "Fern", "Brook", "Laurel", "Dawn", "Sky",
-        "Hazel", "Dune", "Ember", "Marigold", "Grove"
-    ]
-    static func label(for id: Int) -> String {
-        guard id >= 0 && id < 500 else { return "Voice ID \(id)" }
-        return "\(given[id / nature.count]) \(nature[id % nature.count])"
-    }
-}
-
 struct PiperVoiceLabView: View {
     @StateObject private var lab = PiperVoiceLab()
     @State private var phrase = "Welcome to Ghostline. This voice is generated offline."
@@ -351,10 +340,10 @@ struct PiperVoiceLabView: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
             Section("Generate local audio") {
-                Picker("Voice name", selection: $lab.speakerID) {
-                    ForEach(0..<500, id:\.self) { Text(PiperVoiceNames.label(for: $0)).tag($0) }
+                Picker("Dataset reader", selection: $lab.speakerID) {
+                    ForEach(0..<500, id:\.self) { Text(lab.displayName(for: $0)).tag($0) }
                 }
-                Text("Piper voice ID: \(lab.speakerID) • Names are fictional labels, not actual speaker identities.")
+                Text("Piper model ID: \(lab.speakerID) • Reader codes come from the model metadata; personal names are not verified.")
                     .font(.caption).foregroundStyle(.secondary)
                 TextEditor(text: $phrase).frame(minHeight: 75)
                 Button("Speak selected voice") { Task { await lab.preview(phrase) } }
