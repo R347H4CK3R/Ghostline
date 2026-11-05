@@ -40,6 +40,7 @@ final class PiperVoiceLab: ObservableObject {
     @Published var uniqueHashes = 0
     @Published var progress = 0
     @Published var latestOutput: URL?
+    @Published var evidenceFile: URL?
     @Published var cancelRequested = false
 
     private let registry = PiperRegistry.load()
@@ -47,6 +48,7 @@ final class PiperVoiceLab: ObservableObject {
     private var avPlayer: AVAudioPlayer?
     private var tested: [Int: String] = [:]
     private let key = "piper.voice.lab.deviceVerified"
+    private let batchPhrase = "A quick silver fox crossed the quiet valley."
     private var model: PiperRegistry.Model? {
         registry?.models.first { $0.model_id == Self.featuredModelID }
     }
@@ -182,14 +184,88 @@ final class PiperVoiceLab: ObservableObject {
         } catch { status = "Piper generation failed: \(error.localizedDescription)" }
     }
 
+
+    // Hash decoded frames, not WAV headers or filesystem metadata.
+    // Different PCM hashes prove different waveforms, NOT perceptually distinct voices.
+    private func decodedPCMHash(_ wav: URL) throws -> String {
+        let source = try AVAudioFile(forReading: wav)
+        guard source.length > 0, source.length < 5_000_000,
+              let pcm = AVAudioPCMBuffer(pcmFormat: source.processingFormat,
+                                         frameCapacity: AVAudioFrameCount(source.length)) else {
+            throw NSError(domain: "GHOSTLINE", code: 105,
+                          userInfo: [NSLocalizedDescriptionKey: "Invalid WAV frame count"])
+        }
+        try source.read(into: pcm)
+        guard pcm.frameLength > 0, let channels = pcm.floatChannelData else {
+            throw NSError(domain: "GHOSTLINE", code: 106,
+                          userInfo: [NSLocalizedDescriptionKey: "WAV has no decoded PCM"])
+        }
+        var hasher = SHA256()
+        var peak: Float = 0
+        let frameCount = Int(pcm.frameLength)
+        for channel in 0..<Int(pcm.format.channelCount) {
+            let samples = channels[channel]
+            hasher.update(data: Data(bytes: samples,
+                                     count: frameCount * MemoryLayout<Float>.stride))
+            for index in stride(from: 0, to: frameCount, by: max(1, frameCount / 8192)) {
+                peak = max(peak, abs(samples[index]))
+            }
+        }
+        guard peak > 0.0001 else {
+            throw NSError(domain: "GHOSTLINE", code: 107,
+                          userInfo: [NSLocalizedDescriptionKey: "Audio is effectively silent"])
+        }
+        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+
+    // Export device test evidence without unique device identifiers.
+    // The JSON does not certify airplane mode or listening distinctness.
+    func prepareEvidence() {
+        guard !busy, let model, !tested.isEmpty else { return }
+        let hashes = Dictionary(uniqueKeysWithValues:
+            tested.map { (String($0.key), $0.value) })
+        let report: [String: Any] = [
+            "schema_version": 1,
+            "test_type": "piper_ios_decoded_pcm",
+            "device_category": UIDevice.current.model,
+            "ios_version": UIDevice.current.systemVersion,
+            "model_id": model.model_id,
+            "model_md5": model.model_md5 ?? "",
+            "config_md5": model.config_md5 ?? "",
+            "declared_speakers": model.declared_speakers,
+            "sample_phrase": batchPhrase,
+            "decoded_speaker_count": testedCount,
+            "unique_decoded_pcm_hashes": uniqueHashes,
+            "speaker_pcm_sha256": hashes,
+            "airplane_mode_confirmed": false,
+            "distinct_voice_listening_confirmed": false,
+            "generated_utc": ISO8601DateFormatter().string(from: Date())
+        ]
+        do {
+            let bytes = try JSONSerialization.data(withJSONObject: report,
+                                                   options: [.prettyPrinted, .sortedKeys])
+            let file = FileManager.default.temporaryDirectory
+                .appendingPathComponent("ghostline-device-check-\(UUID().uuidString).json")
+            try bytes.write(to: file, options: .atomic)
+            evidenceFile = file
+            status = "Export ready: decoded PCM evidence only. Confirm airplane mode and listen to voices before claiming 500 verified voices."
+        } catch {
+            status = "Evidence export failed: \(error.localizedDescription)"
+        }
+    }
+
     func verifyBatch() async {
         guard !busy else { return }
+        guard (model?.declared_speakers ?? 0) >= Self.targetCount else {
+            status = "The selected model does not declare 500 speaker IDs."
+            return
+        }
         busy = true
         cancelRequested = false
         defer { busy = false }
         do {
             _ = try ensurePlayer()
-            let sample = "A quick silver fox crossed the quiet valley."
+            let sample = batchPhrase
             for id in 0..<Self.targetCount where tested[id] == nil {
                 if cancelRequested || Task.isCancelled { break }
                 status = "Device audio-check \(id + 1) of \(Self.targetCount)."
@@ -199,15 +275,15 @@ final class PiperVoiceLab: ObservableObject {
                     status = "Speaker \(id) generated invalid WAV. Verification stopped."
                     break
                 }
-                let hash = SHA256.hash(data: try Data(contentsOf: wav))
-                    .map { String(format: "%02x", $0) }.joined()
+                let hash = try decodedPCMHash(wav)
                 tested[id] = hash
+                evidenceFile = nil  // Never share a stale report after new tests.
                 try? FileManager.default.removeItem(at: wav)
                 progress = id + 1
                 if id % 10 == 0 { persist(); await Task.yield() }
             }
             persist()
-            status = "Generated and decoded \(testedCount) / 500 speaker IDs; \(uniqueHashes) distinct audio files. Human voice-quality verification remains necessary."
+            status = "Decoded \(testedCount) / 500 speaker IDs; \(uniqueHashes) distinct non-silent PCM streams. Airplane-mode and listening checks remain necessary."
         } catch {
             persist()
             status = "Batch halted: \(error.localizedDescription). Saved \(testedCount) decoded samples."
@@ -220,6 +296,7 @@ final class PiperVoiceLab: ObservableObject {
         modelReady = false
         player = nil
         tested = [:]
+        evidenceFile = nil
         persist()
         status = "Local Piper model and its device-test records cleared."
     }
@@ -253,7 +330,7 @@ struct PiperVoiceLabView: View {
             }
             Section("Offline device-verification run") {
                 Text("\(lab.testedCount) / 500 speaker IDs generated decodable WAV")
-                Text("\(lab.uniqueHashes) different audio hashes")
+                Text("\(lab.uniqueHashes) different decoded PCM hashes (not verified voice identities)")
                 ProgressView(value: Double(lab.testedCount), total: 500)
                 Button("Test remaining speakers automatically") {
                     Task { await lab.verifyBatch() }
@@ -261,7 +338,12 @@ struct PiperVoiceLabView: View {
                 if lab.busy {
                     Button("Stop after current voice") { lab.cancelRequested = true }
                 }
-                Text("Audio decoding verifies technical generation, not perceptual quality or identity. The 500-voice target is NOT complete until listening and offline device behavior are confirmed.")
+                Button("Prepare device evidence JSON") { lab.prepareEvidence() }
+                    .disabled(lab.busy || lab.testedCount == 0)
+                if let file = lab.evidenceFile {
+                    ShareLink(item: file) { Label("Share device test record", systemImage: "square.and.arrow.up") }
+                }
+                Text("Audio decoding verifies technical generation, not perceptual quality or identity. The export does not claim airplane-mode validation. The 500-voice target is NOT complete until listening and offline device behavior are confirmed.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             Section("Status") {
