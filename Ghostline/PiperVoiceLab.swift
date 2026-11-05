@@ -60,6 +60,15 @@ final class PiperVoiceLab: ObservableObject {
     private var modelURL: URL { modelDir.appendingPathComponent("model.onnx") }
     private var configURL: URL { modelDir.appendingPathComponent("model.onnx.json") }
 
+    // Piper model config is authoritative. The upstream index currently
+    // reports 2,306 for LibriTTS-R, but the actual model config has 904.
+    private var configSpeakerCount: Int? {
+        guard let data = try? Data(contentsOf: configURL),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let count = json["num_speakers"] as? Int, count > 0 else { return nil }
+        return count
+    }
+
     init() {
         if let saved = UserDefaults.standard.data(forKey: key),
            let v = try? JSONDecoder().decode([Int: String].self, from: saved) {
@@ -232,7 +241,8 @@ final class PiperVoiceLab: ObservableObject {
             "model_id": model.model_id,
             "model_md5": model.model_md5 ?? "",
             "config_md5": model.config_md5 ?? "",
-            "declared_speakers": model.declared_speakers,
+            "catalog_declared_speakers": model.declared_speakers,
+            "model_config_speakers": configSpeakerCount ?? 0,
             "sample_phrase": batchPhrase,
             "decoded_speaker_count": testedCount,
             "unique_decoded_pcm_hashes": uniqueHashes,
@@ -256,8 +266,8 @@ final class PiperVoiceLab: ObservableObject {
 
     func verifyBatch() async {
         guard !busy else { return }
-        guard (model?.declared_speakers ?? 0) >= Self.targetCount else {
-            status = "The selected model does not declare 500 speaker IDs."
+        guard (configSpeakerCount ?? 0) >= Self.targetCount else {
+            status = "The installed model config does not support 500 speaker IDs."
             return
         }
         busy = true
