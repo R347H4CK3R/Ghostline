@@ -1,19 +1,46 @@
 import SwiftUI
 import AVFoundation
-import SpeechSynthesizer
-import PocketTTS
+import FluidAudio
 
-/// Freely usable synthetic neural voices (not named celebrity replicas).
+// Kyutai PocketTTS English preset IDs from the published model pack.
+// Voice-specific licenses remain in effect; this is not a celebrity catalog.
 @MainActor
 final class NeuralStudio: ObservableObject {
-    @Published var engineName = "PocketTTS"
-    @Published var voices: [TTSVoice] = []
-    @Published var voiceID = ""
-    @Published var state = "Choose an engine and prepare its model."
+    struct Voice: Identifiable {
+        let id: String
+        let license: String
+        var name: String { id.replacingOccurrences(of: "_", with: " ").capitalized }
+    }
+    let voices: [Voice] = [
+        .init(id:"alba",license:"CC BY 4.0"),
+        .init(id:"anna",license:"CC BY 4.0"),
+        .init(id:"azelma",license:"CC BY 4.0"),
+        .init(id:"bill_boerst",license:"CC0"),
+        .init(id:"caro_davy",license:"CC0"),
+        .init(id:"charles",license:"CC BY 4.0"),
+        .init(id:"cosette",license:"CC BY-NC 4.0"),
+        .init(id:"eponine",license:"CC BY 4.0"),
+        .init(id:"eve",license:"CC BY 4.0"),
+        .init(id:"fantine",license:"CC BY 4.0"),
+        .init(id:"george",license:"CC BY 4.0"),
+        .init(id:"jane",license:"CC BY 4.0"),
+        .init(id:"javert",license:"CC0"),
+        .init(id:"jean",license:"CC BY-NC 4.0"),
+        .init(id:"marius",license:"CC0"),
+        .init(id:"mary",license:"CC BY 4.0"),
+        .init(id:"michael",license:"CC BY 4.0"),
+        .init(id:"paul",license:"CC BY 4.0"),
+        .init(id:"peter_yearsley",license:"CC0"),
+        .init(id:"stuart_bell",license:"CC0"),
+        .init(id:"vera",license:"CC BY 4.0")
+    ]
+
+    @Published var voiceID = "alba"
+    @Published var state = "Prepare the free PocketTTS CoreML model."
     @Published var busy = false
     @Published var generated: URL?
     @Published var installed = false
-    private let pocket = PocketEngine()
+    private let pocket = PocketTtsManager()
     private var playback: AVAudioPlayer?
 
     func prepare() async {
@@ -21,46 +48,35 @@ final class NeuralStudio: ObservableObject {
         busy = true
         defer { busy = false }
         do {
-            state = "Checking and preparing \(engineName) model. First setup requires downloading the free weights."
-            try await pocket.prepare(onProgress: nil)
-            voices = try await pocket.availableVoices()
+            state = "Preparing PocketTTS model. First setup needs a model download."
+            try await pocket.initialize()
             installed = true
-            voiceID = voices.first?.id ?? ""
-            state = "Ready: \(voices.count) real neural voices. Model is cached for offline use."
+            state = "Ready: \(voices.count) published preset voice IDs; audio still needs device testing."
         } catch {
             state = "Model unavailable: \(error.localizedDescription)"
         }
     }
-    func switchEngine(_ value: String) {
-        engineName = value
-        voices = []
-        voiceID = ""
-        installed = false
-        generated = nil
-        state = "Select Prepare Model to load \(value)."
-    }
     func speak(_ words: String) async {
-        guard installed, !busy else { state = "Prepare the model before speaking."; return }
-        guard !words.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { state = "Enter text."; return }
+        guard installed, !busy else { state = "Prepare the model first."; return }
+        guard !words.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty else { state = "Enter text."; return }
         busy = true
         defer { busy = false }
         do {
-            let selected = voices.first { $0.id == voiceID }
-            var options = SynthesisOptions()
-            options.voice = selected
-            state = "Generating \(engineName) speech locally…"
-            let sound: SpokenAudio
-            sound = try await pocket.synthesize(words, options: options)
+            state = "Generating locally with \(voiceID)…"
+            let wav = try await pocket.synthesize(text:words, voice:voiceID)
             let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
-            try sound.write(toWAV: url)
-            let player = try AVAudioPlayer(contentsOf: url)
+            try wav.write(to:url, options:.atomic)
+            let player = try AVAudioPlayer(contentsOf:url)
+            guard player.duration > 0.2, player.prepareToPlay() else {
+                state = "Generated output is not decodable."
+                return
+            }
             try AVAudioSession.sharedInstance().setCategory(.playback)
             try AVAudioSession.sharedInstance().setActive(true)
-            guard player.prepareToPlay() else { state = "Generated file cannot be played."; return }
             playback = player
             generated = url
             _ = player.play()
-            state = "Generated verified playable WAV using \(selected?.name ?? "default") fully on-device."
+            state = "Decodable WAV generated with \(voiceID)."
         } catch {
             state = "Neural synthesis failed: \(error.localizedDescription)"
         }
@@ -72,38 +88,32 @@ struct NeuralStudioView: View {
     @State private var script = "What's your favorite scary movie?"
     var body: some View {
         Form {
-            Section("Free offline neural engine") {
-                Picker("Engine", selection: Binding(get: {neural.engineName}, set: {neural.switchEngine($0)})) {
-                    Text("PocketTTS — speech presets").tag("PocketTTS")
-                }
-                Button(neural.busy ? "Processing…" : "Prepare model") { Task { await neural.prepare() } }.disabled(neural.busy)
-                Text("The first installation downloads open-weight models. After they are cached, synthesis does not need a network connection. The initial download is not offline.")
+            Section("PocketTTS • Free offline neural voices") {
+                Button(neural.busy ? "Processing…" : "Prepare model") {
+                    Task { await neural.prepare() }
+                }.disabled(neural.busy || neural.installed)
+                Text("First setup downloads open-weight assets; once cached, synthesis runs locally without an API. No subscription required.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
-            Section("Neural voice library") {
-                Text(neural.installed ? "\(neural.voices.count) available voices" : "Load the model to discover its voices.")
-                if !neural.voices.isEmpty {
-                    Picker("Voice", selection: $neural.voiceID) {
-                        ForEach(neural.voices, id: \.id) { voice in
-                            Text(voice.name).tag(voice.id)
-                        }
+            Section("Ready-made voices") {
+                Picker("Voice", selection:$neural.voiceID) {
+                    ForEach(neural.voices) { v in
+                        Text(v.name + (v.license.contains("NC") ? " (Non-commercial)" : "")).tag(v.id)
                     }
                 }
-                TextEditor(text: $script).frame(minHeight: 85)
-                Button("Generate and play offline WAV") { Task { await neural.speak(script) } }
-                    .disabled(!neural.installed || neural.busy)
-                if let generated = neural.generated {
-                    ShareLink(item: generated) { Label("Save or share WAV", systemImage: "square.and.arrow.up") }
+                TextEditor(text:$script).frame(minHeight:85)
+                Button("Generate and play offline WAV") {
+                    Task { await neural.speak(script) }
+                }.disabled(!neural.installed || neural.busy)
+                if let output = neural.generated {
+                    ShareLink(item:output) { Label("Export WAV",systemImage:"square.and.arrow.up") }
                 }
             }
-            Section("Model status") {
+            Section("Status") {
                 Text(neural.state).font(.footnote)
-                Text("These are distinct synthetic voices, not impersonations of the 215 named performers and fictional characters in the reference catalog.")
-                    .font(.footnote).foregroundStyle(.secondary)
-                Text("Models: Kokoro Apache-2.0. PocketTTS Kyutai CC BY 4.0 weights; some preset voices have additional noncommercial conditions. Consult each voice's license.")
+                Text("Voices are synthetic presets, not actor or character clones. Kyutai PocketTTS weights CC BY 4.0, with separate voice-specific licenses.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
-        }
-        .navigationTitle("Neural Studio")
+        }.navigationTitle("PocketTTS Offline")
     }
 }
