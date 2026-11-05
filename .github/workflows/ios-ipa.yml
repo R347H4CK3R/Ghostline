@@ -1,0 +1,44 @@
+name: GHOSTLINE iOS IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate catalog counts and project
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          a=Path('Ghostline/App.swift').read_text()
+          assert all(k in a for k in ['@main struct GhostlineApp','ModelBinding','AVAudioRecorder','Generate AI'])
+          print('Source checks passed')
+          PY
+      - name: Install project generator
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build arm64 iOS app
+        run: |
+          set -o pipefail
+          xcodebuild -project GHOSTLINE.xcodeproj -scheme GHOSTLINE -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 | tee xcodebuild.log
+      - name: Assemble unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/GHOSTLINE.app Payload/
+          /usr/bin/zip -qry GHOSTLINE-unsigned.ipa Payload
+          unzip -t GHOSTLINE-unsigned.ipa
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GHOSTLINE-unsigned-IPA
+          path: GHOSTLINE-unsigned.ipa
+      - name: Save build logs if failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: GHOSTLINE-build-logs
+          path: xcodebuild.log
