@@ -25,5 +25,10 @@
 ## Definition of done
 A release is only labeled **300 voices** or **500 voices** once that many specific voices have generated and played valid offline WAV samples on the target iPhone. Model discovery, repository file counts, Swift compilation or a catalog name do not satisfy this bar.
 
-## Current status (November 2026)
-Neural Kokoro/PocketTTS integration source has been committed; previous build attempts failed due to toolchain/dependency resolution and subsequent attempts require verification. Functional count on a real device has not been confirmed. The last independently verified IPA was the offline Apple-device-voice preview, not the final neural library.
+## Current status (November 5, 2026)
+
+- **iOS compile/package milestone:** GitHub Actions [run 42124743868](https://github.com/R347H4CK3R/Ghostline/actions/runs/42124743868) succeeded at commit `9843f7e`. Unsigned IPA artifact contains `GHOSTLINE.app`, Piper dependencies, the eSpeak resource bundle and candidate metadata.
+- **Candidate discovery:** 178 Piper models and 543 candidate speaker slots in the catalog; featured LibriTTS-R medium model declares 2,306 IDs, of which the UI currently offers an automated 500-ID trial.
+- **Verified offline voices on the user's real iPhone:** **0 documented**. No iPhone-generated audio or independent airplane-mode test has been received. This does not mean no voices can work; it means none can responsibly be counted yet.
+- **Next gate:** Install an experimental IPA on the iPhone through the authorized importer, download/checksum the optional Piper model, disable network connectivity, generate/play WAV samples and export an on-device test record. Assess waveforms and listening quality before counting distinct voices. Apple system voices and candidate metadata do not count toward the Piper goal.
+- **Release stability:** Leave existing preview releases untouched while using a separate experimental build for evidence export and safer decoded PCM verification. Do not rebrand a 500-voice release solely on a green build.
