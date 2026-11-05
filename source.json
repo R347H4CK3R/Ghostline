@@ -1,0 +1,31 @@
+{
+  "name": "Ghostline iOS",
+  "identifier": "com.ghostline.studio.source",
+  "subtitle": "Official Ghostline unsigned iOS previews",
+  "description": "Original synthetic and offline voices. Experimental Piper candidate counts are not device-verified.",
+  "sourceURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/source.json",
+  "apps": [
+    {
+      "name": "GHOSTLINE",
+      "bundleIdentifier": "com.ghostline.studio",
+      "developerName": "R347H4CK3R",
+      "subtitle": "Offline speech studio (preview)",
+      "localizedDescription": "Experimental offline speech engines. Model downloads may be required before offline use. Zero voices have yet been independently verified on the target iPhone. No authorized celebrity replicas are included.",
+      "iconURL": "https://github.com/R347H4CK3R/Ghostline/raw/main/.github/assets/icon.png",
+      "tintColor": "#413F74",
+      "versions": [
+        {
+          "version": "1.0",
+          "date": "2026-11-05T22:32:24Z",
+          "localizedDescription": "v0.4.0 dual neural preview; device runtime unverified.",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/v0.4.0-dual-neural-preview/GHOSTLINE-unsigned.ipa",
+          "size": 2398082
+        }
+      ],
+      "version": "1.0",
+      "versionDate": "2026-11-05T22:32:24Z",
+      "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/v0.4.0-dual-neural-preview/GHOSTLINE-unsigned.ipa",
+      "size": 2398082
+    }
+  ]
+}
