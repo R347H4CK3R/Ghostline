@@ -13,9 +13,9 @@ Native SwiftUI voice-studio app for iPhone and compatible IPA importers such as 
 ## Limitations
 - Catalog names are references, not 235 working celebrity/character/singer voice clones.
 - No celebrity or character model files or commercial voice licenses are included.
-- No neural speech-to-speech, singer conversion, or offline neural inference.
+- No verified on-device celebrity identity conversion or singer synthesis; offline neural inference has an experimental implementation but is not yet validated on the target iPhone.
 - An external provider must offer the mapped, authorized model and support the endpoint contract.
-- This repository has not yet established a successful iOS device build or verified Strata installation. Check Actions logs and artifacts.
+- The November 5, 2026 GitHub Actions iOS build succeeded, but iPhone launch, Strata installation and offline neural synthesis are not yet independently verified.
 
 ## Build
 Use Actions > **GHOSTLINE iOS IPA** > Run workflow, or push to main. When successful, download `GHOSTLINE-unsigned-IPA`, extract the artifact ZIP and import `GHOSTLINE-unsigned.ipa` in Strata if your version supports the app.
@@ -30,16 +30,14 @@ Use only voice models with appropriate permissions. Do not use voice cloning for
 
 The iOS app now has an **Offline-only mode** (on by default) and a picker listing English speech voices installed on the device. In offline mode the app uses Apple's AVSpeechSynthesizer without making speech API requests; it requires no subscription, API token or usage billing. Voices not already installed may require installation through iOS settings beforehand. Local speech can be played, microphone recordings captured and shared. Neither the iOS speech voices nor the 235 catalog references are identity-accurate celebrity or singer clones.
 
-A truly offline **neural** speech library requires redistributable model weights and a compatible on-device inference engine (e.g. sherpa-onnx with Piper/Kokoro). Those are **not bundled or operational** in this release. A successful compile only demonstrates source packaging, not that offline neural cloning is functional or that Strata can run it.
+A truly offline **neural** speech library requires redistributable model weights and a compatible on-device inference engine (e.g. sherpa-onnx with Piper/Kokoro). A Piper engine and model-download interface are **included experimentally** in the latest build. Piper weights are optional downloads, not inside the IPA. No generated Piper audio has yet been independently verified on the target iPhone. A successful compile is not evidence of functional offline voice synthesis or Strata compatibility.
 
 ## Native offline neural studio (experimental)
 
-The `Neural Studio` screen connects two real, free CoreML synthesis backends through [arraypress/swift-tts](https://github.com/arraypress/swift-tts) at version 3.2.1:
-- **Kokoro-82M** (Apache-2.0) with its available built-in synthetic voice presets.
-- **Kyutai PocketTTS** (model weights CC BY 4.0, some voice presets CC BY-NC) with its separate available synthetic voice presets.
+The app now builds with FluidAudio 0.15.2 and a patched Piper-ObjC dependency, exposing Kokoro, PocketTTS and a Piper LibriTTS-R speaker test studio. The iOS Piper model is approximately 81 MB and is downloaded on demand. Its catalog currently contains 543 unverified candidates across 178 Piper models; those are metadata entries, **not 543 working iPhone voices**. The featured LibriTTS-R medium model declares 2,306 speaker IDs, but declaration is not proof that any 500 of them sound distinct.
 
-Select a backend, tap **Prepare model** (one-time internet access to download model weights), then select a voice and **Generate and play offline WAV**. Model weights are cached for reuse, so after successful setup and cache verification, synthesis is fully local. The app uses no paid service or generated-audio upload for these engines. Neural audio is exported to WAV.
+**Latest successful native build:** [GitHub Actions run 42124743868](https://github.com/R347H4CK3R/Ghostline/actions/runs/42124743868), November 5, 2026, commit `9843f7e`. The job compiled the app for arm64 iOS, assembled an unsigned IPA, and uploaded `GHOSTLINE-unsigned-IPA`. The artifact inspection confirmed that the IPA contains the speech-support resource bundle and candidate manifest. **Verified functional Piper speakers on the actual target iPhone: 0 evidence received.** Neither the build nor its 500-ID batch loop establishes offline functionality, perceptual distinctness, or a successful Strata launch.
 
-**Accuracy:** Neither engine comes with authentic named celebrity or character replicas. The reference catalog remains distinct from actual generated synthetic voices. PocketTTS supports reference-voice cloning through its engine API, but the user-facing model-cloning workflow is **not yet wired into Ghostline**. This must not be described as finished voice cloning.
+The experimental verification screen generates locally using Piper, decodes WAV files, and tracks per-speaker checks. On the device-evidence development branch it also computes non-silent decoded PCM hashes and provides a shareable JSON evidence report. These hashes demonstrate audio differences, not different human-perceived voice identities. Full verification still requires a real iPhone running offline, sample playback and listening review. The existing preview releases are preserved until that happens.
 
-**Build verification:** Xcode 26.3+ and Swift 6.2 required to resolve swift-tts 3.2.1 dependencies. Device-side synthesis and memory usage are not verified by an unsigned IPA build.
+No celebrities, actors, singers or fictional characters have authorized functioning replicas in this project. Their names in the original 235-entry reference catalog do not represent available models.
