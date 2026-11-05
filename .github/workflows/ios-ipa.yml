@@ -3,6 +3,9 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+concurrency:
+  group: ghostline-ios-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: xcode-27
