@@ -14,7 +14,7 @@ enum Catalog {
       ("Singers","Michael Jackson|Elvis Presley|Freddie Mercury|Whitney Houston|Mariah Carey|Ariana Grande|Beyoncé|Rihanna|Taylor Swift|Billie Eilish|Lady Gaga|Adele|Bruno Mars|The Weeknd|Ed Sheeran|Justin Bieber|Harry Styles|Dua Lipa|Sia|Katy Perry|Miley Cyrus|Lana Del Rey|Olivia Rodrigo|Sabrina Carpenter|Shakira|Bad Bunny|Karol G|Rosalía|Drake|Kendrick Lamar|Eminem|Snoop Dogg|Tupac Shakur|The Notorious B.I.G.|Nicki Minaj|Cardi B|Doja Cat|Post Malone|Travis Scott|Kanye West|J. Cole|Lil Wayne|Future|Johnny Cash|Dolly Parton|Willie Nelson|George Strait|Chris Stapleton|Luke Combs|Morgan Wallen|Jelly Roll|Zach Bryan|Reba McEntire|Carrie Underwood|Kacey Musgraves|Frank Sinatra|Dean Martin|Louis Armstrong|Aretha Franklin|Stevie Wonder|Prince|David Bowie|Ozzy Osbourne|James Hetfield|Chester Bennington|Kurt Cobain|Dave Grohl|Axl Rose|Bon Jovi|Amy Winehouse|Céline Dion|Andrea Bocelli"),
       ("Original Styles","Masked Caller|Gothic Narrator|Midnight Radio|Haunted Whisper|Robot Sentinel|Galactic Tyrant|Animated Trickster|Epic Trailer|Southern Outlaw|Space Captain|Arcane Sorcerer|Creature Growl|Arena Announcer|Noir Detective|Retro Robot|Pop Ballad|Soulful Crooner|Rock Frontman|Country Storyteller|Hip-Hop Host")
     ]
-    static let all: [VoiceItem] = groups.flatMap { category, names in names.split(separator: "|").map { VoiceItem(name: String($0),category:category) } }
+    static let all: [VoiceItem] = groups.flatMap { pair in pair.1.split(separator: "|").map { VoiceItem(name: String($0),category:pair.0) } }
 }
 struct ModelBinding: Codable { var model: String; var voice: String; var authorized: Bool }
 @MainActor final class VoiceStore: NSObject, ObservableObject {
