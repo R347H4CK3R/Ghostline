@@ -62,8 +62,12 @@ jobs:
               source_model=next(m for m in x["models"] if m["model_id"] == candidate["model_id"])
               assert candidate["speaker_id"] < source_model["declared_speakers"]
           featured=next(m for m in x["models"] if m["model_id"] == "en_US-libritts_r-medium")
-          assert featured["declared_speakers"] >= 500, "500 test IDs exceed model's declared speakers"
-          assert all(len(featured[field])==32 for field in ["model_md5","config_md5"])
+          assert featured["declared_speakers"] == 904, "Use actual pinned model config, not stale index"
+          assert featured["model_bytes"] == 78580914
+          assert featured["model_md5"] == "bb2c2776cffbfd736c7c497f620c0ca6"
+          assert featured["config_md5"] == "c740db18a0dab11b13ce0292ea1196c6"
+          assert "e7229f7d33a10e145e109b886d661984201ac3c4" in featured["model_url"]
+          assert "e7229f7d33a10e145e109b886d661984201ac3c4" in featured["config_url"]
           print("Piper candidate slots:",len(ids), "(none counted as device-verified)")
           print("Featured model declared speaker IDs:",featured["declared_speakers"])
           PY
