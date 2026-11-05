@@ -9,6 +9,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      - name: Select modern Xcode for Swift 6.2 dependencies
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+          xcodebuild -version
       - name: Validate catalog counts and project
         run: |
           python3 - <<'PY'
