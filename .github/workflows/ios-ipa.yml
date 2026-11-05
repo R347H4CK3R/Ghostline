@@ -22,6 +22,29 @@ jobs:
           assert all(k in a for k in ['@main struct GhostlineApp','ModelBinding','AVAudioRecorder','Generate AI'])
           print('Source checks passed')
           PY
+      - name: Enforce verified authentic voice inventory
+        run: |
+          python3 - <<'PY'
+          import json, re
+          from pathlib import Path
+          manifest=json.loads(Path("Ghostline/Resources/verified-authentic-voices.json").read_text())
+          assert manifest["schema_version"] == 1
+          voices=manifest["verified_authentic_voices"]
+          assert isinstance(voices, list)
+          required={"identity_attribution_source","voice_usage_authorization","local_model_sha256","on_device_ios_audio_sha256","offline_airplane_mode_confirmed","audible_playback_confirmed","perceptual_identity_review"}
+          assert required.issubset(set(manifest["required_evidence"]))
+          for voice in voices:
+              assert all(voice.get(k) for k in required)
+              assert voice["offline_airplane_mode_confirmed"] is True
+              assert voice["audible_playback_confirmed"] is True
+              assert voice["perceptual_identity_review"] is True
+              assert re.fullmatch(r"[0-9a-fA-F]{64}", voice["local_model_sha256"])
+              assert re.fullmatch(r"[0-9a-fA-F]{64}", voice["on_device_ios_audio_sha256"])
+          # The UI must not promise more authentic identities than documented.
+          source=Path("Ghostline/App.swift").read_text()
+          assert f'Verified authentic voices • {len(voices)}' in source
+          print(f"Verified authentic offline identities: {len(voices)}")
+          PY
       - name: Install project generator
         run: brew install xcodegen
       - name: Generate Xcode project
