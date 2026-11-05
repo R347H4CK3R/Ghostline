@@ -25,3 +25,9 @@ The unsigned IPA is not an App Store-installable signed app. Device compatibilit
 Choose an identity in the catalog. Enter your provider's HTTPS speech API endpoint, save an API key, and map an authorized model ID and voice ID. The app sends `POST` with JSON fields `model`, `voice`, `input`, `response_format: mp3`. Generated audio can be played and shared. If the provider rejects a mapping, the app reports the failure rather than pretending it generated that identity.
 
 Use only voice models with appropriate permissions. Do not use voice cloning for impersonation, scams, or deceptive attribution.
+
+## Free offline mode (November 2026)
+
+The iOS app now has an **Offline-only mode** (on by default) and a picker listing English speech voices installed on the device. In offline mode the app uses Apple's AVSpeechSynthesizer without making speech API requests; it requires no subscription, API token or usage billing. Voices not already installed may require installation through iOS settings beforehand. Local speech can be played, microphone recordings captured and shared. Neither the iOS speech voices nor the 235 catalog references are identity-accurate celebrity or singer clones.
+
+A truly offline **neural** speech library requires redistributable model weights and a compatible on-device inference engine (e.g. sherpa-onnx with Piper/Kokoro). Those are **not bundled or operational** in this release. A successful compile only demonstrates source packaging, not that offline neural cloning is functional or that Strata can run it.
