@@ -47,7 +47,7 @@ final class PiperVoiceLab: ObservableObject {
     private var player: PiperPlayer?
     private var avPlayer: AVAudioPlayer?
     private var tested: [Int: String] = [:]
-    private let key = "piper.voice.lab.deviceVerified"
+    private let key = "piper.voice.lab.decodedPCM.v2"
     private let batchPhrase = "A quick silver fox crossed the quiet valley."
     private var model: PiperRegistry.Model? {
         registry?.models.first { $0.model_id == Self.featuredModelID }
