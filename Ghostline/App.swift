@@ -157,6 +157,9 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("Neural Speech") {
+                    NavigationLink("Open Offline Neural Studio") { NeuralStudioView() }
+                }
                 Section("Catalog • \(Catalog.all.count) references") {
                     TextField("Search characters, actors, singers",text:$store.search)
                     Picker("Category",selection:$store.category) {
