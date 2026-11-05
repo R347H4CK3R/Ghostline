@@ -1,20 +1,18 @@
 import SwiftUI
 import AVFoundation
 import SpeechSynthesizer
-import KokoroTTS
 import PocketTTS
 
 /// Freely usable synthetic neural voices (not named celebrity replicas).
 @MainActor
 final class NeuralStudio: ObservableObject {
-    @Published var engineName = "Kokoro"
+    @Published var engineName = "PocketTTS"
     @Published var voices: [TTSVoice] = []
     @Published var voiceID = ""
     @Published var state = "Choose an engine and prepare its model."
     @Published var busy = false
     @Published var generated: URL?
     @Published var installed = false
-    private let kokoro = KokoroEngine()
     private let pocket = PocketEngine()
     private var playback: AVAudioPlayer?
 
@@ -24,13 +22,8 @@ final class NeuralStudio: ObservableObject {
         defer { busy = false }
         do {
             state = "Checking and preparing \(engineName) model. First setup requires downloading the free weights."
-            if engineName == "Kokoro" {
-                try await kokoro.prepare(onProgress: nil)
-                voices = try await kokoro.availableVoices()
-            } else {
-                try await pocket.prepare(onProgress: nil)
-                voices = try await pocket.availableVoices()
-            }
+            try await pocket.prepare(onProgress: nil)
+            voices = try await pocket.availableVoices()
             installed = true
             voiceID = voices.first?.id ?? ""
             state = "Ready: \(voices.count) real neural voices. Model is cached for offline use."
@@ -57,11 +50,7 @@ final class NeuralStudio: ObservableObject {
             options.voice = selected
             state = "Generating \(engineName) speech locally…"
             let sound: SpokenAudio
-            if engineName == "Kokoro" {
-                sound = try await kokoro.synthesize(words, options: options)
-            } else {
-                sound = try await pocket.synthesize(words, options: options)
-            }
+            sound = try await pocket.synthesize(words, options: options)
             let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
             try sound.write(toWAV: url)
             let player = try AVAudioPlayer(contentsOf: url)
@@ -85,7 +74,6 @@ struct NeuralStudioView: View {
         Form {
             Section("Free offline neural engine") {
                 Picker("Engine", selection: Binding(get: {neural.engineName}, set: {neural.switchEngine($0)})) {
-                    Text("Kokoro — expressive voices").tag("Kokoro")
                     Text("PocketTTS — speech presets").tag("PocketTTS")
                 }
                 Button(neural.busy ? "Processing…" : "Prepare model") { Task { await neural.prepare() } }.disabled(neural.busy)
