@@ -177,7 +177,7 @@ final class PiperVoiceLab: ObservableObject {
         busy = true
         defer { busy = false }
         do {
-            status = "Generating speaker \(speakerID) with local Piper..."
+            status = "Generating \(PiperVoiceNames.label(for: speakerID)) with local Piper..."
             let wav = try await synthesize(words, speaker: speakerID)
             let audio = try AVAudioPlayer(contentsOf: wav)
             guard audio.duration > 0.2, audio.prepareToPlay() else {
@@ -189,7 +189,7 @@ final class PiperVoiceLab: ObservableObject {
             avPlayer = audio
             latestOutput = wav
             _ = audio.play()
-            status = "Speaker \(speakerID) generated decodable WAV. Listen to confirm distinctness."
+            status = "\(PiperVoiceNames.label(for: speakerID)) generated decodable WAV (Piper ID \(speakerID)). Listen to confirm distinctness."
         } catch { status = "Piper generation failed: \(error.localizedDescription)" }
     }
 
@@ -312,6 +312,29 @@ final class PiperVoiceLab: ObservableObject {
     }
 }
 
+
+// These are fictional UI aliases, not verified identities, voice qualities,
+// or the names of LibriTTS speakers. Keep the mapping stable across releases.
+private enum PiperVoiceNames {
+    static let given = [
+        "Avery", "Blair", "Casey", "Dakota", "Ellis",
+        "Finley", "Harper", "Indigo", "Jules", "Kai",
+        "Lane", "Morgan", "Noel", "Oakley", "Parker",
+        "Quinn", "Reese", "Rowan", "Sage", "Taylor",
+        "Uma", "Val", "Wren", "Yael", "Zuri"
+    ]
+    static let nature = [
+        "Cedar", "Willow", "Juniper", "River", "Meadow",
+        "Aspen", "Clover", "Orchid", "Maple", "Briar",
+        "Fern", "Brook", "Laurel", "Dawn", "Sky",
+        "Hazel", "Dune", "Ember", "Marigold", "Grove"
+    ]
+    static func label(for id: Int) -> String {
+        guard id >= 0 && id < 500 else { return "Voice ID \(id)" }
+        return "\(given[id / nature.count]) \(nature[id % nature.count])"
+    }
+}
+
 struct PiperVoiceLabView: View {
     @StateObject private var lab = PiperVoiceLab()
     @State private var phrase = "Welcome to Ghostline. This voice is generated offline."
@@ -328,9 +351,11 @@ struct PiperVoiceLabView: View {
                     .font(.footnote).foregroundStyle(.secondary)
             }
             Section("Generate local audio") {
-                Picker("Speaker", selection: $lab.speakerID) {
-                    ForEach(0..<500, id:\.self) { Text("Speaker \($0)").tag($0) }
+                Picker("Voice name", selection: $lab.speakerID) {
+                    ForEach(0..<500, id:\.self) { Text(PiperVoiceNames.label(for: $0)).tag($0) }
                 }
+                Text("Piper voice ID: \(lab.speakerID) • Names are fictional labels, not actual speaker identities.")
+                    .font(.caption).foregroundStyle(.secondary)
                 TextEditor(text: $phrase).frame(minHeight: 75)
                 Button("Speak selected voice") { Task { await lab.preview(phrase) } }
                     .disabled(!lab.modelReady || lab.busy)
