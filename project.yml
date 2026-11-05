@@ -1,5 +1,8 @@
 name: GHOSTLINE
 packages:
+  FluidAudio:
+    url: https://github.com/FluidInference/FluidAudio.git
+    exactVersion: 0.15.2
   swift-tts:
     url: https://github.com/arraypress/swift-tts.git
     from: 3.2.1
@@ -24,6 +27,8 @@ targets:
         product: KokoroTTS
       - package: swift-tts
         product: PocketTTS
+      - package: FluidAudio
+        product: FluidAudio
     sources:
       - path: Ghostline
     settings:
