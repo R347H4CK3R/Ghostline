@@ -24,8 +24,6 @@ targets:
       - package: swift-tts
         product: SpeechSynthesizer
       - package: swift-tts
-        product: KokoroTTS
-      - package: swift-tts
         product: PocketTTS
       - package: FluidAudio
         product: FluidAudio
