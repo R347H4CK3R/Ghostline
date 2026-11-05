@@ -158,50 +158,23 @@ struct ContentView: View {
         NavigationStack {
             Form {
                 Section("Neural Speech") {
-                    NavigationLink("Piper — 500 Speaker Verification Lab") { PiperVoiceLabView() }
+                    NavigationLink("Piper — Unverified Speaker Candidate Lab") { PiperVoiceLabView() }
                     NavigationLink("Kokoro — Multilingual Ready-Made Voices") { KokoroOfflineView() }
                     NavigationLink("Ready-Made Offline AI Voices — No Recording Required") { NeuralStudioView() }
                     NavigationLink("Optional: Clone a Voice from an Authorized Recording") { CloneStudioView() }
                 }
-                Section("Catalog • \(Catalog.all.count) references") {
-                    TextField("Search characters, actors, singers",text:$store.search)
-                    Picker("Category",selection:$store.category) {
-                        Text("All").tag("All")
-                        ForEach(["Characters","Actors","Singers","Original Styles"],id:\.self) { Text($0).tag($0) }
-                    }
-                    List(store.matched,id:\.id) { item in
-                        Button {
-                            store.choose(item)
-                        } label: {
-                            HStack {
-                                Text(item.name).foregroundStyle(.primary)
-                                Spacer()
-                                if store.selected.id == item.id { Image(systemName:"checkmark.circle.fill") }
-                                else if item.category == "Original Styles" {Image(systemName:"waveform")}
-                                else {Image(systemName:"lock").foregroundStyle(.secondary)}
-                            }
-                        }
-                    }.frame(minHeight:200,maxHeight:340)
+                Section("Verified authentic voices • 0") {
+                    Text("No character, actor, or singer voice has yet passed all release checks: usage rights, exact identity attribution, real offline iPhone synthesis, audible output, and documented listening verification.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    Text("Unverified catalog names are intentionally hidden. Piper candidate IDs and generic system speech voices never count as authentic character or celebrity replicas.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
-                Section("Studio • \(store.selected.name)") {
-                    TextEditor(text:$store.text).frame(minHeight:75)
-                    HStack {
-                        Button("System Speech") {store.speakLocal()}
-                        Spacer()
-                        Button(store.offlineOnly ? "Speak Offline" : "Generate AI") {Task { await store.generate() }}.disabled(store.busy || (!store.offlineOnly && !store.mapped))
-                    }
-                    if let url=store.output { ShareLink(item:url) {Label("Share AI audio",systemImage:"square.and.arrow.up")} }
-                    Text(store.mapped ? "Authorized model configured; generation requires provider access." : "No authorized voice model installed for this identity.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                    HStack {
-                        Button(store.recording ? "Stop Recording" : "Record Mic") {
-                            if store.recording {store.stopRecording()} else {Task {await store.startRecording()}}
-                        }
-                        if store.recorded != nil {
-                            Button("Play Recording"){store.playRecording()}
-                        }
-                    }
-                    if let url=store.recorded { ShareLink(item:url) {Label("Share Recording",systemImage:"square.and.arrow.up")} }
+                Section("Offline voice tools") {
+                    Text("Use the neural studios above for permitted synthetic voices or recordings you are authorized to clone. A successful iOS build alone does not verify an authentic identity.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
                 Section("Free Offline Voices") {
                     Toggle("Offline-only mode", isOn: $store.offlineOnly)
@@ -214,17 +187,6 @@ struct ContentView: View {
                         }
                     }
                     Button("Preview offline voice") { store.speakLocal() }
-                }
-                Section("Optional Online Neural Model Setup") {
-                    TextField("HTTPS /v1/audio/speech endpoint",text:$store.endpoint).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    SecureField("Provider API key",text:$apiKey)
-                    Button("Save API Key") {store.saveKey(apiKey);apiKey=""}
-                    TextField("Model identifier",text:$store.model).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    TextField("Voice identifier",text:$store.voice).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    Toggle("I have authorization for this voice",isOn:$store.authorized)
-                    Button("Save mapping for \(store.selected.name)") {store.saveMapping()}
-                    Text("Catalog names are not preinstalled voice clones. Only connect models you have the rights to use. AI requests send text to your selected provider.")
-                        .font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("Status") {Text(store.status).font(.footnote)}
             }
