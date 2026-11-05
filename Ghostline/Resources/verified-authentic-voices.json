@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "release_policy": "Only documented licensed and iPhone-verified offline authentic voices may be listed as available.",
+  "verified_authentic_voices": [],
+  "required_evidence": [
+    "identity_attribution_source",
+    "voice_usage_authorization",
+    "local_model_sha256",
+    "on_device_ios_audio_sha256",
+    "offline_airplane_mode_confirmed",
+    "audible_playback_confirmed",
+    "perceptual_identity_review"
+  ]
+}
