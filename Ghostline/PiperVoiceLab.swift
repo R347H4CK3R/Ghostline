@@ -318,7 +318,7 @@ struct PiperVoiceLabView: View {
     var body: some View {
         Form {
             Section("One model, 500 speaker candidates") {
-                Text("Piper LibriTTS-R medium • English • approximately 81 MB")
+                Text("Piper LibriTTS-R medium • English • approximately 79 MB")
                 Text("Open-source multispeaker voice model. These 500 candidate IDs are not yet 500 independently verified or distinct voices.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Button(lab.modelReady ? "Model downloaded" : "Download free voice pack") {
