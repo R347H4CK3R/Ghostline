@@ -36,7 +36,7 @@ struct ModelBinding: Codable { var model: String; var voice: String; var authori
     @Published var offlineVoiceID = UserDefaults.standard.string(forKey: "offlineVoiceID") ?? ""
     @Published var offlineOnly = true
     var installedVoices: [AVSpeechSynthesisVoice] {
-        AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix("en") }.sorted { $0.name < $1.name }
+        AVSpeechSynthesisVoice.speechVoices().sorted { ($0.language, $0.name).0 == ($1.language, $1.name).0 ? $0.name < $1.name : $0.language < $1.language }
     }
     func chooseOfflineVoice(_ id: String) {
         offlineVoiceID = id
@@ -199,9 +199,9 @@ struct ContentView: View {
                 }
                 Section("Free Offline Voices") {
                     Toggle("Offline-only mode", isOn: $store.offlineOnly)
-                    Text("Device speech works without accounts, payments or network access. Available voices depend on what iOS has installed; these are not celebrity clones.")
+                    Text("Browse every speech voice installed in iOS, across languages. Additional system voices must be installed using iOS settings. These are genuine system voices, not celebrity clones.")
                         .font(.footnote).foregroundStyle(.secondary)
-                    Picker("Device voice", selection: $store.offlineVoiceID) {
+                    Picker("Any installed device voice", selection: $store.offlineVoiceID) {
                         Text("Default system voice").tag("")
                         ForEach(store.installedVoices, id: \.identifier) { v in
                             Text("\(v.name) (\(v.language))").tag(v.identifier)
