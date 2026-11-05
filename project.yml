@@ -1,5 +1,8 @@
 name: GHOSTLINE
 packages:
+  piper-objc:
+    url: https://github.com/piper-tts-apps/piper-objc.git
+    exactVersion: 0.2.50
   FluidAudio:
     url: https://github.com/FluidInference/FluidAudio.git
     exactVersion: 0.15.2
@@ -21,6 +24,8 @@ targets:
     type: application
     platform: iOS
     dependencies:
+      - package: piper-objc
+        product: piper-player
       - package: swift-tts
         product: SpeechSynthesizer
       - package: swift-tts
