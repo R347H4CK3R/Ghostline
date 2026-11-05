@@ -36,7 +36,7 @@ struct ModelBinding: Codable { var model: String; var voice: String; var authori
     @Published var offlineVoiceID = UserDefaults.standard.string(forKey: "offlineVoiceID") ?? ""
     @Published var offlineOnly = true
     var installedVoices: [AVSpeechSynthesisVoice] {
-        AVSpeechSynthesisVoice.speechVoices().sorted { ($0.language, $0.name).0 == ($1.language, $1.name).0 ? $0.name < $1.name : $0.language < $1.language }
+        AVSpeechSynthesisVoice.speechVoices().sorted { a, b in a.language == b.language ? a.name < b.name : a.language < b.language }
     }
     func chooseOfflineVoice(_ id: String) {
         offlineVoiceID = id
