@@ -1,0 +1,25 @@
+name: GHOSTLINE
+options:
+  bundleIdPrefix: com.ghostline.studio
+settings:
+  base:
+    IPHONEOS_DEPLOYMENT_TARGET: '17.0'
+    SWIFT_VERSION: '5.0'
+    TARGETED_DEVICE_FAMILY: '1,2'
+    GENERATE_INFOPLIST_FILE: YES
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGNING_ALLOWED: NO
+targets:
+  GHOSTLINE:
+    type: application
+    platform: iOS
+    sources:
+      - path: Ghostline
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ghostline.studio
+        INFOPLIST_KEY_CFBundleDisplayName: GHOSTLINE
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Record your voice to play with audio effects.
+        INFOPLIST_KEY_UIApplicationSupportsDocumentBrowser: NO
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: 'UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight'
