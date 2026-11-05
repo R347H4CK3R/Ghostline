@@ -158,6 +158,7 @@ struct ContentView: View {
         NavigationStack {
             Form {
                 Section("Neural Speech") {
+                    NavigationLink("Kokoro — Multilingual Ready-Made Voices") { KokoroOfflineView() }
                     NavigationLink("Ready-Made Offline AI Voices — No Recording Required") { NeuralStudioView() }
                     NavigationLink("Optional: Clone a Voice from an Authorized Recording") { CloneStudioView() }
                 }
