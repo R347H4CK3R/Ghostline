@@ -158,6 +158,7 @@ struct ContentView: View {
         NavigationStack {
             Form {
                 Section("Neural Speech") {
+                    NavigationLink("Piper — 500 Speaker Verification Lab") { PiperVoiceLabView() }
                     NavigationLink("Kokoro — Multilingual Ready-Made Voices") { KokoroOfflineView() }
                     NavigationLink("Ready-Made Offline AI Voices — No Recording Required") { NeuralStudioView() }
                     NavigationLink("Optional: Clone a Voice from an Authorized Recording") { CloneStudioView() }
