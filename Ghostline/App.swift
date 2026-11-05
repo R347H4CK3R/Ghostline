@@ -159,6 +159,7 @@ struct ContentView: View {
             Form {
                 Section("Neural Speech") {
                     NavigationLink("Open Offline Neural Studio") { NeuralStudioView() }
+                    NavigationLink("Create Voice Clones from Authorized Samples") { CloneStudioView() }
                 }
                 Section("Catalog • \(Catalog.all.count) references") {
                     TextField("Search characters, actors, singers",text:$store.search)
