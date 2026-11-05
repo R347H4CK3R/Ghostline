@@ -164,12 +164,46 @@ final class PiperVoiceLab: ObservableObject {
                           userInfo: [NSLocalizedDescriptionKey: "Speech engine returned no audio"])
         }
         let file = URL(fileURLWithPath: path)
+        try finalizeGeneratedWAV(file)
         let attrs = try FileManager.default.attributesOfItem(atPath: path)
         guard (attrs[.size] as? NSNumber)?.intValue ?? 0 > 1024 else {
             throw NSError(domain: "GHOSTLINE", code: 104,
                           userInfo: [NSLocalizedDescriptionKey: "Empty audio output"])
         }
         return file
+    }
+
+    // The pinned piper-objc writer emits a streaming WAV header with placeholder
+    // RIFF/data sizes (0x7ffff000) even after closing a saved file. AVFoundation
+    // can interpret that as a multi-GB truncated stream. Finalize from the real
+    // file length before decoding, playing, hashing, or exporting on iPhone.
+    private func finalizeGeneratedWAV(_ url: URL) throws {
+        let attrs = try FileManager.default.attributesOfItem(atPath: url.path)
+        guard let length = (attrs[.size] as? NSNumber)?.uint64Value,
+              length >= 48, length - 8 <= UInt64(UInt32.max),
+              (length - 44) % 4 == 0 else {
+            throw NSError(domain: "GHOSTLINE", code: 108,
+                          userInfo: [NSLocalizedDescriptionKey: "Invalid Piper WAV size"])
+        }
+        let handle = try FileHandle(forUpdating: url)
+        defer { try? handle.close() }
+        guard let header = try handle.read(upToCount: 44), header.count == 44,
+              header[0..<4].elementsEqual("RIFF".utf8),
+              header[8..<12].elementsEqual("WAVE".utf8),
+              header[12..<16].elementsEqual("fmt ".utf8),
+              header[36..<40].elementsEqual("data".utf8),
+              header[20] == 3, header[21] == 0, // IEEE float samples
+              header[22] == 1, header[23] == 0, // mono
+              header[34] == 32, header[35] == 0 else {
+            throw NSError(domain: "GHOSTLINE", code: 109,
+                          userInfo: [NSLocalizedDescriptionKey: "Unexpected Piper WAV layout"])
+        }
+        var riffLength = UInt32(length - 8).littleEndian
+        var payloadLength = UInt32(length - 44).littleEndian
+        try handle.seek(toOffset: 4)
+        try handle.write(contentsOf: withUnsafeBytes(of: &riffLength) { Data($0) })
+        try handle.seek(toOffset: 40)
+        try handle.write(contentsOf: withUnsafeBytes(of: &payloadLength) { Data($0) })
     }
 
     func preview(_ words: String) async {
