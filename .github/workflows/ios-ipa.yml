@@ -39,6 +39,8 @@ jobs:
             cat package-resolve.log
             exit 1
           fi
+      - name: Regenerate pinned Piper candidate metadata
+        run: python3 scripts/generate_piper_candidates.py
       - name: Verify Piper candidate manifest
         run: |
           python3 - <<'PY'
