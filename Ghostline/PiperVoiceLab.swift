@@ -42,7 +42,7 @@ final class PiperVoiceLab: ObservableObject {
     @Published var latestOutput: URL?
     @Published var cancelRequested = false
 
-    let registry = PiperRegistry.load()
+    private let registry = PiperRegistry.load()
     private var player: PiperPlayer?
     private var avPlayer: AVAudioPlayer?
     private var tested: [Int: String] = [:]
