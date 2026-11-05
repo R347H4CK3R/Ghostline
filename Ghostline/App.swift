@@ -33,6 +33,16 @@ struct ModelBinding: Codable { var model: String; var voice: String; var authori
     @Published var pitch = 0.8
     @Published var speed = 0.48
     @Published var busy = false
+    @Published var offlineVoiceID = UserDefaults.standard.string(forKey: "offlineVoiceID") ?? ""
+    @Published var offlineOnly = true
+    var installedVoices: [AVSpeechSynthesisVoice] {
+        AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix("en") }.sorted { $0.name < $1.name }
+    }
+    func chooseOfflineVoice(_ id: String) {
+        offlineVoiceID = id
+        UserDefaults.standard.set(id, forKey: "offlineVoiceID")
+        if let v = AVSpeechSynthesisVoice(identifier: id) { status = "Selected installed offline voice: \(v.name)" }
+    }
     private let synthesizer = AVSpeechSynthesizer()
     private var player: AVAudioPlayer?
     private var recorder: AVAudioRecorder?
@@ -81,11 +91,12 @@ struct ModelBinding: Codable { var model: String; var voice: String; var authori
         let utterance=AVSpeechUtterance(string:text)
         utterance.rate=Float(speed)
         utterance.pitchMultiplier=Float(pitch)
-        utterance.voice=AVSpeechSynthesisVoice(language:"en-US")
+        utterance.voice=AVSpeechSynthesisVoice(identifier:offlineVoiceID) ?? AVSpeechSynthesisVoice(language:"en-US")
         synthesizer.speak(utterance)
-        status="Apple system voice; this is not a clone of \(selected.name)"
+        status="Device speech voice (no API). Not an identity clone of \(selected.name)."
     }
     func generate() async {
+        if offlineOnly { speakLocal(); return }
         guard mapped,let binding=mappings[selected.id] else { status="No authorized model mapped for this entry";return }
         guard let url=URL(string:endpoint),url.scheme == "https",url.host != nil,url.user == nil,url.password == nil else {status="Enter a valid HTTPS API speech endpoint";return}
         guard let key=apiKey(),!key.isEmpty else {status="Save the provider API key first";return}
@@ -171,7 +182,7 @@ struct ContentView: View {
                     HStack {
                         Button("System Speech") {store.speakLocal()}
                         Spacer()
-                        Button("Generate AI") {Task { await store.generate() }}.disabled(store.busy || !store.mapped)
+                        Button(store.offlineOnly ? "Speak Offline" : "Generate AI") {Task { await store.generate() }}.disabled(store.busy || (!store.offlineOnly && !store.mapped))
                     }
                     if let url=store.output { ShareLink(item:url) {Label("Share AI audio",systemImage:"square.and.arrow.up")} }
                     Text(store.mapped ? "Authorized model configured; generation requires provider access." : "No authorized voice model installed for this identity.")
@@ -186,7 +197,19 @@ struct ContentView: View {
                     }
                     if let url=store.recorded { ShareLink(item:url) {Label("Share Recording",systemImage:"square.and.arrow.up")} }
                 }
-                Section("Authorized Neural Model Setup") {
+                Section("Free Offline Voices") {
+                    Toggle("Offline-only mode", isOn: $store.offlineOnly)
+                    Text("Device speech works without accounts, payments or network access. Available voices depend on what iOS has installed; these are not celebrity clones.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    Picker("Device voice", selection: $store.offlineVoiceID) {
+                        Text("Default system voice").tag("")
+                        ForEach(store.installedVoices, id: \.identifier) { v in
+                            Text("\(v.name) (\(v.language))").tag(v.identifier)
+                        }
+                    }
+                    Button("Preview offline voice") { store.speakLocal() }
+                }
+                Section("Optional Online Neural Model Setup") {
                     TextField("HTTPS /v1/audio/speech endpoint",text:$store.endpoint).textInputAutocapitalization(.never).autocorrectionDisabled()
                     SecureField("Provider API key",text:$apiKey)
                     Button("Save API Key") {store.saveKey(apiKey);apiKey=""}
