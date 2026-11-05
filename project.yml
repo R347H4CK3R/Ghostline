@@ -6,9 +6,6 @@ packages:
   FluidAudio:
     url: https://github.com/FluidInference/FluidAudio.git
     exactVersion: 0.15.2
-  swift-tts:
-    url: https://github.com/arraypress/swift-tts.git
-    from: 3.2.1
 options:
   bundleIdPrefix: com.ghostline.studio
 settings:
@@ -26,10 +23,6 @@ targets:
     dependencies:
       - package: piper-objc
         product: piper-player
-      - package: swift-tts
-        product: SpeechSynthesizer
-      - package: swift-tts
-        product: PocketTTS
       - package: FluidAudio
         product: FluidAudio
     sources:
