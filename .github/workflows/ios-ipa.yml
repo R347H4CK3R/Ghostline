@@ -26,6 +26,33 @@ jobs:
         run: brew install xcodegen
       - name: Generate Xcode project
         run: xcodegen generate
+      - name: Prepare Piper's upstream source submodule
+        run: |
+          set -e
+          xcodebuild -resolvePackageDependencies -project GHOSTLINE.xcodeproj -scheme GHOSTLINE -clonedSourcePackagesDirPath build/SourcePackages -derivedDataPath build > package-resolve.log 2>&1 || true
+          package_dir="build/SourcePackages/checkouts/piper1-gpl-spm"
+          if [ -d "$package_dir/.git" ] || [ -f "$package_dir/.git" ]; then
+            git -C "$package_dir" submodule update --init --recursive --depth 1
+            test -f "$package_dir/piper1-gpl/libpiper/src/piper.cpp"
+          else
+            echo "Piper package not present in resolved dependencies"
+            cat package-resolve.log
+            exit 1
+          fi
+      - name: Verify Piper candidate manifest
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("Ghostline/Resources/piper-candidates.json")
+          x=json.loads(p.read_text())
+          assert x["speaker_candidate_count"] >= 500
+          assert x["speaker_candidate_count"] == len(x["candidates"])
+          assert all(v["availability"] == "candidate_unverified" for v in x["candidates"])
+          ids={v["id"] for v in x["candidates"]}
+          assert len(ids)==len(x["candidates"])
+          print("Piper candidate slots:",len(ids), "(none counted as device-verified)")
+          PY
       - name: Build arm64 iOS app
         run: |
           set -o pipefail
