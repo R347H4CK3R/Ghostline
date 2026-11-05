@@ -31,3 +31,15 @@ Use only voice models with appropriate permissions. Do not use voice cloning for
 The iOS app now has an **Offline-only mode** (on by default) and a picker listing English speech voices installed on the device. In offline mode the app uses Apple's AVSpeechSynthesizer without making speech API requests; it requires no subscription, API token or usage billing. Voices not already installed may require installation through iOS settings beforehand. Local speech can be played, microphone recordings captured and shared. Neither the iOS speech voices nor the 235 catalog references are identity-accurate celebrity or singer clones.
 
 A truly offline **neural** speech library requires redistributable model weights and a compatible on-device inference engine (e.g. sherpa-onnx with Piper/Kokoro). Those are **not bundled or operational** in this release. A successful compile only demonstrates source packaging, not that offline neural cloning is functional or that Strata can run it.
+
+## Native offline neural studio (experimental)
+
+The `Neural Studio` screen connects two real, free CoreML synthesis backends through [arraypress/swift-tts](https://github.com/arraypress/swift-tts) at version 3.2.1:
+- **Kokoro-82M** (Apache-2.0) with its available built-in synthetic voice presets.
+- **Kyutai PocketTTS** (model weights CC BY 4.0, some voice presets CC BY-NC) with its separate available synthetic voice presets.
+
+Select a backend, tap **Prepare model** (one-time internet access to download model weights), then select a voice and **Generate and play offline WAV**. Model weights are cached for reuse, so after successful setup and cache verification, synthesis is fully local. The app uses no paid service or generated-audio upload for these engines. Neural audio is exported to WAV.
+
+**Accuracy:** Neither engine comes with authentic named celebrity or character replicas. The reference catalog remains distinct from actual generated synthetic voices. PocketTTS supports reference-voice cloning through its engine API, but the user-facing model-cloning workflow is **not yet wired into Ghostline**. This must not be described as finished voice cloning.
+
+**Build verification:** Xcode 26.3+ and Swift 6.2 required to resolve swift-tts 3.2.1 dependencies. Device-side synthesis and memory usage are not verified by an unsigned IPA build.
