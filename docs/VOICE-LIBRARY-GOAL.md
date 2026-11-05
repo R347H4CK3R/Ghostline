@@ -28,7 +28,7 @@ A release is only labeled **300 voices** or **500 voices** once that many specif
 ## Current status (November 5, 2026)
 
 - **iOS compile/package milestone:** GitHub Actions [run 42124743868](https://github.com/R347H4CK3R/Ghostline/actions/runs/42124743868) succeeded at commit `9843f7e`. Unsigned IPA artifact contains `GHOSTLINE.app`, Piper dependencies, the eSpeak resource bundle and candidate metadata.
-- **Candidate discovery:** 178 Piper models and 543 candidate speaker slots in the catalog; featured LibriTTS-R medium model declares 2,306 IDs, of which the UI currently offers an automated 500-ID trial.
+- **Candidate discovery:** 178 Piper models and 543 candidate speaker slots in the catalog; featured LibriTTS-R medium model config has 904 IDs (the source index incorrectly says 2,306); the UI offers an automated 500-ID trial. Both model and config asset checksums were corrected and pinned on the experimental branch.
 - **Verified offline voices on the user's real iPhone:** **0 documented**. No iPhone-generated audio or independent airplane-mode test has been received. This does not mean no voices can work; it means none can responsibly be counted yet.
 - **Next gate:** Install an experimental IPA on the iPhone through the authorized importer, download/checksum the optional Piper model, disable network connectivity, generate/play WAV samples and export an on-device test record. Assess waveforms and listening quality before counting distinct voices. Apple system voices and candidate metadata do not count toward the Piper goal.
 - **Release stability:** Leave existing preview releases untouched while using a separate experimental build for evidence export and safer decoded PCM verification. Do not rebrand a 500-voice release solely on a green build.
