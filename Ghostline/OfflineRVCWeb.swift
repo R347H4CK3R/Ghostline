@@ -303,16 +303,17 @@ private struct GhostlineRVCWebView: UIViewRepresentable {
                 Task { @MainActor [weak self] in self?.controller?.receiveAudio(dataURL: wav) }
             }
         }
+        // Use the exact async WKNavigationDelegate signature exposed by modern
+        // WebKit. A near-match to the legacy callback signature is not a guard.
         func webView(_ webView: WKWebView,
-                     decidePolicyFor action: WKNavigationAction,
-                     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-            guard let destination = action.request.url else { decisionHandler(.cancel); return }
+                     decidePolicyFor action: WKNavigationAction) async -> WKNavigationActionPolicy {
+            guard let destination = action.request.url else { return .cancel }
             if destination.scheme == "blob" ||
-               (destination.host == "127.0.0.1" && destination.port == base.port) {
-                decisionHandler(.allow)
-            } else {
-                decisionHandler(.cancel)
+               (destination.scheme == "http" &&
+                destination.host == "127.0.0.1" && destination.port == base.port) {
+                return .allow
             }
+            return .cancel
         }
     }
 }
