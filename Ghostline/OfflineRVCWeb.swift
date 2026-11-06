@@ -139,8 +139,49 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
 final class GhostlineOfflineRVCController: ObservableObject {
     @Published var address: URL?
     @Published var latestWAV: URL?
+    @Published var auditURL: URL?
     @Published var status = "Starting private offline RVC engine..."
     private let server = GhostlineLocalWebServer()
+    private var eventLog: [[String: String]] = []
+    private var wavSHA256: String?
+    private var wavByteCount: Int = 0
+    private let sessionStarted = Date()
+
+    func recordStatus(_ message: String) {
+        status = message
+        eventLog.append([
+            "time_utc": ISO8601DateFormatter().string(from: Date()),
+            "status": String(message.prefix(240))
+        ])
+        if eventLog.count > 250 { eventLog.removeFirst(eventLog.count - 250) }
+    }
+
+    func exportDiagnostics() {
+        let report: [String: Any] = [
+            "schema_version": 1,
+            "record_type": "ghostline_rvc_private_device_runtime_diagnostics",
+            "session_started_utc": ISO8601DateFormatter().string(from: sessionStarted),
+            "exported_utc": ISO8601DateFormatter().string(from: Date()),
+            "runtime": "on_device_webassembly_candidate",
+            "generated_wav_sha256": wavSHA256 as Any? ?? NSNull(),
+            "generated_wav_bytes": wavByteCount,
+            "model_files_sha256": NSNull(),
+            "model_rights_independently_verified": false,
+            "airplane_mode_confirmed": false,
+            "audible_playback_reviewed": false,
+            "perceptual_identity_verified": false,
+            "events": eventLog
+        ]
+        do {
+            let bytes = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+            let path = FileManager.default.temporaryDirectory
+                .appendingPathComponent("GHOSTLINE-RVC-session-" + UUID().uuidString + ".json")
+            try bytes.write(to: path, options: .atomic)
+            auditURL = path
+        } catch {
+            recordStatus("Could not save RVC diagnostics: \(error.localizedDescription)")
+        }
+    }
     func begin() {
         guard address == nil else { return }
         server.start { [weak self] result in
@@ -148,9 +189,9 @@ final class GhostlineOfflineRVCController: ObservableObject {
                 switch result {
                 case .success(let url):
                     self?.address = url
-                    self?.status = "Local inference server ready. No internet connection required."
+                    self?.recordStatus("Local inference server ready. No internet connection required.")
                 case .failure(let error):
-                    self?.status = "Offline RVC engine could not start: \(error.localizedDescription)"
+                    self?.recordStatus("Offline RVC engine could not start: \(error.localizedDescription)")
                 }
             }
         }
@@ -176,7 +217,9 @@ final class GhostlineOfflineRVCController: ObservableObject {
             try decoded.write(to: file, options: .atomic)
             let digest = SHA256.hash(data: decoded).map { String(format: "%02x", $0) }.joined()
             latestWAV = file
-            status = "Offline RVC WAV saved. SHA-256: \(digest.prefix(16))… Listen to verify quality."
+            wavSHA256 = digest
+            wavByteCount = decoded.count
+            recordStatus("Offline RVC WAV saved. SHA-256: \(digest.prefix(16))… Listen to verify quality.")
         } catch {
             status = "Export failed: \(error.localizedDescription)"
         }
@@ -201,14 +244,23 @@ struct GhostlineRVCWebScreen: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            if let wav = controller.latestWAV {
-                ShareLink(item: wav) {
-                    Label("Share offline converted WAV", systemImage: "square.and.arrow.up")
-                        .frame(maxWidth: .infinity)
+            VStack(spacing: 8) {
+                if let wav = controller.latestWAV {
+                    ShareLink(item: wav) {
+                        Label("Share offline converted WAV", systemImage: "square.and.arrow.up")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
-                .buttonStyle(.borderedProminent)
-                .padding(10)
+                Button("Export private conversion diagnostics") { controller.exportDiagnostics() }
+                    .buttonStyle(.bordered)
+                if let audit = controller.auditURL {
+                    ShareLink(item: audit) { Label("Share diagnostic JSON", systemImage: "doc.text") }
+                    Text("Status text may contain model or file names. Inspect before sharing. Identity and airplane-mode verification remain unconfirmed.")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
             }
+            .padding(10)
         }
         .navigationTitle("Offline RVC Converter")
         .navigationBarTitleDisplayMode(.inline)
@@ -246,7 +298,7 @@ private struct GhostlineRVCWebView: UIViewRepresentable {
             guard let value = message.body as? [String: Any],
                   let kind = value["kind"] as? String else { return }
             if kind == "status", let status = value["message"] as? String {
-                Task { @MainActor [weak self] in self?.controller?.status = status }
+                Task { @MainActor [weak self] in self?.controller?.recordStatus(status) }
             } else if kind == "wav", let wav = value["dataURL"] as? String {
                 Task { @MainActor [weak self] in self?.controller?.receiveAudio(dataURL: wav) }
             }
