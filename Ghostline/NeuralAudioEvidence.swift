@@ -34,8 +34,9 @@ final class GhostlineNeuralAudioEvidence: ObservableObject {
     }
     private var receipt: Receipt?
     private var player: AVAudioPlayer?
-    private let observer = GhostlineNeuralPlaybackObserver()
+    private var observer = GhostlineNeuralPlaybackObserver()
     private var attemptID = UUID()
+    private var playbackSessionID = UUID()
     private var completionUTC: String?
 
     private static func digest(_ bytes: Data) -> String {
@@ -44,6 +45,7 @@ final class GhostlineNeuralAudioEvidence: ObservableObject {
 
     func reset() {
         attemptID = UUID()
+        playbackSessionID = UUID()
         observer.onFinished = nil
         player?.stop()
         player?.delegate = nil
@@ -69,41 +71,84 @@ final class GhostlineNeuralAudioEvidence: ObservableObject {
             .appendingPathComponent("GHOSTLINE-neural-" + UUID().uuidString + ".wav")
         do {
             try bytes.write(to: file, options: .atomic)
-            try AVAudioSession.sharedInstance().setCategory(.playback)
-            try AVAudioSession.sharedInstance().setActive(true)
-            let replay = try AVAudioPlayer(contentsOf: file)
-            guard replay.duration >= 0.2, replay.prepareToPlay() else {
-                throw GhostlineWAVInspector.Failure.invalid("Generated WAV cannot be played natively")
-            }
-            let attempt = attemptID
-            observer.onFinished = { [weak self] succeeded in
-                DispatchQueue.main.async { [weak self] in
-                    guard let self, self.attemptID == attempt, self.generatedWAV == file else { return }
-                    self.playbackCompleted = succeeded
-                    self.completionUTC = succeeded ? ISO8601DateFormatter().string(from: Date()) : nil
-                    self.reportURL = nil
-                    self.status = succeeded
-                        ? "Native playback finished. Confirm listening only if you heard the entire clip."
-                        : "Native playback failed or ended early; listening cannot be confirmed."
-                }
-            }
-            replay.delegate = observer
-            guard replay.play() else {
-                throw GhostlineWAVInspector.Failure.invalid("Native WAV playback did not start")
-            }
-            player = replay
-            generatedWAV = file
             receipt = Receipt(engine: engine, voiceID: voiceID,
                               wavSHA256: Self.digest(bytes), pcmSHA256: facts.pcmSHA256,
                               duration: facts.durationSeconds, sampleRate: facts.sampleRate,
                               channels: facts.channels,
                               createdUTC: ISO8601DateFormatter().string(from: Date()))
-            status = "Validated WAV generated; playback started. Offline isolation, quality and identity unverified."
+            generatedWAV = file
+            try startNativePlayback(file)
+            status = "Validated WAV generated; native playback started. Offline isolation, quality and identity unverified."
             return file
         } catch {
-            try? FileManager.default.removeItem(at: file)
             reset()
             throw error
+        }
+    }
+
+    // A new AVAudioPlayer and delegate for every replay make late completion
+    // callbacks from a stopped/replaced player unable to certify current audio.
+    private func startNativePlayback(_ file: URL) throws {
+        guard let receipt, generatedWAV == file else {
+            throw GhostlineWAVInspector.Failure.invalid("No current generated recording")
+        }
+        let currentBytes = try Data(contentsOf: file)
+        let currentFacts = try GhostlineWAVInspector.inspect(currentBytes)
+        guard Self.digest(currentBytes) == receipt.wavSHA256,
+              currentFacts.pcmSHA256 == receipt.pcmSHA256 else {
+            throw GhostlineWAVInspector.Failure.invalid("Generated WAV changed since synthesis")
+        }
+        observer.onFinished = nil
+        player?.delegate = nil
+        player?.stop()
+        player = nil
+        playbackCompleted = false
+        userAttestedListening = false
+        completionUTC = nil
+        reportURL = nil
+        playbackSessionID = UUID()
+
+        try AVAudioSession.sharedInstance().setCategory(.playback)
+        try AVAudioSession.sharedInstance().setActive(true)
+        let replay = try AVAudioPlayer(contentsOf: file)
+        guard replay.duration >= 0.2, replay.prepareToPlay() else {
+            throw GhostlineWAVInspector.Failure.invalid("Generated WAV cannot be played natively")
+        }
+        let attempt = attemptID
+        let session = playbackSessionID
+        let currentObserver = GhostlineNeuralPlaybackObserver()
+        currentObserver.onFinished = { [weak self] succeeded in
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.attemptID == attempt,
+                      self.playbackSessionID == session,
+                      self.generatedWAV == file else { return }
+                self.playbackCompleted = succeeded
+                self.completionUTC = succeeded ? ISO8601DateFormatter().string(from: Date()) : nil
+                self.reportURL = nil
+                self.status = succeeded
+                    ? "Native playback finished. Confirm listening only if you heard the entire clip."
+                    : "Native playback failed or ended early; listening cannot be confirmed."
+            }
+        }
+        replay.delegate = currentObserver
+        guard replay.play() else {
+            throw GhostlineWAVInspector.Failure.invalid("Native WAV playback did not start")
+        }
+        observer = currentObserver
+        player = replay
+    }
+
+    func replayGeneratedWAV() {
+        guard let file = generatedWAV else {
+            status = "Generate a WAV before replaying."
+            return
+        }
+        do {
+            try startNativePlayback(file)
+            status = "Replaying the same SHA-256-checked WAV. Prior listening evidence cleared."
+        } catch {
+            reset()
+            status = "Replay rejected; previous evidence invalidated: " + error.localizedDescription
         }
     }
 
@@ -163,6 +208,7 @@ struct GhostlineNeuralEvidencePanel: View {
         Section("Device audio evidence • private") {
             if let wav = evidence.generatedWAV {
                 ShareLink(item: wav) { Label("Export generated WAV", systemImage: "square.and.arrow.up") }
+                Button("Replay WAV • clears listening confirmation") { evidence.replayGeneratedWAV() }
                 if evidence.playbackCompleted {
                     Button(evidence.userAttestedListening ? "Full playback acknowledged" : "I heard the full WAV on this device") {
                         evidence.attestListening()
