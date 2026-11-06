@@ -224,6 +224,10 @@ struct GhostlineHomeView: View {
                     GhostlineFeatureRow(icon: "shippingbox", heading: "RVC Pack Library",
                                         detail: "Import private .pth / .index candidates")
                 }.buttonStyle(.plain)
+                NavigationLink(destination: RVCOnnxRuntimeView()) {
+                    GhostlineFeatureRow(icon: "cpu", heading: "RVC ONNX Runtime",
+                                        detail: "Load a converted ONNX graph on iPhone")
+                }.buttonStyle(.plain)
                 NavigationLink(destination: CloneStudioView()) {
                     GhostlineFeatureRow(icon: "mic.fill", heading: "Clone Studio",
                                         detail: "Authorized reference voice recordings")
@@ -283,6 +287,7 @@ struct GhostlineLibraryView: View {
             }
             Section("Local voice sources") {
                 NavigationLink("RVC imported packs (not yet playable)") { RVCPackLibraryView() }
+                NavigationLink("RVC ONNX runtime model testing") { RVCOnnxRuntimeView() }
                 NavigationLink("Offline PocketTTS presets") { NeuralStudioView() }
                 NavigationLink("Offline Kokoro presets") { KokoroOfflineView() }
                 NavigationLink("Piper experimental speakers") { PiperVoiceLabView() }
@@ -302,6 +307,7 @@ struct GhostlineGeneratorView: View {
             }
             Section("RVC conversion") {
                 NavigationLink("Import voice packs") { RVCPackLibraryView() }
+                NavigationLink("Load converted ONNX model") { RVCOnnxRuntimeView() }
                 Text("RVC weights can be imported and checked, but are not executable by the current iOS speech engines. Conversion is not yet available.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
