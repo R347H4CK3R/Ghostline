@@ -5,7 +5,7 @@
   "repo_license": "MIT",
   "engine_runtime_license": "GPL-3.0; source/distribution obligations apply",
   "distribution_scope": "experimental unsigned IPA artifact only; not a public release",
-  "validation_note": "13 source-pinned, source-rights-documented Piper experimental candidate packs / 24 source-declared speaker slots (including two source-cleared lineage derivative candidates, not human identity clones). Zero iPhone/Strata generation, listening, or verified identities; Swedish NST held. No numerical cap.",
+  "validation_note": "14 source-pinned, source-rights-documented Piper experimental model candidates / 25 source-declared speaker slots, including Cori high as an alternate quality of the same voice (NOT a unique identity). Zero device-verified voices and zero authorized human identity clones. No arbitrary count cap. Swedish NST held.",
   "verified_identity_count": 0,
   "device_verified_audio_count": 0,
   "models": [
@@ -629,6 +629,51 @@
       },
       "parent_model_id": "nl_BE-rdh-medium",
       "parent_lineage_card_phrase": "Finetuned from Dutch rdh voice"
+    },
+    {
+      "id": "en_GB-cori-high",
+      "display_name": "Cori (High Quality) • British English",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "en_GB",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT-weight-repository / public-domain source dataset; preserve attribution",
+      "dataset_license": "public domain",
+      "training_lineage": "Trained from scratch on public-domain LibriVox recordings (high quality, 500 epochs); alternate quality of Cori medium, not a new person.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Source-declared LibriVox public-domain recordings and MIT model repository; same voice as Cori medium, no actor/character identity use authorized",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_GB/cori/high/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "en/en_GB/cori/high/en_GB-cori-high.onnx",
+          "size": 114219352,
+          "sha256": "470b4dd634c98f8a4850d7626ffc3dfc90774628eeef6605a6dd8f88f30a5903"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "en/en_GB/cori/high/en_GB-cori-high.onnx.json",
+          "size": 4963,
+          "sha256": "9e7fb5b5671612c22f3c81cbe46c1ae87b031a4632bcb509e499dad6f1e2adec"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "en/en_GB/cori/high/MODEL_CARD",
+          "size": 468,
+          "sha256": "136e7bd168b6c35b4a5df01a0253297e5773b5775ceae0af5160f264aa58208f"
+        }
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_GB/cori/high/MODEL_CARD",
+        "dataset_evidence_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_GB/cori/high/MODEL_CARD",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
     }
   ]
 }
