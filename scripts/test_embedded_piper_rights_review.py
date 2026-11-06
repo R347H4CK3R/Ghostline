@@ -26,6 +26,11 @@ for item in quarantine["models"]:
     assert rights["not_for_distribution"] is True
     assert rights["identity_permissions_independently_verified"] is False
     assert rights["model_card_url"] == item["model_card_url"]
+clean_derivatives = {
+    "en_US-john-medium": ("en_US-kristin-medium", "Finetuned from Kristin (above)"),
+    "nl_NL-alex-medium": ("nl_BE-rdh-medium", "Finetuned from Dutch rdh voice"),
+}
+by_id = {p["id"]: p for p in approved["models"]}
 for item in approved["models"]:
     review = item["rights_review"]
     assert review["decision"] == "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY", item["id"]
@@ -40,7 +45,18 @@ for item in approved["models"]:
     assert item["speaker_ids"] == list(range(len(item["speaker_ids"])))
     assert {"MODEL_CARD", "model.onnx", "model.onnx.json"} == {f["name"] for f in item["files"]}
     assert item["dataset_license"] in {"CC0", "CC0 1.0 Universal", "public domain"}
-    assert "Trained from scratch" in item["training_lineage"]
+    derivative = clean_derivatives.get(item["id"])
+    if derivative:
+        parent_id, phrase = derivative
+        assert item["parent_model_id"] == parent_id
+        assert item["parent_lineage_card_phrase"] == phrase
+        assert "Finetuned from" in item["training_lineage"]
+        assert parent_id in by_id and "Trained from scratch" in by_id[parent_id]["training_lineage"]
+        assert by_id[parent_id].get("parent_model_id") is None
+        assert review["parent_model_source_url"] == by_id[parent_id]["model_card_url"]
+    else:
+        assert item.get("parent_model_id") is None
+        assert "Trained from scratch" in item["training_lineage"]
 assert "nl_BE-rdh-x_low" in active_ids, "Compact CC0 voice candidate missing"
 assert "sv_SE-nst-medium" in held_ids, "Unreconciled source card cannot be cleared implicitly"
 print(

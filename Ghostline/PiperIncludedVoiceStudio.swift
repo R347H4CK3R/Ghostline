@@ -20,6 +20,8 @@ struct GhostlineIncludedPiperCatalog: Decodable {
         let license: String
         let dataset_license: String
         let training_lineage: String
+        let parent_model_id: String?
+        let parent_lineage_card_phrase: String?
         let voice_usage_rights: String
         let device_status: String
         let model_card_url: String
@@ -160,11 +162,31 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         return hash.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
+    private func provenanceApproved(_ pack: GhostlineIncludedPiperCatalog.Pack) -> Bool {
+        let lineage = pack.training_lineage.lowercased()
+        if lineage.contains("trained from scratch") && pack.parent_model_id == nil {
+            return true
+        }
+        let parents: [String: (String, String)] = [
+            "en_US-john-medium": ("en_US-kristin-medium", "Finetuned from Kristin (above)"),
+            "nl_NL-alex-medium": ("nl_BE-rdh-medium", "Finetuned from Dutch rdh voice")
+        ]
+        guard let expected = parents[pack.id],
+              pack.parent_model_id == expected.0,
+              pack.parent_lineage_card_phrase == expected.1,
+              lineage.contains("finetuned from"),
+              let parent = catalog?.models.first(where: { $0.id == expected.0 }),
+              parent.parent_model_id == nil,
+              parent.training_lineage.lowercased().contains("trained from scratch"),
+              parent.device_status == "UNVERIFIED_CANDIDATE" else { return false }
+        return true
+    }
+
     private func ensureEngine(for pack: GhostlineIncludedPiperCatalog.Pack) async throws -> PiperPlayer {
         if let engine { return engine }
         guard pack.device_status == "UNVERIFIED_CANDIDATE",
               ["public domain", "CC0", "CC0 1.0 Universal"].contains(pack.dataset_license),
-              pack.training_lineage.lowercased().contains("trained from scratch"),
+              provenanceApproved(pack),
               !pack.speaker_ids.isEmpty,
               pack.speaker_ids == Array(0..<pack.speaker_ids.count),
               pack.asset("model.onnx") != nil,

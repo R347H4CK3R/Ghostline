@@ -237,7 +237,15 @@ jobs:
               assert model["device_status"] == "UNVERIFIED_CANDIDATE"
               assert model["dataset_license"] in ("public domain", "CC0", "CC0 1.0 Universal")
               assert model["speaker_ids"] == list(range(len(model["speaker_ids"])))
-              assert "Trained from scratch" in model["training_lineage"]
+              lineage = model["training_lineage"]
+              approved_parents = {
+                  "en_US-john-medium": "en_US-kristin-medium",
+                  "nl_NL-alex-medium": "nl_BE-rdh-medium",
+              }
+              assert ("Trained from scratch" in lineage or
+                      (model["id"] in approved_parents and
+                       model.get("parent_model_id") == approved_parents[model["id"]] and
+                       "Finetuned from" in lineage))
               assert len(model["files"]) == 3
           source=Path("Ghostline/PiperIncludedVoiceStudio.swift").read_text()
           assert "synthesizeSSMLToFile" in source
