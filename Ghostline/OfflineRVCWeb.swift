@@ -305,6 +305,10 @@ final class GhostlineOfflineRVCController: ObservableObject {
     func recordWebStatus(_ message: String) {
         status = String(message.prefix(250))
         event("web_status", status)
+        let lower = message.lowercased()
+        if lower.contains("error") || lower.contains("failed") || lower.contains("exception") {
+            GhostlineDiagnostics.shared.record("rvc", "runtime_failed")
+        }
     }
 
     func begin() {
@@ -323,6 +327,7 @@ final class GhostlineOfflineRVCController: ObservableObject {
                 hasStartError = true
                 status = "Private RVC pack unavailable: " + error.localizedDescription
                 event("private_model_selection_failed", error.localizedDescription)
+                GhostlineDiagnostics.shared.record("rvc", "model_load_failed")
                 return
             }
         }
@@ -340,6 +345,7 @@ final class GhostlineOfflineRVCController: ObservableObject {
                     self.hasStartError = true
                     self.status = "Offline RVC engine could not start: \(error.localizedDescription)"
                     self.event("server_error", error.localizedDescription)
+                    GhostlineDiagnostics.shared.record("rvc", "runtime_failed")
                 }
             }
         }
