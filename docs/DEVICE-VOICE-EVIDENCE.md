@@ -1,0 +1,39 @@
+# Ghostline offline voice provenance and device-validation protocol
+
+Updated: 2026-11-05. **This is not an identity voice certificate.**
+
+## Voice software and data provenance
+
+| Backend / pack | Provenance | Usage-rights checkpoint | Status |
+| --- | --- | --- | --- |
+| Piper `en_US-libritts_r-medium` | [Official Piper model card](https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/libritts_r/medium/MODEL_CARD); 904 speakers according to the model card, 22,050 Hz, based on [OpenSLR 141](http://www.openslr.org/141/) | Dataset is CC BY 4.0; provide attribution, inspect the per-model card and applicable code/package licenses before sharing. This is **not** consent to describe a speaker as a particular celebrity. | Installed model must produce real decoded PCM on the target device before counting successful generation. |
+| Kyutai PocketTTS | [Official project](https://github.com/kyutai-labs/pocket-tts); [Kyutai documentation](https://kyutai-labs.github.io/pocket-tts/) | Model weights and voice presets may have different licenses, including noncommercial presets. Respect per-voice rights and identify a preset by its official ID. | Engine connected in the app; no target-device listen test supplied. |
+| Kokoro via FluidAudio | [FluidAudio](https://github.com/FluidInference/FluidAudio) | Review model/card and each voice pack license; a ready-made style cannot be labeled as an actor or character identity. | Core ML engine connected; no target-device listen test supplied. |
+| Private RVC `.pth` / `.index` imports | Source and rights note entered by importing user; file SHA-256s recorded locally | **User-entered permission notes are not independently validated**. Keep weights private unless creator and performance rights are documented. | Import + hash integrity only. No converter, pitch extractor, content encoder, or RVC voice synthesis on iPhone yet. |
+| Imported converted Core ML `.mlmodel` | User-selected model, local Core ML compile/load probe | A graph load is neither an authorized identity claim nor proof of audio synthesis. | Graph compile/load and input/output names only. |
+
+## Provenance discrepancy
+
+The catalog metadata derived from Piper's upstream index currently lists 2,306 `en_US-libritts_r-medium` speaker entries, while its official model card states **904**. Ghostline must derive playable ID bounds from the **installed model's `num_speakers`** and must never assume that 500, 904, or 2,306 represent verified unique human voices. The 500 and 8,000 goals are milestones, **not application limits**. Additional authorized voice packs and backends may increase the library independently of Piper's per-model speaker capacity.
+
+## Device-side proof required
+
+1. On the actual iPhone with the intended Strata/LiveContainer host, prepare the legitimate model and note its checksum, iOS version, and app build.
+2. Disconnect network and enable airplane mode **after** the required first-time download. Confirm that voice synthesis does not require network or an external provider.
+3. Generate the same controlled phrase for a test ID. Validate the WAV header and decode to non-silent PCM. Store the **decoded PCM SHA-256**, not the WAV container's hash.
+4. Listen to each generated file, inspect human quality and audible differences, and verify the exact identity only by comparison with **authorized** reference audio.
+5. Export the private evidence JSON and attach the corresponding WAV privately. The app's JSON intentionally reports airplane-mode, listening, and identity checks as false until independently attested.
+6. Only then, and only if the specific voice identity and intended use are legally authorized, include the entry in the verified identity manifest. Keep unreleased models and recordings out of public workflow artifacts.
+
+### Evidence tiers
+
+- **Candidate**: model ID / catalog label / imported files exist.
+- **Technical generation evidence**: actual iPhone non-silent decoded PCM, SHA-256, model checksum, host/runtime context.
+- **Offline playback verified**: physical target iPhone generates and plays the recording while offline, recorded by an independent tester.
+- **Authorized authentic identity verified**: attribution, written rights, direct listening / identity evidence and matching model/audio hashes all reviewed.
+
+A GitHub Actions macOS build or an unsigned IPA **only** establishes that the app compiled and packaged. It does not advance a candidate into an audio-verified, offline-verified, or authentic-identity-verified entry.
+
+## Privacy and safe updates
+
+Do not commit private model weights, third-party reference audio, account tokens, device identifiers or user permission letters to the public repository. The private RVC audit export includes entered names and rights notes, so treat it as private information. Use draft experimental PRs and preserve existing download releases until target-device proof is available.
