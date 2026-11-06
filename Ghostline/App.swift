@@ -273,9 +273,9 @@ struct GhostlineLibraryView: View {
                 Label("0 authentic identities verified", systemImage: "checkmark.shield")
             }
             Section("Browse categories") {
-                ForEach(categories, id: \.0) { entry in
+                ForEach(categories.indices, id: \.self) { index in
                     HStack {
-                        Label(entry.0, systemImage: entry.1)
+                        Label(categories[index].0, systemImage: categories[index].1)
                         Spacer()
                         Text("0 verified").font(.caption).foregroundStyle(.secondary)
                     }
