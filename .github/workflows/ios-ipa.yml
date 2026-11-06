@@ -117,6 +117,10 @@ jobs:
           assert 'piper.voice.lab.decodedPCM.v2"' not in s, 'Do not reintroduce legacy unbound checkpoints'
           print('Piper cached model fingerprints, staging and unverified evidence contracts present')
           PY
+      - name: Exercise WAV integrity inspector with deterministic PCM fixtures
+        run: |
+          swiftc Ghostline/RVCWAVInspector.swift scripts/test_rvc_wav_inspector.swift -o /tmp/ghostline-rvc-wav-tests
+          /tmp/ghostline-rvc-wav-tests
       - name: Prepare fully offline RVC WebAssembly runtime
         run: |
           python3 scripts/build_offline_rvc_web.py
