@@ -28,6 +28,35 @@ struct GhostlineWAVInspectorTests {
         }
         return bytes
     }
+    static func wavFloats(_ bits: [UInt32]) -> Data {
+        var bytes = Data("RIFF".utf8)
+        append32(36 + bits.count * 4, to: &bytes)
+        bytes.append(Data("WAVEfmt ".utf8))
+        append32(16, to: &bytes)
+        append16(3, to: &bytes) // IEEE float
+        append16(1, to: &bytes) // mono
+        append32(16_000, to: &bytes)
+        append32(64_000, to: &bytes)
+        append16(4, to: &bytes)
+        append16(32, to: &bytes)
+        bytes.append(Data("data".utf8))
+        append32(bits.count * 4, to: &bytes)
+        for word in bits { append32(Int(word), to: &bytes) }
+        return bytes
+    }
+
+    static func withMetadataChunk(_ input: Data) -> Data {
+        var output = input
+        var junk = Data("JUNK".utf8)
+        append32(4, to: &junk)
+        junk.append(contentsOf: [1, 2, 3, 4])
+        output.replaceSubrange(36..<36, with: junk)
+        var riffLength = Data()
+        append32(output.count - 8, to: &riffLength)
+        output.replaceSubrange(4..<8, with: riffLength)
+        return output
+    }
+
     static func mustReject(_ bytes: Data, _ label: String) {
         do {
             _ = try GhostlineWAVInspector.inspect(bytes)
@@ -44,7 +73,19 @@ struct GhostlineWAVInspectorTests {
         precondition(facts.sampleRate == 16_000)
         precondition(facts.audioFrames == 6)
         precondition(facts.bitsPerSample == 16 && facts.channels == 1)
-        print("PASS valid PCM WAV")
+        precondition(facts.pcmSHA256.count == 64)
+        let withMetadata = withMetadataChunk(valid)
+        let metadataFacts = try GhostlineWAVInspector.inspect(withMetadata)
+        precondition(valid != withMetadata)
+        precondition(facts.pcmSHA256 == metadataFacts.pcmSHA256,
+                     "WAV header/metadata differences must not change PCM fingerprint")
+        let validFloat = try GhostlineWAVInspector.inspect(wavFloats([0, 0x3f00_0000]))
+        precondition(validFloat.sampleFormat == 3 && validFloat.pcmSHA256.count == 64)
+        print("PASS PCM fingerprint is independent of WAV metadata")
+        mustReject(wavFloats([0, 0x8000_0000]), "signed float zero silence")
+        mustReject(wavFloats([0x3f80_0000, 0x7f80_0000]), "float +Infinity")
+        mustReject(wavFloats([0x3f80_0000, 0xff80_0000]), "float -Infinity")
+        mustReject(wavFloats([0x3f80_0000, 0x7fc0_0000]), "float NaN")
         mustReject(wav(Array(repeating: 0, count: 16)), "silent PCM")
         mustReject(Data(valid.dropLast()), "truncated RIFF")
         var invalid = valid

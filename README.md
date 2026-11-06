@@ -13,9 +13,9 @@ Native SwiftUI voice-studio app for iPhone and compatible IPA importers such as 
 ## Limitations
 - Catalog names are references, not 235 working celebrity/character/singer voice clones.
 - No celebrity or character model files or commercial voice licenses are included.
-- No neural speech-to-speech, singer conversion, or offline neural inference.
+- Experimental offline neural TTS (Kokoro, PocketTTS and Piper) and RVC conversion are integrated into separate screens, but **physical iPhone/Strata generation, audio playback, model compatibility, and device memory safety are not verified**. No identity-accurate singer conversion is certified.
 - An external provider must offer the mapped, authorized model and support the endpoint contract.
-- This repository has not yet established a successful iOS device build or verified Strata installation. Check Actions logs and artifacts.
+- GitHub Actions has generated experimental unsigned iOS IPAs; that proves only CI compilation/packaging. No physical iPhone/Strata installation or offline voice generation has been independently verified. Keep previously working releases intact.
 
 ## Build
 Use Actions > **GHOSTLINE iOS IPA** > Run workflow, or push to main. When successful, download `GHOSTLINE-unsigned-IPA`, extract the artifact ZIP and import `GHOSTLINE-unsigned.ipa` in Strata if your version supports the app.

@@ -121,6 +121,12 @@ jobs:
         run: |
           swiftc Ghostline/RVCWAVInspector.swift scripts/test_rvc_wav_inspector.swift -o /tmp/ghostline-rvc-wav-tests
           /tmp/ghostline-rvc-wav-tests
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('Ghostline/RVCWAVInspector.swift').read_text()
+          assert all(x in src for x in ('import CryptoKit','pcmSHA256','NaN or infinite','zero-valued audio samples'))
+          print("RVC PCM fingerprint and float-safety guard passed")
+          PY
       - name: Guard target-device RVC playback evidence semantics
         run: |
           python3 - <<'PY'
@@ -133,6 +139,7 @@ jobs:
               '"device_audio_playback_started": false', '"user_attested_listening": false',
               '"device_audio_playback_started": playbackStarted',
               '"user_attested_listening": userAttestedListening',
+              '"pcm_audio_payload_sha256": info.pcmSHA256',
               '"airplane_mode_confirmed": false',
               '"voice_identity_verified": false',
               '"voice_rights_independently_verified": false',

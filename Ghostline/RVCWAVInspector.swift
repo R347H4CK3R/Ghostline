@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 /// Inspects a generated WAV before it becomes device evidence.
 /// This checks structure and nonzero PCM bytes, NOT speaker identity or audibility.
@@ -10,6 +11,9 @@ enum GhostlineWAVInspector {
         let audioFrames: Int
         let durationSeconds: Double
         let sampleFormat: Int
+        // SHA-256 of the uncompressed samples, not the WAV container.
+        // Technical evidence only; not proof of identity or audibility.
+        let pcmSHA256: String
     }
 
     enum Failure: Error, LocalizedError {
@@ -79,13 +83,34 @@ enum GhostlineWAVInspector {
               samples.count % fmt.alignment == 0 else {
             throw Failure.invalid("Unsupported or inconsistent WAV sample format")
         }
-        guard bytes[samples].contains(where: { $0 != 0 }) else {
-            throw Failure.invalid("WAV contains only zero-valued audio data")
+        // IEEE floats have both +0 and -0; raw nonzero bytes do not
+        // establish a non-silent sample. Reject NaN/Inf before evidence.
+        var hasSignal = false
+        if fmt.code == 3 {
+            let width = fmt.bits / 8
+            let exponentMask: UInt64 = width == 4 ? 0x7f80_0000 : 0x7ff0_0000_0000_0000
+            let valueMask: UInt64 = width == 4 ? 0x7fff_ffff : 0x7fff_ffff_ffff_ffff
+            for offset in stride(from: samples.lowerBound, to: samples.upperBound, by: width) {
+                var word: UInt64 = 0
+                for i in 0..<width { word |= UInt64(bytes[offset + i]) << (i * 8) }
+                guard (word & exponentMask) != exponentMask else {
+                    throw Failure.invalid("WAV contains NaN or infinite floating-point samples")
+                }
+                if (word & valueMask) != 0 { hasSignal = true }
+            }
+        } else {
+            hasSignal = bytes[samples].contains(where: { $0 != 0 })
         }
+        guard hasSignal else {
+            throw Failure.invalid("WAV contains only zero-valued audio samples")
+        }
+        // A Data slice avoids duplicating a large audio buffer in memory.
+        let pcmDigest = SHA256.hash(data: bytes[samples])
+            .map { String(format: "%02x", $0) }.joined()
         let frames = samples.count / fmt.alignment
         return Facts(sampleRate: fmt.rate, channels: fmt.channels,
                      bitsPerSample: fmt.bits, audioFrames: frames,
                      durationSeconds: Double(frames) / Double(fmt.rate),
-                     sampleFormat: fmt.code)
+                     sampleFormat: fmt.code, pcmSHA256: pcmDigest)
     }
 }

@@ -275,6 +275,8 @@ final class GhostlineOfflineRVCController: ObservableObject {
             latestWAV = file
             savedWAV = [
                 "sha256": digest, "bytes": decoded.count,
+                "pcm_audio_payload_sha256": info.pcmSHA256,
+                "pcm_digest_basis": "WAV data chunk uncompressed sample bytes",
                 "sample_rate_hz": info.sampleRate, "channels": info.channels,
                 "bits_per_sample": info.bitsPerSample, "audio_frames": info.audioFrames,
                 "duration_seconds": info.durationSeconds,
