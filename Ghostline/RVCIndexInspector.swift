@@ -3,7 +3,7 @@ import Foundation
 // A bounded FAISS header probe, not a FAISS decoder and NOT evidence that
 // RVC index retrieval is implemented. Never load the full index into RAM here.
 enum GhostlineRVCIndexInspector {
-    struct Header {
+    struct Header: Sendable {
         let family: String
         let dimension: Int
         let vectorCount: Int64

@@ -162,6 +162,8 @@ jobs:
           assert 'privateModel = nil // revoke selected private model on converter teardown' in w
           print('Index candidates are header-probed and searchable; index retrieval inference remains disabled.')
           PY
+      - name: Guard nonblocking RVC private candidate IO
+        run: python3 scripts/test_rvc_background_io.py
       - name: Guard target-device RVC playback evidence semantics
         run: |
           python3 - <<'PY'
