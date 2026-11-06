@@ -490,6 +490,13 @@ struct PiperVoiceLabView: View {
 
     var body: some View {
         Form {
+            Section("Included open-licensed synthetic voices") {
+                NavigationLink("Browse included Piper packs • UNVERIFIED") {
+                    GhostlineIncludedPiperView()
+                }
+                Text("The current test IPA contains four source-pinned models. This is not a library limit.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
             Section("Piper LibriTTS-R • expandable speaker test") {
                 Text("English • approximately 81 MB model download")
                 Text("The model's own config determines available IDs, not a 500-voice app cap. Registry counts may differ from the installed model.")

@@ -258,6 +258,10 @@ struct GhostlineHomeView: View {
                     GhostlineFeatureRow(icon: "person.wave.2", heading: "PocketTTS Presets",
                                         detail: "Original and licensed synthetic presets")
                 }.buttonStyle(.plain)
+                NavigationLink(destination: GhostlineIncludedPiperView()) {
+                    GhostlineFeatureRow(icon: "waveform.path", heading: "Included Piper Test Voices",
+                        detail: "Source-pinned open-license voices - UNVERIFIED")
+                }.buttonStyle(.plain)
                 NavigationLink(destination: PiperVoiceLabView()) {
                     GhostlineFeatureRow(icon: "waveform.badge.mic", heading: "Piper Test Lab",
                                         detail: "Unverified multispeaker model candidates")

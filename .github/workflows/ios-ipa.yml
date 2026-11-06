@@ -212,12 +212,39 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild -project GHOSTLINE.xcodeproj -scheme GHOSTLINE -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 | tee xcodebuild.log
+      - name: Fetch and audit source-cleared embedded Piper test packs
+        run: |
+          python3 scripts/bundle_cleared_piper_packs.py
+          python3 scripts/bundle_cleared_piper_packs.py --verify
+      - name: Guard unverified identity claims for included voices
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          a=json.loads(Path("Ghostline/Resources/approved-piper-bundle.json").read_text())
+          assert a["verified_identity_count"] == a["device_verified_audio_count"] == 0
+          assert len(a["models"]) >= 1
+          for model in a["models"]:
+              assert model["claimed_real_person_identity"] is None
+              assert model["device_status"] == "UNVERIFIED_CANDIDATE"
+              assert model["dataset_license"] == "public domain"
+              assert "Trained from scratch" in model["training_lineage"]
+              assert len(model["files"]) == 3
+          source=Path("Ghostline/PiperIncludedVoiceStudio.swift").read_text()
+          assert "synthesizeSSMLToFile" in source
+          assert '"airplane_mode_confirmed": false' in source
+          assert '"authorized_identity_match_confirmed": false' in source
+          print("Rights, provenance, and unverified included pack guard passed")
+          PY
       - name: Assemble unsigned IPA
         run: |
           mkdir -p Payload
           test -s build/Build/Products/Release-iphoneos/GHOSTLINE.app/Assets.car
           mkdir -p build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb
           cp -R build/rvc-web-dist/. build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb/
+          mkdir -p build/Build/Products/Release-iphoneos/GHOSTLINE.app/PiperIncluded
+          cp -R build/embedded-piper/. build/Build/Products/Release-iphoneos/GHOSTLINE.app/PiperIncluded/
+          python3 scripts/bundle_cleared_piper_packs.py --verify --directory build/Build/Products/Release-iphoneos/GHOSTLINE.app/PiperIncluded
           python3 scripts/audit_offline_rvc_bundle.py build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb --verify
           cp -R build/Build/Products/Release-iphoneos/GHOSTLINE.app Payload/
           /usr/bin/zip -qry GHOSTLINE-unsigned.ipa Payload
