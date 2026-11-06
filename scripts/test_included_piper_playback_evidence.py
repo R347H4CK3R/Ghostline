@@ -36,4 +36,18 @@ assert source.count("playbackCompleted = false") >= 3, "New sessions must clear 
 assert source.count("userAttestedListening = false") >= 4, "New/repeated audio must clear stale listening acknowledgement"
 assert source.index("audioPlayer = nil", source.index("func replaySavedWAV()")) < source.index("playbackStarted = replay.play()", source.index("func replaySavedWAV()"))
 assert source.index("userAttestedListening = false", source.index("func replaySavedWAV()")) < source.index("replay.delegate = self", source.index("func replaySavedWAV()"))
+# Technical error diagnostics must work even when WAV generation failed.
+# Never serialize input text, private weights, or audio into these receipts.
+diagnostics=source.split("func exportDiagnostics()", 1)[1].split("func exportEvidence()", 1)[0]
+for required_field in (
+    '"stage": lastDiagnosticStage', '"error": lastDiagnosticError',
+    '"generation_elapsed_ms": lastGenerationMilliseconds',
+    '"playback_completed": playbackCompleted', '"airplane_mode_confirmed": false',
+    '"human_listening_verified": false', '"authorized_identity_match_confirmed": false',
+    'diagnosticURL = file',
+):
+    assert required_field in diagnostics, required_field
+assert "phrase" not in diagnostics and ".pth" not in diagnostics and "Data(contentsOf: wav)" not in diagnostics
+assert 'Button("Export private run or failure diagnostics")' in source
+assert 'ShareLink(item: diagnosticURL)' in source
 print("Included Piper WAV replay/attestation receipt guard passed (device inference NOT verified)")
