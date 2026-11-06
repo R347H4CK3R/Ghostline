@@ -5,7 +5,7 @@
   "repo_license": "MIT",
   "engine_runtime_license": "GPL-3.0; source/distribution obligations apply",
   "distribution_scope": "experimental unsigned IPA artifact only; not a public release",
-  "validation_note": "Seven byte-pinned synthetic Piper candidate packs; nine source-declared speaker slots. Zero target-device offline audio, listening, or voice identity verifications. Speaker slots are not verified voices.",
+  "validation_note": "10 source-pinned synthetic Piper candidate packs; 21 source-declared speaker slots. None are device-audio, listening, or identity verified. Source-reported model/dataset licenses are not permission for identity impersonation.",
   "verified_identity_count": 0,
   "device_verified_audio_count": 0,
   "models": [
@@ -271,6 +271,132 @@
           "upstream_path": "uk/uk_UA/ukrainian_tts/medium/MODEL_CARD",
           "sha256": "ce09d0c9d1d90cdc98d1ea8a4ecbdeb5e937d44593876e4194302c5eabbaad9d",
           "size": 267
+        }
+      ]
+    },
+    {
+      "id": "no_NO-nvcc-medium",
+      "display_name": "NVCC • Norwegian • 10 unverified speaker slots",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "no_NO",
+      "speaker_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "license": "MIT model repository / CC0 source dataset; source attribution and runtime obligations retained",
+      "dataset_license": "CC0",
+      "dataset_source_url": "https://www.nb.no/sprakbanken/en/resource-catalogue/oai-nb-no-sbr-75/",
+      "training_lineage": "Trained from scratch on the Norwegian Voice Control Corpus (source-reported CC0).",
+      "runtime_compatibility_note": "Piper model configuration declares 10 voices; individual identity and iPhone compatibility not established.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Source-reported CC0 speech recordings and MIT model-repository terms permit experimental model use; no actor, singer, celebrity, character or named-person voice identity endorsement or impersonation authorization is claimed.",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/no/no_NO/nvcc/medium/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "no/no_NO/nvcc/medium/no_NO-nvcc-medium.onnx",
+          "size": 76770227,
+          "sha256": "3f51702946d9544898440a1a66906155661a9d680ee103130ff68f73360b512e"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "no/no_NO/nvcc/medium/no_NO-nvcc-medium.onnx.json",
+          "size": 5397,
+          "sha256": "98410e911e5a9076ac4677a79b08b20f98c54f550c4388e29978f6bafa32b83d"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "no/no_NO/nvcc/medium/MODEL_CARD",
+          "size": 268,
+          "sha256": "309bb60e631d9c826e862bb0f5732eefd9d2fc4a2ca442b8f93fcf69c78cb3bd"
+        }
+      ]
+    },
+    {
+      "id": "nl_BE-nathalie-x_low",
+      "display_name": "Nathalie corpus • Flemish Dutch • Lightweight",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "nl_BE",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT model repository / CC0 source dataset; source attribution and runtime obligations retained",
+      "dataset_license": "CC0",
+      "dataset_source_url": "https://github.com/rhasspy/dataset-voice-nathalie",
+      "training_lineage": "Trained from scratch on the source-reported CC0 Dutch voice corpus; no consent for identity impersonation inferred.",
+      "runtime_compatibility_note": "Dataset and card refer to a recorded human speaker but permission to market identity imitation is not established.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Source-reported CC0 speech recordings and MIT model-repository terms permit experimental model use; no actor, singer, celebrity, character or named-person voice identity endorsement or impersonation authorization is claimed.",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/nl/nl_BE/nathalie/x_low/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "nl/nl_BE/nathalie/x_low/nl_BE-nathalie-x_low.onnx",
+          "size": 20628813,
+          "sha256": "7d005d2d9b3db4326fc4a1ac86b61ab40252ccf97b76d527f4ffd76d4e3f7dbe"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "nl/nl_BE/nathalie/x_low/nl_BE-nathalie-x_low.onnx.json",
+          "size": 4163,
+          "sha256": "390d21992bd734a49c015fcd7027e4af7b2779f5867ff762e6453e323f554bd8"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "nl/nl_BE/nathalie/x_low/MODEL_CARD",
+          "size": 246,
+          "sha256": "25ac2af86bd2d49c02dd52a46377f3471695c359a64ea51cc891f7933c59547f"
+        }
+      ]
+    },
+    {
+      "id": "sv_SE-nst-medium",
+      "display_name": "NST • Swedish • CC0",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "sv_SE",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT model repository / CC0 source dataset; source attribution and runtime obligations retained",
+      "dataset_license": "CC0",
+      "dataset_source_url": "https://www.nb.no/sprakbanken/en/resource-catalogue/oai-nb-no-sbr-17/",
+      "training_lineage": "Trained from scratch on source-reported CC0 Swedish speech by KBLab at the National Library of Sweden.",
+      "runtime_compatibility_note": "Original card's source URL no longer resolves; verify corpus provenance before any wider distribution.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Source-reported CC0 speech recordings and MIT model-repository terms permit experimental model use; no actor, singer, celebrity, character or named-person voice identity endorsement or impersonation authorization is claimed.",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/sv/sv_SE/nst/medium/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "sv/sv_SE/nst/medium/sv_SE-nst-medium.onnx",
+          "size": 63104526,
+          "sha256": "df011f56825a59dd1efc080c38a65a1ef70407e60f63050e9246f43a3d7e471e"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "sv/sv_SE/nst/medium/sv_SE-nst-medium.onnx.json",
+          "size": 4157,
+          "sha256": "d45dd74cbb4eca58694bf04a97e243044092476f28a55ae26424f0653086980a"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "sv/sv_SE/nst/medium/MODEL_CARD",
+          "size": 306,
+          "sha256": "c85d3e26e47d93e9d9b8572d3c89537c3f8ff212595cb9a3fbd2e07c19432317"
         }
       ]
     }

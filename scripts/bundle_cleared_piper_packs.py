@@ -99,12 +99,12 @@ def main():
                 tmp.unlink(missing_ok=True)
             if not checked_file(dst, item):
                 raise RuntimeError(f"Post-copy verification failed: {dst}")
-        config = json.loads((folder / "model.onnx.json").read_text())
+        config = json.loads((folder / "model.onnx.json").read_text(encoding="utf-8"))
         if config.get("num_speakers", 1) != len(pack["speaker_ids"]):
             raise RuntimeError(f"Speaker count mismatch for {key}: expected {pack['speaker_ids']}, got {config.get('num_speakers')}")
         if config.get("speaker_id_map"):
             assert sorted(config["speaker_id_map"].values()) == pack["speaker_ids"]
-        card = (folder / "MODEL_CARD").read_text()
+        card = (folder / "MODEL_CARD").read_text(encoding="utf-8")
         if (pack["dataset_license"].lower() not in card.lower()
                 or "trained from scratch" not in card.lower()):
             raise RuntimeError(f"License/lineage verification failed: {key}")
@@ -123,11 +123,11 @@ def main():
     manifest_path = root / "manifest.json"
     notice_path = root / "ATTRIBUTION.txt"
     if args.verify:
-        if json.loads(manifest_path.read_text()) != catalog or notice_path.read_text() != notice:
+        if json.loads(manifest_path.read_text(encoding="utf-8")) != catalog or notice_path.read_text(encoding="utf-8") != notice:
             raise RuntimeError("Bundled attribution or manifest mismatches pinned source")
     else:
-        manifest_path.write_text(json.dumps(catalog, sort_keys=True, indent=2) + "\n")
-        notice_path.write_text(notice)
+        manifest_path.write_text(json.dumps(catalog, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+        notice_path.write_text(notice, encoding="utf-8")
     print(f"{len(catalog['models'])} open-license candidate packs, "
           f"{sum(len(p['speaker_ids']) for p in catalog['models'])} unverified speaker slots; "
           "0 device-verified voices.")
