@@ -234,6 +234,10 @@ struct GhostlineHomeView: View {
                 )
 
                 Text("Voice workspaces").font(.title3.bold())
+                NavigationLink(destination: GhostlineCommunityVoicesView()) {
+                    GhostlineFeatureRow(icon: "person.3", heading: "Community Voices",
+                                        detail: "Rights-aware discovery and private imports")
+                }.buttonStyle(.plain)
                 NavigationLink(destination: GhostlineRVCWebScreen()) {
                     GhostlineFeatureRow(icon: "waveform.path", heading: "Offline RVC Converter",
                                         detail: "ContentVec + RMVPE + RVC v2 WebAssembly inference")
@@ -308,6 +312,9 @@ struct GhostlineLibraryView: View {
                 }
             }
             Section("Local voice sources") {
+                NavigationLink("Community Voices • source and rights browser") {
+                    GhostlineCommunityVoicesView()
+                }
                 NavigationLink("Offline RVC v2 conversion") { GhostlineRVCWebScreen() }
                 NavigationLink("RVC imported packs (not yet playable)") { RVCPackLibraryView() }
                 NavigationLink("RVC Core ML model testing") { RVCCoreMLModelView() }
