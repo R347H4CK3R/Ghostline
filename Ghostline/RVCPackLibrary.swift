@@ -19,7 +19,7 @@ struct RVCPackRecord: Identifiable, Codable {
 @MainActor
 final class RVCPackLibrary: ObservableObject {
     @Published var packs: [RVCPackRecord] = []
-    @Published var status = "Import locally owned RVC v2 .pth weights. This builds a private catalog; conversion is not yet implemented on iOS."
+    @Published var status = "Import authorized RVC v2 .pth weights into a private candidate library. The separate experimental converter is not yet device-verified."
     @Published var busy = false
     @Published var auditReport: URL?
 
@@ -255,8 +255,11 @@ struct RVCPackLibraryView: View {
             }
             Section("Conversion compatibility") {
                 Label("RVC v2 .pth files stored and hashed", systemImage: "checkmark.seal")
-                Label("Offline RVC runtime not yet available in this iOS build", systemImage: "exclamationmark.triangle")
-                Text("A .pth file uses PyTorch serialization. Ghostline must add a compatible on-device runtime or a validated CoreML conversion before it can perform RVC voice conversion; importing is not a playback test.")
+                Label("Experimental local WebAssembly RVC converter included", systemImage: "cpu")
+                NavigationLink("Open experimental RVC converter") {
+                    GhostlineRVCWebScreen()
+                }
+                Text("Conversion requires separately selecting a compatible RVC v2 .pth/.onnx voice model, ContentVec ONNX, RMVPE ONNX and source audio. Imported library weights do not automatically load into the converter; .index retrieval is not integrated. A compiled runtime does not prove conversion works on this iPhone.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Text(library.status).font(.footnote)
                 if let report = library.auditReport {
