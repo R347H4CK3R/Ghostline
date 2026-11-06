@@ -144,12 +144,14 @@ final class GhostlineOfflineRVCController: ObservableObject {
     func begin() {
         guard address == nil else { return }
         server.start { [weak self] result in
-            switch result {
-            case .success(let url):
-                self?.address = url
-                self?.status = "Local inference server ready. No internet connection required."
-            case .failure(let error):
-                self?.status = "Offline RVC engine could not start: \(error.localizedDescription)"
+            Task { @MainActor [weak self] in
+                switch result {
+                case .success(let url):
+                    self?.address = url
+                    self?.status = "Local inference server ready. No internet connection required."
+                case .failure(let error):
+                    self?.status = "Offline RVC engine could not start: \(error.localizedDescription)"
+                }
             }
         }
     }
