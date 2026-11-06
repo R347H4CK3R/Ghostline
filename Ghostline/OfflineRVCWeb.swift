@@ -22,6 +22,13 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
         let route: String
     }
     private var privateModel: PrivateModel?
+    private struct PrivateAudio {
+        let file: URL
+        let sha256: String
+        let route: String
+        let contentType: String
+    }
+    private var privateAudio: PrivateAudio?
     private(set) var url: URL?
 
     /// Grants a single in-app converter session a secret, temporary URL for an
@@ -42,6 +49,29 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
         let route = "/private-candidate-" + UUID().uuidString + ".pth"
         stateLock.lock()
         privateModel = PrivateModel(file: file, sha256: pack.weightSHA256, route: route)
+        stateLock.unlock()
+        return route
+    }
+
+    /// Grants the active Voice Changer session one temporary same-origin audio
+    /// route. No file paths or recording bytes go to GitHub, remote servers,
+    /// or the JavaScript message bridge. The route is revoked on screen exit.
+    func allowSourceAudio(_ audio: URL) throws -> String {
+        let ext = audio.pathExtension.lowercased()
+        guard ext == "wav" || ext == "mp3",
+              audio.isFileURL,
+              let attrs = try? FileManager.default.attributesOfItem(atPath: audio.path),
+              (attrs[.type] as? FileAttributeType) == .typeRegular,
+              let bytes = (attrs[.size] as? NSNumber)?.uint64Value,
+              bytes > 44, bytes <= 80_000_000 else {
+            throw NSError(domain: "GHOSTLINE.RVC", code: 422,
+                          userInfo: [NSLocalizedDescriptionKey: "Source recording must be WAV or MP3, at most 80 MB"])
+        }
+        let fingerprint = try fileSHA256(audio)
+        let route = "/private-source-" + UUID().uuidString + "." + ext
+        stateLock.lock()
+        privateAudio = PrivateAudio(file: audio, sha256: fingerprint, route: route,
+                                    contentType: ext == "wav" ? "audio/wav" : "audio/mpeg")
         stateLock.unlock()
         return route
     }
@@ -118,6 +148,7 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
         let previous = listener
         listener = nil
         privateModel = nil // revoke selected private model on converter teardown
+        privateAudio = nil // revoke recorded/private source audio route
         url = nil
         stateLock.unlock()
         previous?.cancel()
@@ -172,6 +203,28 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
             self.stateLock.lock()
             let candidate = self.privateModel
             self.stateLock.unlock()
+            self.stateLock.lock()
+            let audio = self.privateAudio
+            self.stateLock.unlock()
+            if let audio, path == audio.route {
+                guard tokens[0] == "GET",
+                      let attrs = try? FileManager.default.attributesOfItem(atPath: audio.file.path),
+                      (attrs[.type] as? FileAttributeType) == .typeRegular,
+                      let size = (attrs[.size] as? NSNumber)?.uint64Value,
+                      size > 44, size <= 80_000_000,
+                      (try? self.fileSHA256(audio.file)) == audio.sha256 else {
+                    self.sendError(connection, code: 409, message: "Private Audio Integrity Failure")
+                    return
+                }
+                let headers = "HTTP/1.1 200 OK\r\nContent-Type: \(audio.contentType)\r\nContent-Length: \(size)\r\nConnection: close\r\nCross-Origin-Resource-Policy: same-origin\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n\r\n"
+                connection.send(content: Data(headers.utf8), completion: .contentProcessed { sendError in
+                    guard sendError == nil, let file = try? FileHandle(forReadingFrom: audio.file) else {
+                        connection.cancel(); return
+                    }
+                    self.sendFile(connection, from: file)
+                })
+                return
+            }
             if let candidate, path == candidate.route {
                 guard tokens[0] == "GET" else {
                     self.sendError(connection, code: 405, message: "Method Not Allowed"); return
@@ -281,12 +334,15 @@ final class GhostlineOfflineRVCController: ObservableObject {
     private var playbackAttemptID = UUID()
     private let server = GhostlineLocalWebServer()
     private let importedPack: RVCPackRecord?
+    private let sourceAudio: URL?
     private(set) var importedModelPath: String?
+    private(set) var importedAudioPath: String?
     private var sessionID = UUID()
     private var activeConversionID: String?
 
-    init(importedPack: RVCPackRecord? = nil) {
+    init(importedPack: RVCPackRecord? = nil, sourceAudio: URL? = nil) {
         self.importedPack = importedPack
+        self.sourceAudio = sourceAudio
     }
     private var events: [[String: String]] = []
     private var savedWAV: [String: Any]?
@@ -328,6 +384,19 @@ final class GhostlineOfflineRVCController: ObservableObject {
                 status = "Private RVC pack unavailable: " + error.localizedDescription
                 event("private_model_selection_failed", error.localizedDescription)
                 GhostlineDiagnostics.shared.record("rvc", "model_load_failed")
+                return
+            }
+        }
+        if let sourceAudio {
+            do {
+                importedAudioPath = try server.allowSourceAudio(sourceAudio)
+                event("private_audio_ready", "Local source audio route granted for this converter session")
+            } catch {
+                isStarting = false
+                hasStartError = true
+                status = "Source recording unavailable: " + error.localizedDescription
+                event("private_audio_rejected", "Source type, size or integrity rejected")
+                GhostlineDiagnostics.shared.record("rvc", "file_import_failed")
                 return
             }
         }
@@ -549,8 +618,9 @@ final class GhostlineOfflineRVCController: ObservableObject {
 struct GhostlineRVCWebScreen: View {
     @StateObject private var controller: GhostlineOfflineRVCController
 
-    init(importedPack: RVCPackRecord? = nil) {
-        _controller = StateObject(wrappedValue: GhostlineOfflineRVCController(importedPack: importedPack))
+    init(importedPack: RVCPackRecord? = nil, sourceAudio: URL? = nil) {
+        _controller = StateObject(wrappedValue: GhostlineOfflineRVCController(
+            importedPack: importedPack, sourceAudio: sourceAudio))
     }
 
     var body: some View {
@@ -619,6 +689,13 @@ private struct GhostlineRVCWebView: UIViewRepresentable {
             // identifying labels never cross the script-message bridge.
             let script = WKUserScript(
                 source: "window.__ghostlineImportedModelPath = '\(path)';",
+                injectionTime: .atDocumentStart, forMainFrameOnly: true)
+            configuration.userContentController.addUserScript(script)
+        }
+        if let path = controller.importedAudioPath {
+            // The URL is random, loopback-only and valid only for this session.
+            let script = WKUserScript(
+                source: "window.__ghostlinePrivateAudioPath = '\(path)';",
                 injectionTime: .atDocumentStart, forMainFrameOnly: true)
             configuration.userContentController.addUserScript(script)
         }

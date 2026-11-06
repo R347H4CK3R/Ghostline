@@ -59,18 +59,18 @@ struct GhostlineVoiceChangerView: View {
                         Label("Save original recording to Files", systemImage: "square.and.arrow.up")
                     }
                 }
-                Text("Recordings are kept on the iPhone. Save the recording to Files, then select it inside the conversion screen's Source Audio picker.")
+                Text("Recordings stay on your iPhone. The selected WAV or MP3 is handed directly to the offline converter through a temporary local route.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("3 • Offline voice conversion") {
                 if let selected {
                     NavigationLink {
-                        GhostlineRVCWebScreen(importedPack: selected)
+                        GhostlineRVCWebScreen(importedPack: selected, sourceAudio: recordingURL)
                     } label: {
                         Label("Convert into " + selected.name, systemImage: "waveform.path")
                     }
                     .tint(.purple)
-                    Text("The converter needs local ContentVec and RMVPE files. It loads the chosen private model where supported, then accepts your source WAV/MP3. Playback and export appear after a successful conversion.")
+                    Text("The converter needs local ContentVec and RMVPE files. Your selected recording is preloaded automatically. Playback and export appear only after a successful conversion.")
                         .font(.caption).foregroundStyle(.secondary)
                 } else {
                     Text("Choose an imported RVC voice in Step 1 to enable conversion.")
@@ -91,8 +91,8 @@ struct GhostlineVoiceChangerView: View {
                 defer { if granted { source.stopAccessingSecurityScopedResource() } }
                 do {
                     let ext = source.pathExtension.lowercased()
-                    guard ["wav", "mp3", "m4a", "caf"].contains(ext) else {
-                        status = "Choose a WAV, MP3, M4A or CAF recording."
+                    guard ["wav", "mp3"].contains(ext) else {
+                        status = "Choose a WAV or MP3 recording. Other formats are not yet supported by the converter."
                         GhostlineDiagnostics.shared.record("app", "file_import_failed")
                         return
                     }
@@ -100,7 +100,7 @@ struct GhostlineVoiceChangerView: View {
                         .appendingPathComponent("ghostline-source-" + UUID().uuidString + "." + ext)
                     try FileManager.default.copyItem(at: source, to: destination)
                     recordingURL = destination
-                    status = "Source recording imported privately. Export a WAV to Files for the RVC converter."
+                    status = "Source audio imported privately and ready for the converter."
                 } catch {
                     status = "Could not import source recording."
                     GhostlineDiagnostics.shared.record("app", "file_import_failed")
@@ -157,6 +157,6 @@ struct GhostlineVoiceChangerView: View {
         recorder?.stop()
         recorder = nil
         recording = false
-        status = "Recording saved locally. Save it to Files, then import in the converter."
+        status = "Recording saved locally and ready to send directly to the converter."
     }
 }

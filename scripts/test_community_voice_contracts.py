@@ -15,7 +15,7 @@ assert "GhostlineCommunityVoicesView()" in app
 assert "GhostlineDiagnosticsView()" in app
 assert app.count(".tabItem") == 5, "Keep the approved five-tab navigation"
 assert "CANDIDATE_UNVERIFIED" in community
-assert "Voice Changer" in changer and "GhostlineRVCWebScreen(importedPack: selected)" in changer
+assert "Voice Changer" in changer and "GhostlineRVCWebScreen(importedPack: selected, sourceAudio: recordingURL)" in changer
 assert "index retrieval is not yet implemented" in changer
 assert "ShadowSH2306/shadowww-voices" in community
 assert "CC BY-NC 4.0" in community
