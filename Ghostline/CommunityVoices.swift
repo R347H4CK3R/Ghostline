@@ -109,23 +109,26 @@ private final class CommunityImportStore: ObservableObject {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             let uid = UUID()
             let target = directory.appendingPathComponent(uid.uuidString + "." + ext)
-            try FileManager.default.copyItem(at: external, to: target)
             do {
-                // FileHandle streaming prevents copying large model weights into RAM.
-                let handle = try FileHandle(forReadingFrom: target)
-                defer { try? handle.close() }
-                var sha = SHA256()
-                var size: Int64 = 0
-                while let block = try handle.read(upToCount: 1_048_576), !block.isEmpty {
-                    sha.update(data: block)
-                    size += Int64(block.count)
-                    if Task.isCancelled { throw CancellationError() }
-                }
-                guard size > 0 else {
-                    throw NSError(domain: "CommunityVoices", code: 2,
-                                  userInfo: [NSLocalizedDescriptionKey: "The selected file is empty."])
-                }
-                let hash = sha.finalize().map { String(format: "%02x", $0) }.joined()
+                // Copy and hash large imported files off the UI thread.
+                // The security scope stays open for the duration of this await.
+                let (hash, size) = try await Task.detached(priority: .userInitiated) {
+                    try FileManager.default.copyItem(at: external, to: target)
+                    let handle = try FileHandle(forReadingFrom: target)
+                    defer { try? handle.close() }
+                    var sha = SHA256()
+                    var size: Int64 = 0
+                    while let block = try handle.read(upToCount: 1_048_576), !block.isEmpty {
+                        sha.update(data: block)
+                        size += Int64(block.count)
+                        if Task.isCancelled { throw CancellationError() }
+                    }
+                    guard size > 0 else {
+                        throw NSError(domain: "CommunityVoices", code: 2,
+                                      userInfo: [NSLocalizedDescriptionKey: "The selected file is empty."])
+                    }
+                    return (sha.finalize().map { String(format: "%02x", $0) }.joined(), size)
+                }.value
                 items.insert(.init(id: uid, fileName: external.lastPathComponent,
                                    sourceID: sourceID, sha256: hash, bytes: size,
                                    importedAt: Date(), verification: "CANDIDATE_UNVERIFIED"), at: 0)
