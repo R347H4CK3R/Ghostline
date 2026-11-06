@@ -1,0 +1,8 @@
+# Keep generated test artifacts and models out of Git history.
+/build/
+/Payload/
+/GHOSTLINE.xcodeproj/
+*.ipa
+*.partial
+__pycache__/
+*.pyc

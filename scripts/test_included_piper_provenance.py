@@ -23,6 +23,17 @@ for p in catalog["models"]:
 by_id={p["id"]:p for p in catalog["models"]}
 assert by_id["nl_BE-rdh-medium"]["dataset_license"]=="CC0 1.0 Universal"
 assert by_id["uk_UA-ukrainian_tts-medium"]["speaker_ids"]==[0,1,2]
+# November 6 expansion: source-declared slots are candidate IDs, never target-device proof.
+for key in ("no_NO-nvcc-medium", "nl_BE-nathalie-x_low", "sv_SE-nst-medium"):
+    item=by_id[key]
+    assert item["device_status"]=="UNVERIFIED_CANDIDATE"
+    assert item["dataset_license"]=="CC0"
+    assert item["dataset_source_url"].startswith("https://")
+    assert "Trained from scratch" in item["training_lineage"]
+    assert item["claimed_real_person_identity"] is None
+assert by_id["no_NO-nvcc-medium"]["speaker_ids"]==list(range(10))
+assert by_id["nl_BE-nathalie-x_low"]["speaker_ids"]==[0]
+assert by_id["sv_SE-nst-medium"]["speaker_ids"]==[0]
 source=Path("Ghostline/PiperIncludedVoiceStudio.swift").read_text()
 assert "speakerId: Int32(selectedSpeakerID)" in source
 assert '"speaker_id": selectedSpeakerID' in source
