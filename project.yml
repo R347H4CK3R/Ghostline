@@ -25,6 +25,11 @@ targets:
         product: piper-player
       - package: FluidAudio
         product: FluidAudio
+    info:
+      path: Ghostline/Info.plist
+      properties:
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     sources:
       - path: Ghostline
     settings:
