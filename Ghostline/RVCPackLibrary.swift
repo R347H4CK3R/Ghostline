@@ -164,7 +164,7 @@ struct RVCPackLibraryView: View {
                     VStack(alignment: .leading, spacing: 5) {
                         Text(pack.name).font(.headline)
                         Text(pack.category + " • Imported, unverified").font(.caption).foregroundStyle(.secondary)
-                        Text("SHA-256: " + pack.weightSHA256.prefix(16) + "…")
+                        Text("SHA-256: " + String(pack.weightSHA256.prefix(16)) + "…")
                             .font(.caption2).monospaced().foregroundStyle(.secondary)
                         Text(pack.indexFile == nil ? "Retrieval index: not attached" : "Retrieval index: attached")
                             .font(.caption)
