@@ -17,6 +17,7 @@ required = [
     "try sha256File(wav) == expectedSHA256",
     "audioPlayer?.stop()",
     "replay.delegate = self",
+    "guard (try? sha256File(wav)) == audioHash",
     "audio.delegate = self",
     "func attestListening()",
     "guard !busy, playbackStarted, playbackCompleted, !userAttestedListening",
