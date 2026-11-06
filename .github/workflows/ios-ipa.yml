@@ -171,6 +171,19 @@ jobs:
         run: python3 scripts/test_private_rvc_pack_bridge.py
       - name: Guard PocketTTS and Kokoro audio-evidence contracts
         run: python3 scripts/test_neural_audio_evidence.py
+      - name: Verify custom GHOSTLINE app icon source
+        run: |
+          python3 - <<'PY'
+          import json, struct
+          from pathlib import Path
+          catalog = Path("Ghostline/Assets.xcassets/AppIcon.appiconset")
+          images = json.loads((catalog / "Contents.json").read_text())["images"]
+          assert any(x.get("filename") == "AppIcon-1024.png" for x in images)
+          data = (catalog / "AppIcon-1024.png").read_bytes()
+          assert data[:8] == b"\x89PNG\r\n\x1a\n"
+          assert struct.unpack(">II", data[16:24]) == (1024, 1024)
+          print("Original high-resolution violet GHOSTLINE app icon present")
+          PY
       - name: Prepare fully offline RVC WebAssembly runtime
         run: |
           python3 scripts/build_offline_rvc_web.py
@@ -186,6 +199,7 @@ jobs:
       - name: Assemble unsigned IPA
         run: |
           mkdir -p Payload
+          test -s build/Build/Products/Release-iphoneos/GHOSTLINE.app/Assets.car
           mkdir -p build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb
           cp -R build/rvc-web-dist/. build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb/
           python3 scripts/audit_offline_rvc_bundle.py build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb --verify
