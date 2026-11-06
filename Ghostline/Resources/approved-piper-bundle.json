@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "source_repository": "https://huggingface.co/rhasspy/piper-voices",
+  "source_revision": "c10ece1aade47bb51c153c893d14e5bf8e5b7117",
+  "repo_license": "MIT",
+  "engine_runtime_license": "GPL-3.0; source/distribution obligations apply",
+  "distribution_scope": "experimental unsigned IPA artifact only; not a public release",
+  "validation_note": "Byte-pinned source metadata and licensing are not evidence of iPhone audio, speaker identity, or off-grid synthesis",
+  "verified_identity_count": 0,
+  "device_verified_audio_count": 0,
+  "models": [
+    {
+      "id": "en_US-ljspeech-medium",
+      "display_name": "LJ Speech • US English",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "en_US",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT-weight-repository / public-domain source dataset; preserve attribution",
+      "dataset_license": "public domain",
+      "training_lineage": "Trained from scratch; LJ Speech dataset in public domain.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Public-domain training recordings and open model-repository license; no celebrity/character impersonation rights implied",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/ljspeech/medium/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "en/en_US/ljspeech/medium/en_US-ljspeech-medium.onnx",
+          "size": 63531379,
+          "sha256": "6f52a751e2349abe7a76735eb09dc1875298c77ea2342ffd2fef79ff81b87f22"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "en/en_US/ljspeech/medium/en_US-ljspeech-medium.onnx.json",
+          "size": 4972,
+          "sha256": "141d612cc0a95ed7efc1ca936b845c2364967f2e9217c5dbfcf69fc4d6c65860"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "en/en_US/ljspeech/medium/MODEL_CARD",
+          "size": 517,
+          "sha256": "fbee1529c89d36b3fe76d7e9f3f832dce17f44900a52d76a9bda735654766b4d"
+        }
+      ]
+    },
+    {
+      "id": "en_US-kristin-medium",
+      "display_name": "Kristin • US English",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "en_US",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT-weight-repository / public-domain source dataset; preserve attribution",
+      "dataset_license": "public domain",
+      "training_lineage": "Trained from scratch on public-domain LibriVox recordings.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Public-domain training recordings and open model-repository license; no celebrity/character impersonation rights implied",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/kristin/medium/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "en/en_US/kristin/medium/en_US-kristin-medium.onnx",
+          "size": 63531379,
+          "sha256": "5849957f929cbf720c258f8458692d6103fff2f0e3d3b19c8259474bb06a18d4"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "en/en_US/kristin/medium/en_US-kristin-medium.onnx.json",
+          "size": 4968,
+          "sha256": "5681426d4aead22195de70531eeeeddb46493cfaffc5764b2ea3db73428b651c"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "en/en_US/kristin/medium/MODEL_CARD",
+          "size": 479,
+          "sha256": "8c181b1d5f7d8152b914faab941fcbe6b8f0495e63e5189d6f27b8c68c8393fc"
+        }
+      ]
+    },
+    {
+      "id": "en_US-norman-medium",
+      "display_name": "Norman • US English",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "en_US",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT-weight-repository / public-domain source dataset; preserve attribution",
+      "dataset_license": "public domain",
+      "training_lineage": "Trained from scratch on public-domain LibriVox recordings.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Public-domain training recordings and open model-repository license; no celebrity/character impersonation rights implied",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/norman/medium/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "en/en_US/norman/medium/en_US-norman-medium.onnx",
+          "size": 63531379,
+          "sha256": "b9739443232a80a59c7d18810dd856899bf16a7964725f5ab81ea49b1351cb71"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "en/en_US/norman/medium/en_US-norman-medium.onnx.json",
+          "size": 4968,
+          "sha256": "6c2db7f558a4a8deb9fe822583c1c5105f6c4e834dd0f9de8ad17a888ee9fe1d"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "en/en_US/norman/medium/MODEL_CARD",
+          "size": 528,
+          "sha256": "60eaf4d10009d1bd4a1aa555d337dae00f60421d72fee415b9139a021e7cb5d0"
+        }
+      ]
+    },
+    {
+      "id": "en_GB-cori-medium",
+      "display_name": "Cori • British English",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "en_GB",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT-weight-repository / public-domain source dataset; preserve attribution",
+      "dataset_license": "public domain",
+      "training_lineage": "Trained from scratch on public-domain LibriVox recordings.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Public-domain training recordings and open model-repository license; no celebrity/character impersonation rights implied",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_GB/cori/medium/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "en/en_GB/cori/medium/en_GB-cori-medium.onnx",
+          "size": 63531379,
+          "sha256": "1899f98e5fb8310154f3c2973f4b8a929ba7245e722b3d3a85680b833d95f10d"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "en/en_GB/cori/medium/en_GB-cori-medium.onnx.json",
+          "size": 4966,
+          "sha256": "e262c16d7f192f69d4edd6b4ef8a5915379e67495fcc402f1ab15eeb33da3d36"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "en/en_GB/cori/medium/MODEL_CARD",
+          "size": 474,
+          "sha256": "38d76dfde845837b184668f8bab1c6426ad740b1af0fcebc349037822739e536"
+        }
+      ]
+    }
+  ]
+}
