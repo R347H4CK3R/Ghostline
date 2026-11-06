@@ -43,7 +43,7 @@ final class GhostlineCommunityRVCDownloader: ObservableObject {
         size: 63_016_939
     )
 
-    private func hashFile(_ file: URL) throws -> (String, Int64) {
+    nonisolated private static func hashFile(_ file: URL) throws -> (String, Int64) {
         let handle = try FileHandle(forReadingFrom: file)
         defer { try? handle.close() }
         var h = SHA256()
@@ -94,7 +94,9 @@ final class GhostlineCommunityRVCDownloader: ObservableObject {
         }
         task = nil
         phase = "Verifying SHA-256 before installing"
-        let (found, count) = try hashFile(target)
+        let (found, count) = try await Task.detached(priority: .userInitiated) {
+            try Self.hashFile(target)
+        }.value
         guard count == asset.size, found == asset.sha256 else {
             GhostlineDiagnostics.shared.record("community", "model_checksum_failed")
             throw NSError(domain: "GHOSTLINE.Community", code: 4,
