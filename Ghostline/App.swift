@@ -167,7 +167,7 @@ struct ContentView: View {
         TabView {
             NavigationStack { GhostlineHomeView() }
                 .tabItem { Label("Home", systemImage: "house.fill") }
-            NavigationStack { GhostlineLibraryView() }
+            NavigationStack { GhostlineCategorizedVoiceLibraryView() }
                 .tabItem { Label("Library", systemImage: "square.stack.3d.up.fill") }
             NavigationStack { GhostlineGeneratorView() }
                 .tabItem { Label("Generate", systemImage: "waveform") }
