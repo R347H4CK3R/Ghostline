@@ -24,7 +24,7 @@ by_id={p["id"]:p for p in catalog["models"]}
 assert by_id["nl_BE-rdh-medium"]["dataset_license"]=="CC0 1.0 Universal"
 assert by_id["uk_UA-ukrainian_tts-medium"]["speaker_ids"]==[0,1,2]
 # November 6 expansion: source-declared slots are candidate IDs, never target-device proof.
-for key in ("no_NO-nvcc-medium", "nl_BE-nathalie-x_low", "sv_SE-nst-medium"):
+for key in ("no_NO-nvcc-medium", "nl_BE-nathalie-x_low", "el_GR-rapunzelina-medium"):
     item=by_id[key]
     assert item["device_status"]=="UNVERIFIED_CANDIDATE"
     assert item["dataset_license"]=="CC0"
@@ -33,10 +33,14 @@ for key in ("no_NO-nvcc-medium", "nl_BE-nathalie-x_low", "sv_SE-nst-medium"):
     assert item["claimed_real_person_identity"] is None
 assert by_id["no_NO-nvcc-medium"]["speaker_ids"]==list(range(10))
 assert by_id["nl_BE-nathalie-x_low"]["speaker_ids"]==[0]
-assert by_id["sv_SE-nst-medium"]["speaker_ids"]==[0]
-# The original Swedish model card mislinks NST dictation sbr-17.
-# KBLab's first-party model report instead references TTS corpus sbr-18.
-sv = by_id["sv_SE-nst-medium"]
+assert by_id["el_GR-rapunzelina-medium"]["speaker_ids"]==[0]
+assert by_id["el_GR-rapunzelina-medium"]["dataset_source_url"] == "https://www.kaggle.com/datasets/bryanpark/greek-single-speaker-speech-dataset"
+assert "sv_SE-nst-medium" not in by_id
+# Original Swedish MODEL_CARD confuses NST dictation sbr-17 with TTS sbr-18.
+# Preserve its source history ONLY in a non-distributable quarantine ledger.
+quarantine=json.loads(Path("Ghostline/Resources/quarantined-piper-candidates.json").read_text(encoding="utf-8"))
+sv = next(p for p in quarantine["models"] if p["id"] == "sv_SE-nst-medium")
+assert sv["rights_review"]["not_for_distribution"] is True
 assert sv["dataset_source_url"] == "https://kb-labb.github.io/posts/2023-05-24-swedish-text-to-speech/"
 assert sv["dataset_historical_catalogue_url"].endswith("/oai-nb-no-sbr-18/")
 assert "sbr-17" in sv["dataset_provenance_note"] and "sbr-18" in sv["dataset_provenance_note"]
