@@ -42,7 +42,7 @@ jobs:
               assert re.fullmatch(r"[0-9a-fA-F]{64}", voice["on_device_ios_audio_sha256"])
           # The UI must not promise more authentic identities than documented.
           source=Path("Ghostline/App.swift").read_text()
-          assert f'Verified authentic voices • {len(voices)}' in source
+          assert f'Authentic identities: {len(voices)} verified' in source
           print(f"Verified authentic offline identities: {len(voices)}")
           PY
       - name: Install project generator
