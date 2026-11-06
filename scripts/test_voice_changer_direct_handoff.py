@@ -9,7 +9,7 @@ voice = Path("Ghostline/VoiceChanger.swift").read_text(encoding="utf-8")
 native = Path("Ghostline/OfflineRVCWeb.swift").read_text(encoding="utf-8")
 browser = Path("scripts/build_offline_rvc_web.py").read_text(encoding="utf-8")
 assert "GhostlineRVCWebScreen(importedPack: selected, sourceAudioURL: recordingURL)" in voice
-assert ".disabled(recording)" in voice
+assert ".disabled(recording || importingAudio)" in voice
 assert "No Files export/re-import required." in voice
 assert "privateSourceAudio = nil // revoke source recording at converter teardown" in native
 assert 'let route = "/private-source-" + UUID().uuidString + "." + ext' in native
