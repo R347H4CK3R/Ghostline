@@ -6,13 +6,15 @@ import WebKit
 
 /// A loopback-only HTTP server so WebAssembly, module workers and model uploads
 /// share a normal same-origin context. No remote voice-processing service is used.
-final class GhostlineLocalWebServer {
+final class GhostlineLocalWebServer: @unchecked Sendable {
+    private let stateLock = NSLock()
+    private var startCompleted = false
     private let queue = DispatchQueue(label: "com.ghostline.rvc.http")
     private var listener: NWListener?
     private let root = Bundle.main.bundleURL.appendingPathComponent("RVCWeb", isDirectory: true)
     private(set) var url: URL?
 
-    func start(ready: @escaping (Result<URL, Error>) -> Void) {
+    func start(ready: @escaping @Sendable (Result<URL, Error>) -> Void) {
         guard FileManager.default.fileExists(atPath: root.appendingPathComponent("index.html").path) else {
             ready(.failure(NSError(domain: "GHOSTLINE", code: 200, userInfo: [
                 NSLocalizedDescriptionKey: "Bundled offline RVC web engine not found"
@@ -24,28 +26,33 @@ final class GhostlineLocalWebServer {
             parameters.requiredLocalEndpoint = .hostPort(host: .ipv4(.loopback), port: .any)
             let listener = try NWListener(using: parameters)
             self.listener = listener
-            var didComplete = false
             listener.stateUpdateHandler = { [weak self] state in
                 guard let self else { return }
                 switch state {
                 case .ready:
-                    guard !didComplete, let port = listener.port,
+                    guard let port = listener.port,
                           let url = URL(string: "http://127.0.0.1:\(port.rawValue)/") else { return }
-                    didComplete = true
                     self.url = url
-                    DispatchQueue.main.async { ready(.success(url)) }
+                    self.finishStart(.success(url), ready: ready)
                 case .failed(let error):
-                    guard !didComplete else { return }
-                    didComplete = true
-                    DispatchQueue.main.async { ready(.failure(error)) }
+                    self.finishStart(.failure(error), ready: ready)
                 default: break
                 }
             }
             listener.newConnectionHandler = { [weak self] connection in self?.handle(connection) }
             listener.start(queue: queue)
         } catch {
-            DispatchQueue.main.async { ready(.failure(error)) }
+            finishStart(.failure(error), ready: ready)
         }
+    }
+
+    private func finishStart(_ result: Result<URL, Error>,
+                             ready: @escaping @Sendable (Result<URL, Error>) -> Void) {
+        stateLock.lock()
+        if startCompleted { stateLock.unlock(); return }
+        startCompleted = true
+        stateLock.unlock()
+        DispatchQueue.main.async { ready(result) }
     }
 
     func stop() {
