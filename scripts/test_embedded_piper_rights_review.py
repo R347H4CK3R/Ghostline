@@ -41,6 +41,7 @@ for item in approved["models"]:
     assert {"MODEL_CARD", "model.onnx", "model.onnx.json"} == {f["name"] for f in item["files"]}
     assert item["dataset_license"] in {"CC0", "CC0 1.0 Universal", "public domain"}
     assert "Trained from scratch" in item["training_lineage"]
+assert "nl_BE-rdh-x_low" in active_ids, "Compact CC0 voice candidate missing"
 assert "sv_SE-nst-medium" in held_ids, "Unreconciled source card cannot be cleared implicitly"
 print(
     f"Source-rights gate passed: {len(active_ids)} source-documented experimental candidate packs, "

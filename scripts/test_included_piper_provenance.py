@@ -22,6 +22,11 @@ for p in catalog["models"]:
         assert f["upstream_path"] and ".." not in f["upstream_path"]
 by_id={p["id"]:p for p in catalog["models"]}
 assert by_id["nl_BE-rdh-medium"]["dataset_license"]=="CC0 1.0 Universal"
+assert by_id["nl_BE-rdh-x_low"]["dataset_license"]=="CC0 1.0 Universal"
+assert by_id["nl_BE-rdh-x_low"]["dataset_source_url"]==by_id["nl_BE-rdh-medium"]["dataset_source_url"]
+assert by_id["nl_BE-rdh-x_low"]["speaker_ids"]==[0]
+assert next(f for f in by_id["nl_BE-rdh-x_low"]["files"] if f["name"]=="model.onnx")["size"] < 25_000_000
+assert by_id["nl_BE-rdh-x_low"]["rights_review"]["decision"]=="SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY"
 assert by_id["uk_UA-ukrainian_tts-medium"]["speaker_ids"]==[0,1,2]
 # November 6 expansion: source-declared slots are candidate IDs, never target-device proof.
 for key in ("no_NO-nvcc-medium", "nl_BE-nathalie-x_low", "el_GR-rapunzelina-medium"):
@@ -53,5 +58,9 @@ assert "func selectSpeaker(_ id: Int)" in source
 reset=source.split("func selectSpeaker(_ id: Int)",1)[1].split("private func packDirectory",1)[0]
 for marker in ("outputURL = nil","evidenceURL = nil","playbackCompleted = false","userAttestedListening = false"):
     assert marker in reset
+assert "Task.detached(priority: .userInitiated)" in source
+assert "try await ensureEngine(for: pack)" in source
+assert "ghostlineVerifyIncludedAsset(" in source
+assert "checksByName" in source
 assert "0 voice identities verified" in source
 print(f"Provenance: {len(catalog['models'])} unverified model packs; {sum(len(p['speaker_ids']) for p in catalog['models'])} candidate speaker slots; 0 verified device voices.")

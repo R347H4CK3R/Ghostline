@@ -43,6 +43,35 @@ struct GhostlineIncludedPiperCatalog: Decodable {
     }
 }
 
+// Perform large model SHA-256 checks outside the MainActor to keep the five-tab
+// UI responsive when the bundled ONNX file is tens of megabytes.
+private func ghostlineVerifyIncludedAsset(name: String, size: Int,
+                                         expectedSHA256: String, directory: URL) throws -> String {
+    guard ["model.onnx", "model.onnx.json", "MODEL_CARD"].contains(name),
+          size > 0, expectedSHA256.count == 64 else {
+        throw NSError(domain: "GhostlinePiper", code: 1,
+                      userInfo: [NSLocalizedDescriptionKey: "Invalid bundled asset manifest"])
+    }
+    let file = directory.appendingPathComponent(name)
+    let attrs = try FileManager.default.attributesOfItem(atPath: file.path)
+    guard (attrs[.size] as? NSNumber)?.intValue == size else {
+        throw NSError(domain: "GhostlinePiper", code: 2,
+                      userInfo: [NSLocalizedDescriptionKey: "Bundled asset length mismatch: \(name)"])
+    }
+    let handle = try FileHandle(forReadingFrom: file)
+    defer { try? handle.close() }
+    var hash = SHA256()
+    while let next = try handle.read(upToCount: 1024 * 1024), !next.isEmpty {
+        hash.update(data: next)
+    }
+    let digest = hash.finalize().map { String(format: "%02x", $0) }.joined()
+    guard digest == expectedSHA256 else {
+        throw NSError(domain: "GhostlinePiper", code: 3,
+                      userInfo: [NSLocalizedDescriptionKey: "Bundled asset SHA-256 mismatch: \(name)"])
+    }
+    return digest
+}
+
 @MainActor
 final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private let catalog = GhostlineIncludedPiperCatalog.load()
@@ -131,28 +160,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         return hash.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
-    private func verify(_ asset: GhostlineIncludedPiperCatalog.Asset,
-                        in dir: URL) throws -> String {
-        guard ["model.onnx", "model.onnx.json", "MODEL_CARD"].contains(asset.name),
-              asset.size > 0, asset.sha256.count == 64 else {
-            throw NSError(domain: "GhostlinePiper", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "Invalid bundled asset manifest"])
-        }
-        let file = dir.appendingPathComponent(asset.name)
-        let attrs = try FileManager.default.attributesOfItem(atPath: file.path)
-        guard (attrs[.size] as? NSNumber)?.intValue == asset.size else {
-            throw NSError(domain: "GhostlinePiper", code: 2,
-                          userInfo: [NSLocalizedDescriptionKey: "Bundled asset length mismatch: \(asset.name)"])
-        }
-        let digest = try sha256File(file)
-        guard digest == asset.sha256 else {
-            throw NSError(domain: "GhostlinePiper", code: 3,
-                          userInfo: [NSLocalizedDescriptionKey: "Bundled asset SHA-256 mismatch: \(asset.name)"])
-        }
-        return digest
-    }
-
-    private func ensureEngine(for pack: GhostlineIncludedPiperCatalog.Pack) throws -> PiperPlayer {
+    private func ensureEngine(for pack: GhostlineIncludedPiperCatalog.Pack) async throws -> PiperPlayer {
         if let engine { return engine }
         guard pack.device_status == "UNVERIFIED_CANDIDATE",
               ["public domain", "CC0", "CC0 1.0 Universal"].contains(pack.dataset_license),
@@ -166,9 +174,23 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
                           userInfo: [NSLocalizedDescriptionKey: "Pack provenance is not approved for inclusion"])
         }
         let directory = packDirectory(for: pack)
-        let modelHash = try verify(pack.asset("model.onnx")!, in: directory)
-        let configHash = try verify(pack.asset("model.onnx.json")!, in: directory)
-        _ = try verify(pack.asset("MODEL_CARD")!, in: directory)
+        // Capture Sendable primitives rather than passing actor-isolated pack
+        // objects into Task.detached. Pack switching is blocked while busy.
+        let checks: [(String, Int, String)] = pack.files.map { ($0.name, $0.size, $0.sha256) }
+        let checksByName = try await Task.detached(priority: .userInitiated) { () throws -> [String: String] in
+            var digests: [String: String] = [:]
+            for (name, size, sha256) in checks {
+                digests[name] = try ghostlineVerifyIncludedAsset(
+                    name: name, size: size, expectedSHA256: sha256, directory: directory)
+            }
+            return digests
+        }.value
+        guard let modelHash = checksByName["model.onnx"],
+              let configHash = checksByName["model.onnx.json"],
+              checksByName["MODEL_CARD"] != nil else {
+            throw NSError(domain: "GhostlinePiper", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "Missing bundled pack asset"])
+        }
         let configFile = directory.appendingPathComponent("model.onnx.json")
         let configData = try Data(contentsOf: configFile)
         guard let config = try JSONSerialization.jsonObject(with: configData) as? [String: Any],
@@ -242,7 +264,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         }
         do {
             status = "Checking all three pinned model files offline (SHA-256)..."
-            let player = try ensureEngine(for: pack)
+            let player = try await ensureEngine(for: pack)
             lastDiagnosticStage = "Performing offline Piper synthesis"
             let escaped = phrase.replacingOccurrences(of: "&", with: "&amp;")
                 .replacingOccurrences(of: "<", with: "&lt;")
