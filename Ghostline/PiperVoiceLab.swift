@@ -59,8 +59,25 @@ final class PiperVoiceLab: ObservableObject {
     private var modelSHA256: String?
     private var configSHA256: String?
     private let batchPhrase = "A quick silver fox crossed the quiet valley."
+    // The remote voices.json metadata for LibriTTS-R is stale: it advertises
+    // 2,306 speakers and incompatible checksums for the published 904-speaker
+    // model. Pin both actual files to the same immutable upstream revision.
+    // Do not disable integrity checking or fall back to incorrect catalog MD5s.
+    private static let verifiedLibriTTSRevision = "e7229f7d33a10e145e109b886d661984201ac3c4"
     private var model: PiperRegistry.Model? {
-        registry?.models.first { $0.model_id == Self.featuredModelID }
+        guard registry?.models.contains(where: { $0.model_id == Self.featuredModelID }) == true else {
+            return nil
+        }
+        let base = "https://huggingface.co/rhasspy/piper-voices/resolve/\(Self.verifiedLibriTTSRevision)/en/en_US/libritts_r/medium/en_US-libritts_r-medium.onnx"
+        return PiperRegistry.Model(
+            model_id: Self.featuredModelID,
+            model_bytes: 78_580_914,
+            declared_speakers: 904,
+            model_url: base,
+            config_url: base + ".json",
+            model_md5: "bb2c2776cffbfd736c7c497f620c0ca6",
+            config_md5: "c740db18a0dab11b13ce0292ea1196c6"
+        )
     }
     private var modelDir: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -161,7 +178,7 @@ final class PiperVoiceLab: ObservableObject {
         let digest = Insecure.MD5.hash(data: data).map { String(format: "%02x", $0) }.joined()
         guard digest.lowercased() == expected.lowercased() else {
             throw NSError(domain: "GHOSTLINE", code: 101,
-                          userInfo: [NSLocalizedDescriptionKey: "Model checksum mismatch"])
+                          userInfo: [NSLocalizedDescriptionKey: "Downloaded model does not match the pinned official bytes (checksum mismatch)"])
         }
     }
 
