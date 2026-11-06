@@ -130,7 +130,7 @@ private final class CommunityImportStore: ObservableObject {
                 throw error
             }
         } catch {
-            status = "Import failed: \\(error.localizedDescription)"
+            status = "Import failed: \(error.localizedDescription)"
         }
     }
 }
@@ -147,7 +147,7 @@ struct GhostlineCommunityVoicesView: View {
     private var filtered: [CommunitySource] {
         CommunitySources.items.filter {
             (engine == "All" || $0.engine == engine) &&
-            (query.isEmpty || "\\($0.title) \\($0.category) \\($0.engine)".localizedCaseInsensitiveContains(query))
+            (query.isEmpty || "\($0.title) \($0.category) \($0.engine)".localizedCaseInsensitiveContains(query))
         }
     }
 
@@ -217,7 +217,7 @@ struct GhostlineCommunityVoicesView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             if !store.items.isEmpty {
-                Section("Locally staged candidates • \\(store.items.count)") {
+                Section("Locally staged candidates • \(store.items.count)") {
                     ForEach(store.items) { item in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(item.fileName).font(.subheadline.bold())
@@ -240,7 +240,7 @@ struct GhostlineCommunityVoicesView: View {
                 Task { await store.importFile(first, sourceID: sourceID) }
             } else if case .failure(let error) = result {
                 // Dismissal does not change the current source selection.
-                print("Community file picker: \\(error.localizedDescription)")
+                print("Community file picker: \(error.localizedDescription)")
             }
         }
     }
