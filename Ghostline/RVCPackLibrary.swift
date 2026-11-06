@@ -21,6 +21,7 @@ final class RVCPackLibrary: ObservableObject {
     @Published var packs: [RVCPackRecord] = []
     @Published var status = "Import locally owned RVC v2 .pth weights. This builds a private catalog; conversion is not yet implemented on iOS."
     @Published var busy = false
+    @Published var auditReport: URL?
 
     private var root: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -88,7 +89,12 @@ final class RVCPackLibrary: ObservableObject {
                                       weightSHA256: checksum, indexFile: nil,
                                       indexSHA256: nil, createdAt: Date())
             packs.append(entry)
-            try saveIndex()
+            do {
+                try saveIndex()
+            } catch {
+                packs.removeAll { $0.id == id }
+                throw error
+            }
             status = "Imported .pth candidate with SHA-256 integrity. RVC inference and identity have not been verified on this iPhone."
         } catch {
             try? FileManager.default.removeItem(at: target)
@@ -96,21 +102,82 @@ final class RVCPackLibrary: ObservableObject {
         }
     }
 
+    // Never overwrite the existing retrieval index until its replacement has
+    // been copied, hashed and atomically committed to the catalog.
     func attachIndex(_ source: URL, for packID: UUID) {
         guard !busy, let idx = packs.firstIndex(where: { $0.id == packID }) else { return }
         busy = true
         defer { busy = false }
-        let filename = packID.uuidString + ".index"
+        let previous = packs[idx]
+        let filename = packID.uuidString + "-" + UUID().uuidString + ".index"
         let target = root.appendingPathComponent(filename)
         do {
-            try? FileManager.default.removeItem(at: target)
             let checksum = try copyFromPicker(source, to: target, allowedExtension: "index")
             packs[idx].indexFile = filename
             packs[idx].indexSHA256 = checksum
-            try saveIndex()
-            status = "Attached retrieval index. This does not establish device inference support."
+            do {
+                try saveIndex()
+            } catch {
+                packs[idx] = previous
+                throw error
+            }
+            if let old = previous.indexFile, old != filename {
+                try? FileManager.default.removeItem(at: root.appendingPathComponent(old))
+            }
+            auditReport = nil
+            status = "Retrieval index saved with SHA-256. Conversion and iPhone inference remain unverified."
         } catch {
-            status = "Index import failed: \(error.localizedDescription)"
+            packs[idx] = previous
+            try? FileManager.default.removeItem(at: target)
+            status = "Index import failed without deleting the previous index: \(error.localizedDescription)"
+        }
+    }
+
+    // JSON contains metadata and checksums, never checkpoint bytes or raw
+    // audio. Consent and identity evidence require independent human review.
+    func audit(_ pack: RVCPackRecord) {
+        guard !busy else { return }
+        busy = true
+        defer { busy = false }
+        auditReport = nil
+        do {
+            let currentWeightSHA = try digest(root.appendingPathComponent(pack.weightFile))
+            let weightMatches = currentWeightSHA == pack.weightSHA256
+            var indexMatches: Bool? = nil
+            if let indexFile = pack.indexFile {
+                guard let expected = pack.indexSHA256 else {
+                    throw NSError(domain: "GHOSTLINE.RVC", code: 3,
+                                  userInfo: [NSLocalizedDescriptionKey: "Retrieval index has no recorded checksum"])
+                }
+                indexMatches = try digest(root.appendingPathComponent(indexFile)) == expected
+            }
+            let report: [String: Any] = [
+                "schema_version": 1,
+                "record_type": "private_rvc_candidate_file_audit",
+                "candidate_id": pack.id.uuidString,
+                "display_name": pack.name,
+                "category": pack.category,
+                "source_and_rights_note_user_supplied": pack.rightsNote,
+                "model_sha256": pack.weightSHA256,
+                "model_hash_matches": weightMatches,
+                "index_sha256": pack.indexSHA256 ?? "",
+                "index_hash_matches": indexMatches as Any? ?? NSNull(),
+                "model_inference_on_iphone_verified": false,
+                "voice_identity_verified": false,
+                "voice_rights_independently_verified": false,
+                "generated_utc": ISO8601DateFormatter().string(from: Date())
+            ]
+            let bytes = try JSONSerialization.data(withJSONObject: report,
+                                                   options: [.prettyPrinted, .sortedKeys])
+            let file = FileManager.default.temporaryDirectory
+                .appendingPathComponent("ghostline-private-rvc-audit-" + pack.id.uuidString + ".json")
+            try bytes.write(to: file, options: .atomic)
+            auditReport = file
+            status = weightMatches && indexMatches != false
+                ? "File integrity matches import checksums. This is not proof of authorized voice or working RVC audio."
+                : "INTEGRITY FAILURE: a local RVC file differs from its import checksum."
+        } catch {
+            status = "Integrity audit failed: \(error.localizedDescription)"
         }
     }
 
@@ -120,13 +187,21 @@ final class RVCPackLibrary: ObservableObject {
     }
 
     func delete(_ pack: RVCPackRecord) {
-        try? FileManager.default.removeItem(at: root.appendingPathComponent(pack.weightFile))
-        if let indexFile = pack.indexFile {
-            try? FileManager.default.removeItem(at: root.appendingPathComponent(indexFile))
-        }
+        guard !busy else { return }
+        let previous = packs
         packs.removeAll { $0.id == pack.id }
-        do { try saveIndex(); status = "Pack deleted from private app storage." }
-        catch { status = "Files deleted; catalog index could not be written." }
+        do {
+            try saveIndex()
+            try? FileManager.default.removeItem(at: root.appendingPathComponent(pack.weightFile))
+            if let indexFile = pack.indexFile {
+                try? FileManager.default.removeItem(at: root.appendingPathComponent(indexFile))
+            }
+            auditReport = nil
+            status = "Pack removed from the private catalog; associated files deleted where possible."
+        } catch {
+            packs = previous
+            status = "Delete not committed; catalog preserved: \(error.localizedDescription)"
+        }
     }
 }
 
@@ -170,6 +245,7 @@ struct RVCPackLibraryView: View {
                             .font(.caption)
                         HStack {
                             Button("Attach .index") { indexPackID = pack.id; importIndex = true }
+                            Button("Audit SHA-256") { library.audit(pack) }
                             Spacer()
                             Button("Delete", role: .destructive) { library.delete(pack) }
                         }.buttonStyle(.borderless)
@@ -183,6 +259,11 @@ struct RVCPackLibraryView: View {
                 Text("A .pth file uses PyTorch serialization. Ghostline must add a compatible on-device runtime or a validated CoreML conversion before it can perform RVC voice conversion; importing is not a playback test.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Text(library.status).font(.footnote)
+                if let report = library.auditReport {
+                    ShareLink(item: report) { Label("Export private file-integrity audit", systemImage: "square.and.arrow.up") }
+                    Text("Audit JSON contains your pack name and source/rights note; share only with people you trust.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
         }
         .navigationTitle("RVC Pack Library")
