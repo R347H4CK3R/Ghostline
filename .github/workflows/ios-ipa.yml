@@ -117,6 +117,18 @@ jobs:
           assert "c740db18a0dab11b13ce0292ea1196c6" in source
           print("Pinned LibriTTS-R metadata, checksums, and 904 candidate IDs verified")
           PY
+      - name: Guard bundled Piper offline initialization and unverified labeling
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path("Ghostline/PiperVoiceLab.swift").read_text()
+          assert "bundledPackAvailable" in s
+          assert "func installBundledPack() async" in s
+          assert "let hashes = try validatePack(at: staging)" in s
+          assert "await lab.installBundledPack()" in s
+          assert "0 newly verified audio samples" in s
+          print("Unverified bundled Piper activation and integrity guard present")
+          PY
       - name: Guard Piper model-bound device evidence and cached pack staging
         run: |
           python3 - <<'PY'
@@ -181,6 +193,12 @@ jobs:
           test -n "$(find build/rvc-web-dist/onnx-wasm -name '*.wasm' -print -quit)"
       - name: Audit RVC WebAssembly asset integrity and local entrypoint
         run: python3 scripts/audit_offline_rvc_bundle.py build/rvc-web-dist --write
+      - name: Download and checksum pinned rights-documented 904-ID test pack
+        run: |
+          python3 scripts/bundle_piper_included.py
+          test -f build/embedded-piper/model.onnx
+          test -f build/embedded-piper/model.onnx.json
+          test -f build/embedded-piper/ATTRIBUTION.txt
       - name: Build arm64 iOS app
         run: |
           set -o pipefail
@@ -191,6 +209,8 @@ jobs:
           mkdir -p build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb
           cp -R build/rvc-web-dist/. build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb/
           python3 scripts/audit_offline_rvc_bundle.py build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb --verify
+          mkdir -p build/Build/Products/Release-iphoneos/GHOSTLINE.app/PiperIncluded
+          cp -R build/embedded-piper/. build/Build/Products/Release-iphoneos/GHOSTLINE.app/PiperIncluded/
           cp -R build/Build/Products/Release-iphoneos/GHOSTLINE.app Payload/
           /usr/bin/zip -qry GHOSTLINE-unsigned.ipa Payload
           unzip -t GHOSTLINE-unsigned.ipa
