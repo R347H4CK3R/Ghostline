@@ -234,6 +234,10 @@ struct GhostlineHomeView: View {
                 )
 
                 Text("Voice workspaces").font(.title3.bold())
+                NavigationLink(destination: GhostlineVoiceChangerView()) {
+                    GhostlineFeatureRow(icon: "waveform.badge.mic", heading: "Voice Changer",
+                                        detail: "Choose voice • record • convert • export")
+                }.buttonStyle(.plain)
                 NavigationLink(destination: GhostlineCommunityVoicesView()) {
                     GhostlineFeatureRow(icon: "person.3", heading: "Community Voices",
                                         detail: "Rights-aware discovery and private imports")
@@ -330,6 +334,7 @@ struct GhostlineGeneratorView: View {
     var body: some View {
         List {
             Section("Generate offline speech") {
+                NavigationLink("Voice Changer • record and convert") { GhostlineVoiceChangerView() }
                 NavigationLink("Kokoro — neural text to speech") { KokoroOfflineView() }
                 NavigationLink("PocketTTS — synthetic voice presets") { NeuralStudioView() }
                 NavigationLink("Clone Studio — authorized reference audio") { CloneStudioView() }
@@ -363,6 +368,11 @@ struct GhostlineToolsView: View {
             Section("Verification") {
                 Text("Authentic identities: 0 verified on target iPhone")
                 Text("Keep the device offline after required model setup. Compare actual audio with authorized reference recordings. This application never certifies identities from catalog names alone.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Section("Diagnostics") {
+                NavigationLink("GitHub error reports • optional") { GhostlineDiagnosticsView() }
+                Text("Privacy-filtered error codes only; GitHub token is stored in Keychain.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("Privacy") {
