@@ -236,6 +236,8 @@ jobs:
           assert '"authorized_identity_match_confirmed": false' in source
           print("Rights, provenance, and unverified included pack guard passed")
           PY
+      - name: Guard included Piper replay and native listening receipts
+        run: python3 scripts/test_included_piper_playback_evidence.py
       - name: Assemble unsigned IPA
         run: |
           mkdir -p Payload
