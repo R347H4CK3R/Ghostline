@@ -84,6 +84,15 @@ final class PiperVoiceLab: ObservableObject {
             .appendingPathComponent("PiperModels", isDirectory: true)
             .appendingPathComponent(Self.featuredModelID, isDirectory: true)
     }
+    // The IPA contains an optional ready-to-install, checksum-verified test pack.
+    // Do not overwrite an intact cached model or count these IDs as tested.
+    private var includedDirectory: URL {
+        Bundle.main.bundleURL.appendingPathComponent("PiperIncluded", isDirectory: true)
+    }
+    var bundledPackAvailable: Bool {
+        FileManager.default.fileExists(atPath: includedDirectory.appendingPathComponent("model.onnx").path) &&
+        FileManager.default.fileExists(atPath: includedDirectory.appendingPathComponent("model.onnx.json").path)
+    }
     private var modelURL: URL { modelDir.appendingPathComponent("model.onnx") }
     private var configURL: URL { modelDir.appendingPathComponent("model.onnx.json") }
 
@@ -194,6 +203,63 @@ final class PiperVoiceLab: ObservableObject {
             try FileManager.default.removeItem(at: destination)
         }
         try FileManager.default.moveItem(at: temporary, to: destination)
+    }
+
+    // Activate bundled model offline, preserving any previously intact pack.
+    // This is intentionally separate from device audio verification.
+    func installBundledPack() async {
+        guard !busy else { return }
+        guard bundledPackAvailable else {
+            status = "No embedded model found in this IPA."
+            return
+        }
+        if modelReady {
+            status = "A checksum-verified Piper pack is already installed."
+            return
+        }
+        busy = true
+        defer { busy = false }
+        let fm = FileManager.default
+        let parent = modelDir.deletingLastPathComponent()
+        let staging = parent.appendingPathComponent("bundled-\(UUID().uuidString)", isDirectory: true)
+        let backup = parent.appendingPathComponent("backup-bundled-\(UUID().uuidString)", isDirectory: true)
+        let prior = (modelSHA256, configSHA256)
+        do {
+            try fm.createDirectory(at: staging, withIntermediateDirectories: true)
+            status = "Installing bundled 904-ID model offline and checking file integrity..."
+            try fm.copyItem(at: includedDirectory.appendingPathComponent("model.onnx"),
+                            to: staging.appendingPathComponent("model.onnx"))
+            try fm.copyItem(at: includedDirectory.appendingPathComponent("model.onnx.json"),
+                            to: staging.appendingPathComponent("model.onnx.json"))
+            let hashes = try validatePack(at: staging)
+            if fm.fileExists(atPath: modelDir.path) { try fm.moveItem(at: modelDir, to: backup) }
+            do { try fm.moveItem(at: staging, to: modelDir) }
+            catch {
+                if fm.fileExists(atPath: backup.path) { try? fm.moveItem(at: backup, to: modelDir) }
+                throw error
+            }
+            modelSHA256 = hashes.0
+            configSHA256 = hashes.1
+            modelReady = true
+            player = nil
+            latestOutput = nil
+            evidenceFile = nil
+            if prior.0 != hashes.0 || prior.1 != hashes.1 {
+                tested.removeAll()
+                batchStart = 0
+                UserDefaults.standard.removeObject(forKey: key)
+                persist()
+            }
+            if fm.fileExists(atPath: backup.path) { try? fm.removeItem(at: backup) }
+            status = "Included model verified offline: 904 candidate speaker IDs, 0 newly verified audio samples. Generate and listen to test."
+        } catch {
+            try? fm.removeItem(at: staging)
+            if fm.fileExists(atPath: backup.path) && !fm.fileExists(atPath: modelDir.path) {
+                try? fm.moveItem(at: backup, to: modelDir)
+            }
+            modelReady = (try? validateInstalledPack()) != nil
+            status = "Bundled pack could not be installed; prior data preserved: \(error.localizedDescription)"
+        }
     }
 
     func downloadModel() async {
@@ -508,12 +574,21 @@ struct PiperVoiceLabView: View {
     var body: some View {
         Form {
             Section("Piper LibriTTS-R • expandable speaker test") {
-                Text("English • approximately 81 MB model download")
+                Text("English • 78.6 MB model included in this testing build")
                 Text("The model's own config determines available IDs, not a 500-voice app cap. Registry counts may differ from the installed model.")
                     .font(.footnote).foregroundStyle(.secondary)
-                Button(lab.modelReady ? "Model downloaded" : "Download free model") {
-                    Task { await lab.downloadModel() }
-                }.disabled(lab.busy || lab.modelReady)
+                if lab.bundledPackAvailable {
+                    Button(lab.modelReady ? "Included test pack installed" : "Install included 904-ID pack offline") {
+                        Task { await lab.installBundledPack() }
+                    }.disabled(lab.busy || lab.modelReady)
+                }
+                if !lab.bundledPackAvailable {
+                    Button(lab.modelReady ? "Model downloaded" : "Download free model") {
+                        Task { await lab.downloadModel() }
+                    }.disabled(lab.busy || lab.modelReady)
+                }
+                Text("Bundled LibriTTS-R is an unverified 904-speaker candidate pack, not 904 licensed celebrity voices.")
+                    .font(.caption).foregroundStyle(.secondary)
                 Text("Model config speaker slots: \(lab.speakerCount). None is an identity-verified voice simply because it has an ID.")
                     .font(.caption).foregroundStyle(.secondary)
                 Text("Source: rhasspy/piper-voices. Review each model's MODEL_CARD and license before redistributing. Piper software is GPL-licensed.")
@@ -566,6 +641,11 @@ struct PiperVoiceLabView: View {
                 Button("Delete downloaded pack and tests", role: .destructive) {
                     lab.clearDownloadedPack()
                 }.disabled(lab.busy)
+            }
+        }
+        .task {
+            if lab.bundledPackAvailable && !lab.modelReady {
+                await lab.installBundledPack()
             }
         }
         .navigationTitle("Piper Speaker Lab")
