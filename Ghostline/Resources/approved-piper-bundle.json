@@ -5,7 +5,7 @@
   "repo_license": "MIT",
   "engine_runtime_license": "GPL-3.0; source/distribution obligations apply",
   "distribution_scope": "experimental unsigned IPA artifact only; not a public release",
-  "validation_note": "11 source-pinned, source-rights-documented Piper candidate packs / 22 source-declared speaker slots; compact 16 kHz Flemish CC0 x_low variant added for lower storage/memory testing; Swedish NST withheld for dataset provenance. Zero target-iPhone audio, listening or identity verification. No actor, singer, game, TV or celebrity rights implied.",
+  "validation_note": "13 source-pinned, source-rights-documented Piper experimental candidate packs / 24 source-declared speaker slots (including two source-cleared lineage derivative candidates, not human identity clones). Zero iPhone/Strata generation, listening, or verified identities; Swedish NST held. No numerical cap.",
   "verified_identity_count": 0,
   "device_verified_audio_count": 0,
   "models": [
@@ -526,6 +526,109 @@
         "identity_permissions_independently_verified": false,
         "device_generation_verified": false
       }
+    },
+    {
+      "id": "en_US-john-medium",
+      "display_name": "John - US English - LibriVox (Kristin lineage)",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "en_US",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT-weight-repository / public-domain source dataset and parent; preserve attribution",
+      "dataset_license": "public domain",
+      "training_lineage": "Finetuned from en_US-kristin-medium, itself trained from scratch on public-domain LibriVox recordings; John's model card independently reports public-domain recordings.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Source-reported public-domain/CC0 data and a source-cleared Piper parent; no independent narrator identity or celebrity/character impersonation permission.",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/john/medium/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "en/en_US/john/medium/en_US-john-medium.onnx",
+          "size": 63531379,
+          "sha256": "789c6c875726e627ddee93d51d8727859abe9c091c3d141591f4b83c2072e988"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "en/en_US/john/medium/en_US-john-medium.onnx.json",
+          "size": 4965,
+          "sha256": "af60f177b6b550f3d7a302720c0fb89e7f94a82b5dca464775ef63b1c69ba09a"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "en/en_US/john/medium/MODEL_CARD",
+          "size": 498,
+          "sha256": "a056da65cd70dcbda96fc3420fe8d3442dbf3c8b75f49cdf800a715b42e299d1"
+        }
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/john/medium/MODEL_CARD",
+        "dataset_evidence_url": "https://librivox.org",
+        "parent_model_id": "en_US-kristin-medium",
+        "parent_model_source_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/kristin/medium/MODEL_CARD",
+        "parent_lineage_card_phrase": "Finetuned from Kristin (above)",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      },
+      "dataset_source_url": "https://librivox.org",
+      "parent_model_id": "en_US-kristin-medium",
+      "parent_lineage_card_phrase": "Finetuned from Kristin (above)"
+    },
+    {
+      "id": "nl_NL-alex-medium",
+      "display_name": "Alex - Dutch (Netherlands) - CC0 (RDH lineage)",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "nl_NL",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT-weight-repository / CC0 dataset and CC0 parent; preserve attribution",
+      "dataset_license": "CC0",
+      "dataset_source_url": "https://github.com/OHF-Voice/voice-datasets",
+      "training_lineage": "Finetuned from nl_BE-rdh-medium, itself trained from scratch on source-reported CC0 1.0 Dutch recordings; Alex model card separately states CC0 source.",
+      "runtime_compatibility_note": "Piper v0.2.0 config; compatibility with target iPhone not tested.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Source-reported public-domain/CC0 data and a source-cleared Piper parent; no independent narrator identity or celebrity/character impersonation permission.",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/nl/nl_NL/alex/medium/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "nl/nl_NL/alex/medium/nl_NL-alex-medium.onnx",
+          "size": 63531476,
+          "sha256": "22f0497c4d895a09fbc6a469459aa8954ea0955d3c6e19dbcc2e23acbb93e30b"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "nl/nl_NL/alex/medium/nl_NL-alex-medium.onnx.json",
+          "size": 4965,
+          "sha256": "9ea643871742c038511b6aaf20e6fc098a78a11968122d2f6ca3e50403423f95"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "nl/nl_NL/alex/medium/MODEL_CARD",
+          "size": 268,
+          "sha256": "1c359231626d8bd5b86a8deafb8598ef2004ba5d7fd239297a95eeac48b6f07b"
+        }
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/nl/nl_NL/alex/medium/MODEL_CARD",
+        "dataset_evidence_url": "https://github.com/OHF-Voice/voice-datasets",
+        "parent_model_id": "nl_BE-rdh-medium",
+        "parent_model_source_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/nl/nl_BE/rdh/medium/MODEL_CARD",
+        "parent_lineage_card_phrase": "Finetuned from Dutch rdh voice",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      },
+      "parent_model_id": "nl_BE-rdh-medium",
+      "parent_lineage_card_phrase": "Finetuned from Dutch rdh voice"
     }
   ]
 }
