@@ -44,6 +44,7 @@ declare global {
   interface Window {
     webkit?: { messageHandlers?: { ghostline?: { postMessage: (x: unknown) => void } } };
     __ghostlineImportedModelPath?: string;
+    __ghostlinePrivateAudioPath?: string;
   }
 }
 
@@ -54,8 +55,9 @@ button.addEventListener("click", async () => {
   let model = $<HTMLInputElement>("model").files?.[0];
   const contentVec = $<HTMLInputElement>("contentvec").files?.[0];
   const rmvpe = $<HTMLInputElement>("rmvpe").files?.[0];
-  const audio = $<HTMLInputElement>("audio").files?.[0];
-  if ((!model && !window.__ghostlineImportedModelPath) || !contentVec || !rmvpe || !audio) {
+  let audio = $<HTMLInputElement>("audio").files?.[0];
+  if ((!model && !window.__ghostlineImportedModelPath) || !contentVec || !rmvpe ||
+      (!audio && !window.__ghostlinePrivateAudioPath)) {
     status("Select an RVC v2 .pth/.onnx voice or an imported pack, ContentVec, RMVPE and source audio.");
     return;
   }
@@ -77,6 +79,20 @@ button.addEventListener("click", async () => {
   previousSave.removeAttribute("href");
   const time = performance.now();
   try {
+    if (!audio && window.__ghostlinePrivateAudioPath) {
+      status("Loading your private on-device source recording...");
+      const sourceResponse = await fetch(window.__ghostlinePrivateAudioPath, {
+        cache: "no-store", credentials: "omit"
+      });
+      if (!sourceResponse.ok) throw new Error("Local source audio integrity check failed");
+      const contents = await sourceResponse.blob();
+      if (contents.size <= 44 || contents.size > 80_000_000)
+        throw new Error("Source audio size is invalid");
+      const ext = window.__ghostlinePrivateAudioPath.endsWith(".mp3") ? ".mp3" : ".wav";
+      audio = new File([contents], "private-source" + ext,
+                       { type: ext === ".wav" ? "audio/wav" : "audio/mpeg" });
+    }
+    if (!audio) throw new Error("Choose a source WAV or MP3");
     if (!model) {
       // Same-origin local URL supplied by the native RVC Pack Library. The
       // native server checks the stored SHA-256 before releasing any bytes.
@@ -175,7 +191,7 @@ button:disabled{opacity:.5}audio{width:100%;margin-top:12px}a{color:#d2acff}
 <p id="selected-pack">If opened from your RVC Pack Library, the selected private .pth is loaded after its import checksum is revalidated. Choosing a file here overrides it.</p>
 <label for="contentvec">ContentVec 768-dimension encoder (.onnx)</label><input id="contentvec" type="file" accept=".onnx">
 <label for="rmvpe">RMVPE pitch estimator (.onnx)</label><input id="rmvpe" type="file" accept=".onnx">
-<label for="audio">Source vocal WAV / MP3</label><input id="audio" type="file" accept="audio/*,.wav,.mp3">
+<label for="audio">Source vocal WAV / MP3 (optional when recorded in Voice Changer)</label><input id="audio" type="file" accept="audio/*,.wav,.mp3">
 <label for="speaker">Speaker ID (model-specific)</label><input id="speaker" type="number" value="0" min="0">
 <label for="pitch">Pitch shift in semitones</label><input id="pitch" type="number" value="0" min="-24" max="24">
 </div>
