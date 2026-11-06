@@ -44,6 +44,8 @@ declare global {
   interface Window {
     webkit?: { messageHandlers?: { ghostline?: { postMessage: (x: unknown) => void } } };
     __ghostlineImportedModelPath?: string;
+    __ghostlineSourceAudioPath?: string;
+    __ghostlineSourceAudioExt?: string;
   }
 }
 
@@ -54,8 +56,9 @@ button.addEventListener("click", async () => {
   let model = $<HTMLInputElement>("model").files?.[0];
   const contentVec = $<HTMLInputElement>("contentvec").files?.[0];
   const rmvpe = $<HTMLInputElement>("rmvpe").files?.[0];
-  const audio = $<HTMLInputElement>("audio").files?.[0];
-  if ((!model && !window.__ghostlineImportedModelPath) || !contentVec || !rmvpe || !audio) {
+  let audio = $<HTMLInputElement>("audio").files?.[0];
+  if ((!model && !window.__ghostlineImportedModelPath) || !contentVec || !rmvpe ||
+      (!audio && !window.__ghostlineSourceAudioPath)) {
     status("Select an RVC v2 .pth/.onnx voice or an imported pack, ContentVec, RMVPE and source audio.");
     return;
   }
@@ -90,6 +93,23 @@ button.addEventListener("click", async () => {
     }
     if (!/\.(pth|onnx)$/i.test(model.name) || [contentVec, rmvpe].some(x => !x.name.toLowerCase().endsWith(".onnx"))) {
       throw new Error("RVC voice must be .pth or .onnx; ContentVec and RMVPE must be .onnx.");
+    }
+    if (!audio) {
+      // The native recorder/importer provides an ephemeral same-origin route.
+      // A file selected in the web picker always overrides this handoff.
+      const ext = window.__ghostlineSourceAudioExt;
+      if (!ext || !["wav", "mp3", "m4a", "caf"].includes(ext)) {
+        throw new Error("Private source audio extension was not approved.");
+      }
+      status("Loading your recorded speech privately from this iPhone...");
+      const response = await fetch(window.__ghostlineSourceAudioPath!, {
+        cache: "no-store", credentials: "omit",
+      });
+      if (!response.ok) {
+        throw new Error("Local audio integrity check failed (" + response.status + ")");
+      }
+      const data = await response.blob();
+      audio = new File([data], "private-recorded-source." + ext, { type: data.type || "application/octet-stream" });
     }
     status("Decoding source audio on your iPhone...");
     const decoded = await prepareInputAudio(audio);
@@ -175,7 +195,8 @@ button:disabled{opacity:.5}audio{width:100%;margin-top:12px}a{color:#d2acff}
 <p id="selected-pack">If opened from your RVC Pack Library, the selected private .pth is loaded after its import checksum is revalidated. Choosing a file here overrides it.</p>
 <label for="contentvec">ContentVec 768-dimension encoder (.onnx)</label><input id="contentvec" type="file" accept=".onnx">
 <label for="rmvpe">RMVPE pitch estimator (.onnx)</label><input id="rmvpe" type="file" accept=".onnx">
-<label for="audio">Source vocal WAV / MP3</label><input id="audio" type="file" accept="audio/*,.wav,.mp3">
+<label for="audio">Source vocal WAV / MP3 (optional when sent from Voice Changer)</label><input id="audio" type="file" accept="audio/*,.wav,.mp3,.m4a,.caf">
+<p>Voice Changer recordings transfer privately and automatically; choosing a file here overrides the handoff.</p>
 <label for="speaker">Speaker ID (model-specific)</label><input id="speaker" type="number" value="0" min="0">
 <label for="pitch">Pitch shift in semitones</label><input id="pitch" type="number" value="0" min="-24" max="24">
 </div>

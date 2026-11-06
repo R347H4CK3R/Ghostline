@@ -59,17 +59,25 @@ struct GhostlineVoiceChangerView: View {
                         Label("Save original recording to Files", systemImage: "square.and.arrow.up")
                     }
                 }
-                Text("Recordings are kept on the iPhone. Save the recording to Files, then select it inside the conversion screen's Source Audio picker.")
+                Text("Recordings stay on the iPhone and transfer privately to the converter. You can override the recording with the converter's Source Audio picker.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("3 • Offline voice conversion") {
                 if let selected {
                     NavigationLink {
-                        GhostlineRVCWebScreen(importedPack: selected)
+                        GhostlineRVCWebScreen(importedPack: selected, sourceAudioURL: recordingURL)
                     } label: {
                         Label("Convert into " + selected.name, systemImage: "waveform.path")
                     }
                     .tint(.purple)
+                    .disabled(recording)
+                    if recording {
+                        Text("Stop recording before opening the converter.")
+                            .font(.caption).foregroundStyle(.orange)
+                    } else if recordingURL != nil {
+                        Text("Your local recording will be handed directly to the converter, with SHA-256 checked. No Files export/re-import required.")
+                            .font(.caption).foregroundStyle(.green)
+                    }
                     Text("The converter needs local ContentVec and RMVPE files. It loads the chosen private model where supported, then accepts your source WAV/MP3. Playback and export appear after a successful conversion.")
                         .font(.caption).foregroundStyle(.secondary)
                 } else {
@@ -100,7 +108,7 @@ struct GhostlineVoiceChangerView: View {
                         .appendingPathComponent("ghostline-source-" + UUID().uuidString + "." + ext)
                     try FileManager.default.copyItem(at: source, to: destination)
                     recordingURL = destination
-                    status = "Source recording imported privately. Export a WAV to Files for the RVC converter."
+                    status = "Source recording imported privately and ready for direct RVC handoff."
                 } catch {
                     status = "Could not import source recording."
                     GhostlineDiagnostics.shared.record("app", "file_import_failed")
@@ -157,6 +165,6 @@ struct GhostlineVoiceChangerView: View {
         recorder?.stop()
         recorder = nil
         recording = false
-        status = "Recording saved locally. Save it to Files, then import in the converter."
+        status = "Recording saved locally and ready for direct RVC handoff."
     }
 }
