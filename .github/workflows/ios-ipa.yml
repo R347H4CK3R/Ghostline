@@ -80,6 +80,28 @@ jobs:
           assert len(ids)==len(x["candidates"])
           print("Piper candidate slots:",len(ids), "(none counted as device-verified)")
           PY
+      - name: Guard Piper model-bound device evidence and cached pack staging
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('Ghostline/PiperVoiceLab.swift').read_text()
+          required=[
+              'piper.voice.lab.decodedPCM.v3',
+              'checkpoint.modelSHA256 == fingerprints.0',
+              'checkpoint.configSHA256 == fingerprints.1',
+              'validatePack(at: staging)',
+              'fm.moveItem(at: staging, to: modelDir)',
+              'fm.moveItem(at: backup, to: modelDir)',
+              '"model_sha256": modelSHA256',
+              '"config_sha256": configSHA256',
+              '"airplane_mode_confirmed": false',
+              '"distinct_voice_listening_confirmed": false'
+          ]
+          assert all(item in s for item in required), 'Piper cache/evidence guard missing'
+          assert s.index('validatePack(at: staging)') < s.index('fm.moveItem(at: staging, to: modelDir)')
+          assert 'piper.voice.lab.decodedPCM.v2"' not in s, 'Do not reintroduce legacy unbound checkpoints'
+          print('Piper cached model fingerprints, staging and unverified evidence contracts present')
+          PY
       - name: Build arm64 iOS app
         run: |
           set -o pipefail

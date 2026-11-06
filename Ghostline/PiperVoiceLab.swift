@@ -48,8 +48,16 @@ final class PiperVoiceLab: ObservableObject {
     private let registry = PiperRegistry.load()
     private var player: PiperPlayer?
     private var avPlayer: AVAudioPlayer?
+    private struct Checkpoint: Codable {
+        let modelSHA256: String
+        let configSHA256: String
+        var decodedPCMHashes: [Int: String]
+    }
     private var tested: [Int: String] = [:]
-    private let key = "piper.voice.lab.decodedPCM.v2"
+    // Old v2 candidate hashes had no model binding and are deliberately not promoted.
+    private let key = "piper.voice.lab.decodedPCM.v3"
+    private var modelSHA256: String?
+    private var configSHA256: String?
     private let batchPhrase = "A quick silver fox crossed the quiet valley."
     private var model: PiperRegistry.Model? {
         registry?.models.first { $0.model_id == Self.featuredModelID }
@@ -71,16 +79,63 @@ final class PiperVoiceLab: ObservableObject {
         return count
     }
 
-    var speakerCount: Int { configSpeakerCount ?? 0 }
+    var speakerCount: Int { modelReady ? (configSpeakerCount ?? 0) : 0 }
 
     init() {
-        if let saved = UserDefaults.standard.data(forKey: key),
-           let v = try? JSONDecoder().decode([Int: String].self, from: saved) {
-            tested = v
-            updateCounts()
+        if FileManager.default.fileExists(atPath: modelURL.path) ||
+           FileManager.default.fileExists(atPath: configURL.path) {
+            do {
+                let fingerprints = try validateInstalledPack()
+                modelSHA256 = fingerprints.0
+                configSHA256 = fingerprints.1
+                modelReady = true
+                if let saved = UserDefaults.standard.data(forKey: key),
+                   let checkpoint = try? JSONDecoder().decode(Checkpoint.self, from: saved),
+                   checkpoint.modelSHA256 == fingerprints.0,
+                   checkpoint.configSHA256 == fingerprints.1 {
+                    let count = configSpeakerCount ?? 0
+                    tested = checkpoint.decodedPCMHashes.filter {
+                        $0.key >= 0 && $0.key < count && $0.value.count == 64 &&
+                        $0.value.utf8.allSatisfy { (48...57).contains($0) || (97...102).contains($0) }
+                    }
+                }
+            } catch {
+                status = "Cached Piper files failed integrity validation; re-download is required: \(error.localizedDescription)"
+            }
         }
-        modelReady = FileManager.default.fileExists(atPath: modelURL.path) &&
-            FileManager.default.fileExists(atPath: configURL.path)
+        updateCounts()
+    }
+
+    private func sha256File(_ url: URL) throws -> String {
+        let stream = try FileHandle(forReadingFrom: url)
+        defer { try? stream.close() }
+        var sha = SHA256()
+        while let chunk = try stream.read(upToCount: 1_048_576), !chunk.isEmpty {
+            sha.update(data: chunk)
+        }
+        return sha.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+
+    private func validatePack(at directory: URL) throws -> (String, String) {
+        guard let model else {
+            throw NSError(domain: "GHOSTLINE", code: 110,
+                          userInfo: [NSLocalizedDescriptionKey: "Model registry missing"])
+        }
+        let weight = directory.appendingPathComponent("model.onnx")
+        let config = directory.appendingPathComponent("model.onnx.json")
+        try verifyMD5(weight, expected: model.model_md5)
+        try verifyMD5(config, expected: model.config_md5)
+        guard let data = try? Data(contentsOf: config),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let count = json["num_speakers"] as? Int, count > 0 else {
+            throw NSError(domain: "GHOSTLINE", code: 111,
+                          userInfo: [NSLocalizedDescriptionKey: "Speaker configuration invalid"])
+        }
+        return (try sha256File(weight), try sha256File(config))
+    }
+
+    private func validateInstalledPack() throws -> (String, String) {
+        try validatePack(at: modelDir)
     }
 
     private func updateCounts() {
@@ -88,7 +143,10 @@ final class PiperVoiceLab: ObservableObject {
         uniqueHashes = Set(tested.values).count
     }
     private func persist() {
-        if let bytes = try? JSONEncoder().encode(tested) {
+        if let modelSHA256, let configSHA256,
+           let bytes = try? JSONEncoder().encode(Checkpoint(modelSHA256: modelSHA256,
+                                                            configSHA256: configSHA256,
+                                                            decodedPCMHashes: tested)) {
             UserDefaults.standard.set(bytes, forKey: key)
         }
         updateCounts()
@@ -128,26 +186,66 @@ final class PiperVoiceLab: ObservableObject {
         }
         busy = true
         defer { busy = false }
+        let fm = FileManager.default
+        let parent = modelDir.deletingLastPathComponent()
+        let staging = parent.appendingPathComponent("incoming-\(UUID().uuidString)", isDirectory: true)
+        let backup = parent.appendingPathComponent("backup-\(UUID().uuidString)", isDirectory: true)
+        let priorModelHash = modelSHA256
+        let priorConfigHash = configSHA256
         do {
-            try FileManager.default.createDirectory(at: modelDir, withIntermediateDirectories: true)
-            status = "Downloading \(model.model_bytes / 1_000_000) MB Piper model (once)..."
-            try await fetch(model.model_url, to: modelURL, md5: model.model_md5)
-            status = "Downloading speaker configuration..."
-            try await fetch(model.config_url, to: configURL, md5: model.config_md5)
+            try fm.createDirectory(at: staging, withIntermediateDirectories: true)
+            status = "Downloading \(model.model_bytes / 1_000_000) MB Piper model into temporary storage..."
+            try await fetch(model.model_url, to: staging.appendingPathComponent("model.onnx"),
+                            md5: model.model_md5)
+            status = "Downloading and verifying speaker configuration..."
+            try await fetch(model.config_url, to: staging.appendingPathComponent("model.onnx.json"),
+                            md5: model.config_md5)
+            let fingerprints = try validatePack(at: staging)
+            if fm.fileExists(atPath: modelDir.path) {
+                try fm.moveItem(at: modelDir, to: backup)
+            }
+            do {
+                try fm.moveItem(at: staging, to: modelDir)
+            } catch {
+                if fm.fileExists(atPath: backup.path) {
+                    try? fm.moveItem(at: backup, to: modelDir)
+                }
+                throw error
+            }
+            modelSHA256 = fingerprints.0
+            configSHA256 = fingerprints.1
             modelReady = true
             player = nil
-            status = "Verified model files downloaded. Speech can now be generated offline."
+            latestOutput = nil
+            evidenceFile = nil
+            if priorModelHash != fingerprints.0 || priorConfigHash != fingerprints.1 {
+                tested.removeAll()
+                batchStart = 0
+                UserDefaults.standard.removeObject(forKey: key)
+                persist()
+            }
+            if fm.fileExists(atPath: backup.path) { try? fm.removeItem(at: backup) }
+            status = "Both model files verified and installed together. Offline speaker tests may begin."
         } catch {
-            modelReady = false
-            status = "Model download/integrity check failed: \(error.localizedDescription)"
+            try? fm.removeItem(at: staging)
+            if fm.fileExists(atPath: backup.path) && !fm.fileExists(atPath: modelDir.path) {
+                try? fm.moveItem(at: backup, to: modelDir)
+            }
+            modelReady = (try? validateInstalledPack()) != nil
+            status = "Model update failed; any previous intact pack was preserved: \(error.localizedDescription)"
         }
     }
 
     private func ensurePlayer() throws -> PiperPlayer {
         if let player { return player }
-        guard modelReady else {
+        guard modelReady, let modelSHA256, let configSHA256 else {
             throw NSError(domain: "GHOSTLINE", code: 102,
-                          userInfo: [NSLocalizedDescriptionKey: "Model must be downloaded first"])
+                          userInfo: [NSLocalizedDescriptionKey: "Verified model must be downloaded first"])
+        }
+        let current = try validateInstalledPack()
+        guard current.0 == modelSHA256, current.1 == configSHA256 else {
+            throw NSError(domain: "GHOSTLINE", code: 112,
+                          userInfo: [NSLocalizedDescriptionKey: "Installed model changed since device tests"])
         }
         let created = try PiperPlayer(params: .init(modelPath: modelURL.path,
                                                    configPath: configURL.path))
@@ -272,12 +370,27 @@ final class PiperVoiceLab: ObservableObject {
     // Export device test evidence without unique device identifiers.
     // The JSON does not certify airplane mode or listening distinctness.
     func prepareEvidence() {
-        guard !busy, let model, !tested.isEmpty else { return }
+        guard !busy, let model, !tested.isEmpty,
+              let modelSHA256, let configSHA256 else { return }
+        do {
+            let current = try validateInstalledPack()
+            guard current.0 == modelSHA256, current.1 == configSHA256 else {
+                status = "Evidence withheld: cached model or configuration has changed."
+                evidenceFile = nil
+                return
+            }
+        } catch {
+            status = "Evidence withheld: model integrity check failed: \(error.localizedDescription)"
+            evidenceFile = nil
+            return
+        }
         let hashes = Dictionary(uniqueKeysWithValues:
             tested.map { (String($0.key), $0.value) })
         let report: [String: Any] = [
-            "schema_version": 1,
+            "schema_version": 2,
             "test_type": "piper_ios_decoded_pcm",
+            "model_sha256": modelSHA256,
+            "config_sha256": configSHA256,
             "device_category": UIDevice.current.model,
             "ios_version": UIDevice.current.systemVersion,
             "model_id": model.model_id,
@@ -358,9 +471,15 @@ final class PiperVoiceLab: ObservableObject {
         try? FileManager.default.removeItem(at: modelDir)
         modelReady = false
         player = nil
-        tested = [:]
+        avPlayer = nil
+        modelSHA256 = nil
+        configSHA256 = nil
+        tested.removeAll()
+        batchStart = 0
+        latestOutput = nil
         evidenceFile = nil
-        persist()
+        UserDefaults.standard.removeObject(forKey: key)
+        updateCounts()
         status = "Local Piper model and its device-test records cleared."
     }
 }

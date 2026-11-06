@@ -37,3 +37,10 @@ A GitHub Actions macOS build or an unsigned IPA **only** establishes that the ap
 ## Privacy and safe updates
 
 Do not commit private model weights, third-party reference audio, account tokens, device identifiers or user permission letters to the public repository. The private RVC audit export includes entered names and rights notes, so treat it as private information. Use draft experimental PRs and preserve existing download releases until target-device proof is available.
+
+## Experimental Piper cache and evidence hardening (November 5, 2026)
+
+- A downloaded Piper ONNX model and its JSON configuration now enter a private staging directory together. Each file is checked against the upstream registry MD5, the speaker count is validated, and both are SHA-256 fingerprinted **before** replacing the installed directory. A failed transfer should retain an existing intact pack; this rollback behavior still requires target-device testing.
+- At launch, an installed model is **not considered ready** simply because files exist: both checksums and a positive configuration speaker count must validate.
+- Device-test checkpoints are schema `piper.voice.lab.decodedPCM.v3`, bound to the exact ONNX and configuration SHA-256 pair. Pre-existing unbound v2 test counts are deliberately not migrated or considered evidence. Changing the model/config invalidates prior candidate test hashes.
+- Evidence JSON schema version 2 includes `model_sha256` and `config_sha256` alongside decoded PCM hashes. An export is refused when either installed file no longer matches the tested model. Neither this code nor successful CI compilation establishes actual on-device playback, voice distinction, airplane mode, or identity authorization.
