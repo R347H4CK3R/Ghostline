@@ -142,6 +142,22 @@ jobs:
           assert ".ipv4(.loopback)" in src
           print("Offline RVC localhost header framing/CSP wiring source guard passed")
           PY
+      - name: Test private FAISS index header candidate parsing
+        run: |
+          swiftc Ghostline/RVCIndexInspector.swift scripts/test_rvc_index_inspector.swift -o /tmp/ghostline-faiss-header-tests
+          /tmp/ghostline-faiss-header-tests
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('Ghostline/RVCPackLibrary.swift').read_text()
+          assert 'GhostlineRVCIndexInspector.inspect(target)' in s
+          assert '"index_retrieval_inference_supported": false' in s
+          assert 'ForEach(visiblePacks)' in s
+          assert 'packSearch' in s and 'packCategory' in s
+          w=Path('Ghostline/OfflineRVCWeb.swift').read_text()
+          assert '.index files are never served' in w
+          assert 'privateModel = nil // revoke selected private model on converter teardown' in w
+          print('Index candidates are header-probed and searchable; index retrieval inference remains disabled.')
+          PY
       - name: Guard target-device RVC playback evidence semantics
         run: |
           python3 - <<'PY'

@@ -117,6 +117,7 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
         startCompleted = false
         let previous = listener
         listener = nil
+        privateModel = nil // revoke selected private model on converter teardown
         url = nil
         stateLock.unlock()
         previous?.cancel()
