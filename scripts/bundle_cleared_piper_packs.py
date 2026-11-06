@@ -49,6 +49,11 @@ def main():
     assert len(held_ids) == len(quarantine["models"])
     assert all(item["rights_review"]["not_for_distribution"] is True for item in quarantine["models"])
     assert held_ids.isdisjoint({item["id"] for item in catalog["models"]}), "Provenance hold leaked into distribution manifest"
+    approved_derivatives = {
+        "en_US-john-medium": ("en_US-kristin-medium", "Finetuned from Kristin (above)"),
+        "nl_NL-alex-medium": ("nl_BE-rdh-medium", "Finetuned from Dutch rdh voice"),
+    }
+    by_id = {pack["id"]: pack for pack in catalog["models"]}
     names = set()
     root.mkdir(parents=True, exist_ok=True)
     for pack in catalog["models"]:
@@ -73,7 +78,23 @@ def main():
         assert review["device_generation_verified"] is False, key
         assert pack["dataset_license"] in ("public domain", "CC0", "CC0 1.0 Universal")
         assert "MIT" in pack["license"]
-        assert "Trained from scratch" in pack["training_lineage"]
+        derivative = approved_derivatives.get(key)
+        if derivative:
+            parent_id, phrase = derivative
+            assert pack.get("parent_model_id") == parent_id
+            assert pack.get("parent_lineage_card_phrase") == phrase
+            assert "Finetuned from" in pack["training_lineage"]
+            assert parent_id in by_id and parent_id != key
+            parent = by_id[parent_id]
+            assert "Trained from scratch" in parent["training_lineage"]
+            assert parent.get("parent_model_id") is None
+            assert parent["rights_review"]["decision"] == "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY"
+            assert pack["rights_review"]["parent_model_id"] == parent_id
+            assert pack["rights_review"]["parent_model_source_url"] == parent["model_card_url"]
+        else:
+            assert pack.get("parent_model_id") is None
+            assert pack.get("parent_lineage_card_phrase") is None
+            assert "Trained from scratch" in pack["training_lineage"]
         assert pack["speaker_ids"] and pack["speaker_ids"] == list(range(len(pack["speaker_ids"])))
         folder = root / key
         folder.mkdir(exist_ok=True)
@@ -117,8 +138,9 @@ def main():
         if config.get("speaker_id_map"):
             assert sorted(config["speaker_id_map"].values()) == pack["speaker_ids"]
         card = (folder / "MODEL_CARD").read_text(encoding="utf-8")
+        expected_lineage = derivative[1].lower() if derivative else "trained from scratch"
         if (pack["dataset_license"].lower() not in card.lower()
-                or "trained from scratch" not in card.lower()):
+                or expected_lineage not in card.lower()):
             raise RuntimeError(f"License/lineage verification failed: {key}")
         print(f"{key}: model_sha256={pack['files'][0]['sha256']} speakerIDs={len(pack['speaker_ids'])} UNVERIFIED")
     all_models = ", ".join(pack["id"] for pack in catalog["models"])
@@ -126,8 +148,9 @@ def main():
               f"Models: {all_models}.\n"
               "Model repository: rhasspy/piper-voices (MIT), pinned revision "
               f"{revision}.\n"
-              "Each bundled MODEL_CARD reports public-domain/CC0 recordings and"
-              " from-scratch training. The Piper runtime has separate GPL obligations.\n"
+              "Each bundled MODEL_CARD reports public-domain/CC0 data and either"
+              " from-scratch training or an explicitly approved source-cleared parent."
+              " Piper runtime GPL obligations remain separate.\n"
               "These are synthetic voices, NOT authenticated movie, singer, actor,"
               " game, celebrity or character clones. Device offline audio and human"
               " listening have NOT been verified.\n"

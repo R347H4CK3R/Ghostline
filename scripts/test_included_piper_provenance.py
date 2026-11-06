@@ -21,6 +21,16 @@ for p in catalog["models"]:
         assert f["size"]>0 and re.fullmatch(r"[0-9a-f]{64}",f["sha256"])
         assert f["upstream_path"] and ".." not in f["upstream_path"]
 by_id={p["id"]:p for p in catalog["models"]}
+for derivative, parent, phrase in (
+    ("en_US-john-medium", "en_US-kristin-medium", "Finetuned from Kristin (above)"),
+    ("nl_NL-alex-medium", "nl_BE-rdh-medium", "Finetuned from Dutch rdh voice"),
+):
+    p=by_id[derivative]
+    assert p["parent_model_id"] == parent and p["parent_lineage_card_phrase"] == phrase
+    assert "Finetuned from" in p["training_lineage"]
+    assert "Trained from scratch" in by_id[parent]["training_lineage"]
+    assert p["rights_review"]["parent_model_source_url"] == by_id[parent]["model_card_url"]
+    assert p["device_status"] == "UNVERIFIED_CANDIDATE"
 assert by_id["nl_BE-rdh-medium"]["dataset_license"]=="CC0 1.0 Universal"
 assert by_id["nl_BE-rdh-x_low"]["dataset_license"]=="CC0 1.0 Universal"
 assert by_id["nl_BE-rdh-x_low"]["dataset_source_url"]==by_id["nl_BE-rdh-medium"]["dataset_source_url"]
