@@ -108,6 +108,8 @@ jobs:
           test -f build/rvc-web-dist/index.html
           test -f build/rvc-web-dist/inference.worker.js
           test -n "$(find build/rvc-web-dist/onnx-wasm -name '*.wasm' -print -quit)"
+      - name: Audit RVC WebAssembly asset integrity and local entrypoint
+        run: python3 scripts/audit_offline_rvc_bundle.py build/rvc-web-dist --write
       - name: Build arm64 iOS app
         run: |
           set -o pipefail
@@ -117,6 +119,7 @@ jobs:
           mkdir -p Payload
           mkdir -p build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb
           cp -R build/rvc-web-dist/. build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb/
+          python3 scripts/audit_offline_rvc_bundle.py build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb --verify
           cp -R build/Build/Products/Release-iphoneos/GHOSTLINE.app Payload/
           /usr/bin/zip -qry GHOSTLINE-unsigned.ipa Payload
           unzip -t GHOSTLINE-unsigned.ipa
