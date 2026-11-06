@@ -19,7 +19,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           a=Path('Ghostline/App.swift').read_text()
-          assert all(k in a for k in ['@main struct GhostlineApp','AVAudioRecorder','Verified authentic voices • 0','CloneStudioView'])
+          assert all(k in a for k in ['@main struct GhostlineApp','AVAudioRecorder','GhostlineLibraryView','RVCPackLibraryView','CloneStudioView'])
           print('Source checks passed')
           PY
       - name: Enforce verified authentic voice inventory
