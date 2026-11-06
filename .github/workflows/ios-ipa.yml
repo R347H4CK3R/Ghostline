@@ -62,6 +62,10 @@ jobs:
           PY
       - name: Install project generator
         run: brew install xcodegen
+      - name: Prepare approved Ghostline icon asset catalog
+        run: |
+          python3 scripts/prepare_ghostline_icon.py
+          test -f Ghostline/Assets.xcassets/AppIcon.appiconset/Icon1024.png
       - name: Generate Xcode project
         run: xcodegen generate
       - name: Prepare Piper's upstream source submodule
