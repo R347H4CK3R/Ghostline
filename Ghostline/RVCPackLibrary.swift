@@ -40,7 +40,7 @@ final class RVCPackLibrary: ObservableObject {
         }
     }
 
-    private func digest(_ source: URL) throws -> String {
+    nonisolated private static func digest(_ source: URL) throws -> String {
         let stream = try FileHandle(forReadingFrom: source)
         defer { try? stream.close() }
         var hash = SHA256()
@@ -51,28 +51,30 @@ final class RVCPackLibrary: ObservableObject {
         return hash.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
-    private func fileBytes(_ url: URL) throws -> UInt64 {
+    nonisolated private static func fileBytes(_ url: URL) throws -> UInt64 {
         let attrs = try FileManager.default.attributesOfItem(atPath: url.path)
         return (attrs[.size] as? NSNumber)?.uint64Value ?? 0
     }
 
-    private func copyFromPicker(_ source: URL, to target: URL, allowedExtension: String) throws -> String {
+    nonisolated private static func copyFromPicker(_ source: URL, to target: URL, allowedExtension: String) throws -> String {
         guard source.pathExtension.lowercased() == allowedExtension else {
             throw NSError(domain: "GHOSTLINE.RVC", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: "Expected a .\(allowedExtension) file"])
         }
         let permitted = source.startAccessingSecurityScopedResource()
         defer { if permitted { source.stopAccessingSecurityScopedResource() } }
-        let size = try fileBytes(source)
+        let size = try Self.fileBytes(source)
         guard size > 1024, size <= 1_000_000_000 else {
             throw NSError(domain: "GHOSTLINE.RVC", code: 2,
                           userInfo: [NSLocalizedDescriptionKey: "File is empty or exceeds the 1 GB import limit"])
         }
         try FileManager.default.copyItem(at: source, to: target)
-        return try digest(target)
+        return try Self.digest(target)
     }
 
-    func importWeights(_ source: URL, name: String, category: String, rights: String) {
+    // Copy/hash large imported checkpoints away from MainActor. A 1 GB model
+    // must not block navigation, progress text, or iOS watchdog deadlines.
+    func importWeights(_ source: URL, name: String, category: String, rights: String) async {
         guard !busy else { return }
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let authorization = rights.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -81,13 +83,16 @@ final class RVCPackLibrary: ObservableObject {
             return
         }
         busy = true
+        status = "Copying and SHA-256 hashing private .pth file off the UI thread..."
         defer { busy = false }
         let id = UUID()
         let filename = id.uuidString + ".pth"
         let target = root.appendingPathComponent(filename)
         do {
             try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-            let checksum = try copyFromPicker(source, to: target, allowedExtension: "pth")
+            let checksum = try await Task.detached(priority: .userInitiated) {
+                try Self.copyFromPicker(source, to: target, allowedExtension: "pth")
+            }.value
             let entry = RVCPackRecord(id: id, name: title, category: category,
                                       rightsNote: authorization, weightFile: filename,
                                       weightSHA256: checksum, indexFile: nil,
@@ -110,18 +115,21 @@ final class RVCPackLibrary: ObservableObject {
 
     // Never overwrite the existing retrieval index until its replacement has
     // been copied, hashed and atomically committed to the catalog.
-    func attachIndex(_ source: URL, for packID: UUID) {
+    func attachIndex(_ source: URL, for packID: UUID) async {
         guard !busy, let idx = packs.firstIndex(where: { $0.id == packID }) else { return }
         busy = true
+        status = "Copying, hashing and inspecting the .index off the UI thread..."
         defer { busy = false }
         let previous = packs[idx]
         let filename = packID.uuidString + "-" + UUID().uuidString + ".index"
         let target = root.appendingPathComponent(filename)
         do {
-            let checksum = try copyFromPicker(source, to: target, allowedExtension: "index")
-            // Fail closed for accidental renames, truncated headers and unknown
-            // binary types. This is only a header probe, not FAISS loading.
-            let metadata = try GhostlineRVCIndexInspector.inspect(target)
+            // Header-only inspection stays bounded and runs on the worker too.
+            let (checksum, metadata) = try await Task.detached(priority: .userInitiated) {
+                let checksum = try Self.copyFromPicker(source, to: target, allowedExtension: "index")
+                let header = try GhostlineRVCIndexInspector.inspect(target)
+                return (checksum, header)
+            }.value
             packs[idx].indexFile = filename
             packs[idx].indexSHA256 = checksum
             packs[idx].indexFamily = metadata.family
@@ -147,25 +155,33 @@ final class RVCPackLibrary: ObservableObject {
 
     // JSON contains metadata and checksums, never checkpoint bytes or raw
     // audio. Consent and identity evidence require independent human review.
-    func audit(_ pack: RVCPackRecord) {
+    func audit(_ pack: RVCPackRecord) async {
         guard !busy else { return }
         busy = true
+        status = "Auditing imported model/index checksums without blocking the library UI..."
         defer { busy = false }
         auditReport = nil
+        let weightURL = root.appendingPathComponent(pack.weightFile)
+        let expectedWeight = pack.weightSHA256
+        let linkedIndexURL = pack.indexFile.map { root.appendingPathComponent($0) }
+        let expectedIndex = pack.indexSHA256
         do {
-            let currentWeightSHA = try digest(root.appendingPathComponent(pack.weightFile))
-            let weightMatches = currentWeightSHA == pack.weightSHA256
-            var indexMatches: Bool? = nil
-            if let indexFile = pack.indexFile {
-                guard let expected = pack.indexSHA256 else {
-                    throw NSError(domain: "GHOSTLINE.RVC", code: 3,
-                                  userInfo: [NSLocalizedDescriptionKey: "Retrieval index has no recorded checksum"])
+            // Capture only Sendable URLs and strings. Never pass the mutable
+            // @MainActor catalog record or view model into a detached task.
+            let (weightMatches, indexMatches, indexMetadata) = try await Task.detached(priority: .userInitiated) {
+                let weightMatches = try Self.digest(weightURL) == expectedWeight
+                var indexMatches: Bool? = nil
+                var metadata: GhostlineRVCIndexInspector.Header? = nil
+                if let file = linkedIndexURL {
+                    guard let expected = expectedIndex else {
+                        throw NSError(domain: "GHOSTLINE.RVC", code: 3,
+                                      userInfo: [NSLocalizedDescriptionKey: "Retrieval index has no recorded checksum"])
+                    }
+                    indexMatches = try Self.digest(file) == expected
+                    metadata = try GhostlineRVCIndexInspector.inspect(file)
                 }
-                indexMatches = try digest(root.appendingPathComponent(indexFile)) == expected
-            }
-            let indexMetadata: GhostlineRVCIndexInspector.Header? = try pack.indexFile.map {
-                try GhostlineRVCIndexInspector.inspect(root.appendingPathComponent($0))
-            }
+                return (weightMatches, indexMatches, metadata)
+            }.value
             let metadataMatches = indexMetadata.map {
                 (pack.indexFamily == nil || pack.indexFamily == $0.family) &&
                 (pack.indexDimension == nil || pack.indexDimension == $0.dimension) &&
@@ -293,7 +309,7 @@ struct RVCPackLibraryView: View {
                             .font(.caption)
                         HStack {
                             Button("Attach .index") { indexPackID = pack.id; importIndex = true }
-                            Button("Audit SHA-256") { library.audit(pack) }
+                            Button("Audit SHA-256") { Task { await library.audit(pack) } }
                             Spacer()
                             Button("Delete", role: .destructive) { library.delete(pack) }
                         }.buttonStyle(.borderless)
@@ -331,12 +347,12 @@ struct RVCPackLibraryView: View {
         }
         .fileImporter(isPresented: $importWeights, allowedContentTypes: [.data]) { result in
             if case .success(let url) = result {
-                library.importWeights(url, name: name, category: category, rights: rights)
+                Task { await library.importWeights(url, name: name, category: category, rights: rights) }
             }
         }
         .fileImporter(isPresented: $importIndex, allowedContentTypes: [.data]) { result in
             if case .success(let url) = result, let pack = indexPackID {
-                library.attachIndex(url, for: pack)
+                Task { await library.attachIndex(url, for: pack) }
             }
         }
     }
