@@ -13,6 +13,10 @@ struct RVCPackRecord: Identifiable, Codable {
     var weightSHA256: String
     var indexFile: String?
     var indexSHA256: String?
+    // Header-only FAISS metadata; nil on legacy catalog entries.
+    var indexFamily: String?
+    var indexDimension: Int?
+    var indexVectorCount: Int64?
     var createdAt: Date
 }
 
@@ -87,7 +91,9 @@ final class RVCPackLibrary: ObservableObject {
             let entry = RVCPackRecord(id: id, name: title, category: category,
                                       rightsNote: authorization, weightFile: filename,
                                       weightSHA256: checksum, indexFile: nil,
-                                      indexSHA256: nil, createdAt: Date())
+                                      indexSHA256: nil, indexFamily: nil,
+                                      indexDimension: nil, indexVectorCount: nil,
+                                      createdAt: Date())
             packs.append(entry)
             do {
                 try saveIndex()
@@ -113,8 +119,14 @@ final class RVCPackLibrary: ObservableObject {
         let target = root.appendingPathComponent(filename)
         do {
             let checksum = try copyFromPicker(source, to: target, allowedExtension: "index")
+            // Fail closed for accidental renames, truncated headers and unknown
+            // binary types. This is only a header probe, not FAISS loading.
+            let metadata = try GhostlineRVCIndexInspector.inspect(target)
             packs[idx].indexFile = filename
             packs[idx].indexSHA256 = checksum
+            packs[idx].indexFamily = metadata.family
+            packs[idx].indexDimension = metadata.dimension
+            packs[idx].indexVectorCount = metadata.vectorCount
             do {
                 try saveIndex()
             } catch {
@@ -125,7 +137,7 @@ final class RVCPackLibrary: ObservableObject {
                 try? FileManager.default.removeItem(at: root.appendingPathComponent(old))
             }
             auditReport = nil
-            status = "Retrieval index saved with SHA-256. Conversion and iPhone inference remain unverified."
+            status = "FAISS \(metadata.family), \(metadata.dimension)-dim, \(metadata.vectorCount) vectors: candidate header recognized and SHA-256 saved. Retrieval inference remains unavailable."
         } catch {
             packs[idx] = previous
             try? FileManager.default.removeItem(at: target)
@@ -151,6 +163,14 @@ final class RVCPackLibrary: ObservableObject {
                 }
                 indexMatches = try digest(root.appendingPathComponent(indexFile)) == expected
             }
+            let indexMetadata: GhostlineRVCIndexInspector.Header? = try pack.indexFile.map {
+                try GhostlineRVCIndexInspector.inspect(root.appendingPathComponent($0))
+            }
+            let metadataMatches = indexMetadata.map {
+                (pack.indexFamily == nil || pack.indexFamily == $0.family) &&
+                (pack.indexDimension == nil || pack.indexDimension == $0.dimension) &&
+                (pack.indexVectorCount == nil || pack.indexVectorCount == $0.vectorCount)
+            }
             let report: [String: Any] = [
                 "schema_version": 1,
                 "record_type": "private_rvc_candidate_file_audit",
@@ -162,6 +182,12 @@ final class RVCPackLibrary: ObservableObject {
                 "model_hash_matches": weightMatches,
                 "index_sha256": pack.indexSHA256 ?? "",
                 "index_hash_matches": indexMatches as Any? ?? NSNull(),
+                "index_faiss_header_recognized": indexMetadata != nil,
+                "index_header_matches_saved_metadata": metadataMatches as Any? ?? NSNull(),
+                "index_family": indexMetadata?.family ?? "",
+                "index_dimension": indexMetadata?.dimension as Any? ?? NSNull(),
+                "index_vector_count": indexMetadata?.vectorCount as Any? ?? NSNull(),
+                "index_retrieval_inference_supported": false,
                 "model_inference_on_iphone_verified": false,
                 "voice_identity_verified": false,
                 "voice_rights_independently_verified": false,
@@ -173,9 +199,9 @@ final class RVCPackLibrary: ObservableObject {
                 .appendingPathComponent("ghostline-private-rvc-audit-" + pack.id.uuidString + ".json")
             try bytes.write(to: file, options: .atomic)
             auditReport = file
-            status = weightMatches && indexMatches != false
-                ? "File integrity matches import checksums. This is not proof of authorized voice or working RVC audio."
-                : "INTEGRITY FAILURE: a local RVC file differs from its import checksum."
+            status = weightMatches && indexMatches != false && metadataMatches != false
+                ? "File hashes and candidate FAISS header match. This does not establish usable RVC index retrieval or voice identity."
+                : "INTEGRITY FAILURE: a local RVC file or FAISS header differs from its import audit."
         } catch {
             status = "Integrity audit failed: \(error.localizedDescription)"
         }
@@ -213,8 +239,18 @@ struct RVCPackLibraryView: View {
     @State private var importWeights = false
     @State private var importIndex = false
     @State private var indexPackID: UUID?
+    @State private var packSearch = ""
+    @State private var packCategory = "All"
     @FocusState private var editingMetadata: Bool
     private let categories = ["Original", "Licensed character", "Licensed actor", "Licensed singer", "Licensed animation", "Games", "Other"]
+    // Search/filter the entire private catalog; no artificial item or result cap.
+    private var visiblePacks: [RVCPackRecord] {
+        library.packs.filter { pack in
+            (packCategory == "All" || pack.category == packCategory) &&
+            (packSearch.isEmpty || pack.name.localizedCaseInsensitiveContains(packSearch) ||
+             pack.category.localizedCaseInsensitiveContains(packSearch))
+        }
+    }
 
     var body: some View {
         Form {
@@ -233,18 +269,27 @@ struct RVCPackLibraryView: View {
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                               rights.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || library.busy)
             }
-            Section("Imported candidates • \(library.packs.count)") {
+            Section("Imported candidates • \(visiblePacks.count) of \(library.packs.count)") {
+                TextField("Search private packs", text: $packSearch)
+                    .autocorrectionDisabled()
+                Picker("Filter category", selection: $packCategory) {
+                    Text("All categories").tag("All")
+                    ForEach(Array(Set(categories + library.packs.map(\.category))).sorted(), id: \.self) { category in
+                        Text(category).tag(category)
+                    }
+                }
                 if library.packs.isEmpty {
                     Text("No imported RVC weights. There are no verified RVC voices on this iPhone.")
                         .foregroundStyle(.secondary)
                 }
-                ForEach(library.packs) { pack in
+                ForEach(visiblePacks) { pack in
                     VStack(alignment: .leading, spacing: 5) {
                         Text(pack.name).font(.headline)
                         Text(pack.category + " • Imported, unverified").font(.caption).foregroundStyle(.secondary)
                         Text("SHA-256: " + String(pack.weightSHA256.prefix(16)) + "…")
                             .font(.caption2).monospaced().foregroundStyle(.secondary)
-                        Text(pack.indexFile == nil ? "Retrieval index: not attached" : "Retrieval index: attached")
+                        Text(pack.indexFile == nil ? "Retrieval index: not attached" :
+                             "FAISS candidate: \(pack.indexFamily ?? "legacy/uninspected"), \(pack.indexDimension.map { String($0) } ?? "?") dimensions • retrieval not implemented")
                             .font(.caption)
                         HStack {
                             Button("Attach .index") { indexPackID = pack.id; importIndex = true }

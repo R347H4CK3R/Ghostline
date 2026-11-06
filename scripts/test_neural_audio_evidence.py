@@ -14,6 +14,10 @@ required = (
     "guard replay.play()",
     "func audioPlayerDidFinishPlaying",
     "self.attemptID == attempt",
+    "self.playbackSessionID == session",
+    "func replayGeneratedWAV()",
+    "Generated WAV changed since synthesis",
+    "Replaying the same SHA-256-checked WAV",
     "self.generatedWAV == file",
     "self.playbackCompleted = succeeded",
     "guard playbackCompleted, generatedWAV != nil, !userAttestedListening",
@@ -31,6 +35,9 @@ required = (
 for invariant in required:
     assert invariant in evidence, f"Missing neural evidence contract: {invariant}"
 assert evidence.index("reset()\n        let facts =") < evidence.index("let replay = try AVAudioPlayer")
+assert evidence.index("Self.digest(currentBytes) == receipt.wavSHA256") < evidence.index("let replay = try AVAudioPlayer")
+assert evidence.index("currentFacts.pcmSHA256 == receipt.pcmSHA256") < evidence.index("let replay = try AVAudioPlayer")
+assert "Button(\"Replay WAV • clears listening confirmation\")" in evidence
 assert "func attestListening()" in evidence
 assert "func exportPrivateEvidence()" in evidence
 
