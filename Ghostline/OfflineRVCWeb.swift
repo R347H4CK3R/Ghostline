@@ -124,11 +124,36 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
 
     private func handle(_ connection: NWConnection) {
         connection.start(queue: queue)
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 16_384) { [weak self] data, _, _, error in
-            guard let self else { connection.cancel(); return }
-            guard error == nil, let data, let request = String(data: data, encoding: .utf8),
+        receiveRequest(connection, buffer: GhostlineHTTPHeaderBuffer())
+    }
+
+    /// Network.framework can return a *partial* TCP request even for a tiny
+    /// GET. Do not interpret a fragment as a malformed HTTP request.
+    private func receiveRequest(_ connection: NWConnection, buffer: GhostlineHTTPHeaderBuffer) {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 16_384) { [weak self] chunk, _, complete, error in
+            guard let self, error == nil, let chunk else {
+                connection.cancel()
+                return
+            }
+            var next = buffer
+            switch next.append(chunk, streamEnded: complete) {
+            case .pending:
+                self.receiveRequest(connection, buffer: next)
+            case .ready(let header):
+                self.serveRequest(connection, header: header)
+            case .tooLarge:
+                self.sendError(connection, code: 431, message: "Request Header Fields Too Large")
+            case .invalid:
+                self.sendError(connection, code: 400, message: "Bad Request")
+            }
+        }
+    }
+
+    private func serveRequest(_ connection: NWConnection, header: Data) {
+            guard let request = String(data: header, encoding: .utf8),
                   let firstLine = request.components(separatedBy: "\r\n").first else {
-                connection.cancel(); return
+                connection.cancel()
+                return
             }
             let tokens = firstLine.split(separator: " ")
             guard tokens.count >= 2, tokens[0] == "GET" || tokens[0] == "HEAD" else {
@@ -187,14 +212,18 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
             case "png": mime = "image/png"
             default: mime = "application/octet-stream"
             }
-            let headers = "HTTP/1.1 200 OK\r\nContent-Type: \(mime)\r\nContent-Length: \(size)\r\nConnection: close\r\nCross-Origin-Opener-Policy: same-origin\r\nCross-Origin-Embedder-Policy: require-corp\r\nCross-Origin-Resource-Policy: same-origin\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n\r\n"
+            // WKNavigationDelegate alone does not block fetch(), workers or
+            // subresources. CSP limits *all* WebKit network requests to local
+            // bundled assets and the explicitly selected same-origin model.
+            // unsafe-eval is needed for WebAssembly compilation in WebKit.
+            let csp = GhostlineRVCNetworkPolicy.contentSecurityPolicy
+            let headers = "HTTP/1.1 200 OK\r\nContent-Type: \(mime)\r\nContent-Length: \(size)\r\nConnection: close\r\nContent-Security-Policy: \(csp)\r\nReferrer-Policy: no-referrer\r\nCross-Origin-Opener-Policy: same-origin\r\nCross-Origin-Embedder-Policy: require-corp\r\nCross-Origin-Resource-Policy: same-origin\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n\r\n"
             connection.send(content: Data(headers.utf8), completion: .contentProcessed { sendError in
                 guard sendError == nil else { connection.cancel(); return }
                 if tokens[0] == "HEAD" { connection.cancel(); return }
                 guard let file = try? FileHandle(forReadingFrom: target) else { connection.cancel(); return }
                 self.sendFile(connection, from: file)
             })
-        }
     }
 
     private func sendFile(_ connection: NWConnection, from file: FileHandle) {
