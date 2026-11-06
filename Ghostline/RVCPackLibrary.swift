@@ -252,6 +252,10 @@ struct RVCPackLibraryView: View {
                             Spacer()
                             Button("Delete", role: .destructive) { library.delete(pack) }
                         }.buttonStyle(.borderless)
+                        NavigationLink("Convert with this imported .pth candidate") {
+                            GhostlineRVCWebScreen(importedPack: pack)
+                        }
+                        .font(.subheadline)
                     }
                     .padding(.vertical, 4)
                 }
@@ -262,7 +266,7 @@ struct RVCPackLibraryView: View {
                 NavigationLink("Open experimental RVC converter") {
                     GhostlineRVCWebScreen()
                 }
-                Text("Conversion requires separately selecting a compatible RVC v2 .pth/.onnx voice model, ContentVec ONNX, RMVPE ONNX and source audio. Imported library weights do not automatically load into the converter; .index retrieval is not integrated. A compiled runtime does not prove conversion works on this iPhone.")
+                Text("For an imported pack, use its Convert action to load the private .pth candidate directly through an ephemeral SHA-256-checked localhost route. Supply compatible ContentVec ONNX, RMVPE ONNX and source audio separately. A manually chosen .pth/.onnx can override the imported pack. .index retrieval is still not integrated. This path requires actual iPhone/Strata testing.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Text(library.status).font(.footnote)
                 if let report = library.auditReport {

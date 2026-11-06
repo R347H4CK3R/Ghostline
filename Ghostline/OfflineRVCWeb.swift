@@ -14,7 +14,47 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
     private let queue = DispatchQueue(label: "com.ghostline.rvc.http")
     private var listener: NWListener?
     private let root = Bundle.main.bundleURL.appendingPathComponent("RVCWeb", isDirectory: true)
+    private let privateRoot = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("GHOSTLINE-RVC", isDirectory: true)
+    private struct PrivateModel {
+        let file: URL
+        let sha256: String
+        let route: String
+    }
+    private var privateModel: PrivateModel?
     private(set) var url: URL?
+
+    /// Grants a single in-app converter session a secret, temporary URL for an
+    /// explicitly selected candidate. No catalog directory can be browsed.
+    /// .index files are never served: retrieval inference is not integrated.
+    func allowImportedWeight(_ pack: RVCPackRecord) throws -> String {
+        guard pack.weightFile == pack.id.uuidString + ".pth",
+              pack.weightSHA256.count == 64,
+              pack.weightSHA256.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }) else {
+            throw NSError(domain: "GHOSTLINE.RVC", code: 420,
+                          userInfo: [NSLocalizedDescriptionKey: "Invalid private RVC candidate metadata"])
+        }
+        let file = privateRoot.appendingPathComponent(pack.weightFile)
+        guard FileManager.default.fileExists(atPath: file.path) else {
+            throw NSError(domain: "GHOSTLINE.RVC", code: 421,
+                          userInfo: [NSLocalizedDescriptionKey: "Imported .pth weight file is missing"])
+        }
+        let route = "/private-candidate-" + UUID().uuidString + ".pth"
+        stateLock.lock()
+        privateModel = PrivateModel(file: file, sha256: pack.weightSHA256, route: route)
+        stateLock.unlock()
+        return route
+    }
+
+    private func fileSHA256(_ url: URL) throws -> String {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        var hash = SHA256()
+        while let data = try handle.read(upToCount: 1024 * 1024), !data.isEmpty {
+            hash.update(data: data)
+        }
+        return hash.finalize().map { String(format: "%02x", $0) }.joined()
+    }
 
     func start(ready: @escaping @Sendable (Result<URL, Error>) -> Void) {
         guard FileManager.default.fileExists(atPath: root.appendingPathComponent("index.html").path) else {
@@ -99,6 +139,33 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
                   !path.contains("\0"), !path.split(separator: "/").contains("..") else {
                 self.sendError(connection, code: 400, message: "Bad Request"); return
             }
+            // This private endpoint is deliberately outside the app asset
+            // tree. Access requires an unpredictable URL known only to the
+            // selected same-origin WKWebView, and the saved file must match
+            // its import-time SHA-256 immediately before being served.
+            self.stateLock.lock()
+            let candidate = self.privateModel
+            self.stateLock.unlock()
+            if let candidate, path == candidate.route {
+                guard tokens[0] == "GET" else {
+                    self.sendError(connection, code: 405, message: "Method Not Allowed"); return
+                }
+                guard let attrs = try? FileManager.default.attributesOfItem(atPath: candidate.file.path),
+                      (attrs[.type] as? FileAttributeType) == .typeRegular,
+                      let size = (attrs[.size] as? NSNumber)?.uint64Value,
+                      size > 1024, size <= 1_000_000_000,
+                      (try? self.fileSHA256(candidate.file)) == candidate.sha256 else {
+                    self.sendError(connection, code: 409, message: "Private Model Integrity Failure"); return
+                }
+                let headers = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: \(size)\r\nConnection: close\r\nCross-Origin-Resource-Policy: same-origin\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n\r\n"
+                connection.send(content: Data(headers.utf8), completion: .contentProcessed { sendError in
+                    guard sendError == nil, let file = try? FileHandle(forReadingFrom: candidate.file) else {
+                        connection.cancel(); return
+                    }
+                    self.sendFile(connection, from: file)
+                })
+                return
+            }
             let fileName = path == "/" ? "index.html" : String(path.drop(while: { $0 == "/" }))
             let target = self.root.appendingPathComponent(fileName).standardizedFileURL
             guard target.path.hasPrefix(self.root.standardizedFileURL.path + "/"),
@@ -169,7 +236,13 @@ final class GhostlineOfflineRVCController: ObservableObject {
     @Published var playbackStatus = ""
     private var player: AVAudioPlayer?
     private let server = GhostlineLocalWebServer()
+    private let importedPack: RVCPackRecord?
+    private(set) var importedModelPath: String?
     private var sessionID = UUID()
+
+    init(importedPack: RVCPackRecord? = nil) {
+        self.importedPack = importedPack
+    }
     private var events: [[String: String]] = []
     private var savedWAV: [String: Any]?
 
@@ -196,6 +269,18 @@ final class GhostlineOfflineRVCController: ObservableObject {
         status = "Starting private offline RVC engine..."
         let session = UUID()
         sessionID = session
+        if let importedPack {
+            do {
+                importedModelPath = try server.allowImportedWeight(importedPack)
+                event("private_model_selected", "Candidate weight SHA-256: " + importedPack.weightSHA256)
+            } catch {
+                isStarting = false
+                hasStartError = true
+                status = "Private RVC pack unavailable: " + error.localizedDescription
+                event("private_model_selection_failed", error.localizedDescription)
+                return
+            }
+        }
         event("server_start", "Opening bundled RVC runtime on loopback only")
         server.start { [weak self] result in
             Task { @MainActor [weak self] in
@@ -230,7 +315,9 @@ final class GhostlineOfflineRVCController: ObservableObject {
             "target_device_audio_listening_confirmed": false,
             "voice_identity_verified": false,
             "voice_rights_independently_verified": false,
-            "rvc_index_retrieval_integrated": false
+            "rvc_index_retrieval_integrated": false,
+            "selected_private_rvc_weight_sha256": importedPack?.weightSHA256 as Any? ?? NSNull(),
+            "selected_private_rvc_transfer": importedPack == nil ? "manual_file_picker" : "ephemeral_local_hash_checked"
         ]
         do {
             let bytes = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
@@ -337,7 +424,12 @@ final class GhostlineOfflineRVCController: ObservableObject {
 }
 
 struct GhostlineRVCWebScreen: View {
-    @StateObject private var controller = GhostlineOfflineRVCController()
+    @StateObject private var controller: GhostlineOfflineRVCController
+
+    init(importedPack: RVCPackRecord? = nil) {
+        _controller = StateObject(wrappedValue: GhostlineOfflineRVCController(importedPack: importedPack))
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             if let url = controller.address {
@@ -399,6 +491,14 @@ private struct GhostlineRVCWebView: UIViewRepresentable {
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
         configuration.userContentController.add(context.coordinator, name: "ghostline")
+        if let path = controller.importedModelPath {
+            // Only the unguessable local route is injected; model weights and
+            // identifying labels never cross the script-message bridge.
+            let script = WKUserScript(
+                source: "window.__ghostlineImportedModelPath = '\(path)';",
+                injectionTime: .atDocumentStart, forMainFrameOnly: true)
+            configuration.userContentController.addUserScript(script)
+        }
         let view = WKWebView(frame: .zero, configuration: configuration)
         view.isOpaque = false
         view.backgroundColor = UIColor(red: 0.07, green: 0.05, blue: 0.12, alpha: 1)

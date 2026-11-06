@@ -43,6 +43,7 @@ const status = (message: string): void => {
 declare global {
   interface Window {
     webkit?: { messageHandlers?: { ghostline?: { postMessage: (x: unknown) => void } } };
+    __ghostlineImportedModelPath?: string;
   }
 }
 
@@ -50,21 +51,31 @@ let outputURL: string | null = null;
 const button = $<HTMLButtonElement>("convert");
 button.addEventListener("click", async () => {
   if (button.disabled) return;
-  const model = $<HTMLInputElement>("model").files?.[0];
+  let model = $<HTMLInputElement>("model").files?.[0];
   const contentVec = $<HTMLInputElement>("contentvec").files?.[0];
   const rmvpe = $<HTMLInputElement>("rmvpe").files?.[0];
   const audio = $<HTMLInputElement>("audio").files?.[0];
-  if (!model || !contentVec || !rmvpe || !audio) {
-    status("Select an RVC v2 .pth/.onnx voice, ContentVec, RMVPE and source audio.");
-    return;
-  }
-  if (!/\.(pth|onnx)$/i.test(model.name) || [contentVec, rmvpe].some(x => !x.name.toLowerCase().endsWith(".onnx"))) {
-    status("RVC voice must be .pth or .onnx; ContentVec and RMVPE must be .onnx.");
+  if ((!model && !window.__ghostlineImportedModelPath) || !contentVec || !rmvpe || !audio) {
+    status("Select an RVC v2 .pth/.onnx voice or an imported pack, ContentVec, RMVPE and source audio.");
     return;
   }
   button.disabled = true;
   const time = performance.now();
   try {
+    if (!model) {
+      // Same-origin local URL supplied by the native RVC Pack Library. The
+      // native server checks the stored SHA-256 before releasing any bytes.
+      status("Loading imported private .pth candidate after integrity check...");
+      const response = await fetch(window.__ghostlineImportedModelPath!, {
+        cache: "no-store", credentials: "omit",
+      });
+      if (!response.ok) throw new Error("Private imported model integrity or access failed (" + response.status + ")");
+      const data = await response.blob();
+      model = new File([data], "private-imported-candidate.pth", { type: "application/octet-stream" });
+    }
+    if (!/\.(pth|onnx)$/i.test(model.name) || [contentVec, rmvpe].some(x => !x.name.toLowerCase().endsWith(".onnx"))) {
+      throw new Error("RVC voice must be .pth or .onnx; ContentVec and RMVPE must be .onnx.");
+    }
     status("Decoding source audio on your iPhone...");
     const decoded = await prepareInputAudio(audio);
     const origin = new URL("./", location.href).href;
@@ -145,6 +156,7 @@ button:disabled{opacity:.5}audio{width:100%;margin-top:12px}a{color:#d2acff}
 <div class="card">
 <h2>INPUT MODELS</h2>
 <label for="model">RVC v2 voice (.pth or .onnx)</label><input id="model" type="file" accept=".pth,.onnx">
+<p id="selected-pack">If opened from your RVC Pack Library, the selected private .pth is loaded after its import checksum is revalidated. Choosing a file here overrides it.</p>
 <label for="contentvec">ContentVec 768-dimension encoder (.onnx)</label><input id="contentvec" type="file" accept=".onnx">
 <label for="rmvpe">RMVPE pitch estimator (.onnx)</label><input id="rmvpe" type="file" accept=".onnx">
 <label for="audio">Source vocal WAV / MP3</label><input id="audio" type="file" accept="audio/*,.wav,.mp3">

@@ -149,6 +149,8 @@ jobs:
           assert src.index('userAttestedListening = false', src.index('func receiveAudio')) < src.index('savedWAV = [', src.index('func receiveAudio'))
           print('RVC in-app replay/attestation implementation present; no false verification flags')
           PY
+      - name: Guard private RVC candidate-to-converter bridge
+        run: python3 scripts/test_private_rvc_pack_bridge.py
       - name: Prepare fully offline RVC WebAssembly runtime
         run: |
           python3 scripts/build_offline_rvc_web.py
