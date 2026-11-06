@@ -570,7 +570,7 @@ struct PiperVoiceLabView: View {
                 NavigationLink("Browse included Piper packs • UNVERIFIED") {
                     GhostlineIncludedPiperView()
                 }
-                Text("The current test IPA contains four source-pinned models. This is not a library limit.")
+                Text("Source-pinned bundled candidate models are available without a separate download. There is no library cap.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             Section("Piper LibriTTS-R • expandable speaker test") {
