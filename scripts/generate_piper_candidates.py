@@ -8,6 +8,16 @@ from pathlib import Path
 
 SOURCE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/voices.json"
 ASSETS = "https://huggingface.co/rhasspy/piper-voices/resolve/main/"
+# Published LibriTTS-R ONNX and config are NOT the 2,306-speaker model
+# advertised in current voices.json. Pin their common upstream revision and
+# validate the real config before publishing model metadata.
+LIBRITTS_REV = "e7229f7d33a10e145e109b886d661984201ac3c4"
+LIBRITTS_BASE = ("https://huggingface.co/rhasspy/piper-voices/resolve/"
+                + LIBRITTS_REV
+                + "/en/en_US/libritts_r/medium/en_US-libritts_r-medium.onnx")
+LIBRITTS_MODEL_MD5 = "bb2c2776cffbfd736c7c497f620c0ca6"
+LIBRITTS_CONFIG_MD5 = "c740db18a0dab11b13ce0292ea1196c6"
+
 
 def build():
     with urllib.request.urlopen(SOURCE, timeout=60) as response:
@@ -18,7 +28,23 @@ def build():
     candidates = []
     model_inventory = []
     for key, info in sorted(models.items()):
-        files = info.get("files", {})
+        files = dict(info.get("files", {}))
+        if key == "en_US-libritts_r-medium":
+            with urllib.request.urlopen(LIBRITTS_BASE + ".json", timeout=60) as response:
+                config_bytes = response.read()
+            assert hashlib.md5(config_bytes).hexdigest() == LIBRITTS_CONFIG_MD5
+            config = json.loads(config_bytes)
+            assert config["num_speakers"] == 904
+            assert len(config["speaker_id_map"]) == 904
+            info = dict(info, num_speakers=904,
+                        speaker_id_map=config["speaker_id_map"])
+            for p in list(files):
+                if p.endswith(".onnx"):
+                    files[p] = {"size_bytes": 78_580_914,
+                                "md5_digest": LIBRITTS_MODEL_MD5}
+                elif p.endswith(".onnx.json"):
+                    files[p] = {"size_bytes": len(config_bytes),
+                                "md5_digest": LIBRITTS_CONFIG_MD5}
         model_paths = [p for p in files if p.endswith(".onnx")]
         config_paths = [p for p in files if p.endswith(".onnx.json")]
         if len(model_paths) != 1 or len(config_paths) != 1:
@@ -42,11 +68,12 @@ def build():
             "declared_speakers": num_speakers,
             "candidate_speakers": selected,
             "model_bytes": model_bytes,
-            "model_url": ASSETS + model_path,
-            "config_url": ASSETS + config_path,
+            "model_url": LIBRITTS_BASE if key == "en_US-libritts_r-medium" else ASSETS + model_path,
+            "config_url": LIBRITTS_BASE + ".json" if key == "en_US-libritts_r-medium" else ASSETS + config_path,
             "model_md5": files[model_path].get("md5_digest"),
             "config_md5": files[config_path].get("md5_digest"),
             "license": "REVIEW_MODEL_CARD",
+            "verified_config_revision": LIBRITTS_REV if key == "en_US-libritts_r-medium" else None,
             "model_card_url": ASSETS + next((p for p in files if p.endswith("MODEL_CARD")), ""),
         })
         for speaker_id in range(selected):
