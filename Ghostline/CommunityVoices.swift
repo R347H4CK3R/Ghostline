@@ -43,6 +43,12 @@ private enum CommunitySources {
               source: "https://huggingface.co/kyutai/pocket-tts",
               status: "Community packs not device-verified", formats: "Model-specific voice state",
               requiredAction: "Review terms and use supported local PocketTTS presets"),
+        .init(id: "phoenix-rvc", title: "Phoenix RVC v2 default test voice", engine: "RVC",
+              category: "Creator test model", rights: "MIT model card; voice consent independently unverified",
+              summary: "Creator-published .pth and retrieval .index with pinned SHA-256 fingerprints. Optional in-app download with progress; not preinstalled.",
+              source: "https://huggingface.co/PhoenixStormJr/RVC-V2-default-voice",
+              status: "Unverified on iPhone/Strata", formats: ".pth + .index",
+              requiredAction: "Review model rights, then choose verified download below"),
         .init(id: "rvc", title: "Shadowww original RVC voices", engine: "RVC",
               category: "Original creator voices", rights: "CC BY-NC 4.0; attribution and noncommercial use",
               summary: "Four creator-recorded RVC v2 voices, with downloadable .pth/.index pairs and published SHA-256 hashes. No celebrity or film identity implied.",
@@ -131,6 +137,7 @@ private final class CommunityImportStore: ObservableObject {
             }
         } catch {
             status = "Import failed: \(error.localizedDescription)"
+            GhostlineDiagnostics.shared.record("community", "file_import_failed")
         }
     }
 }
@@ -194,6 +201,17 @@ struct GhostlineCommunityVoicesView: View {
                     .padding(.vertical, 6)
                 }
             }
+            Section("Free creator-distributed RVC downloads") {
+                NavigationLink("Download Phoenix RVC model + index • progress") {
+                    GhostlineRVCDownloadView()
+                }
+                Text("Downloads are opt-in, SHA-256 checked and stored privately. The catalog does not automatically execute third-party weights.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Link("Shadowww RVC v2 voices • CC BY-NC 4.0",
+                     destination: URL(string: "https://huggingface.co/ShadowSH2306/shadowww-voices")!)
+                Link("Official RVC demo voices • research restrictions",
+                     destination: URL(string: "https://huggingface.co/licyk/rvc-model")!)
+            }
             Section("Private file import") {
                 Text("Import only models you are authorized to use. Local imports are checksum-audited candidates; engine compatibility and any licensing or identity permissions remain unverified.")
                     .font(.footnote).foregroundStyle(.secondary)
@@ -240,7 +258,7 @@ struct GhostlineCommunityVoicesView: View {
                 Task { await store.importFile(first, sourceID: sourceID) }
             } else if case .failure(let error) = result {
                 // Dismissal does not change the current source selection.
-                print("Community file picker: \(error.localizedDescription)")
+                GhostlineDiagnostics.shared.record("community", "file_picker_failed")
             }
         }
     }
