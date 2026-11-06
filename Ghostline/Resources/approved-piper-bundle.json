@@ -5,7 +5,7 @@
   "repo_license": "MIT",
   "engine_runtime_license": "GPL-3.0; source/distribution obligations apply",
   "distribution_scope": "experimental unsigned IPA artifact only; not a public release",
-  "validation_note": "10 source-pinned, source-rights-documented Piper candidate packs / 21 source-declared speaker slots; Greek CC0 from-scratch added; Swedish NST withheld for dataset catalogue link reconciliation. Zero iPhone audio, listening or identity verification. No actor, singer, game, TV or celebrity rights implied.",
+  "validation_note": "11 source-pinned, source-rights-documented Piper candidate packs / 22 source-declared speaker slots; compact 16 kHz Flemish CC0 x_low variant added for lower storage/memory testing; Swedish NST withheld for dataset provenance. Zero target-iPhone audio, listening or identity verification. No actor, singer, game, TV or celebrity rights implied.",
   "verified_identity_count": 0,
   "device_verified_audio_count": 0,
   "models": [
@@ -276,6 +276,53 @@
         "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
         "reviewed_at": "2026-11-06",
         "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/nl/nl_BE/rdh/medium/MODEL_CARD",
+        "dataset_evidence_url": "https://github.com/r-dh/dutch-vl-tts",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
+    },
+    {
+      "id": "nl_BE-rdh-x_low",
+      "display_name": "RDH • Flemish Dutch • Compact CC0 (16 kHz)",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "nl_BE",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT model-repository / CC0 1.0 Universal dataset; preserve attribution",
+      "dataset_license": "CC0 1.0 Universal",
+      "dataset_source_url": "https://github.com/r-dh/dutch-vl-tts",
+      "training_lineage": "Trained from scratch on the same CC0 1.0 Universal Dutch corpus as RDH medium; independent x_low model weights.",
+      "runtime_compatibility_note": "Compact 16 kHz x_low Piper variant (~20.6 MB ONNX); intended for reduced iPhone memory and size. Physical iPhone/Strata synthesis not tested.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "CC0 1.0 Universal source corpus and MIT model-repository terms; does not grant celebrity, character, actor or singer imitation rights",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/nl/nl_BE/rdh/x_low/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "nl/nl_BE/rdh/x_low/nl_BE-rdh-x_low.onnx",
+          "size": 20628813,
+          "sha256": "fe43651248219b4e816e47d9708f2812f2a09af99470ed822113f3e913430d52"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "nl/nl_BE/rdh/x_low/nl_BE-rdh-x_low.onnx.json",
+          "size": 4158,
+          "sha256": "15724b7ef0247d566d9c2bac252c1b0b6ec9ceb7ccbb2c0a0d1ed57bf03b4f5d"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "nl/nl_BE/rdh/x_low/MODEL_CARD",
+          "size": 242,
+          "sha256": "93803121905ddba966ad0ea89fdf26b7e34f1f700c0c3bbbd504fdeaede98009"
+        }
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/nl/nl_BE/rdh/x_low/MODEL_CARD",
         "dataset_evidence_url": "https://github.com/r-dh/dutch-vl-tts",
         "identity_permissions_independently_verified": false,
         "device_generation_verified": false
