@@ -213,6 +213,7 @@ struct RVCPackLibraryView: View {
     @State private var importWeights = false
     @State private var importIndex = false
     @State private var indexPackID: UUID?
+    @FocusState private var editingMetadata: Bool
     private let categories = ["Original", "Licensed character", "Licensed actor", "Licensed singer", "Licensed animation", "Games", "Other"]
 
     var body: some View {
@@ -221,11 +222,13 @@ struct RVCPackLibraryView: View {
                 Text("Import RVC .pth model weights and optional .index retrieval files. Imports are local-only and will never be marked functional merely because they exist.")
                     .font(.footnote).foregroundStyle(.secondary)
                 TextField("Voice pack name", text: $name)
+                    .focused($editingMetadata)
                 Picker("Category", selection: $category) {
                     ForEach(categories, id: \.self) { Text($0).tag($0) }
                 }
                 TextField("Source and rights documentation", text: $rights, axis: .vertical)
                     .lineLimit(2...4)
+                    .focused($editingMetadata)
                 Button("Import .pth weights") { importWeights = true }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                               rights.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || library.busy)
@@ -270,6 +273,13 @@ struct RVCPackLibraryView: View {
             }
         }
         .navigationTitle("RVC Pack Library")
+        .scrollDismissesKeyboard(.interactively)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { editingMetadata = false }
+            }
+        }
         .fileImporter(isPresented: $importWeights, allowedContentTypes: [.data]) { result in
             if case .success(let url) = result {
                 library.importWeights(url, name: name, category: category, rights: rights)
