@@ -115,6 +115,11 @@ final class GhostlineCommunityRVCDownloader: ObservableObject {
     /// This only imports checksum-protected CANDIDATES, not verified playable voices.
     func downloadAndImport() async {
         guard !busy else { return }
+        if library.packs.contains(where: { $0.weightSHA256 == model.sha256 }) {
+            phase = "Already installed"
+            status = "This exact RVC model is already imported. Open RVC Packs to use it."
+            return
+        }
         busy = true
         defer { busy = false; task = nil }
         let folder = FileManager.default.temporaryDirectory
