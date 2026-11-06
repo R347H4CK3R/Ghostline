@@ -10,8 +10,8 @@ final class KokoroOfflineStudio: ObservableObject {
     @Published var busy = false
     @Published var status = "Select a language and prepare the free Kokoro CoreML engine."
     @Published var output: URL?
+    let evidence = GhostlineNeuralAudioEvidence()
     private var engine = KokoroAneManager(variant: .english)
-    private var player: AVAudioPlayer?
 
     var voices: [String] {
         switch language {
@@ -19,10 +19,15 @@ final class KokoroOfflineStudio: ObservableObject {
         default: return "af_alloy af_aoede af_bella af_heart af_jessica af_kore af_nicole af_nova af_river af_sarah af_sky am_adam am_echo am_eric am_fenrir am_liam am_michael am_onyx am_puck am_santa bf_alice bf_emma bf_isabella bf_lily bm_daniel bm_fable bm_george bm_lewis ef_dora em_alex em_santa ff_siwis hf_alpha hf_beta hm_omega hm_psi if_sara im_nicola jf_alpha jf_gongitsune jf_nezumi jf_tebukuro jm_kumo pf_dora pm_alex pm_santa zf_xiaobei zf_xiaoni zf_xiaoxiao zf_xiaoyi zm_yunjian zm_yunxi zm_yunxia zm_yunyang".split(separator: " ").map(String.init)
         }
     }
+    func clearOutput() {
+        output = nil
+        evidence.reset()
+    }
     func changeLanguage(_ value: String) {
+        guard !busy else { return }
         language = value
         prepared = false
-        output = nil
+        clearOutput()
         let variant: KokoroAneVariant
         switch value {
         case "Mandarin": variant = .mandarin
@@ -47,20 +52,14 @@ final class KokoroOfflineStudio: ObservableObject {
         guard prepared, !busy else { status = "Prepare the model first."; return }
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { status = "Enter some text."; return }
         busy = true
+        clearOutput()
+        let selectedVoice = voiceID
         defer { busy = false }
         do {
-            status = "Generating \(voiceID) entirely on the iPhone..."
-            let wav = try await engine.synthesize(text: text, voice: voiceID)
-            let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
-            try wav.write(to: file, options: .atomic)
-            let result = try AVAudioPlayer(contentsOf: file)
-            guard result.prepareToPlay() else { status = "Generated WAV not playable."; return }
-            try AVAudioSession.sharedInstance().setCategory(.playback)
-            try AVAudioSession.sharedInstance().setActive(true)
-            player = result
-            output = file
-            _ = result.play()
-            status = "Generated playable offline neural audio with \(voiceID)."
+            status = "Generating Kokoro audio on device for \(selectedVoice)..."
+            let wav = try await engine.synthesize(text: text, voice: selectedVoice)
+            output = try evidence.acceptGeneratedWAV(wav, engine: "Kokoro", voiceID: selectedVoice)
+            status = "Kokoro produced validated WAV samples for \(selectedVoice); offline isolation and identity remain unverified."
         } catch { status = "Generation failed: \(error.localizedDescription)" }
     }
 }
@@ -86,13 +85,13 @@ struct KokoroOfflineView: View {
                 Picker("Voice",selection:$studio.voiceID) {
                     ForEach(studio.voices,id:\.self) { Text($0).tag($0) }
                 }
+                .disabled(studio.busy)
+                .onChange(of: studio.voiceID) { _, _ in studio.clearOutput() }
                 TextEditor(text: $script).frame(minHeight:80)
                 Button("Generate offline speech") { Task { await studio.generate(script) } }
                     .disabled(studio.busy || !studio.prepared)
-                if let output = studio.output {
-                    ShareLink(item: output) { Label("Save or share WAV",systemImage:"square.and.arrow.up") }
-                }
             }
+            GhostlineNeuralEvidencePanel(evidence: studio.evidence)
             Section("Status") {
                 Text(studio.status).font(.footnote)
                 Text("Free Kokoro model, Apache-2.0. Voices are synthetic, not authorized celebrity identity clones.")

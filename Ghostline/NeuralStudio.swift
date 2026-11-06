@@ -40,8 +40,13 @@ final class NeuralStudio: ObservableObject {
     @Published var busy = false
     @Published var generated: URL?
     @Published var installed = false
+    let evidence = GhostlineNeuralAudioEvidence()
     private let pocket = PocketTtsManager()
-    private var playback: AVAudioPlayer?
+
+    func clearOutput() {
+        generated = nil
+        evidence.reset()
+    }
 
     func prepare() async {
         guard !busy else { return }
@@ -60,23 +65,14 @@ final class NeuralStudio: ObservableObject {
         guard installed, !busy else { state = "Prepare the model first."; return }
         guard !words.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty else { state = "Enter text."; return }
         busy = true
+        clearOutput()
+        let selectedVoice = voiceID
         defer { busy = false }
         do {
-            state = "Generating locally with \(voiceID)…"
-            let wav = try await pocket.synthesize(text:words, voice:voiceID)
-            let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
-            try wav.write(to:url, options:.atomic)
-            let player = try AVAudioPlayer(contentsOf:url)
-            guard player.duration > 0.2, player.prepareToPlay() else {
-                state = "Generated output is not decodable."
-                return
-            }
-            try AVAudioSession.sharedInstance().setCategory(.playback)
-            try AVAudioSession.sharedInstance().setActive(true)
-            playback = player
-            generated = url
-            _ = player.play()
-            state = "Decodable WAV generated with \(voiceID)."
+            state = "Generating locally with \(selectedVoice)…"
+            let wav = try await pocket.synthesize(text:words, voice:selectedVoice)
+            generated = try evidence.acceptGeneratedWAV(wav, engine: "PocketTTS", voiceID: selectedVoice)
+            state = "PocketTTS produced a validated WAV for \(selectedVoice); offline isolation and identity remain unverified."
         } catch {
             state = "Neural synthesis failed: \(error.localizedDescription)"
         }
@@ -101,14 +97,14 @@ struct NeuralStudioView: View {
                         Text(v.name + (v.license.contains("NC") ? " (Non-commercial)" : "")).tag(v.id)
                     }
                 }
+                .disabled(neural.busy)
+                .onChange(of: neural.voiceID) { _, _ in neural.clearOutput() }
                 TextEditor(text:$script).frame(minHeight:85)
                 Button("Generate and play offline WAV") {
                     Task { await neural.speak(script) }
                 }.disabled(!neural.installed || neural.busy)
-                if let output = neural.generated {
-                    ShareLink(item:output) { Label("Export WAV",systemImage:"square.and.arrow.up") }
-                }
             }
+            GhostlineNeuralEvidencePanel(evidence: neural.evidence)
             Section("Status") {
                 Text(neural.state).font(.footnote)
                 Text("Voices are synthetic presets, not actor or character clones. Kyutai PocketTTS weights CC BY 4.0, with separate voice-specific licenses.")
