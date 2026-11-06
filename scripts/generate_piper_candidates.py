@@ -8,7 +8,6 @@ from pathlib import Path
 
 SOURCE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/voices.json"
 ASSETS = "https://huggingface.co/rhasspy/piper-voices/resolve/main/"
-MAX_SPEAKERS_PER_MODEL = 32
 
 def build():
     with urllib.request.urlopen(SOURCE, timeout=60) as response:
@@ -30,7 +29,9 @@ def build():
         if not isinstance(model_bytes, int) or model_bytes <= 0:
             continue
         num_speakers = max(1, int(info.get("num_speakers", 1) or 1))
-        selected = min(MAX_SPEAKERS_PER_MODEL, num_speakers)
+        # Index all declared slots. The installed model config determines which
+        # speaker IDs are actually executable; this source registry can differ.
+        selected = num_speakers
         lang = info.get("language", {})
         speaker_map = info.get("speaker_id_map") or {}
         speaker_names = {int(v): k for k, v in speaker_map.items() if isinstance(v, int)}
@@ -69,7 +70,7 @@ def build():
         "description": "Candidate only. Counts do NOT prove distinctiveness, licensing or offline iPhone audio.",
         "model_count": len(model_inventory),
         "speaker_candidate_count": len(candidates),
-        "max_speakers_per_model": MAX_SPEAKERS_PER_MODEL,
+        "speaker_ids_truncated": False,
         "models": model_inventory,
         "candidates": candidates,
     }
@@ -83,7 +84,7 @@ def main():
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"Candidate catalog: {data['model_count']} Piper models, {data['speaker_candidate_count']} candidate speaker slots")
-    print("Verified functional iPhone Piper voices: 0 (no Piper engine integrated yet)")
+    print("Verified offline iPhone identities: 0 (metadata regeneration is not device audio testing)")
     print(f"SHA256 source: {data['source_sha256']}")
 
 if __name__ == "__main__":
