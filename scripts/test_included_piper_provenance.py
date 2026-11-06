@@ -21,6 +21,23 @@ for p in catalog["models"]:
         assert f["size"]>0 and re.fullmatch(r"[0-9a-f]{64}",f["sha256"])
         assert f["upstream_path"] and ".." not in f["upstream_path"]
 by_id={p["id"]:p for p in catalog["models"]}
+cori_high = by_id["en_GB-cori-high"]
+cori_medium = by_id["en_GB-cori-medium"]
+assert cori_high["speaker_ids"] == cori_medium["speaker_ids"] == [0]
+assert "alternate quality of Cori medium, not a new person" in cori_high["training_lineage"]
+assert "Trained from scratch" in cori_high["training_lineage"]
+assert cori_high["dataset_license"] == cori_medium["dataset_license"] == "public domain"
+assert cori_high["device_status"] == "UNVERIFIED_CANDIDATE"
+assert cori_high["claimed_real_person_identity"] is None
+assert cori_high["model_card_url"].endswith("/en/en_GB/cori/high/MODEL_CARD")
+assert next(f for f in cori_high["files"] if f["name"] == "model.onnx") == {
+    "name": "model.onnx",
+    "upstream_path": "en/en_GB/cori/high/en_GB-cori-high.onnx",
+    "size": 114219352,
+    "sha256": "470b4dd634c98f8a4850d7626ffc3dfc90774628eeef6605a6dd8f88f30a5903",
+}
+assert cori_high["rights_review"]["identity_permissions_independently_verified"] is False
+assert cori_high["rights_review"]["device_generation_verified"] is False
 for derivative, parent, phrase in (
     ("en_US-john-medium", "en_US-kristin-medium", "Finetuned from Kristin (above)"),
     ("nl_NL-alex-medium", "nl_BE-rdh-medium", "Finetuned from Dutch rdh voice"),
