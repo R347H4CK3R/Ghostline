@@ -110,6 +110,7 @@ struct GhostlineVoiceChangerView: View {
             }
         }
         .onAppear {
+            library.reloadCatalogFromDisk()
             if selectedID == nil { selectedID = library.packs.first?.id }
         }
         .onDisappear {
