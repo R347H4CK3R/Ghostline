@@ -127,6 +127,21 @@ jobs:
           assert all(x in src for x in ('import CryptoKit','pcmSHA256','NaN or infinite','zero-valued audio samples'))
           print("RVC PCM fingerprint and float-safety guard passed")
           PY
+      - name: Test fragmented localhost requests and offline WebKit CSP
+        run: |
+          swiftc Ghostline/GhostlineHTTPHeaderBuffer.swift scripts/test_rvc_http_header_buffer.swift -o /tmp/ghostline-http-tests
+          /tmp/ghostline-http-tests
+          python3 - <<'PY'
+          from pathlib import Path
+          src = Path("Ghostline/OfflineRVCWeb.swift").read_text()
+          assert "receiveRequest(connection, buffer: GhostlineHTTPHeaderBuffer())" in src
+          assert "switch next.append(chunk, streamEnded: complete)" in src
+          assert "Content-Security-Policy: \\(csp)" in src
+          assert "let csp = GhostlineRVCNetworkPolicy.contentSecurityPolicy" in src
+          assert "Referrer-Policy: no-referrer" in src
+          assert ".ipv4(.loopback)" in src
+          print("Offline RVC localhost header framing/CSP wiring source guard passed")
+          PY
       - name: Guard target-device RVC playback evidence semantics
         run: |
           python3 - <<'PY'
@@ -135,9 +150,10 @@ jobs:
           mandatory=[
               'func playSavedWAV()', 'AVAudioPlayer(contentsOf: file)',
               'guard replay.duration > 0.2, replay.prepareToPlay(), replay.play()',
-              'func attestListening()', 'guard playbackStarted, latestWAV != nil, !userAttestedListening',
+              'func attestListening()', 'guard playbackStarted, playbackCompleted, latestWAV != nil, !userAttestedListening',
               '"device_audio_playback_started": false', '"user_attested_listening": false',
               '"device_audio_playback_started": playbackStarted',
+              '"device_audio_playback_completed": playbackCompleted',
               '"user_attested_listening": userAttestedListening',
               '"pcm_audio_payload_sha256": info.pcmSHA256',
               '"airplane_mode_confirmed": false',
@@ -149,6 +165,8 @@ jobs:
           assert src.index('userAttestedListening = false', src.index('func receiveAudio')) < src.index('savedWAV = [', src.index('func receiveAudio'))
           print('RVC in-app replay/attestation implementation present; no false verification flags')
           PY
+      - name: Guard native RVC playback completion evidence
+        run: python3 scripts/test_rvc_playback_evidence.py
       - name: Guard private RVC candidate-to-converter bridge
         run: python3 scripts/test_private_rvc_pack_bridge.py
       - name: Prepare fully offline RVC WebAssembly runtime

@@ -124,11 +124,36 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
 
     private func handle(_ connection: NWConnection) {
         connection.start(queue: queue)
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 16_384) { [weak self] data, _, _, error in
-            guard let self else { connection.cancel(); return }
-            guard error == nil, let data, let request = String(data: data, encoding: .utf8),
+        receiveRequest(connection, buffer: GhostlineHTTPHeaderBuffer())
+    }
+
+    /// Network.framework can return a *partial* TCP request even for a tiny
+    /// GET. Do not interpret a fragment as a malformed HTTP request.
+    private func receiveRequest(_ connection: NWConnection, buffer: GhostlineHTTPHeaderBuffer) {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 16_384) { [weak self] chunk, _, complete, error in
+            guard let self, error == nil, let chunk else {
+                connection.cancel()
+                return
+            }
+            var next = buffer
+            switch next.append(chunk, streamEnded: complete) {
+            case .pending:
+                self.receiveRequest(connection, buffer: next)
+            case .ready(let header):
+                self.serveRequest(connection, header: header)
+            case .tooLarge:
+                self.sendError(connection, code: 431, message: "Request Header Fields Too Large")
+            case .invalid:
+                self.sendError(connection, code: 400, message: "Bad Request")
+            }
+        }
+    }
+
+    private func serveRequest(_ connection: NWConnection, header: Data) {
+            guard let request = String(data: header, encoding: .utf8),
                   let firstLine = request.components(separatedBy: "\r\n").first else {
-                connection.cancel(); return
+                connection.cancel()
+                return
             }
             let tokens = firstLine.split(separator: " ")
             guard tokens.count >= 2, tokens[0] == "GET" || tokens[0] == "HEAD" else {
@@ -187,14 +212,18 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
             case "png": mime = "image/png"
             default: mime = "application/octet-stream"
             }
-            let headers = "HTTP/1.1 200 OK\r\nContent-Type: \(mime)\r\nContent-Length: \(size)\r\nConnection: close\r\nCross-Origin-Opener-Policy: same-origin\r\nCross-Origin-Embedder-Policy: require-corp\r\nCross-Origin-Resource-Policy: same-origin\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n\r\n"
+            // WKNavigationDelegate alone does not block fetch(), workers or
+            // subresources. CSP limits *all* WebKit network requests to local
+            // bundled assets and the explicitly selected same-origin model.
+            // unsafe-eval is needed for WebAssembly compilation in WebKit.
+            let csp = GhostlineRVCNetworkPolicy.contentSecurityPolicy
+            let headers = "HTTP/1.1 200 OK\r\nContent-Type: \(mime)\r\nContent-Length: \(size)\r\nConnection: close\r\nContent-Security-Policy: \(csp)\r\nReferrer-Policy: no-referrer\r\nCross-Origin-Opener-Policy: same-origin\r\nCross-Origin-Embedder-Policy: require-corp\r\nCross-Origin-Resource-Policy: same-origin\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n\r\n"
             connection.send(content: Data(headers.utf8), completion: .contentProcessed { sendError in
                 guard sendError == nil else { connection.cancel(); return }
                 if tokens[0] == "HEAD" { connection.cancel(); return }
                 guard let file = try? FileHandle(forReadingFrom: target) else { connection.cancel(); return }
                 self.sendFile(connection, from: file)
             })
-        }
     }
 
     private func sendFile(_ connection: NWConnection, from file: FileHandle) {
@@ -221,6 +250,17 @@ final class GhostlineLocalWebServer: @unchecked Sendable {
     }
 }
 
+// A native playback completion callback is different from simply starting audio.
+private final class GhostlineRVCPlaybackObserver: NSObject, AVAudioPlayerDelegate {
+    var onFinished: ((Bool) -> Void)?
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        onFinished?(flag)
+    }
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        onFinished?(false)
+    }
+}
+
 /// The web runtime holds an RVC v2 inference pipeline, not merely an ONNX graph probe.
 /// The user supplies ContentVec, RMVPE, converted RVC weights, and source audio locally.
 @MainActor
@@ -232,9 +272,12 @@ final class GhostlineOfflineRVCController: ObservableObject {
     @Published var isStarting = false
     @Published var diagnosticsURL: URL?
     @Published private(set) var playbackStarted = false
+    @Published private(set) var playbackCompleted = false
     @Published private(set) var userAttestedListening = false
     @Published var playbackStatus = ""
     private var player: AVAudioPlayer?
+    private let playbackObserver = GhostlineRVCPlaybackObserver()
+    private var playbackAttemptID = UUID()
     private let server = GhostlineLocalWebServer()
     private let importedPack: RVCPackRecord?
     private(set) var importedModelPath: String?
@@ -310,7 +353,9 @@ final class GhostlineOfflineRVCController: ObservableObject {
             "events": events,
             "saved_wav": savedWAV as Any? ?? NSNull(),
             "device_audio_playback_started": playbackStarted,
+            "device_audio_playback_completed": playbackCompleted,
             "user_attested_listening": userAttestedListening,
+            "target_device_audio_listening_user_attested": userAttestedListening,
             "airplane_mode_confirmed": false,
             "target_device_audio_listening_confirmed": false,
             "voice_identity_verified": false,
@@ -350,7 +395,10 @@ final class GhostlineOfflineRVCController: ObservableObject {
             // from the preceding WAV, even within the same converter session.
             player?.stop()
             player = nil
+            playbackAttemptID = UUID() // invalidate callbacks from earlier recordings
+            playbackObserver.onFinished = nil
             playbackStarted = false
+            playbackCompleted = false
             userAttestedListening = false
             playbackStatus = "Not played in the native audio player yet."
             let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -370,6 +418,7 @@ final class GhostlineOfflineRVCController: ObservableObject {
                 "wav_structure_validated": true,
                 "nonzero_pcm_bytes": true,
                 "device_audio_playback_started": false,
+                "device_audio_playback_completed": false,
                 "user_attested_listening": false,
                 "speaker_identity_verified": false
             ]
@@ -382,38 +431,71 @@ final class GhostlineOfflineRVCController: ObservableObject {
     }
 
     func playSavedWAV() {
-        guard let file = latestWAV else { return }
+        guard let file = latestWAV, let digest = savedWAV?["sha256"] as? String else { return }
+        player?.stop()
+        player = nil
+        playbackAttemptID = UUID()
+        playbackObserver.onFinished = nil
+        playbackStarted = false
+        playbackCompleted = false
+        userAttestedListening = false
+        savedWAV?["device_audio_playback_started"] = false
+        savedWAV?["device_audio_playback_completed"] = false
+        savedWAV?["user_attested_listening"] = false
+        savedWAV?.removeValue(forKey: "device_audio_playback_completed_utc")
+        let attempt = playbackAttemptID
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
             let replay = try AVAudioPlayer(contentsOf: file)
+            playbackObserver.onFinished = { [weak self] succeeded in
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, self.playbackAttemptID == attempt,
+                          self.latestWAV == file,
+                          (self.savedWAV?["sha256"] as? String) == digest else { return }
+                    if succeeded {
+                        self.playbackCompleted = true
+                        self.savedWAV?["device_audio_playback_completed"] = true
+                        self.savedWAV?["device_audio_playback_completed_utc"] = ISO8601DateFormatter().string(from: Date())
+                        self.event("wav_playback_completed", "Native player finished WAV SHA-256 " + digest)
+                        self.playbackStatus = "Native replay finished. Confirm listening only if you heard the entire clip."
+                    } else {
+                        self.playbackCompleted = false
+                        self.event("wav_playback_incomplete", "Native replay ended with a playback or decoding error")
+                        self.playbackStatus = "Native replay did not complete; listening confirmation unavailable."
+                    }
+                }
+            }
+            replay.delegate = playbackObserver
             guard replay.duration > 0.2, replay.prepareToPlay(), replay.play() else {
                 throw NSError(domain: "GHOSTLINE.RVC", code: 301,
                               userInfo: [NSLocalizedDescriptionKey: "Native playback did not start"])
             }
-            player?.stop()
             player = replay
             playbackStarted = true
             savedWAV?["device_audio_playback_started"] = true
             event("wav_playback_started", "AVAudioPlayer started replay of saved WAV")
-            playbackStatus = "Playing saved WAV. Starting playback does not prove anyone listened."
+            playbackStatus = "Playing saved WAV. Wait until replay finishes to confirm listening."
         } catch {
+            playbackObserver.onFinished = nil
             playbackStatus = "Native WAV playback failed: \(error.localizedDescription)"
             event("wav_playback_failed", error.localizedDescription)
         }
     }
 
     func attestListening() {
-        guard playbackStarted, latestWAV != nil, !userAttestedListening else { return }
+        guard playbackStarted, playbackCompleted, latestWAV != nil, !userAttestedListening else { return }
         userAttestedListening = true
         savedWAV?["user_attested_listening"] = true
-        event("user_attested_listening", "User confirmed hearing the saved WAV on this device")
-        playbackStatus = "Listening acknowledged for this WAV. Identity, rights and offline isolation are still unverified."
+        event("user_attested_listening", "User self-attested hearing completed WAV; not independent identity evidence")
+        playbackStatus = "Listening self-attested. Identity, permission and network isolation remain unverified."
     }
 
     func end() {
         player?.stop()
         player = nil
+        playbackAttemptID = UUID()
+        playbackObserver.onFinished = nil
         sessionID = UUID() // ignore callbacks queued before leaving the screen
         address = nil
         isStarting = false
@@ -450,8 +532,8 @@ struct GhostlineRVCWebScreen: View {
                 if let wav = controller.latestWAV {
                     Button("Play saved WAV on iPhone") { controller.playSavedWAV() }
                         .buttonStyle(.borderedProminent)
-                    if controller.playbackStarted {
-                        Button(controller.userAttestedListening ? "Listening acknowledged" : "I heard this WAV on this device") {
+                    if controller.playbackCompleted {
+                        Button(controller.userAttestedListening ? "Listening acknowledged" : "I heard the full WAV on this device") {
                             controller.attestListening()
                         }
                         .disabled(controller.userAttestedListening)
