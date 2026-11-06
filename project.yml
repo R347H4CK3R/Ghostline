@@ -3,9 +3,6 @@ packages:
   piper-objc:
     url: https://github.com/R347H4CK3R/piper-objc.git
     branch: main
-  onnxruntime:
-    url: https://github.com/microsoft/onnxruntime-swift-package-manager.git
-    exactVersion: 1.24.2
   FluidAudio:
     url: https://github.com/FluidInference/FluidAudio.git
     exactVersion: 0.15.2
@@ -28,8 +25,6 @@ targets:
         product: piper-player
       - package: FluidAudio
         product: FluidAudio
-      - package: onnxruntime
-        product: onnxruntime
     sources:
       - path: Ghostline
     settings:
