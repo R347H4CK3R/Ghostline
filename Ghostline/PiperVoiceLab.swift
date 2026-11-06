@@ -44,6 +44,22 @@ final class PiperVoiceLab: ObservableObject {
     @Published var latestOutput: URL?
     @Published var evidenceFile: URL?
     @Published var cancelRequested = false
+    @Published var downloadProgress: Double = 0
+    @Published var downloadReceived: Int64 = 0
+    @Published var downloadExpected: Int64 = 0
+    @Published var downloadSpeedBytesPerSecond: Double = 0
+    @Published var downloadPhase = ""
+    @Published var downloadInFlight = false
+    private var activeDownloadTask: URLSessionDownloadTask?
+
+    var progressDescription: String {
+        let done = ByteCountFormatter.string(fromByteCount: downloadReceived, countStyle: .file)
+        let total = downloadExpected > 0
+            ? ByteCountFormatter.string(fromByteCount: downloadExpected, countStyle: .file)
+            : "size unknown"
+        let speed = ByteCountFormatter.string(fromByteCount: Int64(downloadSpeedBytesPerSecond), countStyle: .file)
+        return "\(done) / \(total) • \(speed)/s"
+    }
 
     private let registry = PiperRegistry.load()
     private var player: PiperPlayer?
@@ -165,18 +181,70 @@ final class PiperVoiceLab: ObservableObject {
         }
     }
 
-    private func fetch(_ urlString: String, to destination: URL, md5: String?) async throws {
+    // Download to an isolated staging location; URLSession owns the temporary
+    // file only until its completion handler returns. Move it before resuming.
+    // Progress is read from the actual transfer task rather than guessed.
+    private func fetch(_ urlString: String, to destination: URL,
+                       md5: String?, phase: String, expectedBytes: Int64 = 0) async throws {
         guard let url = URL(string: urlString),
-              url.scheme == "https", url.host == "huggingface.co"
-        else { throw URLError(.badURL) }
-        let (temporary, response) = try await URLSession.shared.download(from: url)
-        guard let response = response as? HTTPURLResponse, (200...299).contains(response.statusCode)
-        else { throw URLError(.badServerResponse) }
-        try verifyMD5(temporary, expected: md5)
-        if FileManager.default.fileExists(atPath: destination.path) {
-            try FileManager.default.removeItem(at: destination)
+              url.scheme == "https", url.host == "huggingface.co" else {
+            throw URLError(.badURL)
         }
-        try FileManager.default.moveItem(at: temporary, to: destination)
+        downloadPhase = phase
+        downloadProgress = 0
+        downloadReceived = 0
+        downloadExpected = expectedBytes
+        downloadSpeedBytesPerSecond = 0
+        let start = Date()
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let task = URLSession.shared.downloadTask(with: url) { temporary, response, error in
+                do {
+                    if let error { throw error }
+                    guard let response = response as? HTTPURLResponse,
+                          (200...299).contains(response.statusCode) else {
+                        throw URLError(.badServerResponse)
+                    }
+                    guard let temporary else { throw URLError(.cannotCreateFile) }
+                    if FileManager.default.fileExists(atPath: destination.path) {
+                        try FileManager.default.removeItem(at: destination)
+                    }
+                    try FileManager.default.moveItem(at: temporary, to: destination)
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+            activeDownloadTask = task
+            task.resume()
+            Task { @MainActor [weak self] in
+                while task.state == .running || task.state == .suspended {
+                    guard let self else { return }
+                    self.downloadReceived = max(0, task.countOfBytesReceived)
+                    let reported = task.countOfBytesExpectedToReceive
+                    if reported > 0 { self.downloadExpected = reported }
+                    if self.downloadExpected > 0 {
+                        self.downloadProgress = min(1, Double(self.downloadReceived) /
+                            Double(self.downloadExpected))
+                    }
+                    let seconds = max(0.1, Date().timeIntervalSince(start))
+                    self.downloadSpeedBytesPerSecond = Double(self.downloadReceived) / seconds
+                    try? await Task.sleep(for: .milliseconds(250))
+                }
+            }
+        }
+        activeDownloadTask = nil
+        downloadReceived = Int64((try FileManager.default.attributesOfItem(atPath:
+            destination.path)[.size] as? NSNumber)?.int64Value ?? 0)
+        downloadExpected = downloadReceived
+        downloadProgress = 1
+        downloadSpeedBytesPerSecond = 0
+        downloadPhase = "Checking SHA/MD5 integrity"
+        try verifyMD5(destination, expected: md5)
+    }
+
+    func cancelDownload() {
+        activeDownloadTask?.cancel()
+        status = "Cancelling download; existing installed pack will be retained."
     }
 
     func downloadModel() async {
@@ -185,7 +253,11 @@ final class PiperVoiceLab: ObservableObject {
             return
         }
         busy = true
-        defer { busy = false }
+        downloadInFlight = true
+        defer {
+            busy = false
+            downloadInFlight = false
+        }
         let fm = FileManager.default
         let parent = modelDir.deletingLastPathComponent()
         let staging = parent.appendingPathComponent("incoming-\(UUID().uuidString)", isDirectory: true)
@@ -196,10 +268,12 @@ final class PiperVoiceLab: ObservableObject {
             try fm.createDirectory(at: staging, withIntermediateDirectories: true)
             status = "Downloading \(model.model_bytes / 1_000_000) MB Piper model into temporary storage..."
             try await fetch(model.model_url, to: staging.appendingPathComponent("model.onnx"),
-                            md5: model.model_md5)
+                            md5: model.model_md5, phase: "1 of 3 • Downloading model",
+                            expectedBytes: Int64(model.model_bytes))
             status = "Downloading and verifying speaker configuration..."
             try await fetch(model.config_url, to: staging.appendingPathComponent("model.onnx.json"),
-                            md5: model.config_md5)
+                            md5: model.config_md5, phase: "2 of 3 • Downloading configuration")
+            downloadPhase = "3 of 3 • Validating and installing"
             let fingerprints = try validatePack(at: staging)
             if fm.fileExists(atPath: modelDir.path) {
                 try fm.moveItem(at: modelDir, to: backup)
@@ -215,6 +289,7 @@ final class PiperVoiceLab: ObservableObject {
             modelSHA256 = fingerprints.0
             configSHA256 = fingerprints.1
             modelReady = true
+            downloadPhase = "Complete • Verified for local loading"
             player = nil
             latestOutput = nil
             evidenceFile = nil
@@ -232,6 +307,7 @@ final class PiperVoiceLab: ObservableObject {
                 try? fm.moveItem(at: backup, to: modelDir)
             }
             modelReady = (try? validateInstalledPack()) != nil
+            downloadPhase = "Failed • Existing pack preserved"
             status = "Model update failed; any previous intact pack was preserved: \(error.localizedDescription)"
         }
     }
@@ -504,6 +580,19 @@ struct PiperVoiceLabView: View {
                 Button(lab.modelReady ? "Model downloaded" : "Download free model") {
                     Task { await lab.downloadModel() }
                 }.disabled(lab.busy || lab.modelReady)
+                if lab.downloadInFlight && !lab.downloadPhase.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(lab.downloadPhase).font(.headline)
+                        ProgressView(value: lab.downloadProgress, total: 1)
+                        Text("\(Int(lab.downloadProgress * 100))% • \(lab.progressDescription)")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                        Button("Cancel model download", role: .destructive) {
+                            lab.cancelDownload()
+                        }.disabled(lab.downloadPhase.contains("Validating") ||
+                                    lab.downloadPhase.contains("Checking"))
+                    }.accessibilityElement(children: .combine)
+                }
                 Text("Model config speaker slots: \(lab.speakerCount). None is an identity-verified voice simply because it has an ID.")
                     .font(.caption).foregroundStyle(.secondary)
                 Text("Source: rhasspy/piper-voices. Review each model's MODEL_CARD and license before redistributing. Piper software is GPL-licensed.")

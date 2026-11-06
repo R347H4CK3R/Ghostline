@@ -95,6 +95,8 @@ jobs:
           assert len(ids)==len(x["candidates"])
           print("Piper candidate slots:",len(ids), "(none counted as device-verified)")
           PY
+      - name: Validate Piper download checksum and progress contracts
+        run: python3 scripts/test_piper_progress_integrity.py
       - name: Guard Piper model-bound device evidence and cached pack staging
         run: |
           python3 - <<'PY'

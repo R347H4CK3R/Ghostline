@@ -9,6 +9,17 @@ from pathlib import Path
 SOURCE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/voices.json"
 ASSETS = "https://huggingface.co/rhasspy/piper-voices/resolve/main/"
 
+# The upstream voices.json inventory can lag the actual downloadable ONNX
+# objects. These values were independently downloaded and hashed on 2026-11-06.
+# Do not silently revert a corrected checksum when regenerating the catalog.
+LIVE_ASSET_OVERRIDES = {
+    "en_US-libritts_r-medium": {
+        "model_bytes": 78580914,
+        "model_md5": "bb2c2776cffbfd736c7c497f620c0ca6",
+        "config_md5": "c740db18a0dab11b13ce0292ea1196",
+    }
+}
+
 def build():
     with urllib.request.urlopen(SOURCE, timeout=60) as response:
         raw = response.read()
@@ -49,6 +60,7 @@ def build():
             "license": "REVIEW_MODEL_CARD",
             "model_card_url": ASSETS + next((p for p in files if p.endswith("MODEL_CARD")), ""),
         })
+        model_inventory[-1].update(LIVE_ASSET_OVERRIDES.get(key, {}))
         for speaker_id in range(selected):
             candidates.append({
                 "id": f"piper/{key}/{speaker_id}",
