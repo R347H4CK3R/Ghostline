@@ -34,6 +34,13 @@ The catalog metadata derived from Piper's upstream index currently lists 2,306 `
 
 A GitHub Actions macOS build or an unsigned IPA **only** establishes that the app compiled and packaged. It does not advance a candidate into an audio-verified, offline-verified, or authentic-identity-verified entry.
 
+## Experimental RVC native playback / human evidence (November 5, 2026)
+
+- After a **structurally validated, non-silent** RVC WAV is saved, the experimental converter offers **Play saved WAV on iPhone** through `AVAudioPlayer`. Native playback start is logged separately from mere WAV output and separately from a person's listening.
+- After playback starts, the user may explicitly acknowledge hearing **that particular WAV**. The app resets both flags when a different recording is imported from the web engine. Listening acknowledgement is a user assertion only, **not** perceptual identity validation, proof of an offline/airplane-mode environment, evidence of legal performance rights, or automatic promotion to a verified voice.
+- Private RVC diagnostic JSON schema 2 records `device_audio_playback_started` and `user_attested_listening` and retains `voice_identity_verified: false`, `airplane_mode_confirmed: false`, `voice_rights_independently_verified: false`, and `rvc_index_retrieval_integrated: false`. Each new event invalidates previously generated JSON so exports reflect the most recent state. Do **not** publish these diagnostics without reviewing their contents.
+- Code and CI source gates are preliminary, not physical iPhone/Strata proofs. A successful arm64 build alone cannot prove audio generation or that the user actually heard the WAV.
+
 ## Privacy and safe updates
 
 Do not commit private model weights, third-party reference audio, account tokens, device identifiers or user permission letters to the public repository. The private RVC audit export includes entered names and rights notes, so treat it as private information. Use draft experimental PRs and preserve existing download releases until target-device proof is available.

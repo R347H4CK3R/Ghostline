@@ -121,6 +121,27 @@ jobs:
         run: |
           swiftc Ghostline/RVCWAVInspector.swift scripts/test_rvc_wav_inspector.swift -o /tmp/ghostline-rvc-wav-tests
           /tmp/ghostline-rvc-wav-tests
+      - name: Guard target-device RVC playback evidence semantics
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('Ghostline/OfflineRVCWeb.swift').read_text()
+          mandatory=[
+              'func playSavedWAV()', 'AVAudioPlayer(contentsOf: file)',
+              'guard replay.duration > 0.2, replay.prepareToPlay(), replay.play()',
+              'func attestListening()', 'guard playbackStarted, latestWAV != nil, !userAttestedListening',
+              '"device_audio_playback_started": false', '"user_attested_listening": false',
+              '"device_audio_playback_started": playbackStarted',
+              '"user_attested_listening": userAttestedListening',
+              '"airplane_mode_confirmed": false',
+              '"voice_identity_verified": false',
+              '"voice_rights_independently_verified": false',
+          ]
+          assert all(token in src for token in mandatory), 'RVC listening evidence safety contract changed'
+          assert src.index('playbackStarted = false', src.index('func receiveAudio')) < src.index('savedWAV = [', src.index('func receiveAudio'))
+          assert src.index('userAttestedListening = false', src.index('func receiveAudio')) < src.index('savedWAV = [', src.index('func receiveAudio'))
+          print('RVC in-app replay/attestation implementation present; no false verification flags')
+          PY
       - name: Prepare fully offline RVC WebAssembly runtime
         run: |
           python3 scripts/build_offline_rvc_web.py

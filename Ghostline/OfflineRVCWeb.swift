@@ -1,4 +1,5 @@
 import Foundation
+import AVFoundation
 import CryptoKit
 import Network
 import SwiftUI
@@ -163,12 +164,18 @@ final class GhostlineOfflineRVCController: ObservableObject {
     @Published var hasStartError = false
     @Published var isStarting = false
     @Published var diagnosticsURL: URL?
+    @Published private(set) var playbackStarted = false
+    @Published private(set) var userAttestedListening = false
+    @Published var playbackStatus = ""
+    private var player: AVAudioPlayer?
     private let server = GhostlineLocalWebServer()
     private var sessionID = UUID()
     private var events: [[String: String]] = []
     private var savedWAV: [String: Any]?
 
     private func event(_ kind: String, _ detail: String) {
+        // Never offer a stale JSON export after new events or a new WAV.
+        diagnosticsURL = nil
         if events.count >= 200 { events.removeFirst() }
         events.append([
             "at_utc": ISO8601DateFormatter().string(from: Date()),
@@ -211,12 +218,14 @@ final class GhostlineOfflineRVCController: ObservableObject {
     /// Exportable machine-readable device session events do not certify voice identity.
     func exportDiagnostics() {
         let report: [String: Any] = [
-            "schema_version": 1,
+            "schema_version": 2,
             "record_type": "ghostline_private_rvc_web_session_diagnostic",
             "generated_utc": ISO8601DateFormatter().string(from: Date()),
             "bundle_version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown",
             "events": events,
             "saved_wav": savedWAV as Any? ?? NSNull(),
+            "device_audio_playback_started": playbackStarted,
+            "user_attested_listening": userAttestedListening,
             "airplane_mode_confirmed": false,
             "target_device_audio_listening_confirmed": false,
             "voice_identity_verified": false,
@@ -250,6 +259,13 @@ final class GhostlineOfflineRVCController: ObservableObject {
         }
         do {
             let info = try GhostlineWAVInspector.inspect(decoded)
+            // A newly generated recording must never inherit listening evidence
+            // from the preceding WAV, even within the same converter session.
+            player?.stop()
+            player = nil
+            playbackStarted = false
+            userAttestedListening = false
+            playbackStatus = "Not played in the native audio player yet."
             let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
                 .appendingPathComponent("GHOSTLINE-Exports", isDirectory: true)
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -264,7 +280,9 @@ final class GhostlineOfflineRVCController: ObservableObject {
                 "duration_seconds": info.durationSeconds,
                 "wav_structure_validated": true,
                 "nonzero_pcm_bytes": true,
-                "speaker_identity_or_listening_verified": false
+                "device_audio_playback_started": false,
+                "user_attested_listening": false,
+                "speaker_identity_verified": false
             ]
             event("wav_export_saved", "WAV validated and saved; SHA-256: " + digest)
             status = "Offline RVC WAV saved (\(String(format: "%.1f", info.durationSeconds))s, \(info.sampleRate) Hz). Listen to verify quality."
@@ -274,7 +292,39 @@ final class GhostlineOfflineRVCController: ObservableObject {
         }
     }
 
+    func playSavedWAV() {
+        guard let file = latestWAV else { return }
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setActive(true)
+            let replay = try AVAudioPlayer(contentsOf: file)
+            guard replay.duration > 0.2, replay.prepareToPlay(), replay.play() else {
+                throw NSError(domain: "GHOSTLINE.RVC", code: 301,
+                              userInfo: [NSLocalizedDescriptionKey: "Native playback did not start"])
+            }
+            player?.stop()
+            player = replay
+            playbackStarted = true
+            savedWAV?["device_audio_playback_started"] = true
+            event("wav_playback_started", "AVAudioPlayer started replay of saved WAV")
+            playbackStatus = "Playing saved WAV. Starting playback does not prove anyone listened."
+        } catch {
+            playbackStatus = "Native WAV playback failed: \(error.localizedDescription)"
+            event("wav_playback_failed", error.localizedDescription)
+        }
+    }
+
+    func attestListening() {
+        guard playbackStarted, latestWAV != nil, !userAttestedListening else { return }
+        userAttestedListening = true
+        savedWAV?["user_attested_listening"] = true
+        event("user_attested_listening", "User confirmed hearing the saved WAV on this device")
+        playbackStatus = "Listening acknowledged for this WAV. Identity, rights and offline isolation are still unverified."
+    }
+
     func end() {
+        player?.stop()
+        player = nil
         sessionID = UUID() // ignore callbacks queued before leaving the screen
         address = nil
         isStarting = false
@@ -304,6 +354,18 @@ struct GhostlineRVCWebScreen: View {
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 6) {
                 if let wav = controller.latestWAV {
+                    Button("Play saved WAV on iPhone") { controller.playSavedWAV() }
+                        .buttonStyle(.borderedProminent)
+                    if controller.playbackStarted {
+                        Button(controller.userAttestedListening ? "Listening acknowledged" : "I heard this WAV on this device") {
+                            controller.attestListening()
+                        }
+                        .disabled(controller.userAttestedListening)
+                        .buttonStyle(.bordered)
+                    }
+                    if !controller.playbackStatus.isEmpty {
+                        Text(controller.playbackStatus).font(.caption).foregroundStyle(.secondary)
+                    }
                     ShareLink(item: wav) {
                         Label("Share locally generated WAV", systemImage: "square.and.arrow.up")
                             .frame(maxWidth: .infinity)
