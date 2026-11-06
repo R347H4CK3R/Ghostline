@@ -1,0 +1,9 @@
+# Experimental iOS RVC listening-evidence gate (v0.9.4)
+
+This change does not establish functioning offline RVC inference, an authorized identity, or audible output on the target iPhone/Strata. All identity verification counts remain zero.
+
+Native AVAudioPlayer playback now records three separate events: playback initiated, native delegate reported a successful finish, and the user voluntarily attested hearing the complete clip. The listening confirmation control is not displayed before native completion. Failed/aborted playback, new generation, new playback attempts and screen dismissal invalidate old completion callbacks. Completion events are tied to the currently exported WAV SHA-256 and have a UTC timestamp. The export separately records whether playback finished and whether listening was manually self-attested.
+
+This improves evidence integrity but does not independently determine whether sound was audible, identify the voice, prove RVC synthesis, prove physical-device offline isolation or demonstrate permission. The existing independent Airplane Mode and perceptual identity review requirements remain in force. A GitHub Actions compile and static source checks do not count as physical iPhone/Strata testing. No private RVC models, voices or personal recordings are bundled. The .index retrieval mechanism is still not implemented.
+
+Device test: install the experimental IPA privately; use a permitted RVC pack, compatible ContentVec and RMVPE models, and a test recording; generate and save WAV; confirm that the listening acknowledgement stays hidden until native playback actually finishes. Test replay, premature navigation and invalid audio; export the JSON and compare SHA-256 fingerprints. For real offline verification, repeat while Wi-Fi and cellular are both disabled and collect separately reviewed playback/identity evidence. Do not publish unredacted reports or private model files.
