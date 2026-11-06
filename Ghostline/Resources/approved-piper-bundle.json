@@ -5,7 +5,7 @@
   "repo_license": "MIT",
   "engine_runtime_license": "GPL-3.0; source/distribution obligations apply",
   "distribution_scope": "experimental unsigned IPA artifact only; not a public release",
-  "validation_note": "Byte-pinned source metadata and licensing are not evidence of iPhone audio, speaker identity, or off-grid synthesis",
+  "validation_note": "Byte-pinned provenance only. Five source-cleared candidates (including Spanish CarlFM) are NOT evidence of successful offline iPhone audio or distinct speaker identities.",
   "verified_identity_count": 0,
   "device_verified_audio_count": 0,
   "models": [
@@ -154,6 +154,43 @@
           "upstream_path": "en/en_GB/cori/medium/MODEL_CARD",
           "size": 474,
           "sha256": "38d76dfde845837b184668f8bab1c6426ad740b1af0fcebc349037822739e536"
+        }
+      ]
+    },
+    {
+      "id": "es_ES-carlfm-x_low",
+      "display_name": "CarlFM • Spanish (Spain) • Lightweight",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "es_ES",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT-weight-repository / public-domain source dataset; preserve attribution",
+      "dataset_license": "public domain",
+      "training_lineage": "Trained from scratch using public-domain source recordings; original model card does not document a named speaker identity.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Model card identifies a public-domain dataset; no impersonation, celebrity, game, character or named-person voice rights implied",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/es/es_ES/carlfm/x_low/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "es/es_ES/carlfm/x_low/es_ES-carlfm-x_low.onnx",
+          "size": 28130791,
+          "sha256": "d69677323a907cd4963f42b29c20a98b5d6bfa7f3e64df339915e4650c00d125"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "es/es_ES/carlfm/x_low/es_ES-carlfm-x_low.onnx.json",
+          "size": 4159,
+          "sha256": "d9bdfa9ff01eb2bc9e62e7d2593939d1e4c4d8eb7cf75f972731539d12399966"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "es/es_ES/carlfm/x_low/MODEL_CARD",
+          "size": 250,
+          "sha256": "a6e62a3d36c37c7702d877f784001208b952e2bf4d17c72a6b5da442fbefb4b3"
         }
       ]
     }

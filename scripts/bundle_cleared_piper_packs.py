@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare or audit four explicitly sourced public-domain-data Piper test packs.
+"""Prepare or audit explicitly sourced public-domain-data Piper test packs.
 
 No identity voice is attested; these files are bundled only into experimental
 unsigned workflow artifacts. Never publish a release or substitute unknown files.
@@ -47,7 +47,7 @@ def main():
     root.mkdir(parents=True, exist_ok=True)
     for pack in catalog["models"]:
         key = pack["id"]
-        assert re.fullmatch(r"en_(US|GB)-[a-z]+-medium", key), key
+        assert re.fullmatch(r"(?:en_(?:US|GB)-[a-z]+-medium|es_ES-carlfm-x_low)", key), key
         assert key not in names
         names.add(key)
         assert pack["device_status"] == "UNVERIFIED_CANDIDATE"
@@ -62,7 +62,7 @@ def main():
         for item in pack["files"]:
             assert re.fullmatch(r"[a-f0-9]{64}", item["sha256"])
             assert item["size"] > 0
-            assert item["upstream_path"].startswith("en/")
+            assert item["upstream_path"].startswith(("en/", "es/"))
             dst = folder / item["name"]
             if checked_file(dst, item):
                 continue
@@ -93,12 +93,13 @@ def main():
         if "public domain" not in card.lower() or "trained from scratch" not in card.lower():
             raise RuntimeError(f"License/lineage verification failed: {key}")
         print(f"{key}: model_sha256={pack['files'][0]['sha256']} speakerIDs=1 UNVERIFIED")
-    notice = ("GHOSTLINE FOUR OPEN-LICENSE PIPER TEST PACKS — UNVERIFIED\n"
-              "Models: en_US-ljspeech, en_US-kristin, en_US-norman, en_GB-cori (medium).\n"
+    all_models = ", ".join(pack["id"] for pack in catalog["models"])
+    notice = (f"GHOSTLINE {len(catalog['models'])} OPEN-LICENSE PIPER TEST PACKS — UNVERIFIED\n"
+              f"Models: {all_models}.\n"
               "Model repository: rhasspy/piper-voices (MIT), pinned revision "
               f"{revision}.\n"
-              "Each model's bundled MODEL_CARD identifies public-domain source recordings"
-              " and from-scratch training. The Piper runtime has separate GPL obligations.\n"
+              "Each bundled MODEL_CARD reports public-domain source recordings and"
+              " from-scratch training. The Piper runtime has separate GPL obligations.\n"
               "These are synthetic voices, NOT authenticated movie, singer, actor,"
               " game, celebrity or character clones. Device offline audio and human"
               " listening have NOT been verified.\n"
@@ -111,7 +112,7 @@ def main():
     else:
         manifest_path.write_text(json.dumps(catalog, sort_keys=True, indent=2) + "\n")
         notice_path.write_text(notice)
-    print("Four open-license candidate packs, four model configurations; 0 device-verified voices.")
+    print(f"{len(catalog['models'])} open-license candidate packs; 0 device-verified voices.")
 
 
 if __name__ == "__main__":
