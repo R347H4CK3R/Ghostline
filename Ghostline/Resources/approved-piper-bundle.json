@@ -5,7 +5,7 @@
   "repo_license": "MIT",
   "engine_runtime_license": "GPL-3.0; source/distribution obligations apply",
   "distribution_scope": "experimental unsigned IPA artifact only; not a public release",
-  "validation_note": "10 source-pinned synthetic Piper candidate packs; 21 source-declared speaker slots. None are device-audio, listening, or identity verified. Source-reported model/dataset licenses are not permission for identity impersonation.",
+  "validation_note": "10 source-pinned, source-rights-documented Piper candidate packs / 21 source-declared speaker slots; Greek CC0 from-scratch added; Swedish NST withheld for dataset catalogue link reconciliation. Zero iPhone audio, listening or identity verification. No actor, singer, game, TV or celebrity rights implied.",
   "verified_identity_count": 0,
   "device_verified_audio_count": 0,
   "models": [
@@ -44,7 +44,15 @@
           "size": 517,
           "sha256": "fbee1529c89d36b3fe76d7e9f3f832dce17f44900a52d76a9bda735654766b4d"
         }
-      ]
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/ljspeech/medium/MODEL_CARD",
+        "dataset_evidence_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/ljspeech/medium/MODEL_CARD",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
     },
     {
       "id": "en_US-kristin-medium",
@@ -81,7 +89,15 @@
           "size": 479,
           "sha256": "8c181b1d5f7d8152b914faab941fcbe6b8f0495e63e5189d6f27b8c68c8393fc"
         }
-      ]
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/kristin/medium/MODEL_CARD",
+        "dataset_evidence_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/kristin/medium/MODEL_CARD",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
     },
     {
       "id": "en_US-norman-medium",
@@ -118,7 +134,15 @@
           "size": 528,
           "sha256": "60eaf4d10009d1bd4a1aa555d337dae00f60421d72fee415b9139a021e7cb5d0"
         }
-      ]
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/norman/medium/MODEL_CARD",
+        "dataset_evidence_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/norman/medium/MODEL_CARD",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
     },
     {
       "id": "en_GB-cori-medium",
@@ -155,7 +179,15 @@
           "size": 474,
           "sha256": "38d76dfde845837b184668f8bab1c6426ad740b1af0fcebc349037822739e536"
         }
-      ]
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_GB/cori/medium/MODEL_CARD",
+        "dataset_evidence_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_GB/cori/medium/MODEL_CARD",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
     },
     {
       "id": "es_ES-carlfm-x_low",
@@ -192,7 +224,15 @@
           "size": 250,
           "sha256": "a6e62a3d36c37c7702d877f784001208b952e2bf4d17c72a6b5da442fbefb4b3"
         }
-      ]
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/es/es_ES/carlfm/x_low/MODEL_CARD",
+        "dataset_evidence_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/es/es_ES/carlfm/x_low/MODEL_CARD",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
     },
     {
       "id": "nl_BE-rdh-medium",
@@ -231,7 +271,15 @@
           "sha256": "a0ac804376a1b4be5aeba0f982e43380bccd105b84af3477208f8a2b0fb89cc3",
           "size": 244
         }
-      ]
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/nl/nl_BE/rdh/medium/MODEL_CARD",
+        "dataset_evidence_url": "https://github.com/r-dh/dutch-vl-tts",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
     },
     {
       "id": "uk_UA-ukrainian_tts-medium",
@@ -272,7 +320,15 @@
           "sha256": "ce09d0c9d1d90cdc98d1ea8a4ecbdeb5e937d44593876e4194302c5eabbaad9d",
           "size": 267
         }
-      ]
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/uk/uk_UA/ukrainian_tts/medium/MODEL_CARD",
+        "dataset_evidence_url": "https://github.com/OHF-Voice/voice-datasets",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
     },
     {
       "id": "no_NO-nvcc-medium",
@@ -320,7 +376,15 @@
           "size": 268,
           "sha256": "309bb60e631d9c826e862bb0f5732eefd9d2fc4a2ca442b8f93fcf69c78cb3bd"
         }
-      ]
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/no/no_NO/nvcc/medium/MODEL_CARD",
+        "dataset_evidence_url": "https://www.nb.no/sprakbanken/en/resource-catalogue/oai-nb-no-sbr-75/",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
     },
     {
       "id": "nl_BE-nathalie-x_low",
@@ -359,48 +423,62 @@
           "size": 246,
           "sha256": "25ac2af86bd2d49c02dd52a46377f3471695c359a64ea51cc891f7933c59547f"
         }
-      ]
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/nl/nl_BE/nathalie/x_low/MODEL_CARD",
+        "dataset_evidence_url": "https://github.com/rhasspy/dataset-voice-nathalie",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
     },
     {
-      "id": "sv_SE-nst-medium",
-      "display_name": "NST • Swedish • CC0",
+      "id": "el_GR-rapunzelina-medium",
+      "display_name": "Greek • Rapunzelina • CC0 source • UNVERIFIED",
       "engine": "piper",
       "category": "open_licensed_synthetic",
-      "language": "sv_SE",
+      "language": "el_GR",
       "speaker_ids": [
         0
       ],
-      "license": "MIT model repository / CC0 source dataset; source attribution and runtime obligations retained",
+      "license": "MIT model-repository / CC0 source corpus; source-claim documented only",
       "dataset_license": "CC0",
-      "dataset_source_url": "https://kb-labb.github.io/posts/2023-05-24-swedish-text-to-speech/",
-      "dataset_historical_catalogue_url": "https://www.nb.no/sprakbanken/en/resource-catalogue/oai-nb-no-sbr-18/",
-      "dataset_provenance_note": "The original Piper card links sbr-17 (Swedish dictation), but the model author KBLab's original Swedish TTS report links sbr-18 (single-speaker Swedish speech synthesis; about 5300 recordings). Both old catalogue URLs currently return 404. Original MODEL_CARD is bundled unchanged. CC0 is source-reported; independent primary catalogue-license reconciliation is still required before public distribution.",
-      "training_lineage": "Trained from scratch on source-reported CC0 Swedish speech by KBLab at the National Library of Sweden.",
-      "runtime_compatibility_note": "Original card has an apparent sbr-17/sbr-18 catalogue link error; retain candidate-only status until audio and license checks complete.",
+      "dataset_source_url": "https://www.kaggle.com/datasets/bryanpark/greek-single-speaker-speech-dataset",
+      "training_lineage": "Trained from scratch on the CSS10 Greek CC0 corpus; no pretrained personality or celebrity model is identified by the model card.",
+      "runtime_compatibility_note": "Piper/espeak Greek voice, actual on-device synthesis and phonemizer support untested.",
       "claimed_real_person_identity": null,
-      "voice_usage_rights": "Source-reported CC0 speech recordings and MIT model-repository terms permit experimental model use; no actor, singer, celebrity, character or named-person voice identity endorsement or impersonation authorization is claimed.",
+      "voice_usage_rights": "CC0 dataset and MIT weight-repository source claims permit candidate testing; no celebrity, actor, singer, game, character or named-person identity/endorsement rights established.",
       "device_status": "UNVERIFIED_CANDIDATE",
-      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/sv/sv_SE/nst/medium/MODEL_CARD",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/el/el_GR/rapunzelina/medium/MODEL_CARD",
       "files": [
         {
           "name": "model.onnx",
-          "upstream_path": "sv/sv_SE/nst/medium/sv_SE-nst-medium.onnx",
-          "size": 63104526,
-          "sha256": "df011f56825a59dd1efc080c38a65a1ef70407e60f63050e9246f43a3d7e471e"
+          "upstream_path": "el/el_GR/rapunzelina/medium/el_GR-rapunzelina-medium.onnx",
+          "size": 62950044,
+          "sha256": "3ca9fb3092215ee92edfc019b43feb0115ff4dfe638eb34474833ab1de840952"
         },
         {
           "name": "model.onnx.json",
-          "upstream_path": "sv/sv_SE/nst/medium/sv_SE-nst-medium.onnx.json",
-          "size": 4157,
-          "sha256": "d45dd74cbb4eca58694bf04a97e243044092476f28a55ae26424f0653086980a"
+          "upstream_path": "el/el_GR/rapunzelina/medium/el_GR-rapunzelina-medium.onnx.json",
+          "size": 4973,
+          "sha256": "3a6182ec7c7550e14ef15e5d9badbb18f973a434086ac9658a1b10991fd192f8"
         },
         {
           "name": "MODEL_CARD",
-          "upstream_path": "sv/sv_SE/nst/medium/MODEL_CARD",
-          "size": 306,
-          "sha256": "c85d3e26e47d93e9d9b8572d3c89537c3f8ff212595cb9a3fbd2e07c19432317"
+          "upstream_path": "el/el_GR/rapunzelina/medium/MODEL_CARD",
+          "size": 276,
+          "sha256": "dc69f15382dabed061fa8d31b65c14e5c4b57ba2fe6906012c756478da156b50"
         }
-      ]
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/el/el_GR/rapunzelina/medium/MODEL_CARD",
+        "dataset_evidence_url": "https://www.kaggle.com/datasets/bryanpark/greek-single-speaker-speech-dataset",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
     }
   ]
 }

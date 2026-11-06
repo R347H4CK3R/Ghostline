@@ -77,6 +77,8 @@ jobs:
             cat package-resolve.log
             exit 1
           fi
+      - name: Enforce Piper experimental source-rights review and quarantine
+        run: python3 scripts/test_embedded_piper_rights_review.py
       - name: Verify Piper candidate manifest
         run: |
           python3 - <<'PY'

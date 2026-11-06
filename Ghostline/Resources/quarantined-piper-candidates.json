@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "source_revision": "c10ece1aade47bb51c153c893d14e5bf8e5b7117",
+  "distribution_policy": "Do not bundle or publish weights from this ledger; entries are provenance-review holds, not licensed identity clones.",
+  "models": [
+    {
+      "id": "sv_SE-nst-medium",
+      "display_name": "NST • Swedish • CC0",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "sv_SE",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT model repository / CC0 source dataset; source attribution and runtime obligations retained",
+      "dataset_license": "CC0",
+      "dataset_source_url": "https://kb-labb.github.io/posts/2023-05-24-swedish-text-to-speech/",
+      "dataset_historical_catalogue_url": "https://www.nb.no/sprakbanken/en/resource-catalogue/oai-nb-no-sbr-18/",
+      "dataset_provenance_note": "The original Piper card links sbr-17 (Swedish dictation), but the model author KBLab's original Swedish TTS report links sbr-18 (single-speaker Swedish speech synthesis; about 5300 recordings). Both old catalogue URLs currently return 404. Original MODEL_CARD is bundled unchanged. CC0 is source-reported; independent primary catalogue-license reconciliation is still required before public distribution.",
+      "training_lineage": "Trained from scratch on source-reported CC0 Swedish speech by KBLab at the National Library of Sweden.",
+      "runtime_compatibility_note": "Original card has an apparent sbr-17/sbr-18 catalogue link error; retain candidate-only status until audio and license checks complete.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Source-reported CC0 speech recordings and MIT model-repository terms permit experimental model use; no actor, singer, celebrity, character or named-person voice identity endorsement or impersonation authorization is claimed.",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/sv/sv_SE/nst/medium/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "sv/sv_SE/nst/medium/sv_SE-nst-medium.onnx",
+          "size": 63104526,
+          "sha256": "df011f56825a59dd1efc080c38a65a1ef70407e60f63050e9246f43a3d7e471e"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "sv/sv_SE/nst/medium/sv_SE-nst-medium.onnx.json",
+          "size": 4157,
+          "sha256": "d45dd74cbb4eca58694bf04a97e243044092476f28a55ae26424f0653086980a"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "sv/sv_SE/nst/medium/MODEL_CARD",
+          "size": 306,
+          "sha256": "c85d3e26e47d93e9d9b8572d3c89537c3f8ff212595cb9a3fbd2e07c19432317"
+        }
+      ],
+      "rights_review": {
+        "decision": "HOLD_SOURCE_PROVENANCE_RECONCILIATION",
+        "reviewed_at": "2026-11-06",
+        "problem": "Pinned upstream MODEL_CARD links to NST Swedish dictation sbr-17, but original KBLab speech synthesis report links to different single-speaker sbr-18. Primary sbr-18 catalogue currently 404.",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/sv/sv_SE/nst/medium/MODEL_CARD",
+        "original_training_report_url": "https://kb-labb.github.io/posts/2023-05-24-swedish-text-to-speech/",
+        "original_report_dataset_url": "https://www.nb.no/sprakbanken/en/resource-catalogue/oai-nb-no-sbr-18/",
+        "not_for_distribution": true,
+        "identity_permissions_independently_verified": false
+      }
+    }
+  ]
+}

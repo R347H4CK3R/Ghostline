@@ -3,9 +3,9 @@ These are regression guards, not simulated proof of iPhone audio generation.
 """
 from pathlib import Path
 
-evidence = Path("Ghostline/NeuralAudioEvidence.swift").read_text()
-kokoro = Path("Ghostline/KokoroOffline.swift").read_text()
-pocket = Path("Ghostline/NeuralStudio.swift").read_text()
+evidence = Path("Ghostline/NeuralAudioEvidence.swift").read_text(encoding="utf-8")
+kokoro = Path("Ghostline/KokoroOffline.swift").read_text(encoding="utf-8")
+pocket = Path("Ghostline/NeuralStudio.swift").read_text(encoding="utf-8")
 
 required = (
     "GhostlineWAVInspector.inspect(bytes)",

@@ -43,6 +43,12 @@ def main():
     assert len(catalog["models"]) > 0  # variable inventory, no arbitrary cap
     revision = catalog["source_revision"]
     assert re.fullmatch(r"[a-f0-9]{40}", revision)
+    quarantine = json.loads(Path("Ghostline/Resources/quarantined-piper-candidates.json").read_text(encoding="utf-8"))
+    assert quarantine["schema_version"] == 1 and quarantine["source_revision"] == revision
+    held_ids = {item["id"] for item in quarantine["models"]}
+    assert len(held_ids) == len(quarantine["models"])
+    assert all(item["rights_review"]["not_for_distribution"] is True for item in quarantine["models"])
+    assert held_ids.isdisjoint({item["id"] for item in catalog["models"]}), "Provenance hold leaked into distribution manifest"
     names = set()
     root.mkdir(parents=True, exist_ok=True)
     for pack in catalog["models"]:
@@ -59,6 +65,12 @@ def main():
         names.add(key)
         assert pack["device_status"] == "UNVERIFIED_CANDIDATE"
         assert pack["claimed_real_person_identity"] is None
+        review = pack["rights_review"]
+        assert review["decision"] == "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY", key
+        assert review["model_card_url"] == pack["model_card_url"], key
+        assert review["dataset_evidence_url"].startswith("https://"), key
+        assert review["identity_permissions_independently_verified"] is False, key
+        assert review["device_generation_verified"] is False, key
         assert pack["dataset_license"] in ("public domain", "CC0", "CC0 1.0 Universal")
         assert "MIT" in pack["license"]
         assert "Trained from scratch" in pack["training_lineage"]
