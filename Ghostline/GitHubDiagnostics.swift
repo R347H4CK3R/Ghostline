@@ -5,7 +5,7 @@ import Security
 // Uploads only allowlisted error codes and generic platform metadata.
 // NEVER send raw NSError descriptions, filenames, voice text, audio, tokens,
 // model identities or stack traces to a public GitHub issue.
-private struct GhostlineDiagnostic: Codable, Identifiable {
+struct GhostlineDiagnostic: Codable, Identifiable {
     let id: UUID
     let whenUTC: String
     let subsystem: String
