@@ -60,6 +60,21 @@ button.addEventListener("click", async () => {
     return;
   }
   button.disabled = true;
+  const conversionID = crypto.randomUUID();
+  // Clear stale browser playback and notify native code BEFORE asynchronous
+  // inference; a failed new attempt must not inherit an old WAV attestation.
+  window.webkit?.messageHandlers?.ghostline?.postMessage({
+    kind: "conversion_started", conversionId: conversionID
+  });
+  if (outputURL) URL.revokeObjectURL(outputURL);
+  outputURL = null;
+  const previousPreview = $<HTMLAudioElement>("preview");
+  previousPreview.pause();
+  previousPreview.removeAttribute("src");
+  previousPreview.load();
+  const previousSave = $<HTMLAnchorElement>("save");
+  previousSave.hidden = true;
+  previousSave.removeAttribute("href");
   const time = performance.now();
   try {
     if (!model) {
@@ -118,7 +133,8 @@ button.addEventListener("click", async () => {
       const reader = new FileReader();
       reader.onload = () => {
         window.webkit?.messageHandlers?.ghostline?.postMessage({
-          kind: "wav", dataURL: reader.result, name: "GHOSTLINE-RVC-Converted.wav"
+          kind: "wav", conversionId: conversionID, dataURL: reader.result,
+          name: "GHOSTLINE-RVC-Converted.wav"
         });
       };
       reader.readAsDataURL(result.outputWav);

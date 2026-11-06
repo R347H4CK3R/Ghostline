@@ -282,6 +282,7 @@ final class GhostlineOfflineRVCController: ObservableObject {
     private let importedPack: RVCPackRecord?
     private(set) var importedModelPath: String?
     private var sessionID = UUID()
+    private var activeConversionID: String?
 
     init(importedPack: RVCPackRecord? = nil) {
         self.importedPack = importedPack
@@ -376,7 +377,37 @@ final class GhostlineOfflineRVCController: ObservableObject {
         }
     }
 
-    func receiveAudio(dataURL: String) {
+    /// A new WebKit generation attempt invalidates ALL previous listening
+    /// evidence immediately, including if the new conversion fails or exports
+    /// malformed audio. Old async FileReader callbacks cannot be attributed to
+    /// a newer attempt.
+    func beginConversion(id: String) {
+        guard id.count >= 8, id.count <= 80,
+              id.utf8.allSatisfy({ (48...57).contains($0) ||
+                                   (65...90).contains($0) ||
+                                   (97...122).contains($0) || $0 == 45 }) else {
+            event("conversion_attempt_rejected", "Invalid generation attempt identifier")
+            return
+        }
+        player?.stop()
+        player = nil
+        playbackAttemptID = UUID()
+        playbackObserver.onFinished = nil
+        playbackStarted = false
+        playbackCompleted = false
+        userAttestedListening = false
+        latestWAV = nil
+        savedWAV = nil
+        activeConversionID = id
+        playbackStatus = "New conversion started. Previous WAV listening evidence cleared."
+        event("conversion_attempt_started", "New offline attempt; previous WAV and listening state invalidated")
+    }
+
+    func receiveAudio(dataURL: String, conversionID: String) {
+        guard activeConversionID == conversionID else {
+            event("stale_wav_rejected", "Export was not associated with the active conversion attempt")
+            return
+        }
         guard dataURL.hasPrefix("data:audio/") || dataURL.hasPrefix("data:application/octet-stream;") else {
             status = "Export rejected: unexpected data type."
             event("wav_export_rejected", "Unexpected MIME type")
@@ -408,7 +439,9 @@ final class GhostlineOfflineRVCController: ObservableObject {
             try decoded.write(to: file, options: .atomic)
             let digest = SHA256.hash(data: decoded).map { String(format: "%02x", $0) }.joined()
             latestWAV = file
+            activeConversionID = nil // reject duplicate or delayed exports from this attempt
             savedWAV = [
+                "conversion_attempt_id": conversionID,
                 "sha256": digest, "bytes": decoded.count,
                 "pcm_audio_payload_sha256": info.pcmSHA256,
                 "pcm_digest_basis": "WAV data chunk uncompressed sample bytes",
@@ -497,6 +530,7 @@ final class GhostlineOfflineRVCController: ObservableObject {
         playbackAttemptID = UUID()
         playbackObserver.onFinished = nil
         sessionID = UUID() // ignore callbacks queued before leaving the screen
+        activeConversionID = nil // reject late WKWebView audio after teardown
         address = nil
         isStarting = false
         hasStartError = false
@@ -603,8 +637,13 @@ private struct GhostlineRVCWebView: UIViewRepresentable {
                   let kind = value["kind"] as? String else { return }
             if kind == "status", let status = value["message"] as? String {
                 Task { @MainActor [weak self] in self?.controller?.recordWebStatus(status) }
-            } else if kind == "wav", let wav = value["dataURL"] as? String {
-                Task { @MainActor [weak self] in self?.controller?.receiveAudio(dataURL: wav) }
+            } else if kind == "conversion_started", let conversionID = value["conversionId"] as? String {
+                Task { @MainActor [weak self] in self?.controller?.beginConversion(id: conversionID) }
+            } else if kind == "wav", let wav = value["dataURL"] as? String,
+                      let conversionID = value["conversionId"] as? String {
+                Task { @MainActor [weak self] in
+                    self?.controller?.receiveAudio(dataURL: wav, conversionID: conversionID)
+                }
             }
         }
         func webView(_ webView: WKWebView,
