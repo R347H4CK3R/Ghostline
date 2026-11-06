@@ -282,7 +282,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
                 ? "Replaying the same SHA-256-bound local WAV; completion and listening acknowledgement reset."
                 : "Local replay did not start; no listening evidence recorded."
         } catch {
-            status = "Cannot replay this candidate WAV: \\(error.localizedDescription)"
+            status = "Cannot replay this candidate WAV: \(error.localizedDescription)"
         }
     }
 
