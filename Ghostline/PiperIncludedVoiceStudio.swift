@@ -299,6 +299,11 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
               let modelHash = activeModelSHA256,
               let configHash = activeConfigSHA256,
               let audioHash = generatedAudioSHA256 else { return }
+        guard (try? sha256File(wav)) == audioHash else {
+            evidenceURL = nil
+            status = "Saved WAV changed after generation; refusing a stale receipt."
+            return
+        }
         let record: [String: Any] = [
             "schema_version": 1, "engine": "Piper", "model_id": pack.id,
             "source_model_card": pack.model_card_url,
