@@ -40,6 +40,15 @@ final class RVCPackLibrary: ObservableObject {
         }
     }
 
+    func reloadCatalogFromDisk() {
+        guard let data = try? Data(contentsOf: indexURL),
+              let decoded = try? JSONDecoder().decode([RVCPackRecord].self, from: data)
+        else { return }
+        packs = decoded.filter {
+            FileManager.default.fileExists(atPath: root.appendingPathComponent($0.weightFile).path)
+        }
+    }
+
     nonisolated private static func digest(_ source: URL) throws -> String {
         let stream = try FileHandle(forReadingFrom: source)
         defer { try? stream.close() }
