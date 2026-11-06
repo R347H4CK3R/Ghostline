@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 import Network
 import SwiftUI
 import WebKit
@@ -130,6 +131,7 @@ final class GhostlineLocalWebServer {
 @MainActor
 final class GhostlineOfflineRVCController: ObservableObject {
     @Published var address: URL?
+    @Published var latestWAV: URL?
     @Published var status = "Starting private offline RVC engine..."
     private let server = GhostlineLocalWebServer()
     func begin() {
@@ -144,6 +146,33 @@ final class GhostlineOfflineRVCController: ObservableObject {
             }
         }
     }
+    func receiveAudio(dataURL: String) {
+        guard dataURL.hasPrefix("data:audio/") || dataURL.hasPrefix("data:application/octet-stream;") else {
+            status = "Export rejected: unexpected data type."
+            return
+        }
+        guard let comma = dataURL.firstIndex(of: ","),
+              let decoded = Data(base64Encoded: String(dataURL[dataURL.index(after: comma)...])),
+              decoded.count > 44, decoded.count < 80_000_000,
+              decoded.prefix(4).elementsEqual("RIFF".utf8),
+              decoded.dropFirst(8).prefix(4).elementsEqual("WAVE".utf8) else {
+            status = "Export rejected: invalid WAV audio."
+            return
+        }
+        do {
+            let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("GHOSTLINE-Exports", isDirectory: true)
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            let file = dir.appendingPathComponent("RVC-\(UUID().uuidString).wav")
+            try decoded.write(to: file, options: .atomic)
+            let digest = SHA256.hash(data: decoded).map { String(format: "%02x", $0) }.joined()
+            latestWAV = file
+            status = "Offline RVC WAV saved. SHA-256: \(digest.prefix(16))… Listen to verify quality."
+        } catch {
+            status = "Export failed: \(error.localizedDescription)"
+        }
+    }
+
     func end() {
         address = nil
         server.stop()
@@ -155,11 +184,21 @@ struct GhostlineRVCWebScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             if let url = controller.address {
-                GhostlineRVCWebView(url: url)
+                GhostlineRVCWebView(url: url, controller: controller)
             } else {
                 ProgressView()
                     .padding()
                 Text(controller.status).font(.footnote).foregroundStyle(.secondary).padding()
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            if let wav = controller.latestWAV {
+                ShareLink(item: wav) {
+                    Label("Share offline converted WAV", systemImage: "square.and.arrow.up")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(10)
             }
         }
         .navigationTitle("Offline RVC Converter")
@@ -171,10 +210,12 @@ struct GhostlineRVCWebScreen: View {
 
 private struct GhostlineRVCWebView: UIViewRepresentable {
     let url: URL
+    let controller: GhostlineOfflineRVCController
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
+        configuration.userContentController.add(context.coordinator, name: "ghostline")
         let view = WKWebView(frame: .zero, configuration: configuration)
         view.isOpaque = false
         view.backgroundColor = UIColor(red: 0.07, green: 0.05, blue: 0.12, alpha: 1)
@@ -183,10 +224,24 @@ private struct GhostlineRVCWebView: UIViewRepresentable {
         return view
     }
     func updateUIView(_ webView: WKWebView, context: Context) {}
-    func makeCoordinator() -> Coordinator { Coordinator(url: url) }
-    final class Coordinator: NSObject, WKNavigationDelegate {
+    func makeCoordinator() -> Coordinator { Coordinator(url: url, controller: controller) }
+    final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         let base: URL
-        init(url: URL) { self.base = url }
+        weak var controller: GhostlineOfflineRVCController?
+        init(url: URL, controller: GhostlineOfflineRVCController) {
+            self.base = url
+            self.controller = controller
+        }
+        func userContentController(_ userContentController: WKUserContentController,
+                                   didReceive message: WKScriptMessage) {
+            guard let value = message.body as? [String: Any],
+                  let kind = value["kind"] as? String else { return }
+            if kind == "status", let status = value["message"] as? String {
+                Task { @MainActor [weak self] in self?.controller?.status = status }
+            } else if kind == "wav", let wav = value["dataURL"] as? String {
+                Task { @MainActor [weak self] in self?.controller?.receiveAudio(dataURL: wav) }
+            }
+        }
         func webView(_ webView: WKWebView,
                      decidePolicyFor action: WKNavigationAction,
                      decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
