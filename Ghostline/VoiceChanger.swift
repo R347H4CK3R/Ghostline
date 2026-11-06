@@ -110,7 +110,6 @@ struct GhostlineVoiceChangerView: View {
             }
         }
         .onAppear {
-            library = RVCPackLibrary()
             if selectedID == nil { selectedID = library.packs.first?.id }
         }
         .onDisappear {
