@@ -55,11 +55,11 @@ button.addEventListener("click", async () => {
   const rmvpe = $<HTMLInputElement>("rmvpe").files?.[0];
   const audio = $<HTMLInputElement>("audio").files?.[0];
   if (!model || !contentVec || !rmvpe || !audio) {
-    status("Select a converted RVC v2 .onnx voice, ContentVec, RMVPE and source audio.");
+    status("Select an RVC v2 .pth/.onnx voice, ContentVec, RMVPE and source audio.");
     return;
   }
-  if ([model, contentVec, rmvpe].some(x => !x.name.toLowerCase().endsWith(".onnx"))) {
-    status("This offline build requires converted .onnx models. .pth conversion is not included.");
+  if (!/\.(pth|onnx)$/i.test(model.name) || [contentVec, rmvpe].some(x => !x.name.toLowerCase().endsWith(".onnx"))) {
+    status("RVC voice must be .pth or .onnx; ContentVec and RMVPE must be .onnx.");
     return;
   }
   button.disabled = true;
@@ -144,7 +144,7 @@ button:disabled{opacity:.5}audio{width:100%;margin-top:12px}a{color:#d2acff}
 <p>Private, fully local RVC v2 audio conversion using a bundled WebAssembly inference engine. Internet is not needed once you supply compatible local models.</p>
 <div class="card">
 <h2>INPUT MODELS</h2>
-<label for="model">RVC v2 synthesizer (.onnx)</label><input id="model" type="file" accept=".onnx">
+<label for="model">RVC v2 voice (.pth or .onnx)</label><input id="model" type="file" accept=".pth,.onnx">
 <label for="contentvec">ContentVec 768-dimension encoder (.onnx)</label><input id="contentvec" type="file" accept=".onnx">
 <label for="rmvpe">RMVPE pitch estimator (.onnx)</label><input id="rmvpe" type="file" accept=".onnx">
 <label for="audio">Source vocal WAV / MP3</label><input id="audio" type="file" accept="audio/*,.wav,.mp3">
@@ -157,7 +157,7 @@ button:disabled{opacity:.5}audio{width:100%;margin-top:12px}a{color:#d2acff}
 <audio id="preview" controls></audio>
 <p><a id="save" href="#" download="GHOSTLINE-RVC-Converted.wav" hidden>Save converted WAV</a></p>
 </div>
-<p class="note">Only load voices and audio you are permitted to use. Imported files are candidate inputs, not verified voice identities. This engine supports RVC v2 ONNX models; raw .pth models need conversion first. iPhone WebAssembly performance and Strata support require device testing.</p>
+<p class="note">Only load voices and audio you are permitted to use. Imported files are candidate inputs, not verified voice identities. This engine supports RVC v2 .onnx or browser-convertible .pth models. The .pth conversion happens locally but may require substantial memory. iPhone WebAssembly performance and Strata support require device testing.</p>
 <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
