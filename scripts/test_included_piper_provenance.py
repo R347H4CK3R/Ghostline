@@ -34,6 +34,13 @@ for key in ("no_NO-nvcc-medium", "nl_BE-nathalie-x_low", "sv_SE-nst-medium"):
 assert by_id["no_NO-nvcc-medium"]["speaker_ids"]==list(range(10))
 assert by_id["nl_BE-nathalie-x_low"]["speaker_ids"]==[0]
 assert by_id["sv_SE-nst-medium"]["speaker_ids"]==[0]
+# The original Swedish model card mislinks NST dictation sbr-17.
+# KBLab's first-party model report instead references TTS corpus sbr-18.
+sv = by_id["sv_SE-nst-medium"]
+assert sv["dataset_source_url"] == "https://kb-labb.github.io/posts/2023-05-24-swedish-text-to-speech/"
+assert sv["dataset_historical_catalogue_url"].endswith("/oai-nb-no-sbr-18/")
+assert "sbr-17" in sv["dataset_provenance_note"] and "sbr-18" in sv["dataset_provenance_note"]
+assert "source-reported" in sv["dataset_provenance_note"].lower()
 source=Path("Ghostline/PiperIncludedVoiceStudio.swift").read_text()
 assert "speakerId: Int32(selectedSpeakerID)" in source
 assert '"speaker_id": selectedSpeakerID' in source
