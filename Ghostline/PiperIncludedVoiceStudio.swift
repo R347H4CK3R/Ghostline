@@ -44,7 +44,7 @@ struct GhostlineIncludedPiperCatalog: Decodable {
 }
 
 @MainActor
-final class GhostlineIncludedPiperStudio: ObservableObject {
+final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private let catalog = GhostlineIncludedPiperCatalog.load()
     @Published var selectedID = ""
     @Published var status = "These test packs are synthetic and UNVERIFIED on iPhone/Strata."
@@ -52,6 +52,8 @@ final class GhostlineIncludedPiperStudio: ObservableObject {
     @Published var outputURL: URL?
     @Published var evidenceURL: URL?
     @Published var playbackStarted = false
+    @Published var playbackCompleted = false
+    @Published var userAttestedListening = false
 
     private var engine: PiperPlayer?
     private var audioPlayer: AVAudioPlayer?
@@ -62,7 +64,8 @@ final class GhostlineIncludedPiperStudio: ObservableObject {
     var chosen: GhostlineIncludedPiperCatalog.Pack? { candidates.first { $0.id == selectedID } }
     var sourceRevision: String { catalog?.source_revision ?? "Not packaged" }
 
-    init() {
+    override init() {
+        super.init()
         selectedID = catalog?.models.first?.id ?? ""
         if candidates.isEmpty { status = "No rights-documented included Piper packs in this IPA." }
     }
@@ -76,6 +79,8 @@ final class GhostlineIncludedPiperStudio: ObservableObject {
         outputURL = nil
         evidenceURL = nil
         playbackStarted = false
+        playbackCompleted = false
+        userAttestedListening = false
         generatedAudioSHA256 = nil
         activeModelSHA256 = nil
         activeConfigSHA256 = nil
@@ -192,6 +197,8 @@ final class GhostlineIncludedPiperStudio: ObservableObject {
         evidenceURL = nil
         generatedAudioSHA256 = nil
         playbackStarted = false
+        playbackCompleted = false
+        userAttestedListening = false
         audioPlayer?.stop()
         audioPlayer = nil
         defer { busy = false }
@@ -216,6 +223,7 @@ final class GhostlineIncludedPiperStudio: ObservableObject {
             let hash = try sha256File(wav)
             try AVAudioSession.sharedInstance().setCategory(.playback)
             try AVAudioSession.sharedInstance().setActive(true)
+            audio.delegate = self
             audioPlayer = audio
             outputURL = wav
             generatedAudioSHA256 = hash
@@ -226,6 +234,64 @@ final class GhostlineIncludedPiperStudio: ObservableObject {
         } catch {
             status = "Offline Piper candidate failed: \(error.localizedDescription)"
         }
+    }
+
+    // A prior player's delayed callback must not certify a newer WAV/replay.
+    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        let finishedID = ObjectIdentifier(player)
+        Task { @MainActor [weak self] in
+            self?.recordPlaybackCompletion(for: finishedID, succeeded: flag)
+        }
+    }
+
+    private func recordPlaybackCompletion(for id: ObjectIdentifier, succeeded: Bool) {
+        guard let current = audioPlayer, ObjectIdentifier(current) == id,
+              outputURL != nil, generatedAudioSHA256 != nil, playbackStarted else { return }
+        playbackCompleted = succeeded
+        userAttestedListening = false
+        evidenceURL = nil
+        status = succeeded
+            ? "Local WAV playback completed. You may acknowledge listening; voice identity and airplane-mode isolation remain UNVERIFIED."
+            : "WAV playback did not complete successfully. Listening evidence remains UNVERIFIED."
+    }
+
+    func replaySavedWAV() {
+        guard !busy, let wav = outputURL, let expectedSHA256 = generatedAudioSHA256 else { return }
+        audioPlayer?.stop()
+        audioPlayer = nil
+        playbackStarted = false
+        playbackCompleted = false
+        userAttestedListening = false
+        evidenceURL = nil
+        do {
+            guard try sha256File(wav) == expectedSHA256 else {
+                throw NSError(domain: "GhostlinePiper", code: 10,
+                              userInfo: [NSLocalizedDescriptionKey: "Saved WAV changed since generation"])
+            }
+            let replay = try AVAudioPlayer(contentsOf: wav)
+            guard replay.duration > 0.2, replay.prepareToPlay() else {
+                throw NSError(domain: "GhostlinePiper", code: 11,
+                              userInfo: [NSLocalizedDescriptionKey: "WAV replay integrity check failed"])
+            }
+            try AVAudioSession.sharedInstance().setCategory(.playback)
+            try AVAudioSession.sharedInstance().setActive(true)
+            replay.delegate = self
+            audioPlayer = replay
+            playbackStarted = replay.play()
+            status = playbackStarted
+                ? "Replaying the same SHA-256-bound local WAV; completion and listening acknowledgement reset."
+                : "Local replay did not start; no listening evidence recorded."
+        } catch {
+            status = "Cannot replay this candidate WAV: \\(error.localizedDescription)"
+        }
+    }
+
+    func attestListening() {
+        guard !busy, playbackStarted, playbackCompleted, !userAttestedListening,
+              outputURL != nil, generatedAudioSHA256 != nil else { return }
+        userAttestedListening = true
+        evidenceURL = nil
+        status = "User acknowledged hearing completed local WAV. Rights, identity match, and airplane-mode isolation remain UNVERIFIED."
     }
 
     func exportEvidence() {
@@ -243,7 +309,8 @@ final class GhostlineIncludedPiperStudio: ObservableObject {
             "ios_version": UIDevice.current.systemVersion,
             "candidate_not_verified": true,
             "device_audio_playback_started": playbackStarted,
-            "device_audio_playback_completed": false,
+            "device_audio_playback_completed": playbackCompleted,
+            "user_attested_listening": userAttestedListening,
             "airplane_mode_confirmed": false,
             "human_listening_confirmed": false,
             "authorized_identity_match_confirmed": false,
@@ -300,6 +367,14 @@ struct GhostlineIncludedPiperView: View {
                     ShareLink(item: wav) {
                         Label("Export unverified audio sample", systemImage: "square.and.arrow.up")
                     }
+                    Button("Replay SHA-checked WAV") { studio.replaySavedWAV() }
+                        .disabled(studio.busy)
+                    Button("I listened to the completed WAV") { studio.attestListening() }
+                        .disabled(studio.busy || !studio.playbackCompleted || studio.userAttestedListening)
+                    Text(studio.playbackCompleted
+                        ? "Playback completed; identity and offline isolation still unverified."
+                        : "Listening acknowledgement unlocks only after native playback completes.")
+                        .font(.caption).foregroundStyle(.secondary)
                     Button("Export private SHA-256 test evidence") { studio.exportEvidence() }
                     if let evidence = studio.evidenceURL {
                         ShareLink(item: evidence) {
