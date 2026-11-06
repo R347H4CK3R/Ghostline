@@ -52,6 +52,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
     @Published var busy = false
     @Published var outputURL: URL?
     @Published var evidenceURL: URL?
+    @Published var diagnosticURL: URL?
     @Published var playbackStarted = false
     @Published var playbackCompleted = false
     @Published var userAttestedListening = false
@@ -61,6 +62,9 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
     private var activeModelSHA256: String?
     private var activeConfigSHA256: String?
     private var generatedAudioSHA256: String?
+    private var lastDiagnosticStage = "No generation attempted"
+    private var lastDiagnosticError: String?
+    private var lastGenerationMilliseconds: Int?
     var candidates: [GhostlineIncludedPiperCatalog.Pack] { catalog?.models ?? [] }
     var chosen: GhostlineIncludedPiperCatalog.Pack? { candidates.first { $0.id == selectedID } }
     var sourceRevision: String { catalog?.source_revision ?? "Not packaged" }
@@ -79,6 +83,10 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         audioPlayer = nil
         selectedID = id
         selectedSpeakerID = chosen?.speaker_ids.first ?? 0
+        diagnosticURL = nil
+        lastDiagnosticStage = "No generation attempted for selected pack"
+        lastDiagnosticError = nil
+        lastGenerationMilliseconds = nil
         outputURL = nil
         evidenceURL = nil
         playbackStarted = false
@@ -95,6 +103,10 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         audioPlayer?.stop()
         audioPlayer = nil
         selectedSpeakerID = id
+        diagnosticURL = nil
+        lastDiagnosticStage = "No generation attempted for selected speaker"
+        lastDiagnosticError = nil
+        lastGenerationMilliseconds = nil
         outputURL = nil
         evidenceURL = nil
         generatedAudioSHA256 = nil
@@ -210,7 +222,12 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
             status = "Enter text first."
             return
         }
+        let startedAt = Date()
         busy = true
+        diagnosticURL = nil
+        lastDiagnosticStage = "Checking the packaged model and license manifest"
+        lastDiagnosticError = nil
+        lastGenerationMilliseconds = nil
         outputURL = nil
         evidenceURL = nil
         generatedAudioSHA256 = nil
@@ -219,10 +236,14 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         userAttestedListening = false
         audioPlayer?.stop()
         audioPlayer = nil
-        defer { busy = false }
+        defer {
+            lastGenerationMilliseconds = Int(Date().timeIntervalSince(startedAt) * 1_000)
+            busy = false
+        }
         do {
             status = "Checking all three pinned model files offline (SHA-256)..."
             let player = try ensureEngine(for: pack)
+            lastDiagnosticStage = "Performing offline Piper synthesis"
             let escaped = phrase.replacingOccurrences(of: "&", with: "&amp;")
                 .replacingOccurrences(of: "<", with: "&lt;")
                 .replacingOccurrences(of: ">", with: "&gt;")
@@ -232,6 +253,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
                               userInfo: [NSLocalizedDescriptionKey: "No offline audio generated"])
             }
             let wav = URL(fileURLWithPath: filePath)
+            lastDiagnosticStage = "Finalizing and decoding generated WAV"
             try finalizeWAV(wav)
             let audio = try AVAudioPlayer(contentsOf: wav)
             guard audio.duration > 0.2, audio.prepareToPlay() else {
@@ -246,10 +268,13 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
             outputURL = wav
             generatedAudioSHA256 = hash
             playbackStarted = audio.play()
+            lastDiagnosticStage = playbackStarted ? "Local WAV playback started" : "WAV generated but playback failed to start"
             status = playbackStarted
                 ? "Generated local audio for \(pack.display_name). Playback started; human listening and airplane-mode confirmation still UNVERIFIED."
                 : "WAV generated, but playback could not start. Audio remains UNVERIFIED."
         } catch {
+            lastDiagnosticStage = "FAILED during: \(lastDiagnosticStage)"
+            lastDiagnosticError = error.localizedDescription
             status = "Offline Piper candidate failed: \(error.localizedDescription)"
         }
     }
@@ -310,6 +335,49 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         userAttestedListening = true
         evidenceURL = nil
         status = "User acknowledged hearing completed local WAV. Rights, identity match, and airplane-mode isolation remain UNVERIFIED."
+    }
+
+
+    // Failure diagnostics are available even when synthesis produced no WAV.
+    // Export only technical metadata: no input text, speech audio, tokens,
+    // private RVC weights or source recordings are included in this JSON.
+    func exportDiagnostics() {
+        guard !busy, let pack = chosen else { return }
+        let record: [String: Any] = [
+            "schema_version": 1,
+            "engine": "Piper",
+            "pack_id": pack.id,
+            "speaker_id": selectedSpeakerID,
+            "speaker_slot_unverified": true,
+            "model_source_revision": sourceRevision,
+            "model_card_url": pack.model_card_url,
+            "model_sha256": activeModelSHA256 ?? "not loaded",
+            "config_sha256": activeConfigSHA256 ?? "not loaded",
+            "generated_wav_sha256": generatedAudioSHA256 ?? "none",
+            "stage": lastDiagnosticStage,
+            "error": lastDiagnosticError ?? "none",
+            "generation_elapsed_ms": lastGenerationMilliseconds ?? -1,
+            "playback_started": playbackStarted,
+            "playback_completed": playbackCompleted,
+            "user_attested_listening": userAttestedListening,
+            "airplane_mode_confirmed": false,
+            "human_listening_verified": false,
+            "authorized_identity_match_confirmed": false,
+            "device_class": UIDevice.current.model,
+            "ios_version": UIDevice.current.systemVersion,
+            "generated_utc": ISO8601DateFormatter().string(from: Date())
+        ]
+        do {
+            let bytes = try JSONSerialization.data(withJSONObject: record, options: [.prettyPrinted, .sortedKeys])
+            let file = FileManager.default.temporaryDirectory
+                .appendingPathComponent("ghostline-piper-local-diagnostic-\(UUID().uuidString).json")
+            try bytes.write(to: file, options: .atomic)
+            diagnosticURL = file
+            status = "Private offline test diagnostics exported. Device verification remains UNVERIFIED."
+        } catch {
+            diagnosticURL = nil
+            status = "Could not export Piper diagnostics: \(error.localizedDescription)"
+        }
     }
 
     func exportEvidence() {
@@ -415,6 +483,18 @@ struct GhostlineIncludedPiperView: View {
                         }
                     }
                 }
+            }
+            Section("Offline test diagnostics") {
+                Button("Export private run or failure diagnostics") {
+                    studio.exportDiagnostics()
+                }.disabled(studio.busy || studio.candidates.isEmpty)
+                if let diagnosticURL = studio.diagnosticURL {
+                    ShareLink(item: diagnosticURL) {
+                        Label("Share private technical diagnostic JSON", systemImage: "doc.text.magnifyingglass")
+                    }
+                }
+                Text("Includes pack/speaker IDs, stage, duration, hashes, and errors. Does not include entered text, audio, or model weights.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section("Verification status") {
                 Text(studio.status).font(.footnote)
