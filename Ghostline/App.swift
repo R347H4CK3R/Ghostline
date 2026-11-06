@@ -220,6 +220,10 @@ struct GhostlineHomeView: View {
                 )
 
                 Text("Voice workspaces").font(.title3.bold())
+                NavigationLink(destination: GhostlineRVCWebScreen()) {
+                    GhostlineFeatureRow(icon: "waveform.path", heading: "Offline RVC Converter",
+                                        detail: "ContentVec + RMVPE + RVC v2 WebAssembly inference")
+                }.buttonStyle(.plain)
                 NavigationLink(destination: RVCPackLibraryView()) {
                     GhostlineFeatureRow(icon: "shippingbox", heading: "RVC Pack Library",
                                         detail: "Import private .pth / .index candidates")
@@ -286,6 +290,7 @@ struct GhostlineLibraryView: View {
                 }
             }
             Section("Local voice sources") {
+                NavigationLink("Offline RVC v2 conversion") { GhostlineRVCWebScreen() }
                 NavigationLink("RVC imported packs (not yet playable)") { RVCPackLibraryView() }
                 NavigationLink("RVC Core ML model testing") { RVCCoreMLModelView() }
                 NavigationLink("Offline PocketTTS presets") { NeuralStudioView() }
@@ -306,9 +311,10 @@ struct GhostlineGeneratorView: View {
                 NavigationLink("Piper — local speaker testing") { PiperVoiceLabView() }
             }
             Section("RVC conversion") {
+                NavigationLink("Convert RVC v2 voice offline") { GhostlineRVCWebScreen() }
                 NavigationLink("Import voice packs") { RVCPackLibraryView() }
                 NavigationLink("Load converted Core ML model") { RVCCoreMLModelView() }
-                Text("RVC weights can be imported and checked, but are not executable by the current iOS speech engines. Conversion is not yet available.")
+                Text("Offline RVC inference uses locally imported converted v2 ONNX models. Raw .pth models still need conversion. Compatible model packs and physical-device performance require testing.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
         }.navigationTitle("Generate")

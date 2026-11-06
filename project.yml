@@ -14,6 +14,10 @@ settings:
     SWIFT_VERSION: '6.0'
     TARGETED_DEVICE_FAMILY: '1,2'
     GENERATE_INFOPLIST_FILE: YES
+    MARKETING_VERSION: '0.8.0'
+    CURRENT_PROJECT_VERSION: '8'
+    INFOPLIST_KEY_CFBundleShortVersionString: '0.8.0'
+    INFOPLIST_KEY_CFBundleVersion: '8'
     CODE_SIGN_STYLE: Manual
     CODE_SIGNING_ALLOWED: NO
 targets:
@@ -25,6 +29,11 @@ targets:
         product: piper-player
       - package: FluidAudio
         product: FluidAudio
+    info:
+      path: Ghostline/Info.plist
+      properties:
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     sources:
       - path: Ghostline
     settings:
