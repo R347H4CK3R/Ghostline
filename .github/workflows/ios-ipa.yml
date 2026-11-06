@@ -95,6 +95,28 @@ jobs:
           assert len(ids)==len(x["candidates"])
           print("Piper candidate slots:",len(ids), "(none counted as device-verified)")
           PY
+      - name: Guard pinned LibriTTS-R model metadata and speaker IDs
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          catalog = json.loads(Path("Ghostline/Resources/piper-candidates.json").read_text())
+          model = next(m for m in catalog["models"] if m["model_id"] == "en_US-libritts_r-medium")
+          revision = "e7229f7d33a10e145e109b886d661984201ac3c4"
+          assert model["declared_speakers"] == model["candidate_speakers"] == 904
+          assert model["model_bytes"] == 78580914
+          assert model["model_md5"] == "bb2c2776cffbfd736c7c497f620c0ca6"
+          assert model["config_md5"] == "c740db18a0dab11b13ce0292ea1196c6"
+          assert model["verified_config_revision"] == revision
+          assert revision in model["model_url"] and revision in model["config_url"]
+          speakers = {v["speaker_id"] for v in catalog["candidates"] if v["model_id"] == model["model_id"]}
+          assert speakers == set(range(904)), "Do not list invalid or missing speaker IDs"
+          source = Path("Ghostline/PiperVoiceLab.swift").read_text()
+          assert "verifiedLibriTTSRevision" in source
+          assert "bb2c2776cffbfd736c7c497f620c0ca6" in source
+          assert "c740db18a0dab11b13ce0292ea1196c6" in source
+          print("Pinned LibriTTS-R metadata, checksums, and 904 candidate IDs verified")
+          PY
       - name: Guard Piper model-bound device evidence and cached pack staging
         run: |
           python3 - <<'PY'
