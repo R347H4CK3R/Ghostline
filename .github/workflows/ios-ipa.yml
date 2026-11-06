@@ -45,6 +45,21 @@ jobs:
           assert f'Authentic identities: {len(voices)} verified' in source
           print(f"Verified authentic offline identities: {len(voices)}")
           PY
+      - name: Guard identity voice playback and approved tab interface
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          a=Path("Ghostline/App.swift").read_text()
+          assert 'func speakLocal()' in a
+          fallback=a.split('func speakLocal()',1)[1].split('func previewSystemVoice()',1)[0]
+          assert 'synthesizer.speak(' not in fallback, "Never fake identity speech with system TTS"
+          assert 'func previewSystemVoice()' in a
+          assert 'store.previewSystemVoice()' in a
+          assert 'GhostlineTabbedRoot' in a
+          assert all('TabView' in a for _ in range(1))
+          assert 'GhostlineRVCWebScreen()' in a
+          print("Identity fallback guard and five-tab launch checks passed")
+          PY
       - name: Install project generator
         run: brew install xcodegen
       - name: Generate Xcode project
