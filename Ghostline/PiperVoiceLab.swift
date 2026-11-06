@@ -49,6 +49,7 @@ final class PiperVoiceLab: ObservableObject {
     @Published var downloadExpected: Int64 = 0
     @Published var downloadSpeedBytesPerSecond: Double = 0
     @Published var downloadPhase = ""
+    @Published var downloadInFlight = false
     private var activeDownloadTask: URLSessionDownloadTask?
 
     var progressDescription: String {
@@ -252,7 +253,11 @@ final class PiperVoiceLab: ObservableObject {
             return
         }
         busy = true
-        defer { busy = false }
+        downloadInFlight = true
+        defer {
+            busy = false
+            downloadInFlight = false
+        }
         let fm = FileManager.default
         let parent = modelDir.deletingLastPathComponent()
         let staging = parent.appendingPathComponent("incoming-\(UUID().uuidString)", isDirectory: true)
@@ -575,7 +580,7 @@ struct PiperVoiceLabView: View {
                 Button(lab.modelReady ? "Model downloaded" : "Download free model") {
                     Task { await lab.downloadModel() }
                 }.disabled(lab.busy || lab.modelReady)
-                if lab.busy && !lab.downloadPhase.isEmpty {
+                if lab.downloadInFlight && !lab.downloadPhase.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(lab.downloadPhase).font(.headline)
                         ProgressView(value: lab.downloadProgress, total: 1)
