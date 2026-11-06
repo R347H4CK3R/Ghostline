@@ -86,14 +86,24 @@ struct ModelBinding: Codable { var model: String; var voice: String; var authori
         guard SecItemCopyMatching(q as CFDictionary,&output) == errSecSuccess,let bytes=output as? Data else { return nil }
         return String(data:bytes,encoding:.utf8)
     }
+    // Never substitute an ordinary system TTS voice for a selected celebrity,
+    // character, or singer. Those identities require an installed, verified model.
     func speakLocal() {
-        synthesizer.stopSpeaking(at:.immediate)
-        let utterance=AVSpeechUtterance(string:text)
-        utterance.rate=Float(speed)
-        utterance.pitchMultiplier=Float(pitch)
-        utterance.voice=AVSpeechSynthesisVoice(identifier:offlineVoiceID) ?? AVSpeechSynthesisVoice(language:"en-US")
+        synthesizer.stopSpeaking(at: .immediate)
+        status = "No verified offline identity model for \(selected.name). Use a supported neural studio or import an authorized RVC voice; system speech will not impersonate this identity."
+    }
+
+    // Explicitly separate ordinary iOS system-voice preview from identity speech.
+    func previewSystemVoice() {
+        synthesizer.stopSpeaking(at: .immediate)
+        let sample = "This is an Apple system voice preview, not a character or celebrity voice."
+        let utterance = AVSpeechUtterance(string: sample)
+        utterance.rate = Float(speed)
+        utterance.pitchMultiplier = Float(pitch)
+        utterance.voice = AVSpeechSynthesisVoice(identifier: offlineVoiceID)
+            ?? AVSpeechSynthesisVoice(language: "en-US")
         synthesizer.speak(utterance)
-        status="Device speech voice (no API). Not an identity clone of \(selected.name)."
+        status = "Playing an iOS system voice preview. No character identity is claimed."
     }
     func generate() async {
         if offlineOnly { speakLocal(); return }
@@ -168,6 +178,7 @@ struct ContentView: View {
         }
         .tint(accent)
         .preferredColorScheme(.dark)
+        .accessibilityIdentifier("GhostlineTabbedRoot")
     }
 }
 
@@ -203,6 +214,9 @@ struct GhostlineHomeView: View {
                         .font(.system(size: 47))
                         .foregroundStyle(.purple)
                     Text("GHOSTLINE").font(.largeTitle.bold())
+                    Text("RVC Offline Test • New five-tab interface")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.purple)
                     Text("Your private, offline-first voice studio")
                         .font(.subheadline).foregroundStyle(.secondary)
                     HStack {
@@ -325,14 +339,14 @@ struct GhostlineToolsView: View {
     @StateObject private var store = VoiceStore()
     var body: some View {
         Form {
-            Section("Offline speech") {
+            Section("System voices • separate from identities") {
                 Picker("iOS voice", selection: $store.offlineVoiceID) {
                     Text("System default").tag("")
                     ForEach(store.installedVoices, id: \.identifier) { voice in
                         Text("\(voice.name) (\(voice.language))").tag(voice.identifier)
                     }
                 }
-                Button("Preview iOS voice") { store.speakLocal() }
+                Button("Preview system voice (not a character)") { store.previewSystemVoice() }
                 Text(store.status).font(.caption).foregroundStyle(.secondary)
             }
             Section("Verification") {
