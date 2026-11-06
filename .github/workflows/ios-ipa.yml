@@ -102,6 +102,12 @@ jobs:
           assert 'piper.voice.lab.decodedPCM.v2"' not in s, 'Do not reintroduce legacy unbound checkpoints'
           print('Piper cached model fingerprints, staging and unverified evidence contracts present')
           PY
+      - name: Prepare fully offline RVC WebAssembly runtime
+        run: |
+          python3 scripts/build_offline_rvc_web.py
+          test -f build/rvc-web-dist/index.html
+          test -f build/rvc-web-dist/inference.worker.js
+          test -n "$(find build/rvc-web-dist/onnx-wasm -name '*.wasm' -print -quit)"
       - name: Build arm64 iOS app
         run: |
           set -o pipefail
@@ -109,6 +115,8 @@ jobs:
       - name: Assemble unsigned IPA
         run: |
           mkdir -p Payload
+          mkdir -p build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb
+          cp -R build/rvc-web-dist/. build/Build/Products/Release-iphoneos/GHOSTLINE.app/RVCWeb/
           cp -R build/Build/Products/Release-iphoneos/GHOSTLINE.app Payload/
           /usr/bin/zip -qry GHOSTLINE-unsigned.ipa Payload
           unzip -t GHOSTLINE-unsigned.ipa
