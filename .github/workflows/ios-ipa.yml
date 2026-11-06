@@ -229,7 +229,8 @@ jobs:
           for model in a["models"]:
               assert model["claimed_real_person_identity"] is None
               assert model["device_status"] == "UNVERIFIED_CANDIDATE"
-              assert model["dataset_license"] == "public domain"
+              assert model["dataset_license"] in ("public domain", "CC0", "CC0 1.0 Universal")
+              assert model["speaker_ids"] == list(range(len(model["speaker_ids"])))
               assert "Trained from scratch" in model["training_lineage"]
               assert len(model["files"]) == 3
           source=Path("Ghostline/PiperIncludedVoiceStudio.swift").read_text()
@@ -240,6 +241,8 @@ jobs:
           PY
       - name: Guard included Piper replay and native listening receipts
         run: python3 scripts/test_included_piper_playback_evidence.py
+      - name: Audit variable-speaker CC0 manifest and provenance
+        run: python3 scripts/test_included_piper_provenance.py
       - name: Assemble unsigned IPA
         run: |
           mkdir -p Payload

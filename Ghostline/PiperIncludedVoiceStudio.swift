@@ -47,6 +47,7 @@ struct GhostlineIncludedPiperCatalog: Decodable {
 final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private let catalog = GhostlineIncludedPiperCatalog.load()
     @Published var selectedID = ""
+    @Published var selectedSpeakerID = 0
     @Published var status = "These test packs are synthetic and UNVERIFIED on iPhone/Strata."
     @Published var busy = false
     @Published var outputURL: URL?
@@ -67,6 +68,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
     override init() {
         super.init()
         selectedID = catalog?.models.first?.id ?? ""
+        selectedSpeakerID = catalog?.models.first?.speaker_ids.first ?? 0
         if candidates.isEmpty { status = "No rights-documented included Piper packs in this IPA." }
     }
 
@@ -76,6 +78,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         audioPlayer?.stop()
         audioPlayer = nil
         selectedID = id
+        selectedSpeakerID = chosen?.speaker_ids.first ?? 0
         outputURL = nil
         evidenceURL = nil
         playbackStarted = false
@@ -85,6 +88,20 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         activeModelSHA256 = nil
         activeConfigSHA256 = nil
         status = "Selected \(id). UNVERIFIED until iPhone offline audio is generated and reviewed."
+    }
+
+    func selectSpeaker(_ id: Int) {
+        guard !busy, let pack = chosen, pack.speaker_ids.contains(id), selectedSpeakerID != id else { return }
+        audioPlayer?.stop()
+        audioPlayer = nil
+        selectedSpeakerID = id
+        outputURL = nil
+        evidenceURL = nil
+        generatedAudioSHA256 = nil
+        playbackStarted = false
+        playbackCompleted = false
+        userAttestedListening = false
+        status = "Selected speaker slot \(id) in \(pack.id): UNVERIFIED. Prior WAV receipt discarded."
     }
 
     private func packDirectory(for pack: GhostlineIncludedPiperCatalog.Pack) -> URL {
@@ -126,9 +143,10 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
     private func ensureEngine(for pack: GhostlineIncludedPiperCatalog.Pack) throws -> PiperPlayer {
         if let engine { return engine }
         guard pack.device_status == "UNVERIFIED_CANDIDATE",
-              pack.dataset_license == "public domain",
+              ["public domain", "CC0", "CC0 1.0 Universal"].contains(pack.dataset_license),
               pack.training_lineage.lowercased().contains("trained from scratch"),
-              pack.speaker_ids == [0],
+              !pack.speaker_ids.isEmpty,
+              pack.speaker_ids == Array(0..<pack.speaker_ids.count),
               pack.asset("model.onnx") != nil,
               pack.asset("model.onnx.json") != nil,
               pack.asset("MODEL_CARD") != nil else {
@@ -142,7 +160,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         let configFile = directory.appendingPathComponent("model.onnx.json")
         let configData = try Data(contentsOf: configFile)
         guard let config = try JSONSerialization.jsonObject(with: configData) as? [String: Any],
-              (config["num_speakers"] as? Int ?? 1) == 1 else {
+              (config["num_speakers"] as? Int ?? 1) == pack.speaker_ids.count else {
             throw NSError(domain: "GhostlinePiper", code: 5,
                           userInfo: [NSLocalizedDescriptionKey: "Unexpected speaker layout"])
         }
@@ -187,7 +205,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
     }
 
     func generate(_ phrase: String) async {
-        guard !busy, let pack = chosen else { return }
+        guard !busy, let pack = chosen, pack.speaker_ids.contains(selectedSpeakerID) else { return }
         guard !phrase.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             status = "Enter text first."
             return
@@ -209,7 +227,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
                 .replacingOccurrences(of: "<", with: "&lt;")
                 .replacingOccurrences(of: ">", with: "&gt;")
             guard let filePath = await player.synthesizeSSMLToFile(
-                ssml: "<speak>\(escaped)</speak>", speakerId: 0) else {
+                ssml: "<speak>\(escaped)</speak>", speakerId: Int32(selectedSpeakerID)) else {
                 throw NSError(domain: "GhostlinePiper", code: 8,
                               userInfo: [NSLocalizedDescriptionKey: "No offline audio generated"])
             }
@@ -306,6 +324,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         }
         let record: [String: Any] = [
             "schema_version": 1, "engine": "Piper", "model_id": pack.id,
+            "speaker_id": selectedSpeakerID, "speaker_slot_unverified": true,
             "source_model_card": pack.model_card_url,
             "model_sha256": modelHash, "config_sha256": configHash,
             "generated_wav_sha256": audioHash,
@@ -360,7 +379,16 @@ struct GhostlineIncludedPiperView: View {
                         Link("Original model card / provenance", destination: url)
                     }
                 }
-                Text("Pack count is not capped by the UI; each model includes one speaker ID. Candidate pack inclusion does not establish on-device performance.")
+                if let pack = studio.chosen, pack.speaker_ids.count > 1 {
+                    Picker("Unverified speaker slot", selection: Binding(
+                        get: { studio.selectedSpeakerID },
+                        set: { studio.selectSpeaker($0) })) {
+                        ForEach(pack.speaker_ids, id: \.self) { speakerID in
+                            Text("Speaker slot \(speakerID) • UNVERIFIED").tag(speakerID)
+                        }
+                    }.disabled(studio.busy)
+                }
+                Text("No fixed pack or speaker-count cap. Multiple speaker IDs are candidate slots, not validated voices; included IPA audio remains UNVERIFIED.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("Offline synthesis") {

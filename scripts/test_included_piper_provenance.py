@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+"""Static source/provenance check. NOT proof of device inference or listening."""
+import json
+import re
+from pathlib import Path
+catalog=json.loads(Path("Ghostline/Resources/approved-piper-bundle.json").read_text(encoding="utf-8"))
+assert catalog["verified_identity_count"] == 0 == catalog["device_verified_audio_count"]
+assert catalog["distribution_scope"].startswith("experimental unsigned IPA")
+assert len(catalog["models"]) >= 7
+assert len({p["id"] for p in catalog["models"]}) == len(catalog["models"])
+assert sum(len(p["speaker_ids"]) for p in catalog["models"]) >= 9
+rev=catalog["source_revision"]
+for p in catalog["models"]:
+    assert re.fullmatch(r"[a-z]{2}_[A-Z]{2}-[a-z0-9_]+-(?:x_low|low|medium|high)",p["id"])
+    assert p["claimed_real_person_identity"] is None and p["device_status"]=="UNVERIFIED_CANDIDATE"
+    assert p["dataset_license"] in ("public domain","CC0","CC0 1.0 Universal")
+    assert p["speaker_ids"] == list(range(len(p["speaker_ids"]))) and p["speaker_ids"]
+    assert p["model_card_url"].startswith("https://huggingface.co/rhasspy/piper-voices/blob/"+rev+"/")
+    assert {f["name"] for f in p["files"]} == {"model.onnx","model.onnx.json","MODEL_CARD"}
+    for f in p["files"]:
+        assert f["size"]>0 and re.fullmatch(r"[0-9a-f]{64}",f["sha256"])
+        assert f["upstream_path"] and ".." not in f["upstream_path"]
+by_id={p["id"]:p for p in catalog["models"]}
+assert by_id["nl_BE-rdh-medium"]["dataset_license"]=="CC0 1.0 Universal"
+assert by_id["uk_UA-ukrainian_tts-medium"]["speaker_ids"]==[0,1,2]
+source=Path("Ghostline/PiperIncludedVoiceStudio.swift").read_text()
+assert "speakerId: Int32(selectedSpeakerID)" in source
+assert '"speaker_id": selectedSpeakerID' in source
+assert '"speaker_slot_unverified": true' in source
+assert "func selectSpeaker(_ id: Int)" in source
+reset=source.split("func selectSpeaker(_ id: Int)",1)[1].split("private func packDirectory",1)[0]
+for marker in ("outputURL = nil","evidenceURL = nil","playbackCompleted = false","userAttestedListening = false"):
+    assert marker in reset
+assert "0 voice identities verified" in source
+print(f"Provenance: {len(catalog['models'])} unverified model packs; {sum(len(p['speaker_ids']) for p in catalog['models'])} candidate speaker slots; 0 verified device voices.")
