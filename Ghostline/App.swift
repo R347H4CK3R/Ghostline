@@ -152,45 +152,186 @@ struct ModelBinding: Codable { var model: String; var voice: String; var authori
     var body: some Scene { WindowGroup { ContentView() } }
 }
 struct ContentView: View {
-    @StateObject private var store=VoiceStore()
-    @State private var apiKey=""
+    private let accent = Color(red: 0.67, green: 0.36, blue: 1.0)
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Neural Speech") {
-                    NavigationLink("Piper — Unverified Speaker Candidate Lab") { PiperVoiceLabView() }
-                    NavigationLink("Kokoro — Multilingual Ready-Made Voices") { KokoroOfflineView() }
-                    NavigationLink("Ready-Made Offline AI Voices — No Recording Required") { NeuralStudioView() }
-                    NavigationLink("Optional: Clone a Voice from an Authorized Recording") { CloneStudioView() }
-                }
-                Section("Verified authentic voices • 0") {
-                    Text("No character, actor, or singer voice has yet passed all release checks: usage rights, exact identity attribution, real offline iPhone synthesis, audible output, and documented listening verification.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                    Text("Unverified catalog names are intentionally hidden. Piper candidate IDs and generic system speech voices never count as authentic character or celebrity replicas.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-                Section("Offline voice tools") {
-                    Text("Use the neural studios above for permitted synthetic voices or recordings you are authorized to clone. A successful iOS build alone does not verify an authentic identity.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-                Section("Free Offline Voices") {
-                    Toggle("Offline-only mode", isOn: $store.offlineOnly)
-                    Text("Browse every speech voice installed in iOS, across languages. Additional system voices must be installed using iOS settings. These are genuine system voices, not celebrity clones.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                    Picker("Any installed device voice", selection: $store.offlineVoiceID) {
-                        Text("Default system voice").tag("")
-                        ForEach(store.installedVoices, id: \.identifier) { v in
-                            Text("\(v.name) (\(v.language))").tag(v.identifier)
-                        }
-                    }
-                    Button("Preview offline voice") { store.speakLocal() }
-                }
-                Section("Status") {Text(store.status).font(.footnote)}
-            }
-            .navigationTitle("GHOSTLINE")
+        TabView {
+            NavigationStack { GhostlineHomeView() }
+                .tabItem { Label("Home", systemImage: "house.fill") }
+            NavigationStack { GhostlineLibraryView() }
+                .tabItem { Label("Library", systemImage: "square.stack.3d.up.fill") }
+            NavigationStack { GhostlineGeneratorView() }
+                .tabItem { Label("Generate", systemImage: "waveform") }
+            NavigationStack { RVCPackLibraryView() }
+                .tabItem { Label("RVC Packs", systemImage: "shippingbox.fill") }
+            NavigationStack { GhostlineToolsView() }
+                .tabItem { Label("Tools", systemImage: "slider.horizontal.3") }
         }
+        .tint(accent)
+        .preferredColorScheme(.dark)
+    }
+}
+
+private struct GhostlineFeatureRow: View {
+    let icon: String
+    let heading: String
+    let detail: String
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title2)
+                .frame(width: 40, height: 40)
+                .foregroundStyle(Color(red: 0.75, green: 0.5, blue: 1))
+                .background(.purple.opacity(0.17), in: RoundedRectangle(cornerRadius: 12))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(heading).font(.headline)
+                Text(detail).font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").foregroundStyle(.tertiary)
+        }
+        .padding(12)
+        .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+struct GhostlineHomeView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 17) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Image(systemName: "waveform.path")
+                        .font(.system(size: 47))
+                        .foregroundStyle(.purple)
+                    Text("GHOSTLINE").font(.largeTitle.bold())
+                    Text("Your private, offline-first voice studio")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    HStack {
+                        Label("Offline-first", systemImage: "iphone")
+                        Spacer()
+                        Label("Private packs", systemImage: "lock.shield")
+                    }.font(.caption).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(22)
+                .background(
+                    LinearGradient(colors: [.purple.opacity(0.34), .indigo.opacity(0.12), .black],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing),
+                    in: RoundedRectangle(cornerRadius: 24)
+                )
+
+                Text("Voice workspaces").font(.title3.bold())
+                NavigationLink(destination: RVCPackLibraryView()) {
+                    GhostlineFeatureRow(icon: "shippingbox", heading: "RVC Pack Library",
+                                        detail: "Import private .pth / .index candidates")
+                }.buttonStyle(.plain)
+                NavigationLink(destination: CloneStudioView()) {
+                    GhostlineFeatureRow(icon: "mic.fill", heading: "Clone Studio",
+                                        detail: "Authorized reference voice recordings")
+                }.buttonStyle(.plain)
+                NavigationLink(destination: KokoroOfflineView()) {
+                    GhostlineFeatureRow(icon: "waveform", heading: "Kokoro Neural Voices",
+                                        detail: "Download once, synthesize locally")
+                }.buttonStyle(.plain)
+                NavigationLink(destination: NeuralStudioView()) {
+                    GhostlineFeatureRow(icon: "person.wave.2", heading: "PocketTTS Presets",
+                                        detail: "Original and licensed synthetic presets")
+                }.buttonStyle(.plain)
+                NavigationLink(destination: PiperVoiceLabView()) {
+                    GhostlineFeatureRow(icon: "waveform.badge.mic", heading: "Piper Test Lab",
+                                        detail: "Unverified multispeaker model candidates")
+                }.buttonStyle(.plain)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Authentic identity verification").font(.headline)
+                    Text("0 verified movie, animation, performer or singer voices")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    ProgressView(value: 0, total: 1)
+                    Text("Model imports and catalog names do not count as offline iPhone audio verification.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                .padding(16)
+                .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
+            }
+            .padding(18)
+        }
+        .navigationTitle("Home")
+    }
+}
+
+struct GhostlineLibraryView: View {
+    private let categories: [(String, String)] = [
+        ("Movies & film", "film"), ("Television", "tv"),
+        ("Cartoons", "face.smiling"), ("Anime", "sparkles"),
+        ("Gaming", "gamecontroller"), ("Singers", "music.mic"),
+        ("Celebrities", "star"), ("Original voices", "waveform")
+    ]
+    var body: some View {
+        List {
+            Section {
+                Text("This library lists verified authentic voices only. No actor, character, or singer identity has been established by an offline iPhone test.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                Label("0 authentic identities verified", systemImage: "checkmark.shield")
+            }
+            Section("Browse categories") {
+                ForEach(categories, id: \.0) { entry in
+                    HStack {
+                        Label(entry.0, systemImage: entry.1)
+                        Spacer()
+                        Text("0 verified").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            Section("Local voice sources") {
+                NavigationLink("RVC imported packs (not yet playable)") { RVCPackLibraryView() }
+                NavigationLink("Offline PocketTTS presets") { NeuralStudioView() }
+                NavigationLink("Offline Kokoro presets") { KokoroOfflineView() }
+                NavigationLink("Piper experimental speakers") { PiperVoiceLabView() }
+            }
+        }.navigationTitle("Voice Library")
+    }
+}
+
+struct GhostlineGeneratorView: View {
+    var body: some View {
+        List {
+            Section("Generate offline speech") {
+                NavigationLink("Kokoro — neural text to speech") { KokoroOfflineView() }
+                NavigationLink("PocketTTS — synthetic voice presets") { NeuralStudioView() }
+                NavigationLink("Clone Studio — authorized reference audio") { CloneStudioView() }
+                NavigationLink("Piper — local speaker testing") { PiperVoiceLabView() }
+            }
+            Section("RVC conversion") {
+                NavigationLink("Import voice packs") { RVCPackLibraryView() }
+                Text("RVC weights can be imported and checked, but are not executable by the current iOS speech engines. Conversion is not yet available.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+        }.navigationTitle("Generate")
+    }
+}
+
+struct GhostlineToolsView: View {
+    @StateObject private var store = VoiceStore()
+    var body: some View {
+        Form {
+            Section("Offline speech") {
+                Picker("iOS voice", selection: $store.offlineVoiceID) {
+                    Text("System default").tag("")
+                    ForEach(store.installedVoices, id: \.identifier) { voice in
+                        Text("\(voice.name) (\(voice.language))").tag(voice.identifier)
+                    }
+                }
+                Button("Preview iOS voice") { store.speakLocal() }
+                Text(store.status).font(.caption).foregroundStyle(.secondary)
+            }
+            Section("Verification") {
+                Text("Authentic identities: 0 verified on target iPhone")
+                Text("Keep the device offline after required model setup. Compare actual audio with authorized reference recordings. This application never certifies identities from catalog names alone.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Section("Privacy") {
+                Label("Imported RVC files stored only in local app storage", systemImage: "lock")
+                Label("No automatic model or microphone uploads", systemImage: "iphone")
+            }
+        }.navigationTitle("Tools")
     }
 }
