@@ -40,21 +40,29 @@ def main():
     assert catalog["verified_identity_count"] == 0
     assert catalog["device_verified_audio_count"] == 0
     assert catalog["repo_license"] == "MIT"
-    assert len(catalog["models"]) > 0  # initial four entries, no cap
+    assert len(catalog["models"]) > 0  # variable inventory, no arbitrary cap
     revision = catalog["source_revision"]
     assert re.fullmatch(r"[a-f0-9]{40}", revision)
     names = set()
     root.mkdir(parents=True, exist_ok=True)
     for pack in catalog["models"]:
         key = pack["id"]
-        assert re.fullmatch(r"(?:en_(?:US|GB)-[a-z]+-medium|es_ES-carlfm-x_low)", key), key
+        match = re.fullmatch(r"([a-z]{2})_([A-Z]{2})-([a-z0-9_]+)-(x_low|low|medium|high)", key)
+        assert match, key
+        family, region, voice, quality = match.groups()
+        prefix = f"{family}/{family}_{region}/{voice}/{quality}/"
+        assert pack["engine"] == "piper" and pack["language"] == f"{family}_{region}"
+        assert pack["category"] == "open_licensed_synthetic"
+        assert pack["model_card_url"] == (
+            f"https://huggingface.co/rhasspy/piper-voices/blob/{revision}/{prefix}MODEL_CARD")
         assert key not in names
         names.add(key)
         assert pack["device_status"] == "UNVERIFIED_CANDIDATE"
         assert pack["claimed_real_person_identity"] is None
-        assert pack["dataset_license"] == "public domain"
+        assert pack["dataset_license"] in ("public domain", "CC0", "CC0 1.0 Universal")
+        assert "MIT" in pack["license"]
         assert "Trained from scratch" in pack["training_lineage"]
-        assert pack["speaker_ids"] == [0]
+        assert pack["speaker_ids"] and pack["speaker_ids"] == list(range(len(pack["speaker_ids"])))
         folder = root / key
         folder.mkdir(exist_ok=True)
         assert {f["name"] for f in pack["files"]} == {
@@ -62,7 +70,12 @@ def main():
         for item in pack["files"]:
             assert re.fullmatch(r"[a-f0-9]{64}", item["sha256"])
             assert item["size"] > 0
-            assert item["upstream_path"].startswith(("en/", "es/"))
+            expected_upstream = {
+                "model.onnx": prefix + key + ".onnx",
+                "model.onnx.json": prefix + key + ".onnx.json",
+                "MODEL_CARD": prefix + "MODEL_CARD",
+            }[item["name"]]
+            assert item["upstream_path"] == expected_upstream, key
             dst = folder / item["name"]
             if checked_file(dst, item):
                 continue
@@ -87,18 +100,21 @@ def main():
             if not checked_file(dst, item):
                 raise RuntimeError(f"Post-copy verification failed: {dst}")
         config = json.loads((folder / "model.onnx.json").read_text())
-        if config.get("num_speakers", 1) != 1:
-            raise RuntimeError(f"Expected 1 speaker in {key}, got {config.get('num_speakers')}")
+        if config.get("num_speakers", 1) != len(pack["speaker_ids"]):
+            raise RuntimeError(f"Speaker count mismatch for {key}: expected {pack['speaker_ids']}, got {config.get('num_speakers')}")
+        if config.get("speaker_id_map"):
+            assert sorted(config["speaker_id_map"].values()) == pack["speaker_ids"]
         card = (folder / "MODEL_CARD").read_text()
-        if "public domain" not in card.lower() or "trained from scratch" not in card.lower():
+        if (pack["dataset_license"].lower() not in card.lower()
+                or "trained from scratch" not in card.lower()):
             raise RuntimeError(f"License/lineage verification failed: {key}")
-        print(f"{key}: model_sha256={pack['files'][0]['sha256']} speakerIDs=1 UNVERIFIED")
+        print(f"{key}: model_sha256={pack['files'][0]['sha256']} speakerIDs={len(pack['speaker_ids'])} UNVERIFIED")
     all_models = ", ".join(pack["id"] for pack in catalog["models"])
     notice = (f"GHOSTLINE {len(catalog['models'])} OPEN-LICENSE PIPER TEST PACKS — UNVERIFIED\n"
               f"Models: {all_models}.\n"
               "Model repository: rhasspy/piper-voices (MIT), pinned revision "
               f"{revision}.\n"
-              "Each bundled MODEL_CARD reports public-domain source recordings and"
+              "Each bundled MODEL_CARD reports public-domain/CC0 recordings and"
               " from-scratch training. The Piper runtime has separate GPL obligations.\n"
               "These are synthetic voices, NOT authenticated movie, singer, actor,"
               " game, celebrity or character clones. Device offline audio and human"
@@ -112,7 +128,9 @@ def main():
     else:
         manifest_path.write_text(json.dumps(catalog, sort_keys=True, indent=2) + "\n")
         notice_path.write_text(notice)
-    print(f"{len(catalog['models'])} open-license candidate packs; 0 device-verified voices.")
+    print(f"{len(catalog['models'])} open-license candidate packs, "
+          f"{sum(len(p['speaker_ids']) for p in catalog['models'])} unverified speaker slots; "
+          "0 device-verified voices.")
 
 
 if __name__ == "__main__":

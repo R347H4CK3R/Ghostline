@@ -5,7 +5,7 @@
   "repo_license": "MIT",
   "engine_runtime_license": "GPL-3.0; source/distribution obligations apply",
   "distribution_scope": "experimental unsigned IPA artifact only; not a public release",
-  "validation_note": "Byte-pinned provenance only. Five source-cleared candidates (including Spanish CarlFM) are NOT evidence of successful offline iPhone audio or distinct speaker identities.",
+  "validation_note": "Seven byte-pinned synthetic Piper candidate packs; nine source-declared speaker slots. Zero target-device offline audio, listening, or voice identity verifications. Speaker slots are not verified voices.",
   "verified_identity_count": 0,
   "device_verified_audio_count": 0,
   "models": [
@@ -191,6 +191,86 @@
           "upstream_path": "es/es_ES/carlfm/x_low/MODEL_CARD",
           "size": 250,
           "sha256": "a6e62a3d36c37c7702d877f784001208b952e2bf4d17c72a6b5da442fbefb4b3"
+        }
+      ]
+    },
+    {
+      "id": "nl_BE-rdh-medium",
+      "display_name": "RDH • Flemish Dutch • CC0",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "nl_BE",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT model-repository / CC0 1.0 Universal dataset; preserve attribution",
+      "dataset_license": "CC0 1.0 Universal",
+      "dataset_source_url": "https://github.com/r-dh/dutch-vl-tts",
+      "training_lineage": "Trained from scratch on CC0 1.0 Universal Dutch recordings.",
+      "runtime_compatibility_note": "Piper v0.2.0 config; compatibility with target iPhone not tested.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "CC0 1.0 Universal source corpus and MIT model-repository terms; does not grant celebrity, character, actor or singer imitation rights",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/nl/nl_BE/rdh/medium/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "nl/nl_BE/rdh/medium/nl_BE-rdh-medium.onnx",
+          "sha256": "fb1a9d89ff53dbd510c5d10bd1365c36a5f76249c3ca603076646fd778003db1",
+          "size": 63104526
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "nl/nl_BE/rdh/medium/nl_BE-rdh-medium.onnx.json",
+          "sha256": "65deb256664d22099b0db5bb36d96237a3e32e43885c6ce4ee6811e6c04a8d79",
+          "size": 4159
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "nl/nl_BE/rdh/medium/MODEL_CARD",
+          "sha256": "a0ac804376a1b4be5aeba0f982e43380bccd105b84af3477208f8a2b0fb89cc3",
+          "size": 244
+        }
+      ]
+    },
+    {
+      "id": "uk_UA-ukrainian_tts-medium",
+      "display_name": "Ukrainian TTS • CC0 • 3 speaker slots",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "uk_UA",
+      "speaker_ids": [
+        0,
+        1,
+        2
+      ],
+      "license": "MIT model-repository / CC0 dataset; preserve attribution",
+      "dataset_license": "CC0",
+      "dataset_source_url": "https://github.com/OHF-Voice/voice-datasets",
+      "training_lineage": "Trained from scratch on CC0 Ukrainian speech recordings.",
+      "runtime_compatibility_note": "Text phonemes and three candidate speaker slots; actual iOS audio not tested.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "CC0 source corpus and MIT model-repository terms; does not grant celebrity, character, actor or singer imitation rights",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/uk/uk_UA/ukrainian_tts/medium/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "uk/uk_UA/ukrainian_tts/medium/uk_UA-ukrainian_tts-medium.onnx",
+          "sha256": "7920419ac5f6fd8b6450520f24b52ed5a319cb53dd018fbcd71c9e079cbac84f",
+          "size": 76735663
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "uk/uk_UA/ukrainian_tts/medium/uk_UA-ukrainian_tts-medium.onnx.json",
+          "sha256": "4e96e72917ca9b94edc77d6ccfee03a73f450ba2fc1ca93c2e562bc014e5aa55",
+          "size": 2002
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "uk/uk_UA/ukrainian_tts/medium/MODEL_CARD",
+          "sha256": "ce09d0c9d1d90cdc98d1ea8a4ecbdeb5e937d44593876e4194302c5eabbaad9d",
+          "size": 267
         }
       ]
     }
