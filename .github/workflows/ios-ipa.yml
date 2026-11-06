@@ -71,6 +71,10 @@ jobs:
           x=json.loads(p.read_text())
           assert x["speaker_candidate_count"] >= 500
           assert x["speaker_candidate_count"] == len(x["candidates"])
+          assert x.get("speaker_ids_truncated") is False, "No per-model candidate cap is permitted"
+          assert "max_speakers_per_model" not in x
+          assert all(m["candidate_speakers"] == m["declared_speakers"] for m in x["models"])
+          assert sum(m["declared_speakers"] for m in x["models"]) == len(x["candidates"])
           assert all(v["availability"] == "candidate_unverified" for v in x["candidates"])
           ids={v["id"] for v in x["candidates"]}
           assert len(ids)==len(x["candidates"])
