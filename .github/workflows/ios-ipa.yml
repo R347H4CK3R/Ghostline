@@ -169,6 +169,8 @@ jobs:
         run: python3 scripts/test_rvc_playback_evidence.py
       - name: Guard private RVC candidate-to-converter bridge
         run: python3 scripts/test_private_rvc_pack_bridge.py
+      - name: Guard PocketTTS and Kokoro audio-evidence contracts
+        run: python3 scripts/test_neural_audio_evidence.py
       - name: Prepare fully offline RVC WebAssembly runtime
         run: |
           python3 scripts/build_offline_rvc_web.py
