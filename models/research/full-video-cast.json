@@ -1,0 +1,1006 @@
+{
+  "sourceURL": "https://www.youtube.com/watch?v=EAT0nWoEzJ8",
+  "visualMethod": "Nearest manually reviewed on-screen character artwork template; left half only, no actor facial identification",
+  "unresolvedVisualRuns": [
+    {
+      "name": "UNRESOLVED",
+      "start": 0,
+      "end": 4,
+      "seconds": 4,
+      "maxDifference": 0.22268688725490196
+    }
+  ],
+  "profiles": [
+    {
+      "id": "mr-meeseeks",
+      "name": "Mr. Meeseeks",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 36,
+      "cardEnd": 50,
+      "referenceStart": 37.25,
+      "referenceEnd": 47.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "a271eac38ea99c2f255251ac46daabec6d55dd83c10a26154936f7039428bad7",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "mr-top-hat-jones",
+      "name": "Mr. Top Hat Jones",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 50,
+      "cardEnd": 67,
+      "referenceStart": 51.25,
+      "referenceEnd": 61.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "16fecd593068b520142af5386903b99b0e05a27353a7203cbb1559f0dec1b115",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "ants-in-my-eyes-johnson",
+      "name": "Ants-in-My-Eyes Johnson",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 67,
+      "cardEnd": 85,
+      "referenceStart": 68.25,
+      "referenceEnd": 78.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "12b32a3a18e2489eb8995a56c8a44dd59bf6db216e53c3c405013769a45a5849",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "the-eyehole-man",
+      "name": "The Eyehole Man",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 85,
+      "cardEnd": 96,
+      "referenceStart": 86.25,
+      "referenceEnd": 94.75,
+      "referenceSeconds": 8.5,
+      "referenceSHA256": "0585e83d4f584b29205c0266177dcbaf27c60c94ff4afdb8dbba168239dafa93",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "stealy",
+      "name": "Stealy",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 96,
+      "cardEnd": 114,
+      "referenceStart": 97.25,
+      "referenceEnd": 107.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "9ae6d479db10cb7650d3749dd27f453a4fc89bf88f34638894c4921994ee2f19",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "mr-poopybutthole",
+      "name": "Mr. Poopybutthole",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 114,
+      "cardEnd": 130,
+      "referenceStart": 115.25,
+      "referenceEnd": 125.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "c2f745763daa6274d03e194ddd6436e658162d7f58c071c8be1cd1bc221aa6dd",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "beth",
+      "name": "Beth",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 130,
+      "cardEnd": 141,
+      "referenceStart": 131.25,
+      "referenceEnd": 139.75,
+      "referenceSeconds": 8.5,
+      "referenceSHA256": "a1a2051fb46aa2abf5900b98ea393262fdaf48547aeb0a5674498efd2f8bef17",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "jerry",
+      "name": "Jerry",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 141,
+      "cardEnd": 153,
+      "referenceStart": 142.25,
+      "referenceEnd": 151.75,
+      "referenceSeconds": 9.5,
+      "referenceSHA256": "1d03673dcab63c26d5e986f92088ea4a554c8084ba099eba9c30b9a589b932c4",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "summer",
+      "name": "Summer",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 153,
+      "cardEnd": 172,
+      "referenceStart": 154.25,
+      "referenceEnd": 164.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "edaa5efac16d1eda9458deba92be0607049014ff5ded68f3a1e97e4c16e27deb",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "principal-vagina",
+      "name": "Principal Vagina",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 172,
+      "cardEnd": 203,
+      "referenceStart": 173.25,
+      "referenceEnd": 183.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "ca1f81da7e42dbacb313109545d36471845034a063a667f8e4504d11602c2460",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "mr-goldenfold",
+      "name": "Mr. Goldenfold",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 203,
+      "cardEnd": 230,
+      "referenceStart": 204.25,
+      "referenceEnd": 214.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "01b2c2799bc68189e09ed9c822c704c0bc370c527c492862cc3d55616e6b4503",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "jessica",
+      "name": "Jessica",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 230,
+      "cardEnd": 257,
+      "referenceStart": 231.25,
+      "referenceEnd": 241.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "c2aa2679f053e2dec6a684ffeb902a652c513c3d82a79da47264b19ba9a5d1ae",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "brad",
+      "name": "Brad",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 257,
+      "cardEnd": 280,
+      "referenceStart": 258.25,
+      "referenceEnd": 268.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "d53e30cf6cf13e8b82c3cc0ec04833336a1bef291d565ef5dcb8ba840f46fd52",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "jacob",
+      "name": "Jacob",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 280,
+      "cardEnd": 290,
+      "referenceStart": 281.25,
+      "referenceEnd": 288.75,
+      "referenceSeconds": 7.5,
+      "referenceSHA256": "ff9866600118143b453a5a76512f1291715a979b4fc1916f7f5b7f0902628fb3",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "tammy",
+      "name": "Tammy",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 290,
+      "cardEnd": 302,
+      "referenceStart": 291.25,
+      "referenceEnd": 300.75,
+      "referenceSeconds": 9.5,
+      "referenceSHA256": "08332875d9eb778a1d70a70293020e4898a522927fced97cbec8861d584e1fd5",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "ethan",
+      "name": "Ethan",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 302,
+      "cardEnd": 321,
+      "referenceStart": 303.25,
+      "referenceEnd": 313.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "93554e8d8759600118d952d6ecc2b885038d9a868518d074cc66c645eac1da8e",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "nancy",
+      "name": "Nancy",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 321,
+      "cardEnd": 334,
+      "referenceStart": 322.25,
+      "referenceEnd": 332.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "852177ec2b404f09ca8446a0f9e92c1c5c5cd2f45baa14a9c3534c4cb14c6e64",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "toby-matthews",
+      "name": "Toby Matthews",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 334,
+      "cardEnd": 350,
+      "referenceStart": 335.25,
+      "referenceEnd": 345.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "32781f8eda7ca50a8fd1d9fe46e1d8e1e80f4918e7e3a690a6c337633ec1a936",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "frank-palicky",
+      "name": "Frank Palicky",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 350,
+      "cardEnd": 367,
+      "referenceStart": 351.25,
+      "referenceEnd": 361.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "0b048617499991a139a7458e805f7f97b2b08c1ed870e4b540c785b93b2e8363",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "cousin-nicky",
+      "name": "Cousin Nicky",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 367,
+      "cardEnd": 381,
+      "referenceStart": 368.25,
+      "referenceEnd": 378.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "191390b8ec4377243c480f7f51cbbfed0fd73dcd6a4a3d063d43d286c6906d7c",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "birdperson",
+      "name": "Birdperson",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 381,
+      "cardEnd": 398,
+      "referenceStart": 382.25,
+      "referenceEnd": 392.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "42e09ee54f3b0b2cf533a4d1580d2b1be100ea8cc1ad4ff2d4308db093d5d93a",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "mc-haps",
+      "name": "MC Haps",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 398,
+      "cardEnd": 417,
+      "referenceStart": 399.25,
+      "referenceEnd": 409.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "76c08290eb2213fac2ae9a9b01d90c3a01c9097526724a2225bf2f97e183ec2e",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "ice-t-fictional-portrayal",
+      "name": "Ice-T (fictional portrayal)",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 417,
+      "cardEnd": 434,
+      "referenceStart": 418.25,
+      "referenceEnd": 428.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "fe04f7265b50a229ef2a1b81e5ea0952eaa9fa49066e3e6a066230ef3ec82af9",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "scary-terry",
+      "name": "Scary Terry",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 434,
+      "cardEnd": 447,
+      "referenceStart": 435.25,
+      "referenceEnd": 445.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "d52e75adb91878e450df68b57b2265a89632c7187e22fff37d5711e74cb1e265",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "dr-xenon-bloom",
+      "name": "Dr. Xenon Bloom",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 447,
+      "cardEnd": 467,
+      "referenceStart": 448.25,
+      "referenceEnd": 458.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "3e20b3bc4fa6a56f351f5ba5613431440f2242f56a2df01869083f0f225c2a94",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "annie",
+      "name": "Annie",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 467,
+      "cardEnd": 479,
+      "referenceStart": 468.25,
+      "referenceEnd": 477.75,
+      "referenceSeconds": 9.5,
+      "referenceSHA256": "eaf31b87d89d151ee58858299126bd1b11b86718c7cf97bb1db21031b0da2c75",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "revolio-clockberg-jr",
+      "name": "Revolio Clockberg Jr.",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 479,
+      "cardEnd": 491,
+      "referenceStart": 480.25,
+      "referenceEnd": 489.75,
+      "referenceSeconds": 9.5,
+      "referenceSHA256": "c9e47aff703b9933c65760e6ec93453fa8ddaf21973546b58a4e026c291cf13b",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "squanchy",
+      "name": "Squanchy",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 491,
+      "cardEnd": 506,
+      "referenceStart": 492.25,
+      "referenceEnd": 502.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "3e077a9fd9059a942e27e8311a9525bb124c5ec6add04b5a31ff462447a2237e",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "mr-jellybean",
+      "name": "Mr. Jellybean",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 510,
+      "cardEnd": 529,
+      "referenceStart": 511.25,
+      "referenceEnd": 521.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "bdc941f7cc9f38e5283b550ce167fa007f89d00b95f2693ed1856e3853ae5f5f",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "baby-morty-jr",
+      "name": "Baby Morty Jr.",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 529,
+      "cardEnd": 536,
+      "referenceStart": 529.4,
+      "referenceEnd": 535.6,
+      "referenceSeconds": 6.2000000000000455,
+      "referenceSHA256": "dabe2aaab89359db3c9487da73d7d6c4e9d4cceefdaa9c928f4a5fbaaa9f38c2",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "teen-morty-jr",
+      "name": "Teen Morty Jr.",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 544,
+      "cardEnd": 562,
+      "referenceStart": 545.25,
+      "referenceEnd": 555.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "38320416f75c9a1d4ba71b2cd0cf6ca3913baf00fe95e1208bebf685aeda6a72",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "adult-morty-jr",
+      "name": "Adult Morty Jr.",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 562,
+      "cardEnd": 581,
+      "referenceStart": 563.25,
+      "referenceEnd": 573.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "9b56966b6e5438a4a0c3a45f876e6876e8b01bce6b672c292c8a17d1ef309d2a",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "abradolf-lincler",
+      "name": "Abradolf Lincler",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 581,
+      "cardEnd": 602,
+      "referenceStart": 582.25,
+      "referenceEnd": 592.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "adec109e10197d6d50401957aa314b2d0593de1df53800e6f5433720c1177bbd",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "krombopulos-michael",
+      "name": "Krombopulos Michael",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 602,
+      "cardEnd": 616,
+      "referenceStart": 603.25,
+      "referenceEnd": 613.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "c61bf19952ccc8b1f9ec11e69c375be07742cd986bb0a3b95e2b214a6755b511",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "unity",
+      "name": "Unity",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 616,
+      "cardEnd": 643,
+      "referenceStart": 617.25,
+      "referenceEnd": 627.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "b847ab3309d09237a8e83c82c3cd5f77dd9125f603050aa8f35d9980b4565bef",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "prince-nebulon",
+      "name": "Prince Nebulon",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 643,
+      "cardEnd": 664,
+      "referenceStart": 644.25,
+      "referenceEnd": 654.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "debcd9aead10fb981e25a6147c33000169c959747d08dfa5f930be076fe25449",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "king-flippy-nips",
+      "name": "King Flippy Nips",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 664,
+      "cardEnd": 677,
+      "referenceStart": 665.25,
+      "referenceEnd": 675.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "a3ef3918ab3768c95615bf44a8c310de0d45581d201a9d86e81d04610433f211",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "scroopy-noopers",
+      "name": "Scroopy Noopers",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 677,
+      "cardEnd": 693,
+      "referenceStart": 678.25,
+      "referenceEnd": 688.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "cd8dcf22f3c1e034e7010fe89df8412a831493998c75c25cacb44ff49fd89756",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "frankenstein-s-monster",
+      "name": "Frankenstein's Monster",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 693,
+      "cardEnd": 699,
+      "referenceStart": 693.4,
+      "referenceEnd": 698.6,
+      "referenceSeconds": 5.2000000000000455,
+      "referenceSHA256": "50841d545497746be16eb75a1c6c844da86bf987ac8013e3e68197caf0a7dd65",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "sleepy-gary",
+      "name": "Sleepy Gary",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 700,
+      "cardEnd": 710,
+      "referenceStart": 701.25,
+      "referenceEnd": 708.75,
+      "referenceSeconds": 7.5,
+      "referenceSHA256": "625675bef799a6cb96891fcc2d95c0d8ecaa715341767d9f42c6a91c6a39e52f",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "tinkles",
+      "name": "Tinkles",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 710,
+      "cardEnd": 724,
+      "referenceStart": 711.25,
+      "referenceEnd": 721.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "68e8d8bae83866ffa1b312e11f16e0c219e5b6d727dc16ba5bd867436ad1764e",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "reverse-giraffe",
+      "name": "Reverse Giraffe",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 725,
+      "cardEnd": 728,
+      "referenceStart": 725.4,
+      "referenceEnd": 727.6,
+      "referenceSeconds": 2.2000000000000455,
+      "referenceSHA256": "eecf25e746e59f23300747f54841b32ed2e74ec5f8bf98f0e14d6038d2ba9756",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "the-president-fictional-character",
+      "name": "The President (fictional character)",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 728,
+      "cardEnd": 741,
+      "referenceStart": 729.25,
+      "referenceEnd": 739.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "0167419db2145c08483a525ff4494202453f9e5b78030479b364209bd9996fa0",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "general-nathan",
+      "name": "General Nathan",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 742,
+      "cardEnd": 751,
+      "referenceStart": 743.25,
+      "referenceEnd": 749.75,
+      "referenceSeconds": 6.5,
+      "referenceSHA256": "8f0912704a132bd701318edbc7449bf925b90a296406c7adaacda77daa2ccfc3",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "mr-lucius-needful",
+      "name": "Mr. Lucius Needful",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 751,
+      "cardEnd": 763,
+      "referenceStart": 752.25,
+      "referenceEnd": 761.75,
+      "referenceSeconds": 9.5,
+      "referenceSHA256": "da7a73bb3cb617019ad47082294557f027e22108dffc362d3b348452c65d493c",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "snuffles",
+      "name": "Snuffles",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 764,
+      "cardEnd": 769,
+      "referenceStart": 764.4,
+      "referenceEnd": 768.6,
+      "referenceSeconds": 4.2000000000000455,
+      "referenceSHA256": "ac082592d2e9fc6b31bfdbdde259d9b8da32466333e960aa620e3192a02d573a",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "fart",
+      "name": "Fart",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 770,
+      "cardEnd": 778,
+      "referenceStart": 771.25,
+      "referenceEnd": 776.75,
+      "referenceSeconds": 5.5,
+      "referenceSHA256": "2675b2b15d36098d7b2cbd1e2f0c5e9832d567161154060ab491713c0d5de981",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "donna-gueterman",
+      "name": "Donna Gueterman",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 785,
+      "cardEnd": 797,
+      "referenceStart": 786.25,
+      "referenceEnd": 795.75,
+      "referenceSeconds": 9.5,
+      "referenceSHA256": "daf5e007a19e1842fdce2fc1f9c9b72cfd93e95380d06a0c1b33f306d17d2bda",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "joyce-smith",
+      "name": "Joyce Smith",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 803,
+      "cardEnd": 820,
+      "referenceStart": 804.25,
+      "referenceEnd": 814.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "7af646f36b002ad91c8ecc6f23efc499b02915e9a0cc2076f0f3dbce797b155d",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "leonard",
+      "name": "Leonard",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 820,
+      "cardEnd": 831,
+      "referenceStart": 821.25,
+      "referenceEnd": 829.75,
+      "referenceSeconds": 8.5,
+      "referenceSHA256": "de3f159636e4af2af1ba0065580eb0b6bf9e88f3cd0a6b3e5fb24471d53d3974",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "ma-sha",
+      "name": "Ma-Sha",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 832,
+      "cardEnd": 846,
+      "referenceStart": 833.25,
+      "referenceEnd": 843.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "2f13d2fc35a59693c6a77cd4e03659a1101afa14bdf939a0e0971bbfe8d9c36e",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "glaxo-slimslom",
+      "name": "Glaxo Slimslom",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 847,
+      "cardEnd": 856,
+      "referenceStart": 848.25,
+      "referenceEnd": 854.75,
+      "referenceSeconds": 6.5,
+      "referenceSHA256": "b53cabb882c4be72c1ca6db39359581348482f9dd6d5f44b1869ca14e42f3d12",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "shrimply-pibbles",
+      "name": "Shrimply Pibbles",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 856,
+      "cardEnd": 871,
+      "referenceStart": 857.25,
+      "referenceEnd": 867.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "fa4312c0e8224adee780e29fe8cd4fc7682c61f875a65a30ec2c4ab6d82d0e1d",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "zeep-xanflorp",
+      "name": "Zeep Xanflorp",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 871,
+      "cardEnd": 892,
+      "referenceStart": 872.25,
+      "referenceEnd": 882.25,
+      "referenceSeconds": 10,
+      "referenceSHA256": "1c3a11af3b13ee18a4ffac2255fbcb5a6aed2d60ccd33fda59946ddb745b871d",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "pensylvester",
+      "name": "Pensylvester",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 506,
+      "cardEnd": 510,
+      "referenceStart": 506.4,
+      "referenceEnd": 509.6,
+      "referenceSeconds": 3.2000000000000455,
+      "referenceSHA256": "9b5ca0a8e2d629eb6e098bc90645ead412a75c0e0c06e99bb67b87dc9e451566",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "child-morty-jr",
+      "name": "Child Morty Jr.",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 536,
+      "cardEnd": 544,
+      "referenceStart": 537.25,
+      "referenceEnd": 542.75,
+      "referenceSeconds": 5.5,
+      "referenceSHA256": "7955025a1a9606073195ee40fc280e696e471491c435546c765419cf2962f0ae",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "beta-vii",
+      "name": "Beta VII",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 778,
+      "cardEnd": 785,
+      "referenceStart": 778.4,
+      "referenceEnd": 784.6,
+      "referenceSeconds": 6.2000000000000455,
+      "referenceSHA256": "0d8a74598ff315d12fafbb0812daeee86baf6bb52f7aeffc485f2465e11e4a64",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    },
+    {
+      "id": "pat-gueterman",
+      "name": "Pat Gueterman",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons"
+      ],
+      "cardStart": 797,
+      "cardEnd": 802,
+      "referenceStart": 797.4,
+      "referenceEnd": 801.6,
+      "referenceSeconds": 4.2000000000000455,
+      "referenceSHA256": "6e29ce4910b16e0bafcf58129b9ec1cf5fc42842293962bd56e453107d47d4ed",
+      "status": "reference-acquired-not-generated",
+      "authorizedLikeness": false,
+      "perceptualSimilarityVerified": false
+    }
+  ],
+  "alreadyAccepted": [
+    "Rick",
+    "Morty"
+  ],
+  "description": "60 visually identified video roles, including 2 previously accepted samples and 58 newly acquired reference candidates. Not 58 generated or verified voices."
+}
