@@ -1,0 +1,13 @@
+# RVC training companion integration
+
+`python -m tools.voice_studio audit-training /path/to/recordings` measures unique non-silent PCM16 audio and reports duplicate or invalid recordings. It does not identify speakers, detect mixed voices, or assess resemblance. Sixty seconds is an engineering admission floor, not a universal sufficiency or quality guarantee. The current video-card references are mostly only a few seconds each and must not be labeled trained models.
+
+`python -m tools.voice_studio train-rvc --root /path/to/RVC --dataset /path/to/recordings --experiment original-voice --permission "Creator authorized training" --epochs 200` executes preprocessing, PM pitch extraction, HuBERT feature extraction, filelist preparation, actual neural training, and retrieval-index construction. No heavy training is started merely by importing this module or running source tests.
+
+The adapter requires the official [RVC source revision 81eed5e](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI/tree/81eed5e8f68b6bed1789f682fe78cdd324495afc), its installed dependencies and local assets. It follows that revision's [documented CLI](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI/blob/81eed5e8f68b6bed1789f682fe78cdd324495afc/docs/en/cli.md). It sets offline model flags and uses CPU preparation/training to avoid silently consuming a gaming GPU. Running this command can still consume substantial CPU; do not launch it on the gaming laptop during play.
+
+The experiment must be new. This initial adapter does not yet resume a partially trained experiment. Stage logs and atomic progress metadata are written inside its experiment directory. A supplied cancellation event terminates the running stage process group on POSIX. Windows descendant cleanup and recovery still need integration tests.
+
+Five new automated tests cover short-input rejection, duplicate counting, real upstream command selection, unsafe experiment names and missing extracted features. They do **not** execute neural training. No new RVC weights have been trained or device-verified by this change. A successful real training run deliberately ends in `trained-needs-independent-conversion-check`, with `verified: false`; independent conversion/audio checks and approved export are still required. No `.pth` or `.index` is fabricated or renamed from a WAV.
+
+Still pending: complete dependency/resource packaging, GPU benchmarks, source separation, speaker review, resumable training, independent conversion validation, gated export, and native iPhone integration. The existing release and installation feeds remain unchanged.

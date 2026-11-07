@@ -6,6 +6,8 @@ on:
       - 'tools/pack_speech.py'
       - 'tools/local_f5.py'
       - 'tools/voice_studio.py'
+      - 'tools/rvc_training.py'
+      - 'tests/test_rvc_training.py'
       - 'tests/test_voice_pack.py'
       - 'tests/test_pack_speech.py'
       - 'tests/test_local_f5.py'
@@ -28,3 +30,5 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_pack_speech.py'
       - name: Reject missing or corrupt offline assets
         run: python -m unittest discover -s tests -p 'test_local_f5.py'
+      - name: Check training admission and upstream command routing
+        run: python -m unittest discover -s tests -p 'test_rvc_training.py'

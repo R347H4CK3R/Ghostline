@@ -10,6 +10,10 @@ def main(argv=None):
  create=commands.add_parser('create',help='Save an authorized reference as a reusable voice pack')
  create.add_argument('--audio',required=True);create.add_argument('--metadata',required=True);create.add_argument('--output',required=True)
  inspect=commands.add_parser('inspect',help='Validate pack integrity and show voice details');inspect.add_argument('pack')
+ audit=commands.add_parser('audit-training',help='Check whether clean recordings provide enough unique audio');audit.add_argument('dataset')
+ training=commands.add_parser('train-rvc',help='Run the pinned local RVC training stages; outputs require independent conversion checks')
+ for flag in ['root','dataset','experiment','permission']:training.add_argument('--'+flag,required=True)
+ training.add_argument('--epochs',type=int,default=200)
  speech=commands.add_parser('speak',help='Generate WAV speech with the selected voice pack')
  for flag in ['pack','text','output','checkpoint','vocoder-directory','vocab']:speech.add_argument('--'+flag,required=True)
  args=parser.parse_args(argv)
@@ -18,6 +22,12 @@ def main(argv=None):
    path=export_reference_pack(args.audio,json.loads(pathlib.Path(args.metadata).read_text()),args.output)
    print(json.dumps(dict(file=str(path),profile=validate_pack(path)),indent=2))
   elif args.command=='inspect':print(json.dumps(validate_pack(args.pack),indent=2))
+  elif args.command=='audit-training':
+   from tools.rvc_training import audit_dataset
+   print(json.dumps(audit_dataset(args.dataset),indent=2))
+  elif args.command=='train-rvc':
+   from tools.rvc_training import train
+   print(json.dumps(train(args.root,args.dataset,args.experiment,args.permission,epochs=args.epochs),indent=2))
   else:
    # Validate the selected pack and request before allocating large model weights.
    validate_pack(args.pack)
