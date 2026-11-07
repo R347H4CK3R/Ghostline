@@ -45,3 +45,13 @@ Automated synthesis checks: **37/37**. Human listening validation: **0**. Physic
 ## Runtime compatibility
 
 The hosted Xcode 16.4 / older iOS simulator timed out inside local Core ML model loading. The same pinned model and code passed synthesis on the macOS 26 runner. VoiceMatrix 0.2.1 therefore targets iOS 26 and later; physical iPhone testing is still pending.
+
+## Additional automated intelligibility check
+
+Independent development-only whisper.cpp tiny.en transcription matched the seven reference words for **36 of 37** retained simulator recordings, ignoring punctuation and case. `characters_Azgorath` was transcribed as “Hello. This is a boy’s test.” and needs a listening review. This one-sentence check is not a general intelligibility, naturalness, similarity or perceptual-distinctness score. [Per-profile results and exact model/source hashes](docs/qa/0.2.1-asr-intelligibility.json) are retained. No listening verification count was increased.
+
+Reproduce with NumPy and SciPy installed, the retained QA WAV artifact from build 42338999926, an official whisper.cpp checkout/binary and the tiny.en model matching the report checksum:
+
+```sh
+python3 tools/asr_qa.py /path/to/qa-audio --output /path/to/results --whisper-cli /path/to/whisper-cli --model /path/to/ggml-tiny.en.bin --whisper-source /path/to/whisper.cpp
+```
