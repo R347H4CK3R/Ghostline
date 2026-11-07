@@ -1,5 +1,6 @@
 """Resumable full-cast reference-conditioned preview worker. Not RVC training or iOS admission."""
 import os,pathlib,json,time,hashlib,re,subprocess,wave,tempfile,zipfile,contextlib,traceback
+from local_f5 import load_local_model
 ROOT=pathlib.Path(os.environ.get('VOICEMATRIX_CAST_JOB',str(pathlib.Path.cwd()/'full-cast-video'))).resolve()
 REF=ROOT/'references';OUT=ROOT/'generated';OUT.mkdir(exist_ok=True)
 TMP=ROOT/'private-temp';TMP.mkdir(exist_ok=True);tempfile.tempdir=str(TMP)
@@ -37,20 +38,29 @@ try:
   identifier=profile['id'];audio=REF/profile['file']
   if not audio.exists():raise FileNotFoundError('Missing unprocessed reference '+identifier)
   if sha(audio)!=profile['referenceSHA256']:raise ValueError('Reference checksum mismatch '+identifier)
-  update(status='transcribing-references',currentCharacter=profile['name'],referenceIndex=i+1)
+  saved=REF/(identifier+'.private.json')
+  if saved.exists():
+   cached=json.loads(saved.read_text())
+   if cached.get('referenceSHA256')==profile['referenceSHA256'] and isinstance(cached.get('referenceText'),str):continue
+  update(status='transcribing-references',currentCharacter=profile['name'],referenceIndex=i+1,error=None)
   target=TMP/(identifier+'-reference-16k.wav')
   convert(audio,target,16000)
   text=transcribe(target,TMP/(identifier+'-reference'))
   private=dict(profile,referenceText=text)
   write(REF/(identifier+'.private.json'),private)
   target.unlink(missing_ok=True);(TMP/(identifier+'-reference.txt')).unlink(missing_ok=True)
- update(status='loading-shared-model',currentCharacter=None)
+ update(status='loading-shared-model',currentCharacter=None,error=None)
  os.environ['WANDB_MODE']='disabled';os.environ['HF_HUB_DISABLE_TELEMETRY']='1'
  import torch,numpy as np,soundfile as sf,importlib.metadata
  from f5_tts.api import F5TTS
  import f5_tts.infer.utils_infer as infer_utils
  torch.set_num_threads(4)
- model=F5TTS(model='F5TTS_v1_Base',device='cpu',hf_cache_dir=os.environ.get('VOICEMATRIX_F5_CACHE',str(ROOT/'model-cache')))
+ cache=pathlib.Path(os.environ.get('VOICEMATRIX_F5_CACHE',str(ROOT/'model-cache')))
+ checkpoint=cache/'models--SWivid--F5-TTS/snapshots/84e5a410d9cead4de2f847e7c9369a6440bdfaca/F5TTS_v1_Base/model_1250000.safetensors'
+ vocoder=cache/'models--charactr--vocos-mel-24khz/snapshots/0feb3fdd929bcd6649e0e7c5a688cf7dd012ef21'
+ from importlib.resources import files
+ vocab=files('f5_tts').joinpath('infer/examples/vocab.txt')
+ model=load_local_model(checkpoint,vocoder,str(vocab))
  update(status='generating',engine='F5TTS_v1_Base',engineVersion=importlib.metadata.version('f5-tts'),torch=torch.__version__,nfeSteps=32,cpuThreads=4)
  for profile in manifest['profiles']:
   identifier=profile['id']
