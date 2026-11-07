@@ -11,7 +11,7 @@ struct VoiceProfile: Codable, Identifiable, Hashable {
     let characterIdentity: CharacterIdentity?
     var libraryGroup: String {
         if characterIdentity?.kind == "authorizedReplica" { return "Replicas" }
-        if characterIdentity?.kind == "characterInspired" || id.hasPrefix("characters_") { return "Character styles" }
+        if characterIdentity?.kind == "characterInspired" || category == "Fantasy & Characters" { return "Character styles" }
         return "Other speakers"
     }
     var identityLabel: String {

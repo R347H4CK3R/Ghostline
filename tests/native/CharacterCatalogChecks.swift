@@ -7,6 +7,7 @@ import Foundation
         precondition(manifest.voices.filter { $0.libraryGroup == "Replicas" }.isEmpty)
         precondition(manifest.voices.filter { $0.libraryGroup == "Character styles" }.count == 12)
         precondition(manifest.voices.filter { $0.libraryGroup == "Other speakers" }.count == 525)
+        precondition(manifest.voices.first { $0.id == "alba-mackenna-97c5f8f9cf5ae9a1" }?.libraryGroup == "Character styles")
         for voice in manifest.voices { try voice.characterIdentity?.validate() }
         let valid = CharacterIdentity(kind: "authorizedReplica", targetName: "Fixture character", franchise: "Test only", genres: ["Horror & Monsters", "Movies & Television"], referenceSHA256: [String(repeating: "a", count: 64)], authorizationRecord: "models/authorizations/fixture.json")
         try valid.validate()
