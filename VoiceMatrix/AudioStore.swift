@@ -1,0 +1,59 @@
+import Foundation
+import AVFoundation
+
+struct SavedAudio: Identifiable {
+    var id: String { url.lastPathComponent }
+    let url: URL
+    var name: String { url.deletingPathExtension().lastPathComponent }
+}
+@MainActor final class AudioStore: NSObject, ObservableObject, AVAudioPlayerDelegate {
+    @Published var recordings: [SavedAudio] = []
+    @Published var playing: URL?
+    @Published var error: String?
+    @Published var rate: Float = 1
+    private var player: AVAudioPlayer?
+    private var folder: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Recordings", isDirectory: true)
+    }
+    override init() { super.init(); refresh() }
+    func refresh() {
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            recordings = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.creationDateKey])
+                .filter { ["wav", "m4a", "caf"].contains($0.pathExtension) }
+                .sorted { $0.lastPathComponent > $1.lastPathComponent }.map { SavedAudio(url: $0) }
+        } catch { self.error = "Saved recordings could not be opened." }
+    }
+    func play(_ url: URL) {
+        stop()
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setActive(true)
+            let sound = try AVAudioPlayer(contentsOf: url)
+            guard sound.duration > 0 else { throw StudioError.emptyAudio }
+            sound.delegate = self; sound.enableRate = true; sound.rate = rate
+            guard sound.play() else { throw StudioError.emptyAudio }
+            player = sound; playing = url
+        } catch { self.error = "This recording could not play. Check your sound volume or try another recording." }
+    }
+    func stop() { player?.stop(); player = nil; playing = nil }
+    func save(_ url: URL) {
+        do {
+            guard !recordings.contains(where: { $0.id == url.lastPathComponent }) else { return }
+            _ = try AVAudioFile(forReading: url)
+            try FileManager.default.copyItem(at: url, to: folder.appendingPathComponent(url.lastPathComponent))
+            refresh()
+        } catch { self.error = "Your recording could not be saved. Check available storage." }
+    }
+    func delete(_ file: SavedAudio) {
+        do { if playing == file.url { stop() }; try FileManager.default.removeItem(at: file.url); refresh() }
+        catch { self.error = "This recording could not be deleted." }
+    }
+    func rename(_ file: SavedAudio, to name: String) {
+        let cleaned = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty, cleaned.count <= 80, !cleaned.contains("/"), !cleaned.contains(":"), cleaned != ".", cleaned != ".." else { error = "Use a short name without slashes or colons."; return }
+        do { try FileManager.default.moveItem(at: file.url, to: folder.appendingPathComponent(cleaned).appendingPathExtension(file.url.pathExtension)); refresh() }
+        catch { self.error = "That name is already used, or the recording could not be renamed." }
+    }
+    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) { Task { @MainActor in self.playing = nil } }
+}

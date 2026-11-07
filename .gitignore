@@ -1,0 +1,7 @@
+VoiceMatrix/Resources/Phonon/
+build/
+Payload/
+*.ipa
+*.xcodeproj/
+__pycache__/
+.DS_Store

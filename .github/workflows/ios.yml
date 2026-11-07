@@ -1,0 +1,51 @@
+name: VoiceMatrix Offline Experimental IPA
+on:
+  push:
+    branches: ['feature/voicematrix-*']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: voicematrix-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Asset validator regression tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Bundle pinned offline models and 37 English profiles
+        run: |
+          python3 tools/assets.py
+          python3 tools/assets.py --verify
+          cp NOTICE VoiceMatrix/Resources/Phonon/VoiceMatrix-NOTICE.txt
+          cp LICENSES/FluidAudio-LICENSE VoiceMatrix/Resources/Phonon/FluidAudio-LICENSE.txt
+      - name: Install project generator
+        run: brew install xcodegen
+      - name: Generate and build unsigned arm64 app
+        run: |
+          xcodebuild -version
+          xcodegen generate
+          xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 || { tail -120 build.log; exit 1; }
+      - name: Package and inspect experimental IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/VoiceMatrix.app Payload/
+          /usr/bin/ditto -c -k --keepParent Payload VoiceMatrix-v0.2.0-experimental.ipa
+          python3 tools/inspect_ipa.py VoiceMatrix-v0.2.0-experimental.ipa
+          shasum -a 256 VoiceMatrix-v0.2.0-experimental.ipa > VoiceMatrix-v0.2.0-experimental.ipa.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceMatrix-v0.2.0-experimental
+          path: |
+            VoiceMatrix-v0.2.0-experimental.ipa
+            VoiceMatrix-v0.2.0-experimental.ipa.sha256
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: VoiceMatrix-build-log
+          path: build.log
+          if-no-files-found: ignore

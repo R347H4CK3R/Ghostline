@@ -1,0 +1,895 @@
+{
+  "schemaVersion": 1,
+  "engine": "phonon31m",
+  "revision": "c2e998e269e4d4b51f74061faddb8450cd8f9a9a",
+  "baseURL": "https://huggingface.co/FluidInference/pocket-tts-coreml/resolve/c2e998e269e4d4b51f74061faddb8450cd8f9a9a",
+  "files": [
+    {
+      "path": "LICENSE",
+      "remotePath": "phonon/phonon-31m-en/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "size": 11357
+    },
+    {
+      "path": "README.md",
+      "remotePath": "phonon/phonon-31m-en/README.md",
+      "sha256": "a4707c3c6a3dac3fb2e561bdc257f921f4e556df31bed3cff9d31934028f8a93",
+      "size": 2767
+    },
+    {
+      "path": "arch.json",
+      "remotePath": "phonon/phonon-31m-en/arch.json",
+      "sha256": "15f402005db3f2cf2274cfa6173c3661ee906111b2a7722d967af30e188e32d8",
+      "size": 811
+    },
+    {
+      "path": "constants_bin/bos_emb.bin",
+      "remotePath": "phonon/phonon-31m-en/constants_bin/bos_emb.bin",
+      "sha256": "1010476e005ac8b08a2fb3d73d853327148d818ec09e4df99611840233081fac",
+      "size": 128
+    },
+    {
+      "path": "constants_bin/input_bias.bin",
+      "remotePath": "phonon/phonon-31m-en/constants_bin/input_bias.bin",
+      "sha256": "413a43837805c4c2aecb37743799c7773b21a7decd9edd5d3c065600846a3871",
+      "size": 2048
+    },
+    {
+      "path": "constants_bin/speaker_proj_weight.bin",
+      "remotePath": "phonon/phonon-31m-en/constants_bin/speaker_proj_weight.bin",
+      "sha256": "0f5d6b5433ce622fcb9b93885c5cab82ba1537ef6cea60de56a811f2b6f1c79c",
+      "size": 1048576
+    },
+    {
+      "path": "constants_bin/text_embed_table.bin",
+      "remotePath": "phonon/phonon-31m-en/constants_bin/text_embed_table.bin",
+      "sha256": "4a41cf481b98ddad78ec6f50dda7eca2a5033ea75cd1fa54d7381231d65818e7",
+      "size": 8194048
+    },
+    {
+      "path": "constants_bin/tokenizer.json",
+      "remotePath": "phonon/phonon-31m-en/constants_bin/tokenizer.json",
+      "sha256": "691a00068fa7b989f2f3e5ae5daa2d1a5bb319f2d5360deafcfb19a8bb6e7936",
+      "size": 277967
+    },
+    {
+      "path": "constants_bin/tokenizer.model",
+      "remotePath": "phonon/phonon-31m-en/constants_bin/tokenizer.model",
+      "sha256": "82e4572006d64d483317074c22c368e87779640b6f3a9dcd07b7caae32b030ce",
+      "size": 65045
+    },
+    {
+      "path": "mimi_decoder.mlmodelc/analytics/coremldata.bin",
+      "remotePath": "phonon/phonon-31m-en/mimi_decoder.mlmodelc/analytics/coremldata.bin",
+      "sha256": "12f9e3aea28056a789b9a35c7ffcb6eeb53a607d8358998c1d25a41fdc49ee17",
+      "size": 243
+    },
+    {
+      "path": "mimi_decoder.mlmodelc/coremldata.bin",
+      "remotePath": "phonon/phonon-31m-en/mimi_decoder.mlmodelc/coremldata.bin",
+      "sha256": "89525846d461c4dbc7a593c9719bfee18a7284b8d11f464d8860f37199dc875a",
+      "size": 1852
+    },
+    {
+      "path": "mimi_decoder.mlmodelc/model.mil",
+      "remotePath": "phonon/phonon-31m-en/mimi_decoder.mlmodelc/model.mil",
+      "sha256": "f6ca7ee07fe0cacb6fea7558a1f5c8b10ed80e8e94f965585946326f731db830",
+      "size": 95070
+    },
+    {
+      "path": "mimi_decoder.mlmodelc/weights/weight.bin",
+      "remotePath": "phonon/phonon-31m-en/mimi_decoder.mlmodelc/weights/weight.bin",
+      "sha256": "fc998dd13becc51a05e74b2f7efd4bc0f05defafdc6baefe0a424ee6f7427e5a",
+      "size": 44897216
+    },
+    {
+      "path": "pocket_state.json",
+      "remotePath": "phonon/phonon-31m-en/pocket_state.json",
+      "sha256": "9675b15fd9d221ea935df8f9ed60698735e14a5855693c65de2a125efab3b62c",
+      "size": 2918
+    },
+    {
+      "path": "pocket_state.mlmodelc/analytics/coremldata.bin",
+      "remotePath": "phonon/phonon-31m-en/pocket_state.mlmodelc/analytics/coremldata.bin",
+      "sha256": "931c1ec027815fbcfd55c4757a3d21c3c46ad12586a366ec24b16ed64e8439ef",
+      "size": 243
+    },
+    {
+      "path": "pocket_state.mlmodelc/coremldata.bin",
+      "remotePath": "phonon/phonon-31m-en/pocket_state.mlmodelc/coremldata.bin",
+      "sha256": "10091f1e21e7be6ad7be9f7509697b8ff075cdce3806f2eef3f582f5d45556c2",
+      "size": 4771
+    },
+    {
+      "path": "pocket_state.mlmodelc/model.mil",
+      "remotePath": "phonon/phonon-31m-en/pocket_state.mlmodelc/model.mil",
+      "sha256": "70df3c50476ba5c9526bfc3e5a9f8a2d2912652bb8d4a41f91904f45a1d23070",
+      "size": 744313
+    },
+    {
+      "path": "pocket_state.mlmodelc/weights/weight.bin",
+      "remotePath": "phonon/phonon-31m-en/pocket_state.mlmodelc/weights/weight.bin",
+      "sha256": "cbe7fe8d1843021a9ad2995fda682ef85f949290ef65a58b8976b2c2e2a64502",
+      "size": 79068864
+    },
+    {
+      "path": "voices/characters_Azgorath.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/characters_Azgorath.safetensors",
+      "sha256": "36aa733ae6e8255ba507c6d2fefb7583fb80dbc262c50a08755fc78378b3c750",
+      "size": 256208
+    },
+    {
+      "path": "voices/characters_Captain Silas Blackwater.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/characters_Captain Silas Blackwater.safetensors",
+      "sha256": "5c9a87d75642352759664539bb39b69ba9662002fcb74e045c04727acb147117",
+      "size": 256208
+    },
+    {
+      "path": "voices/characters_Fairy Godmother.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/characters_Fairy Godmother.safetensors",
+      "sha256": "b9fa3bb3cdb7149b648d99731ea2ae3752fee3cb079462073037d83f9802ea51",
+      "size": 256208
+    },
+    {
+      "path": "voices/characters_Fennick the Young Elf.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/characters_Fennick the Young Elf.safetensors",
+      "sha256": "fad7e162076cccdc961ad978405058cc124e56a31fd06d12d0e93a167c8e5f88",
+      "size": 256208
+    },
+    {
+      "path": "voices/characters_Grub the Ogre.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/characters_Grub the Ogre.safetensors",
+      "sha256": "65089697f37fdb1570d6bd7cf066841f513979be4cfd83462c1a7d75fb6006c8",
+      "size": 256208
+    },
+    {
+      "path": "voices/characters_Master Aldric.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/characters_Master Aldric.safetensors",
+      "sha256": "1a7227551af7f1c240290068060bd60b340719127098282c957e0f03368ef58b",
+      "size": 256208
+    },
+    {
+      "path": "voices/characters_Morwenna of the Deep.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/characters_Morwenna of the Deep.safetensors",
+      "sha256": "86c8828ed77a4536eeaf8dafe7b020ae1d4964d10342852925a68b66f7b669a1",
+      "size": 256208
+    },
+    {
+      "path": "voices/characters_Old Mortlake.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/characters_Old Mortlake.safetensors",
+      "sha256": "fa310610c7cc25c72ba50456661df7ffaddf5f4c4abe0f4be46fd868483f4e7a",
+      "size": 256208
+    },
+    {
+      "path": "voices/characters_Sir Bramwell.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/characters_Sir Bramwell.safetensors",
+      "sha256": "3f37d172cb0a669eeaca817754dba555fad8411bcefc5954511e671ffd8ae726",
+      "size": 256208
+    },
+    {
+      "path": "voices/characters_The Snow Queen.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/characters_The Snow Queen.safetensors",
+      "sha256": "b0a0e9652970d460a98f593ce4fde45fb4db6fcc78a6641375d997be8e4a0ba6",
+      "size": 256208
+    },
+    {
+      "path": "voices/characters_The Thing Under the Stairs.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/characters_The Thing Under the Stairs.safetensors",
+      "sha256": "9e32873b7ca6cd3c6b4747eb89fdf59365ca83bf31634ff997b5cb0765bf7282",
+      "size": 256208
+    },
+    {
+      "path": "voices/characters_Vyrmathrax the Ancient.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/characters_Vyrmathrax the Ancient.safetensors",
+      "sha256": "f7987b9d2de619401492f9e062e154f48ee847bc7b3b7d006500ad39909d3d5f",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Alfie.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Alfie.safetensors",
+      "sha256": "928da5fe853e548488b72e4b021f00235612b5ca2b47facbf2bd0b489a2b955c",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Bryony.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Bryony.safetensors",
+      "sha256": "c629fa40c4f9e467769fe5762e4957d40e135b64026bd1df1e89bd9e55b951ff",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Edwin.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Edwin.safetensors",
+      "sha256": "46c12febb46f0d21db6ab48842a6bad20440c5670f4f914129c432edc0712bac",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Elodie-Rose.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Elodie-Rose.safetensors",
+      "sha256": "b55f81a8f4bebba232e9c324126f87253789bbd12608970e0eb837c469e3940a",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Freya.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Freya.safetensors",
+      "sha256": "09609a149e2e6331b6ddc75168441e9bea013ad277c17dc8d01806afe7526e03",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Hugh.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Hugh.safetensors",
+      "sha256": "7ce9388b0e5122009280be57d0ce0a46151e92e1a1ec927f88e386b9e6d402a0",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Imogen.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Imogen.safetensors",
+      "sha256": "b464982a70d2991318db971173e2f5c3fffb7d2bd11730be256eb3b434d88e2c",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Lottie.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Lottie.safetensors",
+      "sha256": "4f32bd8a11f8499c8abb333278c799a1c2370e1899c07a9caed07e33322d1233",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Maeve.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Maeve.safetensors",
+      "sha256": "be1231af76129234ff1aa8b7d03531e2c1410d6599eb085c0e9bc7335bd79eb4",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Pippa.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Pippa.safetensors",
+      "sha256": "d9dc45f9ebb4b4f702244ff10910929b86d9304f5fb815572355ee815a8e6954",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Spencer.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Spencer.safetensors",
+      "sha256": "44814129100cc56a90ee76c220c2565e3f6ddece97689c7a8eee3692aaaed900",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Teddy.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Teddy.safetensors",
+      "sha256": "6cca4e57bb4ebf644be9293bcabacb6f170ac9a7f092ada6567c5931d31db841",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_gb_Toby.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_gb_Toby.safetensors",
+      "sha256": "ff348465a91e0e0895df388746463a195d1c7482b82f04b2451650bd54597ca7",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_us_Delia.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_us_Delia.safetensors",
+      "sha256": "896122da57b3e7f83886f1c009b9b537cbf63c04e4cc592d72dd935622c3cb77",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_us_Easton.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_us_Easton.safetensors",
+      "sha256": "3fb875c9b120b314d7dac804812aeaf50f5d0c6e3a8be798951b792483078cd1",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_us_Everly.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_us_Everly.safetensors",
+      "sha256": "64c37adead347b6b4c5acfc3e5883341bcdcd94538a146e521a1f9ec0fad1d6b",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_us_Hadley.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_us_Hadley.safetensors",
+      "sha256": "4c5e11a691dfe73d6dc307cf83cfb00df8c866cbdbf4e128561adddfbdd0820d",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_us_Harper.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_us_Harper.safetensors",
+      "sha256": "44bbecc069b7c1872ba548ceddde8064ff674feed9989313191449fce72d2a08",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_us_Juniper.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_us_Juniper.safetensors",
+      "sha256": "c79e69a6f8228c6e31dd5ae9e573a79ab23abfc0d9140f62e57e123f10a41822",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_us_Micah.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_us_Micah.safetensors",
+      "sha256": "b32ba16219f3908461dcdeddd2aa9bf4e85a46fa165065b30a6e022476231684",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_us_Miles.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_us_Miles.safetensors",
+      "sha256": "eb0e61e9354e1fa7c1647530ff0c5ce4ea6f96fa65729594e443765208fe761e",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_us_Preston.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_us_Preston.safetensors",
+      "sha256": "e3448287e6555990069383a6e0bc3f3a27baa6be69b30e28844d6d569f3239c4",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_us_Russell.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_us_Russell.safetensors",
+      "sha256": "4f87038dbd52f1304be60288769c422d4335b78f14af6342341a4824e4e06231",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_us_Trevor.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_us_Trevor.safetensors",
+      "sha256": "831bd36e9bda1a0471cb02ae281aefdcec403ba5e5abf73f0c240304c2e7a722",
+      "size": 256208
+    },
+    {
+      "path": "voices/en_us_Zoey.safetensors",
+      "remotePath": "phonon/phonon-31m-en/voices/en_us_Zoey.safetensors",
+      "sha256": "d867f9f751360f32540c0cfb32055f95b607e51f1b023b429edd739de2ad04ef",
+      "size": 256208
+    }
+  ],
+  "voices": [
+    {
+      "id": "characters_Azgorath",
+      "name": "Azgorath",
+      "category": "Fantasy & Characters",
+      "language": "en",
+      "accent": "Character performance",
+      "path": "voices/characters_Azgorath.safetensors",
+      "sha256": "36aa733ae6e8255ba507c6d2fefb7583fb80dbc262c50a08755fc78378b3c750",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "characters_Captain Silas Blackwater",
+      "name": "Captain Silas Blackwater",
+      "category": "Fantasy & Characters",
+      "language": "en",
+      "accent": "Character performance",
+      "path": "voices/characters_Captain Silas Blackwater.safetensors",
+      "sha256": "5c9a87d75642352759664539bb39b69ba9662002fcb74e045c04727acb147117",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "characters_Fairy Godmother",
+      "name": "Fairy Godmother",
+      "category": "Fantasy & Characters",
+      "language": "en",
+      "accent": "Character performance",
+      "path": "voices/characters_Fairy Godmother.safetensors",
+      "sha256": "b9fa3bb3cdb7149b648d99731ea2ae3752fee3cb079462073037d83f9802ea51",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "characters_Fennick the Young Elf",
+      "name": "Fennick the Young Elf",
+      "category": "Fantasy & Characters",
+      "language": "en",
+      "accent": "Character performance",
+      "path": "voices/characters_Fennick the Young Elf.safetensors",
+      "sha256": "fad7e162076cccdc961ad978405058cc124e56a31fd06d12d0e93a167c8e5f88",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "characters_Grub the Ogre",
+      "name": "Grub the Ogre",
+      "category": "Fantasy & Characters",
+      "language": "en",
+      "accent": "Character performance",
+      "path": "voices/characters_Grub the Ogre.safetensors",
+      "sha256": "65089697f37fdb1570d6bd7cf066841f513979be4cfd83462c1a7d75fb6006c8",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "characters_Master Aldric",
+      "name": "Master Aldric",
+      "category": "Fantasy & Characters",
+      "language": "en",
+      "accent": "Character performance",
+      "path": "voices/characters_Master Aldric.safetensors",
+      "sha256": "1a7227551af7f1c240290068060bd60b340719127098282c957e0f03368ef58b",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "characters_Morwenna of the Deep",
+      "name": "Morwenna of the Deep",
+      "category": "Fantasy & Characters",
+      "language": "en",
+      "accent": "Character performance",
+      "path": "voices/characters_Morwenna of the Deep.safetensors",
+      "sha256": "86c8828ed77a4536eeaf8dafe7b020ae1d4964d10342852925a68b66f7b669a1",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "characters_Old Mortlake",
+      "name": "Old Mortlake",
+      "category": "Fantasy & Characters",
+      "language": "en",
+      "accent": "Character performance",
+      "path": "voices/characters_Old Mortlake.safetensors",
+      "sha256": "fa310610c7cc25c72ba50456661df7ffaddf5f4c4abe0f4be46fd868483f4e7a",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "characters_Sir Bramwell",
+      "name": "Sir Bramwell",
+      "category": "Fantasy & Characters",
+      "language": "en",
+      "accent": "Character performance",
+      "path": "voices/characters_Sir Bramwell.safetensors",
+      "sha256": "3f37d172cb0a669eeaca817754dba555fad8411bcefc5954511e671ffd8ae726",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "characters_The Snow Queen",
+      "name": "The Snow Queen",
+      "category": "Fantasy & Characters",
+      "language": "en",
+      "accent": "Character performance",
+      "path": "voices/characters_The Snow Queen.safetensors",
+      "sha256": "b0a0e9652970d460a98f593ce4fde45fb4db6fcc78a6641375d997be8e4a0ba6",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "characters_The Thing Under the Stairs",
+      "name": "The Thing Under the Stairs",
+      "category": "Fantasy & Characters",
+      "language": "en",
+      "accent": "Character performance",
+      "path": "voices/characters_The Thing Under the Stairs.safetensors",
+      "sha256": "9e32873b7ca6cd3c6b4747eb89fdf59365ca83bf31634ff997b5cb0765bf7282",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "characters_Vyrmathrax the Ancient",
+      "name": "Vyrmathrax the Ancient",
+      "category": "Fantasy & Characters",
+      "language": "en",
+      "accent": "Character performance",
+      "path": "voices/characters_Vyrmathrax the Ancient.safetensors",
+      "sha256": "f7987b9d2de619401492f9e062e154f48ee847bc7b3b7d006500ad39909d3d5f",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Alfie",
+      "name": "Alfie",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Alfie.safetensors",
+      "sha256": "928da5fe853e548488b72e4b021f00235612b5ca2b47facbf2bd0b489a2b955c",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Bryony",
+      "name": "Bryony",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Bryony.safetensors",
+      "sha256": "c629fa40c4f9e467769fe5762e4957d40e135b64026bd1df1e89bd9e55b951ff",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Edwin",
+      "name": "Edwin",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Edwin.safetensors",
+      "sha256": "46c12febb46f0d21db6ab48842a6bad20440c5670f4f914129c432edc0712bac",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Elodie-Rose",
+      "name": "Elodie-Rose",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Elodie-Rose.safetensors",
+      "sha256": "b55f81a8f4bebba232e9c324126f87253789bbd12608970e0eb837c469e3940a",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Freya",
+      "name": "Freya",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Freya.safetensors",
+      "sha256": "09609a149e2e6331b6ddc75168441e9bea013ad277c17dc8d01806afe7526e03",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Hugh",
+      "name": "Hugh",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Hugh.safetensors",
+      "sha256": "7ce9388b0e5122009280be57d0ce0a46151e92e1a1ec927f88e386b9e6d402a0",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Imogen",
+      "name": "Imogen",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Imogen.safetensors",
+      "sha256": "b464982a70d2991318db971173e2f5c3fffb7d2bd11730be256eb3b434d88e2c",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Lottie",
+      "name": "Lottie",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Lottie.safetensors",
+      "sha256": "4f32bd8a11f8499c8abb333278c799a1c2370e1899c07a9caed07e33322d1233",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Maeve",
+      "name": "Maeve",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Maeve.safetensors",
+      "sha256": "be1231af76129234ff1aa8b7d03531e2c1410d6599eb085c0e9bc7335bd79eb4",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Pippa",
+      "name": "Pippa",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Pippa.safetensors",
+      "sha256": "d9dc45f9ebb4b4f702244ff10910929b86d9304f5fb815572355ee815a8e6954",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Spencer",
+      "name": "Spencer",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Spencer.safetensors",
+      "sha256": "44814129100cc56a90ee76c220c2565e3f6ddece97689c7a8eee3692aaaed900",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Teddy",
+      "name": "Teddy",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Teddy.safetensors",
+      "sha256": "6cca4e57bb4ebf644be9293bcabacb6f170ac9a7f092ada6567c5931d31db841",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_gb_Toby",
+      "name": "Toby",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "British",
+      "path": "voices/en_gb_Toby.safetensors",
+      "sha256": "ff348465a91e0e0895df388746463a195d1c7482b82f04b2451650bd54597ca7",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_us_Delia",
+      "name": "Delia",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "American",
+      "path": "voices/en_us_Delia.safetensors",
+      "sha256": "896122da57b3e7f83886f1c009b9b537cbf63c04e4cc592d72dd935622c3cb77",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_us_Easton",
+      "name": "Easton",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "American",
+      "path": "voices/en_us_Easton.safetensors",
+      "sha256": "3fb875c9b120b314d7dac804812aeaf50f5d0c6e3a8be798951b792483078cd1",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_us_Everly",
+      "name": "Everly",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "American",
+      "path": "voices/en_us_Everly.safetensors",
+      "sha256": "64c37adead347b6b4c5acfc3e5883341bcdcd94538a146e521a1f9ec0fad1d6b",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_us_Hadley",
+      "name": "Hadley",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "American",
+      "path": "voices/en_us_Hadley.safetensors",
+      "sha256": "4c5e11a691dfe73d6dc307cf83cfb00df8c866cbdbf4e128561adddfbdd0820d",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_us_Harper",
+      "name": "Harper",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "American",
+      "path": "voices/en_us_Harper.safetensors",
+      "sha256": "44bbecc069b7c1872ba548ceddde8064ff674feed9989313191449fce72d2a08",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_us_Juniper",
+      "name": "Juniper",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "American",
+      "path": "voices/en_us_Juniper.safetensors",
+      "sha256": "c79e69a6f8228c6e31dd5ae9e573a79ab23abfc0d9140f62e57e123f10a41822",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_us_Micah",
+      "name": "Micah",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "American",
+      "path": "voices/en_us_Micah.safetensors",
+      "sha256": "b32ba16219f3908461dcdeddd2aa9bf4e85a46fa165065b30a6e022476231684",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_us_Miles",
+      "name": "Miles",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "American",
+      "path": "voices/en_us_Miles.safetensors",
+      "sha256": "eb0e61e9354e1fa7c1647530ff0c5ce4ea6f96fa65729594e443765208fe761e",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_us_Preston",
+      "name": "Preston",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "American",
+      "path": "voices/en_us_Preston.safetensors",
+      "sha256": "e3448287e6555990069383a6e0bc3f3a27baa6be69b30e28844d6d569f3239c4",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_us_Russell",
+      "name": "Russell",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "American",
+      "path": "voices/en_us_Russell.safetensors",
+      "sha256": "4f87038dbd52f1304be60288769c422d4335b78f14af6342341a4824e4e06231",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_us_Trevor",
+      "name": "Trevor",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "American",
+      "path": "voices/en_us_Trevor.safetensors",
+      "sha256": "831bd36e9bda1a0471cb02ae281aefdcec403ba5e5abf73f0c240304c2e7a722",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    },
+    {
+      "id": "en_us_Zoey",
+      "name": "Zoey",
+      "category": "Everyday Voices",
+      "language": "en",
+      "accent": "American",
+      "path": "voices/en_us_Zoey.safetensors",
+      "sha256": "d867f9f751360f32540c0cfb32055f95b607e51f1b023b429edd739de2ad04ef",
+      "size": 256208,
+      "engine": "phonon31m",
+      "source": "gradium/phonon-voices",
+      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
+      "qualityStatus": "not-listening-tested",
+      "deviceVerified": false
+    }
+  ]
+}
