@@ -15,7 +15,7 @@ Native ARM64 iOS offline voice studio for iPhone, LiveContainer and Strata. This
 - Bundle: `python3 tools/assets.py`; inspect: `python3 tools/assets.py --verify`.
 - 37 different embedding checksums do not establish perceptual distinctness or quality.
 - Physical-device-verified voices: 0. Authorized recognizable likenesses: 0.
-- Core ML synthesis, Airplane Mode, installation, microphone and UI require Apple/device execution. Linux source checks do not verify those.
+- Core ML speech generation, WAV decoding and file tests passed on a hosted Apple simulator. Airplane Mode, installation, microphone and UI still need physical-device execution.
 - Engine choice is provisional pending comparative iPhone load-time, peak-memory and audio-quality measurements.
 - No near-indistinguishable quality claim. 500+ remains the expansion target; no renamed DSP copies are counted.
 
@@ -31,3 +31,9 @@ xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -sdk iphoneos -des
 Build-time downloads are development only. Complete assets are copied inside the IPA; initialization calls FluidAudio's local `load(from:)`, never its download-enabled `initialize()`.
 
 No release URL or installation-source entry is published until an actual IPA has passed archive inspection. Previous releases are preserved.
+
+## Verified experimental release
+
+[Download VoiceMatrix 0.2.0 experimental](https://github.com/R347H4CK3R/Ghostline/releases/tag/voicematrix-v0.2.0-experimental-20). Ten Python checks and five native tests passed. The CPU simulator smoke test generated 2.24 seconds of non-silent, decodable WAV audio for en_us_Zoey in 3.223 seconds including loading. This is one automated profile check, not verification of all 37 voices or iPhone performance.
+
+[LiveContainer source](https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/source.json) · [Strata source](https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/strata-source.json). Feeds are published; installation remains untested on physical devices.

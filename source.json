@@ -1,0 +1,25 @@
+{
+  "name": "VoiceMatrix \u2014 LiveContainer",
+  "identifier": "com.voicematrix.source",
+  "apps": [
+    {
+      "name": "VoiceMatrix Experimental",
+      "bundleIdentifier": "com.voicematrix.app",
+      "developerName": "VoiceMatrix",
+      "localizedDescription": "Offline Phonon speech studio. 37 experimental English profiles; no device verification or neural voice conversion yet.",
+      "iconURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+      "versions": [
+        {
+          "version": "0.2.0",
+          "buildVersion": "2",
+          "date": "2026-11-06",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.2.0-experimental-20/VoiceMatrix-v0.2.0-experimental.ipa",
+          "localizedDescription": "Experimental: integrity-checked IPA; physical-device audio tests pending.",
+          "minOSVersion": "18.0",
+          "size": 128430844
+        }
+      ]
+    }
+  ],
+  "sourceURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/source.json"
+}
