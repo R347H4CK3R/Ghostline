@@ -1,18 +1,21 @@
 import Foundation
 import AVFoundation
 import FluidAudio
+import CoreML
 
 actor NeuralSpeech {
     private var manager: PocketTtsSmallManager?
     private var session: PocketTtsSmallSession?
     private var activeVoice: String?
+    private let computeUnits: MLComputeUnits
+    init(computeUnits: MLComputeUnits = .cpuAndNeuralEngine) { self.computeUnits = computeUnits }
     func generate(text: String, voice: VoiceProfile, root: URL, manifest: VoiceManifest, output: URL) async throws -> Double {
         if manager == nil || activeVoice != voice.id {
             // Reset the manager on a profile switch: upstream caches every used voice's KV state.
             // One manager/profile at a time bounds that cache; measure load cost on device.
             try Catalog.validate(root: root, manifest: manifest)
             manager = nil
-            let fresh = PocketTtsSmallManager(model: .phonon31m)
+            let fresh = PocketTtsSmallManager(model: .phonon31m, computeUnits: computeUnits)
             try await fresh.load(from: root) // Local-only API. Never initialize()/download.
             manager = fresh; activeVoice = voice.id
         }

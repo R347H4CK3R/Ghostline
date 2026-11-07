@@ -2,9 +2,10 @@ name: VoiceMatrix Offline Experimental IPA
 on:
   push:
     branches: ['feature/voicematrix-*']
+    paths-ignore: [source.json, strata-source.json]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: voicematrix-${{ github.ref }}
   cancel-in-progress: false
@@ -47,6 +48,16 @@ jobs:
             VoiceMatrix-v0.2.0-experimental.ipa
             VoiceMatrix-v0.2.0-experimental.ipa.sha256
           if-no-files-found: error
+      - name: Publish inspected experimental release and installation feeds
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=voicematrix-v0.2.0-experimental-${GITHUB_RUN_NUMBER}
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/VoiceMatrix-v0.2.0-experimental.ipa"
+          python3 tools/install_sources.py "$URL"
+          gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "VoiceMatrix 0.2.0 experimental build ${GITHUB_RUN_NUMBER}" --notes-file docs/RELEASE-NOTES-0.2.0.md VoiceMatrix-v0.2.0-experimental.ipa VoiceMatrix-v0.2.0-experimental.ipa.sha256 source.json strata-source.json
+          gh release view "$TAG" --json assets --jq '.assets[].name' > release-assets.txt
+          python3 -c 'from pathlib import Path; a=Path("release-assets.txt").read_text().splitlines(); assert all(x in a for x in ["VoiceMatrix-v0.2.0-experimental.ipa", "source.json", "strata-source.json"])'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

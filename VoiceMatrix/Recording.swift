@@ -8,9 +8,12 @@ import UniformTypeIdentifiers
     @Published var status = "Record your voice or import an audio file."
     private var recorder: AVAudioRecorder?
     private var timer: Task<Void, Never>?
+    private var requestID = UUID()
     func start() async {
         guard !recording else { return }
+        let request = UUID(); requestID = request
         let permitted = await withCheckedContinuation { (c: CheckedContinuation<Bool, Never>) in AVAudioApplication.requestRecordPermission { c.resume(returning: $0) } }
+        guard requestID == request else { return }
         guard permitted else { status = "Allow microphone access in iPhone Settings → Apps → VoiceMatrix."; return }
         do {
             let session = AVAudioSession.sharedInstance()
@@ -23,6 +26,7 @@ import UniformTypeIdentifiers
         } catch { status = "The microphone could not start. Check permission and available storage." }
     }
     func stop() {
+        requestID = UUID()
         recorder?.stop(); recorder = nil; recording = false; timer?.cancel(); timer = nil
         guard let output, let file = try? AVAudioFile(forReading: output), file.length > 0 else { self.output = nil; status = "No audio was recorded. Try again."; return }
         status = "Your original recording is ready."
@@ -64,7 +68,7 @@ struct RecordingView: View {
                 Text("This experimental build can record, import, listen, and save your original audio. A tested voice conversion engine is still required to change it into another voice.")
             }
             if let url = recorder.output, !recorder.recording { Section("Listen or Save Original Audio") { AudioActions(url: url) } }
-        }.navigationTitle("Change My Voice").onDisappear { if recorder.recording { recorder.stop() } }
+        }.navigationTitle("Change My Voice").onDisappear { recorder.stop() }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.wav, .mpeg4Audio, .audio]) { result in
                 switch result { case .success(let url): recorder.importAudio(url); case .failure: recorder.status = "Import was cancelled or the file could not be opened." }
             }

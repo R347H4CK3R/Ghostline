@@ -24,3 +24,15 @@ class AssetsTests(unittest.TestCase):
   p={'id':'a','sha256':'0'*64}
   with self.assertRaises(ValueError): a.unique_profiles([p,dict(p,id='b')])
 if __name__=='__main__': unittest.main()
+
+class TensorTests(unittest.TestCase):
+ def test_metadata_does_not_make_a_distinct_voice(self):
+  import struct
+  def tensor(label):
+   header=json.dumps({'emb':{'dtype':'F32','shape':[1,1,2],'data_offsets':[0,8]},'__metadata__':{'label':label}}).encode()
+   return struct.pack('<Q',len(header))+header+struct.pack('<ff',0.2,0.4)
+  self.assertEqual(a.tensor_digest(tensor('first')),a.tensor_digest(tensor('second')))
+ def test_nonfinite_conditioning_rejected(self):
+  import struct
+  h=json.dumps({'emb':{'dtype':'F32','shape':[1,1,2],'data_offsets':[0,8]}}).encode()
+  with self.assertRaises(ValueError): a.tensor_digest(struct.pack('<Q',len(h))+h+struct.pack('<ff',float('nan'),1))

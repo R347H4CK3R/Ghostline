@@ -10,6 +10,19 @@ final class AudioTests: XCTestCase {
         XCTAssertEqual(Set(manifest.voices.map(\.sha256)).count, 37)
         try Catalog.validate(root: root, manifest: manifest)
     }
+    func testBundledNeuralVoiceGeneratesDecodableNonSilentWAV() async throws {
+        let (root, manifest) = try Catalog.read()
+        let voice = try XCTUnwrap(manifest.voices.first { $0.id == "en_us_Zoey" })
+        let engine = NeuralSpeech(computeUnits: .cpuOnly)
+        let output = FileManager.default.temporaryDirectory.appendingPathComponent("Neural-test-\(UUID()).wav")
+        defer { try? FileManager.default.removeItem(at: output) }
+        let duration = try await engine.generate(text: "Hello from VoiceMatrix.", voice: voice, root: root, manifest: manifest, output: output)
+        XCTAssertGreaterThan(duration, 0.1)
+        let decoded = try AVAudioFile(forReading: output)
+        XCTAssertEqual(decoded.fileFormat.sampleRate, 24000)
+        XCTAssertGreaterThan(decoded.length, 2400)
+        await engine.unload()
+    }
     func testTraversalRejected() throws {
         let root = FileManager.default.temporaryDirectory
         let manifest = VoiceManifest(schemaVersion: 1, engine: "phonon31m", revision: "test", files: [.init(path: "../invalid", sha256: "0", size: 1)], voices: [])

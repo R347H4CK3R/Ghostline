@@ -349,7 +349,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "44e947ee7b35f53dd0600147bb983863b3f4f3eaa78a95be72f8852f9ec316e3"
     },
     {
       "id": "characters_Captain Silas Blackwater",
@@ -364,7 +365,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "f8503e6ef9ec973115ef62d2430de6601866ed03bfe4691ca4bcad99eff1337a"
     },
     {
       "id": "characters_Fairy Godmother",
@@ -379,7 +381,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "7aade72885e9734c9d2e9bb6409b89119d0d31049d3598519f91ca48a9dbec81"
     },
     {
       "id": "characters_Fennick the Young Elf",
@@ -394,7 +397,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "e71cb04d0dc83a7b4c47f180ac866888b6c47894a1a795b1285c075574d29b9a"
     },
     {
       "id": "characters_Grub the Ogre",
@@ -409,7 +413,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "c64453088f9f919256845d40d5d138b277d3456e300f5ad3f3d370324338e8d1"
     },
     {
       "id": "characters_Master Aldric",
@@ -424,7 +429,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "369e76a1a9852820654f6d48434dcb1ab03c6fed6d7e83291aae96b0675e19e8"
     },
     {
       "id": "characters_Morwenna of the Deep",
@@ -439,7 +445,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "6dda942942ab96700f63876d9f79ba60558fc9c61a1129818438e517a5373b18"
     },
     {
       "id": "characters_Old Mortlake",
@@ -454,7 +461,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "59d13a56b561fa95f507004967cdaed8b15f56c7dba7c4f810c706040ed97441"
     },
     {
       "id": "characters_Sir Bramwell",
@@ -469,7 +477,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "d38cedc0248ed841dd32b7da53f7177479a1dd33f2f89f66eccad47f01bf9a6d"
     },
     {
       "id": "characters_The Snow Queen",
@@ -484,7 +493,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "0aacaed974b230e2be66f487d0fd10959ce2b22ac368962509030a1a5dab8da8"
     },
     {
       "id": "characters_The Thing Under the Stairs",
@@ -499,7 +509,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "e615b2f24486e8e60ea823e995d96025c0ecf8020f04d52d28455225831c095a"
     },
     {
       "id": "characters_Vyrmathrax the Ancient",
@@ -514,7 +525,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "bb01997d186c24cdacca5410e7cad5dd5636ee96db1a376cca4c0e6eec697841"
     },
     {
       "id": "en_gb_Alfie",
@@ -529,7 +541,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "fb5fa6ee8596825685d90d1d5699212d310e9b209ee9d3b5ce8d0210bb46a66e"
     },
     {
       "id": "en_gb_Bryony",
@@ -544,7 +557,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "27ddf56b1fb99848b9718c3b14660122ae1aae1426944ea8765c44996bafdcca"
     },
     {
       "id": "en_gb_Edwin",
@@ -559,7 +573,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "b549252867c99c9b9ed2160ed2517815325b0569fc35464db62f1dc155029bc3"
     },
     {
       "id": "en_gb_Elodie-Rose",
@@ -574,7 +589,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "42b804ef86ed14db809e567686bb5eddca4d0f39bdcf193777a069dd827a223b"
     },
     {
       "id": "en_gb_Freya",
@@ -589,7 +605,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "eaaf898129280cf79fd314db2000ee9574d2c1f82fac408ccfae5dec6f7850e1"
     },
     {
       "id": "en_gb_Hugh",
@@ -604,7 +621,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "50e20d12b2b1de4b4865cac7e0208552ac82731a37e98f82ef44c4fbae964a18"
     },
     {
       "id": "en_gb_Imogen",
@@ -619,7 +637,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "fee2dde9395e015dafdb5b605eac290e8102efd03de9e3aa1a67fa0596bbf439"
     },
     {
       "id": "en_gb_Lottie",
@@ -634,7 +653,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "2e7f01ee545a8dcc0d92ca5b01072a54874fcbe55d91d6939c46c0ec46ceef7d"
     },
     {
       "id": "en_gb_Maeve",
@@ -649,7 +669,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "5ec06f276e99c3eb83b45ee2b97c583a1a53d962f3c2fb083fee84e62a4154e3"
     },
     {
       "id": "en_gb_Pippa",
@@ -664,7 +685,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "6dd807608eb7210bd15fe1d20e1ff3b754001d34d7ff428886f3d404b6ec631a"
     },
     {
       "id": "en_gb_Spencer",
@@ -679,7 +701,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "610cd838752b52a48f0517ce4cf094f758e018e3d21637a478605ef85c81a078"
     },
     {
       "id": "en_gb_Teddy",
@@ -694,7 +717,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "1e6a96a81aceee5eae3d2f504fd962e43a229293f59276e5e0391d8e0e9c805d"
     },
     {
       "id": "en_gb_Toby",
@@ -709,7 +733,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "ba1ef2fc60b340857f2a9d014bb3c62741235a8cd8170e64ff569618b9688ca3"
     },
     {
       "id": "en_us_Delia",
@@ -724,7 +749,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "a159d6f72f776ed168b9d14c83f36c34e4a204fed8777b3b13964016965fda89"
     },
     {
       "id": "en_us_Easton",
@@ -739,7 +765,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "cd027c1372527447c1ed3615c3a4232f1dabb05a681d5d40aeef7eea79c1efb2"
     },
     {
       "id": "en_us_Everly",
@@ -754,7 +781,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "0c8819fbf5834042214e0d3055d335662a86c89b6b0af9dc9cf6a9d5b369b8f7"
     },
     {
       "id": "en_us_Hadley",
@@ -769,7 +797,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "5afb00a9f0aae63947176da4aee8b0dcc4fa5a7fb12e8031101c8505b706cd3c"
     },
     {
       "id": "en_us_Harper",
@@ -784,7 +813,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "6cb6b33c028cfa268c4a08ba6b1540e1ef1127449dac96b0897da1c5524d12e9"
     },
     {
       "id": "en_us_Juniper",
@@ -799,7 +829,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "659a71eb9df3ef746fd55044ba6e2a55eb2afd679354c0f71c8180bff746bb0a"
     },
     {
       "id": "en_us_Micah",
@@ -814,7 +845,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "d6f49fec7a4d12c0c4e7832c3c04bb9faef7e58f776dbade93bcc799ef5e6fb4"
     },
     {
       "id": "en_us_Miles",
@@ -829,7 +861,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "ad3dd427f29b4febbd6aeb10f2c2d4001b5cab61e9e9ad75f7b3c9ce95ff8c57"
     },
     {
       "id": "en_us_Preston",
@@ -844,7 +877,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "ab5dc8c2ba7fb38e3e51e3308bce06959788771599ef5666aad8d6ed1a79f5cf"
     },
     {
       "id": "en_us_Russell",
@@ -859,7 +893,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "0c8282cf8b70f33b106cf48eb6c6d177e00f4b4b66db04a969139552678ce854"
     },
     {
       "id": "en_us_Trevor",
@@ -874,7 +909,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "b15a6353871197aec3790bcfeb1bb8e18c958064369359e62db83fc6607f25ee"
     },
     {
       "id": "en_us_Zoey",
@@ -889,7 +925,8 @@
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
       "qualityStatus": "not-listening-tested",
-      "deviceVerified": false
+      "deviceVerified": false,
+      "tensorSha256": "44c9d9d0fc30aa2f9596456ab653969473dc520da7f3414447bec5b605c29174"
     }
   ]
 }
