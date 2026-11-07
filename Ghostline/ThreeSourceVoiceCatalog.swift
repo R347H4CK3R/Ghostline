@@ -33,11 +33,51 @@ private struct GhostlineSourceSnapshot: Decodable {
     }
 }
 
+
+/// Five additional external discovery directories, not preinstalled voice packs.
+/// "Horror" and "Animation" are search priorities, not verified model identities.
+private struct GhostlineAdditionalSource: Identifiable {
+    let id: String
+    let title: String
+    let url: String
+    let emphasis: String
+    let classification: String
+    let limitation: String
+    static let all: [Self] = [
+        .init(id: "voice-models", title: "Voice Models — RVC directory",
+              url: "https://voice-models.com/",
+              emphasis: "Horror, game characters, animation, singers",
+              classification: "Community RVC download links",
+              limitation: "Creator links and vocal likeness rights require review; no models automatically installed."),
+        .init(id: "rvcvoicemodels", title: "RVC Voice Models — community hub",
+              url: "https://rvcvoicemodels.com/",
+              emphasis: "Characters, animation, voice-conversion demos",
+              classification: "Creator-uploaded RVC v2 listings",
+              limitation: "Community uploads do not establish impersonation consent or iPhone compatibility."),
+        .init(id: "fakeyou", title: "FakeYou — voice-to-voice directory",
+              url: "https://fakeyou.com/voice-conversion",
+              emphasis: "Cartoon and movie-character voice demonstrations",
+              classification: "Hosted community voice-conversion models",
+              limitation: "Hosted access does not grant downloadable offline model weights or redistribution rights."),
+        .init(id: "weightsai", title: "Weights AI — community voices",
+              url: "https://weightsai.net/voices",
+              emphasis: "Animation, gaming and singer-inspired community models",
+              classification: "Community RVC voice library",
+              limitation: "Unofficial fan uploads; check source provenance and individual permissions."),
+        .init(id: "aihub", title: "AI Hub — RVC model forum guide",
+              url: "https://docs.aihub.gg/essentials/voice-models/",
+              emphasis: "Community model discovery and .pth/.index guidance",
+              classification: "Community directory and instructional resource",
+              limitation: "The guide is not a voice pack; external creator files need independent vetting.")
+    ]
+}
+
 struct GhostlineThreeSourceCatalogView: View {
     @State private var search = ""
     @State private var selectedProvider = "All"
     @State private var selectedCategory = "All"
     @State private var showOnlyDeclaredLicenses = false
+    @State private var directoryPriority = "All"
     private let snapshot = GhostlineSourceSnapshot.load()
     private let providers: [(String, String)] = [
         ("All", "All sources"), ("aivoices", "AI Voices"),
@@ -111,6 +151,35 @@ struct GhostlineThreeSourceCatalogView: View {
                     }
                     .padding(.vertical, 6)
                 }
+            }
+            Section("Five additional model sources") {
+                Text("Prioritized for cartoons, animated characters, and horror-film-style voices. These are external directories, not five preinstalled model packs.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Picker("Discovery focus", selection: $directoryPriority) {
+                    Text("All").tag("All")
+                    Text("Animation").tag("Animation")
+                    Text("Horror & movies").tag("Horror & movies")
+                }
+                .pickerStyle(.menu)
+                ForEach(GhostlineAdditionalSource.all.filter { entry in
+                    directoryPriority == "All" ||
+                    (directoryPriority == "Animation" &&
+                     ["voice-models", "rvcvoicemodels", "fakeyou", "weightsai", "aihub"].contains(entry.id)) ||
+                    (directoryPriority == "Horror & movies" &&
+                     ["voice-models", "rvcvoicemodels", "fakeyou", "weightsai", "aihub"].contains(entry.id))
+                }) { source in
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(source.title).font(.headline)
+                        Text(source.emphasis).font(.subheadline)
+                        Text(source.classification).font(.caption).foregroundStyle(.secondary)
+                        Text(source.limitation).font(.caption).foregroundStyle(.orange)
+                        if let url = URL(string: source.url) {
+                            Link("Browse source", destination: url)
+                        }
+                    }.padding(.vertical, 5)
+                }
+                Text("The discovery focus is an editorial guide. No horror or character model is claimed authentic until its reference, permission, and actual offline output are checked.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section("Browse complete provider directories") {
                 Link("AI Voices — full community model directory",
