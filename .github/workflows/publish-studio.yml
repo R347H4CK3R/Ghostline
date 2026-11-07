@@ -1,0 +1,80 @@
+name: Publish inspected offline VoiceMatrix studio
+on:
+  push:
+    branches: ['release/voicematrix-studio-*']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Packaging and approval regression checks
+        run: python3 -m unittest discover -s tests -v
+      - name: Require completed matching native and independent audio tests
+        run: |
+          gh run watch 42401682233 --repo "$GITHUB_REPOSITORY" --interval 30 --exit-status
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/42401682233" > independent-run.json
+          python3 - <<'PY'
+          import json
+          r=json.load(open('independent-run.json'))
+          assert r['head_sha']=='1836161b6294ba854f45aa33308f0f09f7bdd0b6' and r['conclusion']=='success'
+          PY
+          gh run download 42401682233 --repo "$GITHUB_REPOSITORY" --name VoiceMatrix-0.3.0-independent-validation --dir validation
+          gh run download 42401146982 --repo "$GITHUB_REPOSITORY" --name VoiceMatrix-0.3.0-arm64-candidate --dir candidate
+          python3 tools/approve_studio_catalog.py --qa validation/qa-combined/voice-synthesis-results.json --asr validation/asr/asr-intelligibility-results.json --output approved
+      - name: Package and inspect exactly the approved profiles
+        run: |
+          python3 tools/prepare_studio_ipa.py candidate/VoiceMatrix-0.3.0-candidate.ipa VoiceMatrix-v0.3.0-experimental.ipa --lock approved/phonon-lock.json --qa validation/qa-combined/voice-synthesis-results.json --asr validation/asr/asr-intelligibility-results.json
+          python3 tools/inspect_ipa.py VoiceMatrix-v0.3.0-experimental.ipa
+          sha256sum VoiceMatrix-v0.3.0-experimental.ipa > VoiceMatrix-v0.3.0-experimental.ipa.sha256
+          python3 tools/studio_release_notes.py approved/catalog-summary.json VoiceMatrix-v0.3.0-experimental.ipa
+      - name: Publish prerelease and exact installation feeds
+        run: |
+          TAG="voicematrix-v0.3.0-studio-${GITHUB_RUN_NUMBER}"
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/VoiceMatrix-v0.3.0-experimental.ipa"
+          python3 tools/install_studio_sources.py "$URL" VoiceMatrix-v0.3.0-experimental.ipa approved/phonon-lock.json
+          gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "VoiceMatrix 0.3.0 offline voice studio" --notes-file RELEASE-NOTES-0.3.0.md VoiceMatrix-v0.3.0-experimental.ipa VoiceMatrix-v0.3.0-experimental.ipa.sha256 source.json strata-source.json approved/catalog-summary.json approved/phonon-lock.json validation/asr/asr-intelligibility-results.json validation/qa-combined/voice-synthesis-results.json RELEASE-NOTES-0.3.0.md
+          gh release view "$TAG" --json assets,url > published-release.json
+          python3 - <<'PY'
+          import json
+          r=json.load(open('published-release.json'));names={a['name'] for a in r['assets']}
+          assert {'VoiceMatrix-v0.3.0-experimental.ipa','source.json','strata-source.json','catalog-summary.json','asr-intelligibility-results.json'}<=names
+          PY
+          printf '%s\n' "$TAG" > published-tag.txt
+      - name: Download the published IPA and verify it again
+        run: |
+          TAG="$(cat published-tag.txt)"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern VoiceMatrix-v0.3.0-experimental.ipa --dir published-check
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          name='VoiceMatrix-v0.3.0-experimental.ipa'
+          built=pathlib.Path(name);downloaded=pathlib.Path('published-check')/name
+          def sha(p):
+           with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
+          assert sha(built)==sha(downloaded) and built.stat().st_size==downloaded.stat().st_size
+          report=dict(version='0.3.0',bytes=downloaded.stat().st_size,sha256=sha(downloaded),release=json.load(open('published-release.json'))['url'],archiveDownloadedAfterPublication=True)
+          pathlib.Path('release-verification.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps(report,indent=2))
+          PY
+          python3 tools/inspect_ipa.py published-check/VoiceMatrix-v0.3.0-experimental.ipa
+          gh release upload "$TAG" release-verification.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: VoiceMatrix-0.3.0-approved-release
+          path: |
+            VoiceMatrix-v0.3.0-experimental.ipa
+            VoiceMatrix-v0.3.0-experimental.ipa.sha256
+            source.json
+            strata-source.json
+            RELEASE-NOTES-0.3.0.md
+            release-verification.json
+            published-release.json
+            approved
+          if-no-files-found: warn
+          retention-days: 90
