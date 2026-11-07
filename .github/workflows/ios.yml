@@ -1,0 +1,52 @@
+name: VoiceMatrix iOS IPA
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - source.json
+      - strata-source.json
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for f in ['App.swift','Library.swift','Speech.swift','Changer.swift','README.md','project.yml']:
+              assert Path(f).is_file(),f
+          assert 'VoiceMatrixApp' in Path('App.swift').read_text()
+          assert 'AVSpeechSynthesizer' in Path('Speech.swift').read_text()
+          assert 'AVAudioEngine' in Path('Changer.swift').read_text()
+          print('Source gates passed')
+          PY
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Build unsigned arm64 app
+        run: xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Make and verify IPA
+        run: |
+          test -s build/Build/Products/Release-iphoneos/VoiceMatrix.app/Assets.car
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/VoiceMatrix.app Payload/
+          zip -q -r VoiceMatrix-unsigned.ipa Payload
+          python3 - <<'PY'
+          import zipfile,plistlib
+          with zipfile.ZipFile('VoiceMatrix-unsigned.ipa') as z:
+              assert z.testzip() is None
+              p=plistlib.loads(z.read('Payload/VoiceMatrix.app/Info.plist'))
+              assert p['CFBundleIdentifier']=='com.voicematrix.app'
+              print('IPA passed:',p['CFBundleIdentifier'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceMatrix-unsigned-IPA
+          path: VoiceMatrix-unsigned.ipa
+          if-no-files-found: error

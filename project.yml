@@ -1,0 +1,34 @@
+name: VoiceMatrix
+options:
+  bundleIdPrefix: com.voicematrix.app
+settings:
+  base:
+    IPHONEOS_DEPLOYMENT_TARGET: '17.0'
+    SWIFT_VERSION: '5.0'
+    TARGETED_DEVICE_FAMILY: '1,2'
+    GENERATE_INFOPLIST_FILE: YES
+    MARKETING_VERSION: '0.1.0'
+    CURRENT_PROJECT_VERSION: '1'
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGNING_ALLOWED: NO
+targets:
+  VoiceMatrix:
+    type: application
+    platform: iOS
+    sources:
+      - path: .
+        excludes:
+          - README.md
+          - project.yml
+          - source.json
+          - strata-source.json
+          - .github
+          - tools
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.voicematrix.app
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_CFBundleDisplayName: VoiceMatrix
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Record your voice to preview private offline audio effects.
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsDocumentBrowser: NO
