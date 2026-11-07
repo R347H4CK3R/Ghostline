@@ -1,0 +1,20 @@
+name: Character library source checks
+on:
+  push:
+    branches: ['source/voicematrix-character-*']
+permissions:
+  contents: read
+jobs:
+  catalog:
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check source and release regressions
+        run: python3 -m unittest discover -s tests -v
+      - name: Parse Swift source without building an app or IPA
+        run: xcrun swiftc -frontend -parse VoiceMatrix/*.swift
+      - name: Execute character catalog classification and reference-record checks
+        run: |
+          xcrun swiftc VoiceMatrix/Catalog.swift tests/native/CharacterCatalogChecks.swift -o /tmp/character-catalog-checks
+          /tmp/character-catalog-checks models/released-voices.json

@@ -1,5 +1,11 @@
 # VoiceMatrix
 
+## Character-replica objective — source development
+
+The current IPA contains 12 original character performances and 525 other speakers, with **0 verified recognizable character replicas**. Its 537-profile count is a functional speech-library milestone, not completion of the 500-character-replica objective. Character resemblance, naturalness and perceptual distinctness still need reference-based listening tests.
+
+Source development now separates **Character styles**, **Replicas**, and **Other speakers** in the voice picker, defaults browsing to character styles, and searches target/franchise names and overlapping genres when identity metadata exists. Replica entries require named targets, reference checksums and authorization-record paths; those records require human source/rights review and do not establish resemblance. No existing ordinary voice is renamed as a replica. These UI changes are source-only until a future compiled release; the 0.3.0 IPA and installation feeds remain unchanged.
+
 Native ARM64 offline English voice studio for iPhone, LiveContainer and Strata. Current experimental version: **0.3.0 build 5**, iOS 26 or later.
 
 [Download the inspected unsigned IPA](https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-studio-1/VoiceMatrix-v0.3.0-experimental.ipa) · [LiveContainer source](https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/source.json) · [Strata source](https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/strata-source.json)

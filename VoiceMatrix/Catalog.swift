@@ -8,10 +8,43 @@ struct VoiceProfile: Codable, Identifiable, Hashable {
     let baseVoiceID: String?
     let usageRestriction: String?
     let categories: [String]?
+    let characterIdentity: CharacterIdentity?
+    var libraryGroup: String {
+        if characterIdentity?.kind == "authorizedReplica" { return "Replicas" }
+        if characterIdentity?.kind == "characterInspired" || id.hasPrefix("characters_") { return "Character styles" }
+        return "Other speakers"
+    }
+    var identityLabel: String {
+        if let identity = characterIdentity {
+            return identity.kind == "authorizedReplica" ? "Authorized replica of \(identity.targetName) · resemblance unverified" : "Original voice inspired by \(identity.targetName) · not an official replica"
+        }
+        return libraryGroup == "Character styles" ? "Original character performance · not a named-character replica" : "General speaker · not a character replica"
+    }
     var description: String { "\(accent) • \(category)" + (usageRestriction.map { " • " + $0 } ?? "") }
-    var allCategories: [String] { Array(Set((categories ?? []) + [category])).sorted() }
-    var searchText: String { ([name, category, accent] + allCategories).joined(separator: " ") }
+    var allCategories: [String] { Array(Set((categories ?? []) + [category] + (characterIdentity?.genres ?? []))).sorted() }
+    var searchText: String { ([name, category, accent, characterIdentity?.targetName ?? "", characterIdentity?.franchise ?? ""] + allCategories).joined(separator: " ") }
     func matchesCategory(_ selected: String) -> Bool { allCategories.contains(selected) }
+}
+struct CharacterIdentity: Codable, Hashable {
+    let kind, targetName: String
+    let franchise: String?
+    let genres: [String]
+    let referenceSHA256: [String]
+    let authorizationRecord: String?
+    static let allowedGenres = ["Animation & Cartoons", "Horror & Monsters", "Movies & Television", "Video Games", "Anime & Fantasy", "Science Fiction & Superheroes", "Original & Comedy"]
+    func validate() throws {
+        guard ["authorizedReplica", "characterInspired"].contains(kind),
+              !targetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !genres.isEmpty, Set(genres).count == genres.count,
+              genres.allSatisfy({ Self.allowedGenres.contains($0) }) else { throw StudioError.invalidAsset("character identity") }
+        if kind == "authorizedReplica" {
+            guard let record = authorizationRecord, record.hasPrefix("models/authorizations/"),
+                  !record.split(separator: "/").contains(".."),
+                  !referenceSHA256.isEmpty, Set(referenceSHA256).count == referenceSHA256.count,
+                  referenceSHA256.allSatisfy({ $0.count == 64 && $0.allSatisfy({ "0123456789abcdef".contains($0) }) })
+            else { throw StudioError.invalidAsset("replica reference records") }
+        }
+    }
 }
 struct AssetRecord: Codable { let path, sha256: String; let size: Int }
 struct VoiceManifest: Codable {
@@ -40,6 +73,7 @@ enum Catalog {
               Set(manifest.voices.map(\.id)).count == manifest.voices.count,
               Set(manifest.voices.map(\.sha256)).count == manifest.voices.count else { throw StudioError.invalidAsset("catalog") }
         for voice in manifest.voices {
+            try voice.characterIdentity?.validate()
             guard ["phonon31m", "phonon31m-openvoicev2"].contains(voice.engine) else { throw StudioError.invalidAsset("voice engine") }
             if voice.engine == "phonon31m-openvoicev2" {
                 guard let base = voice.baseVoiceID, manifest.voices.contains(where: { $0.id == base && $0.engine == "phonon31m" }) else { throw StudioError.invalidAsset("voice source") }

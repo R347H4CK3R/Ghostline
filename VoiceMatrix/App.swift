@@ -42,7 +42,7 @@ struct HomeView: View {
                 Text("A private voice studio. No account needed.").foregroundStyle(.secondary)
                 NavigationLink { SpeechView() } label: { HomeCard(title: "MAKE SPEECH", detail: "Type words. Choose a voice. Hear them speak.", icon: "text.bubble.fill") }.accessibilityIdentifier("make-speech")
                 NavigationLink { RecordingView() } label: { HomeCard(title: "CHANGE MY VOICE", detail: "Record. Choose a voice. Hear your changed voice.", icon: "mic.fill") }.accessibilityIdentifier("change-my-voice")
-                Text("\(studio.voices.count) bundled English profiles • Experimental\n\(studio.onDeviceSpeechChecks) speech checks completed on this iPhone.").font(.footnote).foregroundStyle(.secondary)
+                Text("\(studio.voices.filter { $0.libraryGroup == "Character styles" }.count) original character styles • \(studio.voices.filter { $0.libraryGroup == "Replicas" }.count) replica entries\n\(studio.voices.count) total speakers • Experimental\n\(studio.onDeviceSpeechChecks) speech checks completed on this iPhone.").font(.footnote).foregroundStyle(.secondary)
             }.padding(24)
         }.background(Color(red: 0.045, green: 0.025, blue: 0.09)).navigationTitle("VoiceMatrix")
     }
@@ -110,8 +110,10 @@ struct VoicesView: View {
     var onChoose: (() -> Void)? = nil
     @State private var search = ""
     @State private var filter = "All"
+    @State private var library = "Character styles"
     var filtered: [VoiceProfile] {
         studio.voices.filter { voice in
+            (library == "All voices" || voice.libraryGroup == library) &&
             (search.isEmpty || voice.searchText.localizedCaseInsensitiveContains(search)) &&
             (filter == "All" || (filter == "Favorites" && studio.favorites.contains(voice.id)) || (filter == "Recent" && studio.recent.contains(voice.id)) || (filter == "American" && voice.accent == "American") || voice.matchesCategory(filter))
         }
@@ -119,12 +121,17 @@ struct VoicesView: View {
     var body: some View {
         List {
             Section {
+                Picker("Voice library", selection: $library) {
+                    ForEach(["Character styles", "Replicas", "Other speakers", "All voices"], id: \.self) { Text($0).tag($0) }
+                }.accessibilityIdentifier("voice-library")
+                Text("\(studio.voices.filter { $0.libraryGroup == "Replicas" }.count) replica entries • \(studio.voices.filter { $0.libraryGroup == "Character styles" }.count) original character styles")
+                    .font(.caption).foregroundStyle(.secondary)
                 Picker("Show", selection: $filter) {
                     ForEach(["All", "American", "Favorites", "Recent"] + Array(Set(studio.voices.flatMap(\.allCategories))).sorted(), id: \.self) { Text($0).tag($0) }
                 }
-                Text("Included experimental profiles. No celebrity likenesses or near-indistinguishable quality claims.").font(.caption).foregroundStyle(.secondary)
+                Text("Replicas require a named target and authorization records. Original character styles and other speakers are separate. Character resemblance still requires listening comparisons.").font(.caption).foregroundStyle(.secondary)
             }
-            if filtered.isEmpty { Text("No matching voices. Try another search or filter.").foregroundStyle(.secondary) }
+            if filtered.isEmpty { Text(library == "Replicas" ? "No authorized character replicas are included yet. Choose Character styles to hear the original performances." : "No matching voices. Try another search or filter.").foregroundStyle(.secondary) }
             ForEach(filtered) { voice in
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
@@ -136,6 +143,7 @@ struct VoicesView: View {
                         Spacer()
                         Button { studio.favorite(voice.id) } label: { Image(systemName: studio.favorites.contains(voice.id) ? "heart.fill" : "heart") }.accessibilityLabel("Favorite \(voice.name)")
                     }
+                    Text(voice.identityLabel).font(.caption).foregroundStyle(.purple)
                     Text(voice.description).font(.caption).foregroundStyle(.secondary)
                     Button {
                         studio.selectedID = voice.id
