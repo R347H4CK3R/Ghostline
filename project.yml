@@ -31,6 +31,9 @@ targets:
       - path: VoiceMatrix/Resources/ReferenceBank
         type: folder
         buildPhase: resources
+      - path: VoiceMatrix/Resources/PhononReferences
+        type: folder
+        buildPhase: resources
     dependencies:
       - package: FluidAudio
     settings:

@@ -1,0 +1,53 @@
+name: Prepare existing voices for offline conversion
+on:
+  push:
+    branches: ['probe/voicematrix-existing-profiles-*']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  prepare:
+    runs-on: macos-26
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bundle tested models and existing speech references
+        run: |
+          python3 tools/assets.py
+          python3 tools/bundle_openvoice.py
+          gh run download 42390971417 --repo "$GITHUB_REPOSITORY" --name VoiceMatrix-expanded-profile-QA-audio --dir VoiceMatrix/Resources/PhononReferences
+          mkdir -p VoiceMatrix/Resources/ReferenceBank
+          brew install xcodegen
+      - name: Extract local conditioning for each existing voice
+        env:
+          NSUnbufferedIO: YES
+        run: |
+          xcodegen generate
+          python3 - <<'PY'
+          import sys,json,subprocess
+          sys.path.insert(0,'tools')
+          from run_native_tests import run
+          devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','-j']))
+          device=next(d['udid'] for group in devices['devices'].values() for d in group if 'iPhone' in d['name'])
+          code=run(['xcodebuild','-project','VoiceMatrix.xcodeproj','-scheme','VoiceMatrix','-destination','platform=iOS Simulator,id='+device,'-derivedDataPath','original-tests','-parallel-testing-enabled','NO','-only-testing:VoiceMatrixTests/ExistingProfileTests','CODE_SIGNING_ALLOWED=NO','test'],'original-tests.log',timeout=1200)
+          sys.exit(code)
+          PY
+      - name: Retain compact profiles
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          paths=list((Path.home()/'Library/Developer/CoreSimulator/Devices').glob('*/data/Containers/Data/Application/*/Documents/VoiceMatrix-Original-Profiles/original-conversion-results.json'))
+          assert paths
+          shutil.copytree(paths[0].parent,'original-profile-output')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: VoiceMatrix-original-conversion-profiles
+          path: |
+            original-profile-output
+            original-tests.log
+          if-no-files-found: warn
