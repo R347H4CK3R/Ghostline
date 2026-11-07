@@ -168,7 +168,7 @@ struct VoiceChangerView: View {
             Section("4. Save original recording") {
                 Button("Prepare original audio") { audio.prepareOriginal() }
                     .disabled(audio.recorded == nil || audio.recording)
-                if let source = audio.export {
+                if let source = audio.exported {
                     ShareLink(item: source) {
                         Label("SAVE OR SHARE RECORDING",systemImage:"square.and.arrow.up")
                     }
