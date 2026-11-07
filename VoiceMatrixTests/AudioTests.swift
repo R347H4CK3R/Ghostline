@@ -16,7 +16,10 @@ final class AudioTests: XCTestCase {
         let engine = NeuralSpeech(computeUnits: .cpuOnly)
         let output = FileManager.default.temporaryDirectory.appendingPathComponent("Neural-test-\(UUID()).wav")
         defer { try? FileManager.default.removeItem(at: output) }
+        let started = Date()
+        print("VoiceMatrix neural smoke: starting local CPU model load and WAV synthesis")
         let duration = try await engine.generate(text: "Hello from VoiceMatrix.", voice: voice, root: root, manifest: manifest, output: output)
+        print("VoiceMatrix neural smoke: completed, elapsed=\(Date().timeIntervalSince(started)), audioSeconds=\(duration)")
         XCTAssertGreaterThan(duration, 0.1)
         let decoded = try AVAudioFile(forReading: output)
         XCTAssertEqual(decoded.fileFormat.sampleRate, 24000)
