@@ -15,7 +15,7 @@ for category in expected:
     assert found, category + " missing"
     ids = re.findall(r'"([^"]+)"', found.group(1))
     assert ids and all(i in packs for i in ids), (category, ids)
-assert "NavigationStack { GhostlineCategorizedVoiceLibraryView() }" in app
+assert "NavigationStack { GhostlineUSVoiceLibrary() }" in app
 assert "await studio.generate(words)" in source
 assert "studio.replaySavedWAV()" in source
 assert "GhostlineVoiceChangerView()" in source
