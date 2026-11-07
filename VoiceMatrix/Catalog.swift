@@ -35,8 +35,14 @@ enum Catalog {
         return (root, manifest)
     }
     static func validate(root: URL, manifest: VoiceManifest) throws {
+        try validateAssets(root: root, files: manifest.files)
+        for voice in manifest.voices {
+            guard manifest.files.contains(where: { $0.path == voice.path && $0.sha256 == voice.sha256 && $0.size == voice.size }) else { throw StudioError.invalidAsset(voice.name) }
+        }
+    }
+    static func validateAssets(root: URL, files: [AssetRecord]) throws {
         var seen = Set<String>()
-        for entry in manifest.files {
+        for entry in files {
             guard !entry.path.hasPrefix("/"), !entry.path.split(separator: "/").contains(".."), seen.insert(entry.path).inserted else { throw StudioError.invalidAsset("catalog path") }
             let url = root.appendingPathComponent(entry.path)
             let handle = try FileHandle(forReadingFrom: url)
@@ -46,8 +52,6 @@ enum Catalog {
             let digest = hash.finalize().map { String(format: "%02x", $0) }.joined()
             guard bytes == entry.size, digest == entry.sha256 else { throw StudioError.invalidAsset(entry.path) }
         }
-        for voice in manifest.voices {
-            guard manifest.files.contains(where: { $0.path == voice.path && $0.sha256 == voice.sha256 && $0.size == voice.size }) else { throw StudioError.invalidAsset(voice.name) }
-        }
     }
+
 }

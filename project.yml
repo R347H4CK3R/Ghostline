@@ -25,6 +25,9 @@ targets:
       - path: VoiceMatrix/Resources/Phonon
         type: folder
         buildPhase: resources
+      - path: VoiceMatrix/Resources/OpenVoice
+        type: folder
+        buildPhase: resources
     dependencies:
       - package: FluidAudio
     settings:
