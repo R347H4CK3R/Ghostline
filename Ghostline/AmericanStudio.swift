@@ -289,6 +289,9 @@ struct GhostlineAmericanDownloads: View {
             }
             Section("Community voice models") {
                 NavigationLink("Rights-reviewed community catalog") { GhostlineCommunityVoicesView() }
+                NavigationLink("Browse 589 three-provider model listings") {
+                    GhostlineThreeSourceCatalogView()
+                }
                 NavigationLink("Download creator-published RVC weights") { GhostlineRVCDownloadView() }
                 NavigationLink("Manage private RVC voice packs") { RVCPackLibraryView() }
                 Text("Some downloads require model-specific licenses. American-English accent and actual device compatibility are not confirmed by an RVC file's name.")

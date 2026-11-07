@@ -241,6 +241,13 @@ struct GhostlineCommunityVoicesView: View {
                     .padding(.vertical, 6)
                 }
             }
+            Section("Expanded animation, horror and character catalog") {
+                NavigationLink("Browse AI Voices, Hugging Face and OpenVoice listings") {
+                    GhostlineThreeSourceCatalogView()
+                }
+                Text("An offline metadata index; model availability, American-English accent and use rights remain unverified. Duplicate model files are not bundled.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Section("Free creator-distributed RVC downloads") {
                 NavigationLink("Download Phoenix RVC model + index • progress") {
                     GhostlineRVCDownloadView()
