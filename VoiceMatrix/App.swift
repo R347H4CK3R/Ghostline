@@ -182,8 +182,8 @@ struct SettingsView: View {
     @State private var report: URL?
     var body: some View {
         Form {
-            Section("VoiceMatrix 0.2.0 · Experimental") {
-                Text("\(studio.voices.count) bundled English profiles\n0 physical-device-verified voices\n0 authorized recognizable likenesses\nQuality listening tests pending")
+            Section("VoiceMatrix 0.2.1 · Experimental") {
+                Text("\(studio.voices.count) bundled English profiles\n\(studio.automatedChecks) automated speech checks passed (simulator)\n0 physical-device-verified voices\n0 authorized recognizable likenesses\nQuality listening tests pending")
                 Text("One shared Phonon engine. Models and profiles are included in the installation.")
                 Text("Profile storage: \(ByteCountFormatter.string(fromByteCount: Int64(studio.voices.reduce(0) { $0 + $1.size }), countStyle: .file))")
             }

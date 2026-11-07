@@ -1,5 +1,6 @@
 import XCTest
 import AVFoundation
+import CryptoKit
 @testable import VoiceMatrix
 
 final class AudioTests: XCTestCase {
@@ -10,20 +11,30 @@ final class AudioTests: XCTestCase {
         XCTAssertEqual(Set(manifest.voices.map(\.sha256)).count, 37)
         try Catalog.validate(root: root, manifest: manifest)
     }
-    func testBundledNeuralVoiceGeneratesDecodableNonSilentWAV() async throws {
+    func testAllBundledNeuralVoicesGenerateDecodableNonSilentWAV() async throws {
+        executionTimeAllowance = 360
         let (root, manifest) = try Catalog.read()
-        let voice = try XCTUnwrap(manifest.voices.first { $0.id == "en_us_Zoey" })
         let engine = NeuralSpeech(computeUnits: .cpuOnly)
-        let output = FileManager.default.temporaryDirectory.appendingPathComponent("Neural-test-\(UUID()).wav")
-        defer { try? FileManager.default.removeItem(at: output) }
-        let started = Date()
-        print("VoiceMatrix neural smoke: starting local CPU model load and WAV synthesis")
-        let duration = try await engine.generate(text: "Hello from VoiceMatrix.", voice: voice, root: root, manifest: manifest, output: output, progress: { print("VoiceMatrix test phase: " + $0) })
-        print("VoiceMatrix neural smoke: completed, elapsed=\(Date().timeIntervalSince(started)), audioSeconds=\(duration)")
-        XCTAssertGreaterThan(duration, 0.1)
-        let decoded = try AVAudioFile(forReading: output)
-        XCTAssertEqual(decoded.fileFormat.sampleRate, 24000)
-        XCTAssertGreaterThan(decoded.length, 2400)
+        let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("VoiceMatrix-QA")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        var results: [[String: Any]] = []
+        for voice in manifest.voices {
+            let output = folder.appendingPathComponent(voice.id).appendingPathExtension("wav")
+            let started = Date()
+            print("VoiceMatrix QA starting profile=\(voice.id)")
+            let duration = try await engine.generate(text: "Hello. This is a voice test.", voice: voice, root: root, manifest: manifest, output: output)
+            let decoded = try AVAudioFile(forReading: output)
+            XCTAssertGreaterThan(duration, 0.1, voice.id)
+            XCTAssertEqual(decoded.fileFormat.sampleRate, 24000, voice.id)
+            XCTAssertGreaterThan(decoded.length, 2400, voice.id)
+            let digest = SHA256.hash(data: try Data(contentsOf: output)).map { String(format: "%02x", $0) }.joined()
+            results.append(["id": voice.id, "audioSeconds": duration, "elapsedSeconds": Date().timeIntervalSince(started), "audioSHA256": digest, "embeddingSHA256": voice.sha256, "nonSilentWAVDecoded": true])
+            print("VoiceMatrix QA passed profile=\(voice.id) audioSeconds=\(duration)")
+        }
+        XCTAssertEqual(results.count, 37)
+        let report: [String: Any] = ["schemaVersion": 1, "platform": "iOS Simulator", "engine": "phonon31m", "modelRevision": manifest.revision, "physicalDeviceVerified": 0, "listeningVerified": 0, "profiles": results]
+        let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
+        try data.write(to: folder.appendingPathComponent("voice-synthesis-results.json"), options: .atomic)
         await engine.unload()
     }
     func testTemporaryAudioCleanupOnlyRemovesOwnedTemporaryFiles() throws {

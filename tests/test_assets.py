@@ -36,3 +36,18 @@ class TensorTests(unittest.TestCase):
   import struct
   h=json.dumps({'emb':{'dtype':'F32','shape':[1,1,2],'data_offsets':[0,8]}}).encode()
   with self.assertRaises(ValueError): a.tensor_digest(struct.pack('<Q',len(h))+h+struct.pack('<ff',float('nan'),1))
+
+class QAReportTests(unittest.TestCase):
+ def setUp(self):
+  self.lock={'revision':'pinned','voices':[{'id':'a','sha256':'1'*64}]}
+  self.report={'modelRevision':'pinned','profiles':[{'id':'a','embeddingSHA256':'1'*64,'audioSeconds':1.5,'elapsedSeconds':2.0,'nonSilentWAVDecoded':True}]}
+ def test_valid_report(self): self.assertEqual(a.validate_qa_report(self.report,self.lock),1)
+ def test_wrong_embedding(self):
+  self.report['profiles'][0]['embeddingSHA256']='2'*64
+  with self.assertRaises(ValueError): a.validate_qa_report(self.report,self.lock)
+ def test_missing_voice(self):
+  self.report['profiles']=[]
+  with self.assertRaises(ValueError): a.validate_qa_report(self.report,self.lock)
+ def test_failed_generation(self):
+  self.report['profiles'][0]['nonSilentWAVDecoded']=False
+  with self.assertRaises(ValueError): a.validate_qa_report(self.report,self.lock)

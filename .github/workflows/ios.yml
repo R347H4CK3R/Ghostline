@@ -12,7 +12,7 @@ concurrency:
 jobs:
   build:
     runs-on: macos-26
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - name: Asset validator regression tests
@@ -35,30 +35,38 @@ jobs:
           NSUnbufferedIO: YES
         run: |
           python3 tools/run_native_tests.py
+      - name: Include synthesis verification evidence
+        run: cp voice-synthesis-results.json build/Build/Products/Release-iphoneos/VoiceMatrix.app/Phonon/
       - name: Package and inspect experimental IPA
         run: |
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/VoiceMatrix.app Payload/
-          /usr/bin/ditto -c -k --keepParent Payload VoiceMatrix-v0.2.0-experimental.ipa
-          python3 tools/inspect_ipa.py VoiceMatrix-v0.2.0-experimental.ipa
-          shasum -a 256 VoiceMatrix-v0.2.0-experimental.ipa > VoiceMatrix-v0.2.0-experimental.ipa.sha256
+          /usr/bin/ditto -c -k --keepParent Payload VoiceMatrix-v0.2.1-experimental.ipa
+          python3 tools/inspect_ipa.py VoiceMatrix-v0.2.1-experimental.ipa
+          shasum -a 256 VoiceMatrix-v0.2.1-experimental.ipa > VoiceMatrix-v0.2.1-experimental.ipa.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: VoiceMatrix-v0.2.0-experimental
+          name: VoiceMatrix-v0.2.1-experimental
           path: |
-            VoiceMatrix-v0.2.0-experimental.ipa
-            VoiceMatrix-v0.2.0-experimental.ipa.sha256
+            VoiceMatrix-v0.2.1-experimental.ipa
+            VoiceMatrix-v0.2.1-experimental.ipa.sha256
           if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceMatrix-37-profile-QA-audio
+          path: qa-audio
+          if-no-files-found: error
+          retention-days: 14
       - name: Publish inspected experimental release and installation feeds
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG=voicematrix-v0.2.0-experimental-${GITHUB_RUN_NUMBER}
-          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/VoiceMatrix-v0.2.0-experimental.ipa"
+          TAG=voicematrix-v0.2.1-experimental-${GITHUB_RUN_NUMBER}
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/VoiceMatrix-v0.2.1-experimental.ipa"
           python3 tools/install_sources.py "$URL"
-          gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "VoiceMatrix 0.2.0 experimental build ${GITHUB_RUN_NUMBER}" --notes-file docs/RELEASE-NOTES-0.2.0.md VoiceMatrix-v0.2.0-experimental.ipa VoiceMatrix-v0.2.0-experimental.ipa.sha256 source.json strata-source.json
+          gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "VoiceMatrix 0.2.1 experimental build ${GITHUB_RUN_NUMBER}" --notes-file docs/RELEASE-NOTES-0.2.1.md VoiceMatrix-v0.2.1-experimental.ipa VoiceMatrix-v0.2.1-experimental.ipa.sha256 source.json strata-source.json voice-synthesis-results.json
           gh release view "$TAG" --json assets --jq '.assets[].name' > release-assets.txt
-          python3 -c 'from pathlib import Path; a=Path("release-assets.txt").read_text().splitlines(); assert all(x in a for x in ["VoiceMatrix-v0.2.0-experimental.ipa", "source.json", "strata-source.json"])'
+          python3 -c 'from pathlib import Path; a=Path("release-assets.txt").read_text().splitlines(); assert all(x in a for x in ["VoiceMatrix-v0.2.1-experimental.ipa", "source.json", "strata-source.json"])'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

@@ -42,6 +42,13 @@ def validate_profiles(root, profiles):
   seen.add(digest)
  return len(seen)
 
+def validate_qa_report(report,lock):
+ expected={v['id']:v['sha256'] for v in lock['voices']}; profiles=report['profiles']
+ if report['modelRevision']!=lock['revision'] or len(profiles)!=len(expected) or {p['id'] for p in profiles}!=set(expected): raise ValueError('QA profiles do not match bundled model')
+ for p in profiles:
+  if p['embeddingSHA256']!=expected[p['id']] or p['nonSilentWAVDecoded'] is not True or not math.isfinite(p['audioSeconds']) or p['audioSeconds']<=0.1 or not math.isfinite(p['elapsedSeconds']) or p['elapsedSeconds']<0: raise ValueError('Missing or invalid synthesis proof')
+ return len(profiles)
+
 def bundle(lock, root):
  root=Path(root); root.mkdir(parents=True,exist_ok=True)
  for e in lock['files']:

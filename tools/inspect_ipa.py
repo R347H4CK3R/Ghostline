@@ -1,5 +1,6 @@
 import hashlib,json,plistlib,struct,sys,zipfile
 from pathlib import PurePosixPath
+from assets import validate_qa_report
 
 def inspect(path):
  with zipfile.ZipFile(path) as z:
@@ -7,7 +8,7 @@ def inspect(path):
   prefix='Payload/VoiceMatrix.app/'
   info=plistlib.loads(z.read(prefix+'Info.plist'))
   assert info['CFBundleIdentifier']=='com.voicematrix.app'
-  assert info['CFBundleShortVersionString']=='0.2.0'
+  assert info['CFBundleShortVersionString']=='0.2.1'
   binary=z.read(prefix+info['CFBundleExecutable'])
   assert binary[:4]==b'\xcf\xfa\xed\xfe' and struct.unpack_from('<I',binary,4)[0]==0x100000c,'Not arm64 Mach-O'
   assert prefix+'Assets.car' in z.namelist(),'Missing app icon assets'
@@ -20,5 +21,7 @@ def inspect(path):
   voices=manifest['voices']
   assert len({v['id'] for v in voices})==len(voices)
   assert len({v['sha256'] for v in voices})==len(voices)
+  qa=json.loads(z.read(root+'voice-synthesis-results.json')))
+  validate_qa_report(qa,manifest)
   print(json.dumps({'bundle':info['CFBundleIdentifier'],'version':info['CFBundleShortVersionString'],'profiles':len(voices),'deviceVerified':0,'archive':'passed'},indent=2))
 if __name__=='__main__': inspect(sys.argv[1])

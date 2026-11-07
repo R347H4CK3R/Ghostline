@@ -65,6 +65,7 @@ actor NeuralSpeech {
     func unload() async { await cancel(); manager = nil; activeVoice = nil }
 }
 @MainActor final class SpeechStudio: ObservableObject {
+    @Published var automatedChecks = 0
     @Published var voices: [VoiceProfile] = []
     @Published var selectedID = ""
     @Published var busy = false
@@ -72,7 +73,7 @@ actor NeuralSpeech {
     @Published var output: URL?
     @Published var favorites = Set(UserDefaults.standard.stringArray(forKey: "favorites") ?? [])
     @Published var recent = UserDefaults.standard.stringArray(forKey: "recent") ?? []
-    @Published var diagnostics = "VoiceMatrix 0.2.0\nNo device listening verification recorded.\n"
+    @Published var diagnostics = "VoiceMatrix 0.2.1\nNo device listening verification recorded.\n"
     private let neural = NeuralSpeech()
     private var task: Task<Void, Never>?
     private var generation = UUID()
@@ -88,6 +89,15 @@ actor NeuralSpeech {
                 return a.name < b.name
             }
             selectedID = voices.first?.id ?? ""
+            let proofURL = loaded.0.appendingPathComponent("voice-synthesis-results.json")
+            if let data = try? Data(contentsOf: proofURL),
+               let proof = try? JSONDecoder().decode(SynthesisProof.self, from: data),
+               proof.modelRevision == loaded.1.revision,
+               proof.profiles.count == voices.count,
+               Set(proof.profiles.map(\.id)) == Set(voices.map(\.id)),
+               proof.profiles.allSatisfy({ item in item.nonSilentWAVDecoded && item.audioSeconds > 0.1 && voices.contains(where: { $0.id == item.id && $0.sha256 == item.embeddingSHA256 }) }) {
+                automatedChecks = proof.profiles.count
+            }
         } catch { status = error.localizedDescription }
     }
     func favorite(_ id: String) {
@@ -134,4 +144,10 @@ actor NeuralSpeech {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("VoiceMatrix-diagnostics.txt")
         do { try diagnostics.write(to: url, atomically: true, encoding: .utf8); return url } catch { status = "The error report could not be created."; return nil }
     }
+}
+
+private struct SynthesisProof: Decodable {
+    struct Entry: Decodable { let id, embeddingSHA256: String; let audioSeconds: Double; let nonSilentWAVDecoded: Bool }
+    let modelRevision: String
+    let profiles: [Entry]
 }
