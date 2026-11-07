@@ -1,0 +1,30 @@
+name: Voice companion source checks
+on:
+  push:
+    paths:
+      - 'tools/voice_pack.py'
+      - 'tools/pack_speech.py'
+      - 'tools/local_f5.py'
+      - 'tools/voice_studio.py'
+      - 'tests/test_voice_pack.py'
+      - 'tests/test_pack_speech.py'
+      - 'tests/test_local_f5.py'
+      - '.github/workflows/voice-companion.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate reference packs and speech routing
+        run: python -m unittest discover -s tests -p 'test_voice_pack.py'
+      - name: Check selected voice routing
+        run: python -m unittest discover -s tests -p 'test_pack_speech.py'
+      - name: Reject missing or corrupt offline assets
+        run: python -m unittest discover -s tests -p 'test_local_f5.py'
