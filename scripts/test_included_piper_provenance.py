@@ -12,7 +12,7 @@ assert catalog["schema_version"] == 1
 assert catalog["verified_identity_count"] == 0 == catalog["device_verified_audio_count"]
 assert catalog["distribution_scope"] == "experimental unsigned IPA artifact only; not a public release"
 by_id = {m["id"]: m for m in catalog["models"]}
-expected = {"en_US-ljspeech-medium", "en_US-kristin-medium", "en_US-norman-medium", "en_US-john-medium"}
+expected = {"en_US-ljspeech-medium", "en_US-kristin-medium", "en_US-norman-medium", "en_US-john-medium", "en_US-ljspeech-high"}
 assert set(by_id) == expected, "Non-US model cannot enter American-only IPA"
 revision = catalog["source_revision"]
 assert re.fullmatch("[a-f0-9]{40}", revision)
@@ -52,4 +52,7 @@ assert "func selectSpeaker(_ id: Int)" in tts
 assert "func replaySavedWAV()" in tts
 assert "func exportEvidence()" in tts
 assert '"airplane_mode_confirmed": false' in tts
-print("American-English source audit: four model candidates, all pinned, no identity/device verification claims.")
+high=by_id["en_US-ljspeech-high"]
+assert "Alternate quality variant" in high["training_lineage"]
+assert high["files"][0]["sha256"]=="5d4f08ba6a2a48c44592eed3ce56bf85e9de3dd4e20df90541ae68a8310c029a"
+print("American-English source audit: 5 bundled models, 4 speaker identities; no device/identity verification.")

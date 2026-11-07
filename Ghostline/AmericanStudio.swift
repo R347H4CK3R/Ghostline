@@ -101,8 +101,10 @@ struct GhostlineAmericanDashboard: View {
                     Text("American Voice Studio").font(.title3.weight(.semibold))
                     Text("Your private, offline-first voice changer and text-to-speech workspace.")
                         .font(.subheadline).foregroundStyle(.secondary)
-                    Label("\(GhostlineUSVoices.all.count) bundled American-English model candidates",
+                    Label("\(GhostlineUSVoices.all.count) American-English model variants packaged in IPA",
                           systemImage: "shippingbox")
+                    Text("Offline from first launch. Four distinct source voices; LJ Speech high/medium share one speaker.")
+                        .font(.caption).foregroundStyle(.secondary)
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -158,7 +160,9 @@ struct GhostlineUSVoiceLibrary: View {
                 Text("American English only").font(.headline).foregroundStyle(.purple)
                 Text("The active TTS voice picker uses en_US models exclusively. A category describes a creative usage, not a person's voice identity.")
                     .font(.footnote).foregroundStyle(.secondary)
-                Text("\(GhostlineUSVoices.all.count) source-reviewed models • 0 device-verified identities")
+                Text("\(GhostlineUSVoices.all.count) bundled offline model variants • 4 speaker identities")
+                    .font(.caption)
+                Text("0 iPhone audio-verified voices. No celebrity or character identities verified.")
                     .font(.caption)
             }
             Section("Browse categories") {
@@ -177,7 +181,7 @@ struct GhostlineUSVoiceLibrary: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(voice.display_name).font(.headline)
-                            Text("en_US • source-reviewed • iPhone audio unverified")
+                            Text("en_US • packaged offline • listening unverified")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
@@ -282,7 +286,9 @@ struct GhostlineAmericanDownloads: View {
     var body: some View {
         List {
             Section("Included American English") {
-                Text("\(GhostlineUSVoices.all.count) en_US model candidates included with this test build.")
+                Text("\(GhostlineUSVoices.all.count) en_US model variants packaged for offline use immediately.")
+                Text("These represent four distinct source voices; two LJ Speech variants share a speaker. No network download is required for their included Piper ONNX/config files.")
+                    .font(.caption).foregroundStyle(.secondary)
                 Text("Additional languages remain in earlier experimental builds; the new Studio and Voices tabs show American-English TTS models only.")
                     .font(.caption).foregroundStyle(.secondary)
                 NavigationLink("Test included US voice models") { GhostlineUSTextToSpeech() }
@@ -294,7 +300,10 @@ struct GhostlineAmericanDownloads: View {
                 }
                 NavigationLink("Download creator-published RVC weights") { GhostlineRVCDownloadView() }
                 NavigationLink("Manage private RVC voice packs") { RVCPackLibraryView() }
-                Text("Some downloads require model-specific licenses. American-English accent and actual device compatibility are not confirmed by an RVC file's name.")
+                Text("The 589 indexed community entries and horror/animation listings are discovery records, not bundled voices. No downloadable model is included without compatible inference and documented redistribution rights.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Text("American-English accent and actual device compatibility are not confirmed by a model's name.")
+                    .font(.caption).foregroundStyle(.secondary)
                     .font(.caption).foregroundStyle(.secondary)
             }
         }.navigationTitle("Downloads")

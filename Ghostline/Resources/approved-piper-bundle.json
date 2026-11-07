@@ -5,7 +5,7 @@
   "repo_license": "MIT",
   "engine_runtime_license": "GPL-3.0; source/distribution obligations apply",
   "distribution_scope": "experimental unsigned IPA artifact only; not a public release",
-  "validation_note": "American-English experimental rebuild: only four source-documented en_US Piper TTS candidates packaged; eight categories are original presentation uses, not separate celebrity/character voice identities. No target iPhone/Strata generation or listening verification. Previous multilingual releases remain available.",
+  "validation_note": "Five source-documented en_US Piper TTS model files bundled for offline use, representing four speaker identities (LJ Speech high and medium are the SAME speaker). 589 directory listings and other character/horror sources remain discovery-only, not licensed or functional offline model files. Zero independently verified iPhone audio or real-person/character identities.",
   "verified_identity_count": 0,
   "device_verified_audio_count": 0,
   "models": [
@@ -194,6 +194,51 @@
       "dataset_source_url": "https://librivox.org",
       "parent_model_id": "en_US-kristin-medium",
       "parent_lineage_card_phrase": "Finetuned from Kristin (above)"
+    },
+    {
+      "id": "en_US-ljspeech-high",
+      "display_name": "LJ Speech (High Quality) • US English",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "en_US",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT-weight-repository / public-domain source dataset; preserve attribution",
+      "dataset_license": "public domain",
+      "training_lineage": "Trained from scratch; LJ Speech public-domain dataset. Alternate quality variant of LJ Speech medium, not a new speaker identity.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Public-domain training recordings and open model-repository license; no celebrity/character impersonation rights implied",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/ljspeech/high/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "en/en_US/ljspeech/high/en_US-ljspeech-high.onnx",
+          "size": 114199011,
+          "sha256": "5d4f08ba6a2a48c44592eed3ce56bf85e9de3dd4e20df90541ae68a8310c029a"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "en/en_US/ljspeech/high/en_US-ljspeech-high.onnx.json",
+          "size": 4970,
+          "sha256": "7e1f4634af596d83cca997fb7a931ba80b70f8a316a2655ee69c55365e0ace14"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "en/en_US/ljspeech/high/MODEL_CARD",
+          "size": 513,
+          "sha256": "289f7421072d689a3d91f6c632f486af46f9b8b04417536104a4ea667b8a394b"
+        }
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/ljspeech/high/MODEL_CARD",
+        "dataset_evidence_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/ljspeech/high/MODEL_CARD",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false
+      }
     }
   ]
 }
