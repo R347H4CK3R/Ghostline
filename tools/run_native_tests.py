@@ -57,11 +57,11 @@ def collect_qa(lock):
   for p in candidates:
    if p.is_file():
     with p.open('rb') as f: files[hashlib.file_digest(f,'sha256').hexdigest()]=p
-  for profile in report['profiles']: shutil.copyfile(files[profile['audioSHA256']],Path('qa-audio')/(profile['id']+'.wav'))
+  for profile in report['profiles'] + report.get('additionalEnglishChecks',[]): shutil.copyfile(files[profile['audioSHA256']],Path('qa-audio')/profile.get('file',profile['id']+'.wav'))
   Path('qa-audio/voice-synthesis-results.json').write_text(json.dumps(report,indent=2)+'\n')
  report=json.loads(Path('qa-audio/voice-synthesis-results.json').read_text());validate_qa_report(report,lock)
- for profile in report['profiles']:
-  with (Path('qa-audio')/(profile['id']+'.wav')).open('rb') as f: digest=hashlib.file_digest(f,'sha256').hexdigest()
+ for profile in report['profiles'] + report.get('additionalEnglishChecks',[]):
+  with (Path('qa-audio')/profile.get('file',profile['id']+'.wav')).open('rb') as f: digest=hashlib.file_digest(f,'sha256').hexdigest()
   if digest!=profile['audioSHA256']: raise ValueError('QA WAV checksum mismatch')
  shutil.copyfile('qa-audio/voice-synthesis-results.json','voice-synthesis-results.json')
  print('Validated and retained actual WAV output for all profiles:',len(report['profiles']),flush=True)
