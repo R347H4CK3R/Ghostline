@@ -10,10 +10,18 @@ import UniformTypeIdentifiers
     private var recorder: AVAudioRecorder?
     private var timer: Task<Void, Never>?
     private var requestID = UUID()
-    func start() async {
+    private weak var audioOwner: AudioStore?
+    private var microphoneLease: UUID?
+    private func releaseMicrophone() {
+        if let microphoneLease { audioOwner?.releaseMicrophone(microphoneLease) }
+        microphoneLease = nil; audioOwner = nil
+    }
+    func start(audio: AudioStore) async {
         guard !recording, !requestingPermission else { return }
+        guard let lease = audio.claimMicrophone() else { status = "Stop the other recording first."; return }
+        audioOwner = audio; microphoneLease = lease
         requestingPermission = true
-        defer { requestingPermission = false }
+        defer { requestingPermission = false; if !recording { releaseMicrophone() } }
         let request = UUID(); requestID = request
         let permitted = await withCheckedContinuation { (c: CheckedContinuation<Bool, Never>) in AVAudioApplication.requestRecordPermission { c.resume(returning: $0) } }
         guard requestID == request else { return }
@@ -31,7 +39,7 @@ import UniformTypeIdentifiers
     }
     func stop() {
         requestID = UUID()
-        recorder?.stop(); recorder = nil; recording = false; timer?.cancel(); timer = nil
+        recorder?.stop(); recorder = nil; recording = false; timer?.cancel(); timer = nil; releaseMicrophone()
         guard let output, let file = try? AVAudioFile(forReading: output), file.length > 0 else { self.output = nil; status = "No audio was recorded. Try again."; return }
         status = "Your original recording is ready."
     }
@@ -61,11 +69,12 @@ struct RecordingView: View {
     @State private var importing = false
     @State private var choosing = false
     var body: some View {
+        ScrollViewReader { proxy in
         Form {
             Section("Step 1 · Record your voice") {
                 Button {
                     audio.stop()
-                    if recorder.recording { recorder.stop() } else { Task { await recorder.start() } }
+                    if recorder.recording { recorder.stop() } else { Task { await recorder.start(audio: audio) } }
                 } label: { Label(recorder.recording ? "STOP RECORDING" : "RECORD MY VOICE", systemImage: recorder.recording ? "stop.fill" : "mic.fill").frame(minHeight: 52) }
                     .buttonStyle(.borderedProminent).disabled(studio.busy || recorder.requestingPermission)
                 Button("Import Audio") { importing = true }.disabled(recorder.recording || recorder.requestingPermission || studio.busy)
@@ -85,11 +94,14 @@ struct RecordingView: View {
                 Text(studio.status).accessibilityAddTraits(.updatesFrequently)
             }
             Section("Step 4 · Listen or Save") {
-                if let url = studio.changedOutput { AudioActions(url: url) } else { Text("Your changed voice will appear here.").foregroundStyle(.secondary) }
-            }
+                if let url = studio.changedOutput { AudioActions(url: url).disabled(audio.microphoneInUse || recorder.requestingPermission) } else { Text("Your changed voice will appear here.").foregroundStyle(.secondary) }
+            }.id("conversion-result")
             if let url = recorder.output, !recorder.recording {
                 DisclosureGroup("Original recording") { AudioActions(url: url) }.disabled(studio.busy)
             }
+        }.onChange(of: studio.changedOutput) { _, value in
+            if value != nil { withAnimation { proxy.scrollTo("conversion-result", anchor: .bottom) } }
+        }
         }.navigationTitle("Change My Voice")
             .onChange(of: recorder.recording) { _, _ in studio.recordingInProgress = recorder.recording || recorder.requestingPermission }
             .onChange(of: recorder.requestingPermission) { _, _ in studio.recordingInProgress = recorder.recording || recorder.requestingPermission }

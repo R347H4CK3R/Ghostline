@@ -13,6 +13,17 @@ struct SavedAudio: Identifiable {
     @Published var error: String?
     @Published var rate: Float = 1
     private var player: AVAudioPlayer?
+    @Published private var microphoneOwner: UUID?
+    var microphoneInUse: Bool { microphoneOwner != nil }
+    func claimMicrophone() -> UUID? {
+        guard microphoneOwner == nil else { return nil }
+        stop()
+        let token = UUID(); microphoneOwner = token; return token
+    }
+    func releaseMicrophone(_ token: UUID) {
+        guard microphoneOwner == token else { return }
+        microphoneOwner = nil
+    }
     private var savedSources = UserDefaults.standard.dictionary(forKey: "savedSources") as? [String: String] ?? [:]
     func isSaved(_ url: URL) -> Bool {
         let name = savedSources[url.lastPathComponent] ?? url.lastPathComponent
@@ -32,7 +43,8 @@ struct SavedAudio: Identifiable {
         } catch { self.error = "Saved recordings could not be opened." }
     }
     func play(_ url: URL) {
-        stop()
+        guard !microphoneInUse else { error = "Stop recording before listening to audio."; return }
+        stop(); error = nil
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)

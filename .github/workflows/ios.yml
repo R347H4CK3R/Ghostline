@@ -15,7 +15,7 @@ jobs:
       - run: python3 -m unittest discover -s tests -v
       - run: python3 tools/validate_source_catalog.py
   audio:
-    needs: source
+    needs: arm64
     strategy:
       fail-fast: false
       matrix:
@@ -24,18 +24,16 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: |
-            VoiceMatrix/Resources/Phonon
-            build/openvoice-source
-          key: voicematrix-offline-assets-${{ hashFiles('models/phonon-lock.json', 'models/openvoice-lock.json') }}
-      - name: Bundle complete local inference assets
+      - name: Restore the exact compiled inference bundle used by ARM64 build
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          python3 tools/assets.py
-          python3 tools/bundle_openvoice.py
-          cp NOTICE VoiceMatrix/Resources/Phonon/VoiceMatrix-NOTICE.txt
-          cp LICENSES/FluidAudio-LICENSE VoiceMatrix/Resources/Phonon/FluidAudio-LICENSE.txt
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name VoiceMatrix-0.3.0-offline-assets --dir compiled-assets
+          python3 - <<'PY'
+          import zipfile
+          with zipfile.ZipFile('compiled-assets/VoiceMatrix-offline-assets.zip') as z:z.extractall('VoiceMatrix')
+          PY
+          python3 tools/assets.py --verify
           brew install xcodegen
       - name: Configure deterministic QA shard
         run: |
@@ -84,6 +82,12 @@ jobs:
           cp NOTICE VoiceMatrix/Resources/Phonon/VoiceMatrix-NOTICE.txt
           cp LICENSES/FluidAudio-LICENSE VoiceMatrix/Resources/Phonon/FluidAudio-LICENSE.txt
           brew install xcodegen
+          python3 tools/package_ipa.py VoiceMatrix/Resources VoiceMatrix-offline-assets.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceMatrix-0.3.0-offline-assets
+          path: VoiceMatrix-offline-assets.zip
+          if-no-files-found: error
       - name: Build unsigned native ARM64
         run: |
           xcodegen generate

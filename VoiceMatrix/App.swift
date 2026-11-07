@@ -63,25 +63,30 @@ struct SpeechView: View {
     @EnvironmentObject var audio: AudioStore
     @State private var words = "Hello! Welcome to your private voice studio."
     @State private var choosing = false
+    @FocusState private var editingMessage: Bool
     var body: some View {
+        ScrollViewReader { proxy in
         Form {
             Section("Step 1 · Choose a voice") {
                 Button { choosing = true } label: { Label(studio.selected?.name ?? "Choose a voice", systemImage: "person.wave.2.fill") }.disabled(studio.busy)
                 if let voice = studio.selected { Text(voice.description).font(.caption).foregroundStyle(.secondary) }
             }
             Section("Step 2 · Type your message") {
-                TextEditor(text: $words).frame(minHeight: 150).accessibilityLabel("Your message")
+                TextEditor(text: $words).focused($editingMessage).frame(minHeight: 150).accessibilityLabel("Your message")
                 Text("\(words.count) / 2,000 characters").font(.caption).foregroundStyle(words.count > 2000 ? .red : .secondary)
             }
             Section("Step 3 · Tap Speak") {
-                Button { studio.speak(words, audio: audio) } label: { Label("SPEAK", systemImage: "play.fill").frame(maxWidth: .infinity, minHeight: 50).font(.title3.bold()) }.buttonStyle(.borderedProminent)
+                Button { editingMessage = false; studio.speak(words, audio: audio) } label: { Label("SPEAK", systemImage: "play.fill").frame(maxWidth: .infinity, minHeight: 50).font(.title3.bold()) }.buttonStyle(.borderedProminent)
                     .disabled(studio.busy || studio.recordingInProgress || studio.selected == nil || words.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || words.count > 2000)
                 if studio.busy { ProgressView("Creating your speech…"); Button("Cancel", role: .cancel) { studio.cancel() } }
                 Text(studio.status).font(.callout).accessibilityAddTraits(.updatesFrequently)
             }
             Section("Step 4 · Listen or Save") {
                 if let url = studio.output { AudioActions(url: url) } else { Text("Your speech will appear here.").foregroundStyle(.secondary) }
-            }
+            }.id("speech-result")
+        }.onChange(of: studio.output) { _, value in
+            if value != nil { withAnimation { proxy.scrollTo("speech-result", anchor: .bottom) } }
+        }
         }.navigationTitle("Make Speech").sheet(isPresented: $choosing) { NavigationStack { VoicesView(onChoose: { choosing = false }) } }
     }
 }
@@ -89,12 +94,14 @@ struct AudioActions: View {
     @EnvironmentObject var audio: AudioStore
     let url: URL
     var body: some View {
+        Group {
         Button { audio.play(url) } label: { Label("Listen / Replay", systemImage: "play.fill") }
         if audio.playing != nil { Button("Stop") { audio.stop() } }
         Button { audio.save(url) } label: { Label(audio.isSaved(url) ? "Saved" : "Save Recording", systemImage: "square.and.arrow.down") }
             .disabled(audio.isSaved(url)).accessibilityIdentifier("save-recording")
         ShareLink(item: url) { Label("Share Audio", systemImage: "square.and.arrow.up") }
         if let error = audio.error { Text(error).foregroundStyle(.orange) }
+        }.disabled(audio.microphoneInUse)
     }
 }
 struct VoicesView: View {

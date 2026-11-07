@@ -172,7 +172,7 @@ actor NeuralSpeech {
     }
     func speak(_ text: String, audio: AudioStore) {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !busy, !recordingInProgress, let voice = selected, let pack else { return }
+        guard !busy, !recordingInProgress, !audio.microphoneInUse, let voice = selected, let pack else { return }
         guard !text.isEmpty, text.count <= 2000 else { status = "Enter between 1 and 2,000 characters."; return }
         audio.stop(); TemporaryAudio.discard(output); busy = true; status = "Preparing \(voice.name)…"; output = nil
         let token = UUID(); generation = token
@@ -202,7 +202,7 @@ actor NeuralSpeech {
         }
     }
     func changeVoice(source: URL, audio: AudioStore) {
-        guard !busy, !recordingInProgress, let voice = selected, let pack else { return }
+        guard !busy, !recordingInProgress, !audio.microphoneInUse, let voice = selected, let pack else { return }
         audio.stop(); TemporaryAudio.discard(changedOutput); changedOutput = nil
         busy = true; changingVoice = true; status = "Preparing \(voice.name)…"
         let token = UUID(); generation = token
@@ -233,7 +233,7 @@ actor NeuralSpeech {
     }
     func clearChangedVoice() { TemporaryAudio.discard(changedOutput); changedOutput = nil }
     func checkIncludedVoices(audio: AudioStore) {
-        guard !busy, !recordingInProgress, let pack else { return }
+        guard !busy, !recordingInProgress, !audio.microphoneInUse, let pack else { return }
         audio.stop(); busy = true; checkingVoices = true; checkProgress = 0
         let token = UUID(); generation = token
         task = Task {
