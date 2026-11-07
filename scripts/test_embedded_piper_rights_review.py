@@ -57,7 +57,7 @@ for item in approved["models"]:
     else:
         assert item.get("parent_model_id") is None
         assert "Trained from scratch" in item["training_lineage"]
-assert "nl_BE-rdh-x_low" in active_ids, "Compact CC0 voice candidate missing"
+assert active_ids == {"en_US-ljspeech-medium", "en_US-kristin-medium", "en_US-norman-medium", "en_US-john-medium"}, "Rebuilt IPA must package American English only"
 assert "sv_SE-nst-medium" in held_ids, "Unreconciled source card cannot be cleared implicitly"
 print(
     f"Source-rights gate passed: {len(active_ids)} source-documented experimental candidate packs, "
