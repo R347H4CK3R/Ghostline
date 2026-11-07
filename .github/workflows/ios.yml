@@ -24,6 +24,12 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            VoiceMatrix/Resources/Phonon
+            build/openvoice-source
+          key: voicematrix-offline-assets-${{ hashFiles('models/phonon-lock.json', 'models/openvoice-lock.json') }}
       - name: Bundle complete local inference assets
         run: |
           python3 tools/assets.py
@@ -65,6 +71,12 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            VoiceMatrix/Resources/Phonon
+            build/openvoice-source
+          key: voicematrix-offline-assets-${{ hashFiles('models/phonon-lock.json', 'models/openvoice-lock.json') }}
       - name: Bundle complete offline resources
         run: |
           python3 tools/assets.py

@@ -30,7 +30,7 @@ if __name__=='__main__':
  profiles=json.loads(Path('models/original-conversion-lock.json').read_text())['profiles']
  destination=output/'Profiles';destination.mkdir(exist_ok=True)
  for entry in profiles:
-  source=Path(entry['path']);data=source.read_bytes()
+  profile_source=Path(entry['path']);data=profile_source.read_bytes()
   if len(data)!=entry['size'] or hashlib.sha256(data).hexdigest()!=entry['sha256']:raise ValueError('Damaged source conditioning')
   value=json.loads(data)
   if value['id']!=entry['id'] or value['ttsEmbeddingSHA256']!=entry['ttsEmbeddingSHA256'] or value['converterRevision']!=lock['revision']:raise ValueError('Incompatible source conditioning')
