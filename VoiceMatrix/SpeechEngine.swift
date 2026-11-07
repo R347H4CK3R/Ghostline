@@ -10,19 +10,23 @@ actor NeuralSpeech {
     private var activeVoice: String?
     private let computeUnits: MLComputeUnits
     init(computeUnits: MLComputeUnits = .cpuAndNeuralEngine) { self.computeUnits = computeUnits }
-    func generate(text: String, voice: VoiceProfile, root: URL, manifest: VoiceManifest, output: URL) async throws -> Double {
+    func generate(text: String, voice: VoiceProfile, root: URL, manifest: VoiceManifest, output: URL, progress: @escaping @Sendable (String) -> Void = { _ in }) async throws -> Double {
         if manager == nil || activeVoice != voice.id {
             // Reset the manager on a profile switch: upstream caches every used voice's KV state.
             // One manager/profile at a time bounds that cache; measure load cost on device.
+            progress("Checking included voice files")
             try Catalog.validate(root: root, manifest: manifest)
             manager = nil
             let fresh = PocketTtsSmallManager(model: .phonon31m, computeUnits: computeUnits)
+            progress("Starting the voice engine")
             try await fresh.load(from: root) // Local-only API. Never initialize()/download.
             manager = fresh; activeVoice = voice.id
         }
         guard let manager else { throw StudioError.missingPack }
         try Task.checkCancellation()
+        progress("Preparing the selected voice")
         let stream = try await manager.makeSession(voice: voice.id)
+        progress("Creating your speech")
         session = stream
         stream.enqueue(text); stream.finish()
         var writer: AVAudioFile?
@@ -36,6 +40,7 @@ actor NeuralSpeech {
             guard let format = AVAudioFormat(standardFormatWithSampleRate: 24000, channels: 1) else { throw StudioError.emptyAudio }
             for try await frame in stream.frames {
                 try Task.checkCancellation()
+                if frames == 0 { progress("Writing speech audio") }
                 guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frame.samples.count)), let samples = buffer.floatChannelData?[0] else { throw StudioError.emptyAudio }
                 buffer.frameLength = AVAudioFrameCount(frame.samples.count)
                 for (index, value) in frame.samples.enumerated() {
@@ -45,6 +50,7 @@ actor NeuralSpeech {
                 try writer?.write(from: buffer); frames += Int64(frame.samples.count)
             }
             try Task.checkCancellation()
+            progress("Finishing your recording")
             writer = nil; session = nil
             guard frames >= 2400, energy / Double(frames) > 1e-9 else { throw StudioError.emptyAudio }
             let decoded = try AVAudioFile(forReading: output)
@@ -98,7 +104,12 @@ actor NeuralSpeech {
         task = Task {
             let started = Date()
             do {
-                let duration = try await neural.generate(text: text, voice: voice, root: pack.0, manifest: pack.1, output: url)
+                let duration = try await neural.generate(text: text, voice: voice, root: pack.0, manifest: pack.1, output: url, progress: { [weak self] phase in
+                    Task { @MainActor [weak self] in
+                        guard let self, self.generation == token, self.busy else { return }
+                        self.status = phase
+                    }
+                })
                 try Task.checkCancellation()
                 guard generation == token else { try? FileManager.default.removeItem(at: url); return }
                 output = url; busy = false; status = "Ready. Listen, Save, or Share."

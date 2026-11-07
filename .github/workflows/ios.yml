@@ -31,6 +31,8 @@ jobs:
           xcodegen generate
           xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 || { tail -120 build.log; exit 1; }
       - name: Run native integrity and audio file tests
+        env:
+          NSUnbufferedIO: YES
         run: |
           DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if "iPhone" in x["name"]))')
           xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath test-build -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 120 -maximum-test-execution-time-allowance 180 CODE_SIGNING_ALLOWED=NO test > native-tests.log 2>&1 || { tail -100 native-tests.log; exit 1; }
@@ -65,4 +67,5 @@ jobs:
           path: |
             build.log
             native-tests.log
+            test-build/Logs/Test/*.xcresult
           if-no-files-found: ignore

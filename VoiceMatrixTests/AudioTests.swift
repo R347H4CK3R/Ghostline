@@ -18,7 +18,7 @@ final class AudioTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: output) }
         let started = Date()
         print("VoiceMatrix neural smoke: starting local CPU model load and WAV synthesis")
-        let duration = try await engine.generate(text: "Hello from VoiceMatrix.", voice: voice, root: root, manifest: manifest, output: output)
+        let duration = try await engine.generate(text: "Hello from VoiceMatrix.", voice: voice, root: root, manifest: manifest, output: output, progress: { print("VoiceMatrix test phase: " + $0) })
         print("VoiceMatrix neural smoke: completed, elapsed=\(Date().timeIntervalSince(started)), audioSeconds=\(duration)")
         XCTAssertGreaterThan(duration, 0.1)
         let decoded = try AVAudioFile(forReading: output)
