@@ -51,13 +51,13 @@ enum ConversionAudio {
         }
         return LinearSpectrum(frames: count, values: result)
     }
-    static func readMono(_ url: URL) throws -> [Float] {
+    static func readMono(_ url: URL, minimumSeconds: Double = 1) throws -> [Float] {
         let file = try AVAudioFile(forReading: url, commonFormat: .pcmFormatFloat32, interleaved: false)
         guard file.processingFormat.sampleRate.isFinite,
               (8000...192000).contains(file.processingFormat.sampleRate),
               (1...8).contains(file.processingFormat.channelCount) else { throw ConversionError.invalidAudio }
         let seconds = Double(file.length) / file.processingFormat.sampleRate
-        guard seconds >= 1, seconds <= 10.01 else { throw ConversionError.duration }
+        guard seconds >= minimumSeconds, seconds <= 10.01 else { throw ConversionError.duration }
         guard let input = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)),
               let monoFormat = AVAudioFormat(standardFormatWithSampleRate: file.processingFormat.sampleRate, channels: 1),
               let mono = AVAudioPCMBuffer(pcmFormat: monoFormat, frameCapacity: AVAudioFrameCount(file.length)),
@@ -104,7 +104,7 @@ enum ConversionAudio {
         }
         let expectedCount = Double(mono.frameLength) * sampleRate / monoFormat.sampleRate
         guard abs(Double(samples.count) - expectedCount) <= 64 else { throw ConversionError.invalidAudio }
-        guard samples.count >= 22050, samples.count <= 221000, samples.allSatisfy(\.isFinite) else { throw ConversionError.duration }
+        guard samples.count >= max(2560, Int(sampleRate * minimumSeconds)), samples.count <= 221000, samples.allSatisfy(\.isFinite) else { throw ConversionError.duration }
         let energy = samples.reduce(0.0) { $0 + Double($1) * Double($1) } / Double(samples.count)
         guard energy > 1e-8 else { throw ConversionError.invalidAudio }
         return samples
@@ -116,7 +116,9 @@ enum ConversionAudio {
               let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count)),
               let destination = buffer.floatChannelData?[0] else { throw ConversionError.modelFailure }
         buffer.frameLength = AVAudioFrameCount(samples.count)
-        for i in samples.indices { destination[i] = max(-1, min(1, samples[i])) }
+        let peak = samples.reduce(Float(0)) { max($0, abs($1)) }
+        let gain = min(Float(1), 0.98 / max(peak, 0.000001))
+        for i in samples.indices { destination[i] = samples[i] * gain }
         var file: AVAudioFile? = try AVAudioFile(forWriting: url, settings: [AVFormatIDKey: Int(kAudioFormatLinearPCM), AVSampleRateKey: sampleRate, AVNumberOfChannelsKey: 1, AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false])
         try file?.write(from: buffer); file = nil
         guard try AVAudioFile(forReading: url).length == Int64(samples.count) else { throw ConversionError.modelFailure }

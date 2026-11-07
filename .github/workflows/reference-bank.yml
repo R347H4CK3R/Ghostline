@@ -1,0 +1,65 @@
+name: VoiceMatrix licensed reference profile validation
+on:
+  push:
+    branches: ['probe/voicematrix-reference-bank-*']
+permissions:
+  contents: read
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Development reference processing tools
+        run: |
+          python3 -m pip install numpy==2.2.6
+          brew install xcodegen ffmpeg
+      - name: Source regression checks
+        run: python3 -m unittest discover -s tests -v
+      - name: Bundle pinned offline models and licensed reference shard
+        run: |
+          python3 tools/assets.py
+          python3 tools/bundle_openvoice.py
+          python3 tools/acquire_reference_bank.py VoiceMatrix/Resources/ReferenceBank --shard ${{ matrix.shard }} --shards 4
+      - name: Validate native audio and reference conditioning
+        env:
+          NSUnbufferedIO: YES
+        run: |
+          xcodegen generate
+          python3 - <<'PY'
+          import sys,json,subprocess
+          sys.path.insert(0,'tools')
+          from run_native_tests import run
+          devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','-j']))
+          device=next(d['udid'] for group in devices['devices'].values() for d in group if 'iPhone' in d['name'])
+          code=run(['xcodebuild','-project','VoiceMatrix.xcodeproj','-scheme','VoiceMatrix','-destination','platform=iOS Simulator,id='+device,'-derivedDataPath','bank-tests','-parallel-testing-enabled','NO','-only-testing:VoiceMatrixTests/ConversionTests','-only-testing:VoiceMatrixTests/ReferenceBankTests','CODE_SIGNING_ALLOWED=NO','test'],'bank-tests.log',timeout=1800)
+          sys.exit(code)
+          PY
+      - name: Retain actual generated audio and compact profiles
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          matches=list((Path.home()/'Library/Developer/CoreSimulator/Devices').glob('*/data/Containers/Data/Application/*/Documents/VoiceMatrix-Bank-QA/bank-results.json'))
+          for report in matches:shutil.copytree(report.parent,'bank-output',dirs_exist_ok=True)
+          if Path('VoiceMatrix/Resources/ReferenceBank/reference-manifest.json').exists():
+              Path('bank-output').mkdir(exist_ok=True)
+              shutil.copyfile('VoiceMatrix/Resources/ReferenceBank/reference-manifest.json','bank-output/reference-manifest.json')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: VoiceMatrix-reference-bank-${{ matrix.shard }}
+          path: |
+            bank-output
+            bank-tests.log
+          if-no-files-found: warn
+          retention-days: 14

@@ -29,6 +29,21 @@ final class ConversionTests: XCTestCase {
         XCTAssertThrowsError(try ConversionAudio.spectrum([]))
         XCTAssertThrowsError(try ConversionAudio.spectrum([0]))
     }
+    func testExportPreventsClippingWithGainInsteadOfFlatteningPeaks() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let samples = (0..<22050).map { Float(2 * sin(Double($0) * 0.1)) }
+        try ConversionAudio.write(samples, to: url)
+        let file = try AVAudioFile(forReading: url, commonFormat: .pcmFormatFloat32, interleaved: false)
+        let buffer = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)))
+        try file.read(into: buffer)
+        let data = try XCTUnwrap(buffer.floatChannelData?[0])
+        let output = Array(UnsafeBufferPointer(start: data, count: Int(buffer.frameLength)))
+        XCTAssertGreaterThan(output.max() ?? 0, 0.97)
+        XCTAssertLessThan(output.max() ?? 1, 0.981)
+        XCTAssertTrue(output.allSatisfy { abs($0) < 0.981 })
+        XCTAssertGreaterThan(Set(output.map { Int($0 * 1000) }).count, 100)
+    }
     func testStereoResamplingPreservesFullThreeSecondRecording() throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
         defer { try? FileManager.default.removeItem(at: url) }

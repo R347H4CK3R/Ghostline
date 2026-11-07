@@ -1,5 +1,6 @@
 import Foundation
 import CoreML
+import CryptoKit
 
 struct ConversionProfile: Codable {
     let id, ttsEmbeddingSHA256, converterRevision, referenceAudioSHA256: String
@@ -34,6 +35,7 @@ actor OfflineVoiceConverter {
     private var pack: ConversionPack?
     private var encoder: MLModel?
     private var converter: MLModel?
+    private var cachedSource: (hash: String, samples: [Float], spectrum: LinearSpectrum, embedding: [Float])?
     init(computeUnits: MLComputeUnits = .cpuAndGPU) { self.computeUnits = computeUnits }
     private func assets() throws -> ConversionPack {
         if let pack { return pack }
@@ -73,10 +75,25 @@ actor OfflineVoiceConverter {
         guard target.count == 256, target.allSatisfy(\.isFinite) else { throw ConversionError.invalidProfile }
         try Task.checkCancellation()
         progress("Reading your recording")
-        let samples = try ConversionAudio.readMono(source)
-        let spectrum = try ConversionAudio.spectrum(samples)
+        let handle = try FileHandle(forReadingFrom: source)
+        var sourceHasher = SHA256()
+        do {
+            while let data = try handle.read(upToCount: 1_048_576), !data.isEmpty { sourceHasher.update(data: data) }
+            try handle.close()
+        } catch { try? handle.close(); throw error }
+        let sourceHash = sourceHasher.finalize().map { String(format: "%02x", $0) }.joined()
+        let samples: [Float]
+        let spectrum: LinearSpectrum
+        let sourceSpeaker: [Float]
         progress("Preparing your voice")
-        let sourceSpeaker = try embed(spectrum)
+        if let cachedSource, cachedSource.hash == sourceHash {
+            samples = cachedSource.samples; spectrum = cachedSource.spectrum; sourceSpeaker = cachedSource.embedding
+        } else {
+            samples = try ConversionAudio.readMono(source, minimumSeconds: 0.15)
+            spectrum = try ConversionAudio.spectrum(samples)
+            sourceSpeaker = try embed(spectrum)
+            cachedSource = (sourceHash, samples, spectrum, sourceSpeaker)
+        }
         encoder = nil // Copy the small embedding, then release the encoder before converter loading.
         try Task.checkCancellation()
         let pack = try assets()
@@ -112,7 +129,7 @@ actor OfflineVoiceConverter {
         catch { try? FileManager.default.removeItem(at: destination); throw error }
         return ConversionResult(sourceSeconds: Double(samples.count) / ConversionAudio.sampleRate, outputSeconds: Double(count) / ConversionAudio.sampleRate, sourceEmbedding: sourceSpeaker)
     }
-    func unload() { encoder = nil; converter = nil; pack = nil }
+    func unload() { encoder = nil; converter = nil; pack = nil; cachedSource = nil }
     static func cosine(_ a: [Float], _ b: [Float]) -> Double {
         guard a.count == b.count else { return 0 }
         var dot = 0.0, aa = 0.0, bb = 0.0
