@@ -3,6 +3,7 @@ import hashlib,json,pathlib,urllib.request,urllib.error,zipfile,tempfile
 from urllib.parse import quote
 candidates=[
  ('Rick Sanchez','Homiebear/RickSanchez_450e_14400s','RickSanchez_450e_14400s.zip'),
+ ('Rick Sanchez (alternate)','brookieisthatyou/MY-RVC-V2-MODELS','RickSanchez.zip'),
  ('Morty Smith','MrSpringtroll/morty','morty.zip'),
  ('Morty Smith (Virtual Rick-Ality listing)','brookieisthatyou/MY-RVC-V2-MODELS','MortySmith.zip')]
 def fetch(url,limit=2_000_000):

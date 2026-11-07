@@ -1,0 +1,178 @@
+{
+  "scope": "Research candidates only; no model approved, voice generated, or likeness verified.",
+  "candidates": [
+    {
+      "target": "Rick Sanchez",
+      "franchise": "Rick and Morty",
+      "genres": [
+        "Animation & Cartoons",
+        "Science Fiction & Superheroes"
+      ],
+      "repository": "Homiebear/RickSanchez_450e_14400s",
+      "requestedFile": "RickSanchez_450e_14400s.zip",
+      "status": "unapproved",
+      "includedInApp": false,
+      "authorizationEstablished": false,
+      "inferenceTested": false,
+      "revision": "748b6bf18d6d54780f872855cd9a9a55ff231942",
+      "declaredLicense": "openrail",
+      "repositoryFiles": [
+        ".gitattributes",
+        "README.md",
+        "RickSanchez_450e_14400s.zip"
+      ],
+      "publishedDocuments": {
+        "README.md": {
+          "sha256": "9516f3c1a28f4cb4855e990dbaf1cafabf8b90a0887cf05aac5191b76ad9cd49",
+          "text": "---\r\nlicense: openrail\r\n---\r\n"
+        }
+      },
+      "archiveEntries": [
+        {
+          "path": "RickSanchez.index",
+          "bytes": 314622139
+        }
+      ],
+      "containsRVCCheckpoint": false,
+      "containsRetrievalIndex": true,
+      "archiveStatus": "Downloaded and inspected without extracting or executing",
+      "archiveBytes": 292678405,
+      "archiveSHA256": "e9e8127a3441e083f507c095a09f700b060dcd10b58467b927bf4868f57e52e3",
+      "blockingChecks": [
+        "Recording provenance and voice/likeness authorization require review",
+        "Redistribution permission requires review",
+        "RVC checkpoint is not a Phonon or OpenVoice conditioning file",
+        "No native iOS inference or resemblance verification"
+      ]
+    },
+    {
+      "target": "Morty Smith",
+      "franchise": "Rick and Morty",
+      "genres": [
+        "Animation & Cartoons",
+        "Science Fiction & Superheroes"
+      ],
+      "repository": "MrSpringtroll/morty",
+      "requestedFile": "morty.zip",
+      "status": "unapproved",
+      "includedInApp": false,
+      "authorizationEstablished": false,
+      "inferenceTested": false,
+      "revision": "a66af1de19814391a3b2501bba0a1d25375e7677",
+      "declaredLicense": "openrail",
+      "repositoryFiles": [
+        ".gitattributes",
+        "README.md",
+        "morty.zip"
+      ],
+      "publishedDocuments": {
+        "README.md": {
+          "sha256": "aed9f9e83693625c634010ca797d3c1a00b19643cc394b234433381f2c9ca7ed",
+          "text": "---\nlicense: openrail\n---\n"
+        }
+      },
+      "archiveEntries": [
+        {
+          "path": "Morty.pth",
+          "bytes": 55193241
+        },
+        {
+          "path": "added_IVF128_Flat_nprobe_1_Morty_v2.index",
+          "bytes": 15794379
+        }
+      ],
+      "containsRVCCheckpoint": true,
+      "containsRetrievalIndex": true,
+      "archiveStatus": "Downloaded and inspected without extracting or executing",
+      "archiveBytes": 60473610,
+      "archiveSHA256": "88cf7460392400356c702022d03e6c45ba6542fcee6fafeb34151006c3e2beaa",
+      "blockingChecks": [
+        "Recording provenance and voice/likeness authorization require review",
+        "Redistribution permission requires review",
+        "RVC checkpoint is not a Phonon or OpenVoice conditioning file",
+        "No native iOS inference or resemblance verification"
+      ]
+    },
+    {
+      "target": "Morty Smith (Virtual Rick-Ality listing)",
+      "franchise": "Rick and Morty",
+      "genres": [
+        "Animation & Cartoons",
+        "Science Fiction & Superheroes"
+      ],
+      "repository": "brookieisthatyou/MY-RVC-V2-MODELS",
+      "requestedFile": "MortySmith.zip",
+      "status": "unapproved",
+      "includedInApp": false,
+      "authorizationEstablished": false,
+      "inferenceTested": false,
+      "revision": "e6680da4b9700f32ee689726246f3f6cdee45345",
+      "declaredLicense": null,
+      "repositoryFiles": [
+        ".gitattributes",
+        "06Knuckles.zip",
+        "AmamiNodoka.zip",
+        "AmyRose06.zip",
+        "Asta.zip",
+        "AuctionDayMoony.zip",
+        "BenjaminFairist.zip",
+        "BottBuddy.zip",
+        "CarsMack.zip",
+        "Chloe.zip",
+        "Clara.zip",
+        "DaffyDuck.zip",
+        "DarthVader.zip",
+        "DaveScreaming.zip",
+        "DoesBadThingsGuy.zip",
+        "Eimi-Isami.zip",
+        "ElliePhillips.zip",
+        "Hawkmoth.zip",
+        "HotelMario.zip",
+        "IUsedToBeACow.zip",
+        "MIM-Mario.zip",
+        "March-7th.zip",
+        "MoriCalliope.zip",
+        "MortySmith.zip",
+        "NicoleDemara.zip",
+        "PTDXenophanesNoFX.zip",
+        "RandomAssortiveMommy.zip",
+        "Reckerless.zip",
+        "RickSanchez.zip",
+        "RubyRose.zip",
+        "SorasakiHina.zip",
+        "TheCoon.zip",
+        "TomTGT.zip",
+        "ToyomiKotori.zip",
+        "TrollGirlfriend.zip",
+        "TsuyuAsui.zip",
+        "UziDoorman.zip",
+        "Wallace.zip",
+        "WarakuChise.zip",
+        "ZeebadUS.zip",
+        "Zoey.zip"
+      ],
+      "publishedDocuments": {},
+      "archiveEntries": [
+        {
+          "path": "MortySmith/added_IVF292_Flat_nprobe_1_MortySmith_v2.index",
+          "bytes": 35980699
+        },
+        {
+          "path": "MortySmith/MortySmith.pth",
+          "bytes": 55225095
+        }
+      ],
+      "containsRVCCheckpoint": true,
+      "containsRetrievalIndex": true,
+      "archiveStatus": "Downloaded and inspected without extracting or executing",
+      "archiveBytes": 73639679,
+      "archiveSHA256": "423e1060fdd6a9ad36800cfb9a576f1372858796e5eac3bcaa654361fca05a4b",
+      "blockingChecks": [
+        "Recording provenance and voice/likeness authorization require review",
+        "Redistribution permission requires review",
+        "RVC checkpoint is not a Phonon or OpenVoice conditioning file",
+        "No native iOS inference or resemblance verification"
+      ]
+    }
+  ]
+}
