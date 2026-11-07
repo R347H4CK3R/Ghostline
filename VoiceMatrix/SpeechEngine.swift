@@ -11,8 +11,16 @@ actor NeuralSpeech {
     private var validatedRoot: URL?
     private let converter: OfflineVoiceConverter
     private let computeUnits: MLComputeUnits
-    init(computeUnits: MLComputeUnits = .cpuAndNeuralEngine) { self.computeUnits = computeUnits; self.converter = OfflineVoiceConverter(computeUnits: computeUnits == .cpuOnly ? .cpuOnly : .cpuAndGPU) }
+    static var defaultComputeUnits: MLComputeUnits {
+        #if targetEnvironment(simulator)
+        return .cpuOnly
+        #else
+        return .cpuAndNeuralEngine
+        #endif
+    }
+    init(computeUnits: MLComputeUnits = NeuralSpeech.defaultComputeUnits) { self.computeUnits = computeUnits; self.converter = OfflineVoiceConverter(computeUnits: computeUnits == .cpuOnly ? .cpuOnly : .cpuAndGPU) }
     func generate(text: String, voice: VoiceProfile, root: URL, manifest: VoiceManifest, output: URL, progress: @escaping @Sendable (String) -> Void = { _ in }) async throws -> Double {
+        try Task.checkCancellation()
         if voice.engine == "phonon31m-openvoicev2" {
             return try await generateConditioned(text: text, voice: voice, root: root, manifest: manifest, output: output, progress: progress)
         }
@@ -105,6 +113,7 @@ actor NeuralSpeech {
         } catch { try? FileManager.default.removeItem(at: output); throw error }
     }
     func convertRecording(source: URL, voice: VoiceProfile, root: URL, manifest: VoiceManifest, output: URL, progress: @escaping @Sendable (String) -> Void) async throws -> Double {
+        try Task.checkCancellation()
         await session?.cancel(); session = nil; manager = nil; activeVoice = nil
         if validatedRoot != root { try Catalog.validate(root: root, manifest: manifest); validatedRoot = root }
         let target = try await converter.targetProfile(for: voice, root: root, manifest: manifest)

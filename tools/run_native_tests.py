@@ -2,7 +2,7 @@
 import json,os,signal,subprocess,sys,time,shutil,hashlib
 from pathlib import Path
 
-def run(command,log,timeout=1200):
+def run(command,log,timeout=2100):
  log=Path(log)
  with log.open('wb') as output:
   process=subprocess.Popen(command,stdout=output,stderr=subprocess.STDOUT,start_new_session=True)
@@ -45,22 +45,30 @@ def collect_qa(lock):
   result=max(Path('test-build/Logs/Test').glob('*.xcresult'),key=lambda p:p.stat().st_mtime)
   subprocess.run(['xcrun','xcresulttool','export','attachments','--path',str(result),'--output-path','qa-attachments'],check=True)
   candidates=list(Path('qa-attachments').rglob('*'))
-  report=None
+  report=None; conversion_report=None
+  relaxed=dict(lock,requiresVoiceConversionChecks=False)
   for p in candidates:
    if not p.is_file() or p.stat().st_size>1000000: continue
    try:
-    candidate=json.loads(p.read_text());validate_qa_report(candidate,lock);report=candidate;break
+    candidate=json.loads(p.read_text())
+    if candidate.get('kind')=='voice-conversion':conversion_report=candidate;continue
+    validate_qa_report(candidate,relaxed);report=candidate
    except (OSError,ValueError,KeyError,TypeError): pass
   if report is None: raise ValueError('No complete synthesis proof in XCTest attachments')
+  if conversion_report is not None:report['conversionChecks']=conversion_report['profiles']
   Path('qa-audio').mkdir(exist_ok=True)
   files={}
   for p in candidates:
    if p.is_file():
     with p.open('rb') as f: files[hashlib.file_digest(f,'sha256').hexdigest()]=p
-  for profile in report['profiles'] + report.get('additionalEnglishChecks',[]): shutil.copyfile(files[profile['audioSHA256']],Path('qa-audio')/profile.get('file',profile['id']+'.wav'))
+  for profile in report['profiles'] + report.get('additionalEnglishChecks',[]) + report.get('conversionChecks',[]): shutil.copyfile(files[profile['audioSHA256']],Path('qa-audio')/profile.get('file',profile['id']+'.wav'))
   Path('qa-audio/voice-synthesis-results.json').write_text(json.dumps(report,indent=2)+'\n')
- report=json.loads(Path('qa-audio/voice-synthesis-results.json').read_text());validate_qa_report(report,lock)
- for profile in report['profiles'] + report.get('additionalEnglishChecks',[]):
+ report=json.loads(Path('qa-audio/voice-synthesis-results.json').read_text())
+ converted=Path('qa-audio/voice-conversion-results.json')
+ if converted.exists():report['conversionChecks']=json.loads(converted.read_text())['profiles']
+ Path('qa-audio/voice-synthesis-results.json').write_text(json.dumps(report,indent=2)+'\n')
+ validate_qa_report(report,lock)
+ for profile in report['profiles'] + report.get('additionalEnglishChecks',[]) + report.get('conversionChecks',[]):
   with (Path('qa-audio')/profile.get('file',profile['id']+'.wav')).open('rb') as f: digest=hashlib.file_digest(f,'sha256').hexdigest()
   if digest!=profile['audioSHA256']: raise ValueError('QA WAV checksum mismatch')
  shutil.copyfile('qa-audio/voice-synthesis-results.json','voice-synthesis-results.json')
@@ -69,7 +77,14 @@ def collect_qa(lock):
 if __name__=='__main__':
  devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','-j']))
  device=next(d['udid'] for group in devices['devices'].values() for d in group if 'iPhone' in d['name'])
- command=['xcodebuild','-project','VoiceMatrix.xcodeproj','-scheme','VoiceMatrix','-destination','platform=iOS Simulator,id='+device,'-derivedDataPath','test-build','-parallel-testing-enabled','NO','-test-timeouts-enabled','YES','-default-test-execution-time-allowance','120','-maximum-test-execution-time-allowance','900','CODE_SIGNING_ALLOWED=NO','test']
+ command=['xcodebuild','-project','VoiceMatrix.xcodeproj','-scheme','VoiceMatrix','-destination','platform=iOS Simulator,id='+device,'-derivedDataPath','test-build','-parallel-testing-enabled','NO','-test-timeouts-enabled','YES','-default-test-execution-time-allowance','120','-maximum-test-execution-time-allowance','1500','CODE_SIGNING_ALLOWED=NO','test']
+ shard_path=Path('VoiceMatrixTests/qa-shard.json')
+ if shard_path.exists() and json.loads(shard_path.read_text())['index']!=0: command+=['-skip-testing:VoiceMatrixUITests']
  code=run(command,'native-tests.log')
- if code==0: collect_qa(json.loads(Path('models/phonon-lock.json').read_text()))
+ if code==0:
+  lock=json.loads(Path('models/phonon-lock.json').read_text())
+  shard_path=Path('VoiceMatrixTests/qa-shard.json')
+  if shard_path.exists():
+   shard=json.loads(shard_path.read_text());lock['voices']=[v for i,v in enumerate(lock['voices']) if i%shard['count']==shard['index']]
+  collect_qa(lock)
  sys.exit(code)

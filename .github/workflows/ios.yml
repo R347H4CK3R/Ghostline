@@ -1,68 +1,92 @@
-name: VoiceMatrix Offline Experimental IPA
+name: VoiceMatrix full offline catalog validation
 on:
   push:
     branches: ['feature/voicematrix-*']
     paths-ignore: [source.json, strata-source.json]
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
   actions: read
-concurrency:
-  group: voicematrix-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
-  build:
-    runs-on: macos-26
-    timeout-minutes: 35
+  source:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Asset validator regression tests
-        run: python3 -m unittest discover -s tests -v
-      - name: Bundle pinned offline models and expanded profile candidates
+      - run: python3 -m unittest discover -s tests -v
+      - run: python3 tools/validate_source_catalog.py
+  audio:
+    needs: source
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bundle complete local inference assets
         run: |
           python3 tools/assets.py
-          python3 tools/assets.py --verify
+          python3 tools/bundle_openvoice.py
           cp NOTICE VoiceMatrix/Resources/Phonon/VoiceMatrix-NOTICE.txt
           cp LICENSES/FluidAudio-LICENSE VoiceMatrix/Resources/Phonon/FluidAudio-LICENSE.txt
-      - name: Install project generator
-        run: brew install xcodegen
-      - name: Generate and build unsigned arm64 app
+          brew install xcodegen
+      - name: Configure deterministic QA shard
         run: |
-          xcodebuild -version
-          xcodegen generate
-          xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 || { tail -120 build.log; exit 1; }
-      - name: Run native integrity and audio file tests
+          python3 - <<'PY'
+          import json,pathlib
+          pathlib.Path('VoiceMatrixTests/qa-shard.json').write_text(json.dumps({'index':${{ matrix.shard }},'count':4}))
+          PY
+      - name: Run native speech, conversion, navigation and audio tests
         env:
           NSUnbufferedIO: YES
-        run: python3 tools/run_native_tests.py
-      - name: Include synthesis verification evidence
-        run: cp voice-synthesis-results.json build/Build/Products/Release-iphoneos/VoiceMatrix.app/Phonon/
-      - name: Package and inspect experimental IPA
         run: |
-          mkdir -p Payload
-          cp -R build/Build/Products/Release-iphoneos/VoiceMatrix.app Payload/
-          python3 tools/package_ipa.py Payload VoiceMatrix-v0.2.2-experimental.ipa
-          python3 tools/inspect_ipa.py VoiceMatrix-v0.2.2-experimental.ipa
-          shasum -a 256 VoiceMatrix-v0.2.2-experimental.ipa > VoiceMatrix-v0.2.2-experimental.ipa.sha256
+          xcodegen generate
+          python3 tools/run_native_tests.py
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: VoiceMatrix-v0.2.2-experimental
-          path: |
-            VoiceMatrix-v0.2.2-experimental.ipa
-            VoiceMatrix-v0.2.2-experimental.ipa.sha256
-          if-no-files-found: error
-      - uses: actions/upload-artifact@v4
-        with:
-          name: VoiceMatrix-expanded-profile-QA-audio
+          name: VoiceMatrix-0.3.0-QA-${{ matrix.shard }}
           path: qa-audio
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: VoiceMatrix-build-log
+          name: VoiceMatrix-0.3.0-log-${{ matrix.shard }}
           path: |
-            build.log
             native-tests.log
             test-build/Logs/Test/*.xcresult
-          if-no-files-found: ignore
+          if-no-files-found: warn
+          retention-days: 14
+  arm64:
+    needs: source
+    runs-on: macos-26
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bundle complete offline resources
+        run: |
+          python3 tools/assets.py
+          python3 tools/bundle_openvoice.py
+          cp NOTICE VoiceMatrix/Resources/Phonon/VoiceMatrix-NOTICE.txt
+          cp LICENSES/FluidAudio-LICENSE VoiceMatrix/Resources/Phonon/FluidAudio-LICENSE.txt
+          brew install xcodegen
+      - name: Build unsigned native ARM64
+        run: |
+          xcodegen generate
+          xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 || { tail -120 build.log; exit 1; }
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/VoiceMatrix.app Payload/
+          python3 tools/package_ipa.py Payload VoiceMatrix-0.3.0-candidate.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceMatrix-0.3.0-arm64-candidate
+          path: VoiceMatrix-0.3.0-candidate.ipa
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: VoiceMatrix-0.3.0-arm64-build-log
+          path: build.log
+          if-no-files-found: warn

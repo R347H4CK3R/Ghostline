@@ -27,6 +27,17 @@ if __name__=='__main__':
  for name in ['OpenVoice_SpeakerEncoder','OpenVoice_VoiceConverter']:
   subprocess.run(['xcrun','coremlcompiler','compile',str(source/(name+'.mlpackage')),str(output)],check=True)
   assert (output/(name+'.mlmodelc')).is_dir()
+ profiles=json.loads(Path('models/original-conversion-lock.json').read_text())['profiles']
+ destination=output/'Profiles';destination.mkdir(exist_ok=True)
+ for entry in profiles:
+  source=Path(entry['path']);data=source.read_bytes()
+  if len(data)!=entry['size'] or hashlib.sha256(data).hexdigest()!=entry['sha256']:raise ValueError('Damaged source conditioning')
+  value=json.loads(data)
+  if value['id']!=entry['id'] or value['ttsEmbeddingSHA256']!=entry['ttsEmbeddingSHA256'] or value['converterRevision']!=lock['revision']:raise ValueError('Incompatible source conditioning')
+  (destination/(entry['id']+'.json')).write_bytes(data)
+ for notice in Path('LICENSES').glob('REFERENCE-*'):shutil.copyfile(notice,output/notice.name)
+ for name in ['reference-provenance.json','original-conversion-lock.json']:
+  shutil.copyfile(Path('models')/name,output/name)
  shutil.copyfile('LICENSES/OpenVoice-LICENSE',output/'OpenVoice-LICENSE.txt')
  shutil.copyfile(source/'README.md',output/'Model-Card.md')
  (output/'NOTICE.txt').write_text('OpenVoice V2: MyShell AI, MIT. Community Core ML conversion: CoreML-Models / Daisuke Majima, model card MIT. Pinned source revision: '+lock['revision']+'\nNo third-party Swift demo code is included.\n')

@@ -1,0 +1,23 @@
+{
+  "uniqueProfiles": 538,
+  "categoryMemberships": {
+    "Lower Voices": 340,
+    "Original Voices": 538,
+    "Fantasy & Characters": 13,
+    "Horror & Monsters": 6,
+    "Cinematic & Narration": 4,
+    "Gaming Characters": 6,
+    "Animation & Cartoon Styles": 4,
+    "Midrange Voices": 160,
+    "Everyday & Conversation": 525,
+    "Everyday Voices": 25,
+    "Higher Voices": 37,
+    "International Voices": 64,
+    "Studio Voices": 210,
+    "Community Voices": 226
+  },
+  "overlappingCategories": true,
+  "duplicateInferenceFilesCreated": 0,
+  "pitchMethod": "Median autocorrelation pitch measured from actual generated QA preview; not a quality or likeness score",
+  "characterTagBasis": "Publisher-named original character roles; no official fictional-character identity or performer authorization implied"
+}

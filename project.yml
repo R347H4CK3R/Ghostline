@@ -48,11 +48,21 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.voicematrix.tests
+  VoiceMatrixUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [VoiceMatrixUITests]
+    dependencies:
+      - target: VoiceMatrix
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.voicematrix.uitests
 schemes:
   VoiceMatrix:
     build:
       targets:
         VoiceMatrix: all
         VoiceMatrixTests: [test]
+        VoiceMatrixUITests: [test]
     test:
-      targets: [VoiceMatrixTests]
+      targets: [VoiceMatrixTests, VoiceMatrixUITests]

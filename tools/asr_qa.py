@@ -1,4 +1,5 @@
 import argparse,pathlib,json,hashlib,subprocess,re,wave
+from fractions import Fraction
 import numpy as np
 from scipy.signal import resample_poly
 parser=argparse.ArgumentParser(description="Development-only speech-recognition check of retained simulator QA WAVs. Requires NumPy, SciPy and whisper.cpp; no app runtime dependency.")
@@ -28,7 +29,8 @@ for p in checks:
  with wave.open(str(src)) as f:
   assert f.getsampwidth()==2 and f.getnchannels()==1
   rate=f.getframerate();audio=np.frombuffer(f.readframes(f.getnframes()),dtype='<i2').astype(np.float64)/32768
- converted=resample_poly(audio,2,3);assert rate==24000
+ if rate not in [24000,22050]:raise ValueError("Unexpected speech WAV sample rate")
+ ratio=Fraction(16000,rate);converted=resample_poly(audio,ratio.numerator,ratio.denominator)
  dst=out/p['file']
  with wave.open(str(dst),'wb') as f:
   f.setnchannels(1);f.setsampwidth(2);f.setframerate(16000);f.writeframes((np.clip(converted,-1,32767/32768)*32768).astype('<i2').tobytes())

@@ -1,0 +1,813 @@
+{
+  "nativeRun": 42393393792,
+  "profiles": [
+    {
+      "id": "en_gb_Toby",
+      "path": "models/original-conversion/be9586eb664246b299d07d50.json",
+      "size": 970,
+      "sha256": "265e2a1291b63d294da57516938dc2702c5e0b9119768991c891137f3cab6959",
+      "ttsEmbeddingSHA256": "ff348465a91e0e0895df388746463a195d1c7482b82f04b2451650bd54597ca7",
+      "referenceAudioSHA256": "b80c7fc47b6cfaa5f41874ca1cd3b56127ccb3509d72b9885ba42f82c65da56e"
+    },
+    {
+      "id": "fr_fr_H\u00e9l\u00e8ne",
+      "path": "models/original-conversion/d7857c3d46ebf1d18da344a3.json",
+      "size": 982,
+      "sha256": "c2fa00c8a0f56211571aebf7ed83727ee46a1ecba9c1d0ed04afbd25dc3f0a07",
+      "ttsEmbeddingSHA256": "a4d56f1c431ee248dabcdc6d67ace60a2c5a1a33a0f1b285652e946f31792fcc",
+      "referenceAudioSHA256": "af809e711750a594cb788e9eaee18e1eb332e7e9a3b1302a1b6684024f6fb9de"
+    },
+    {
+      "id": "pt_br_D\u00e9bora",
+      "path": "models/original-conversion/da7d04f946bdc1deadc42d37.json",
+      "size": 977,
+      "sha256": "3d13826c8526ed4b5b08afdf62b0a7552303595c1b7da0e75049464a9ba6c44e",
+      "ttsEmbeddingSHA256": "3eab04806c4f1841c03380b04ff36f75bda650b47fc9d4c3229f3ffc46d4c095",
+      "referenceAudioSHA256": "bd0dba96241cd3492ffa54cb6c5baa865d667529ff0639f60fc893dc35ac59f4"
+    },
+    {
+      "id": "es_mx_Leonel",
+      "path": "models/original-conversion/35335fcd017be0b4f67daae6.json",
+      "size": 972,
+      "sha256": "09d0e2577364319133c47bd0957d689b5848783cef94be1c9eea8b149854590f",
+      "ttsEmbeddingSHA256": "2d6e572032205227762f3018d66971e568e3dc95ae402999210c587b804e4231",
+      "referenceAudioSHA256": "a653ed942c6c0940849a032070dce5c0b48ae738a04f910880af03718711d011"
+    },
+    {
+      "id": "es_es_Luc\u00eda-Sol",
+      "path": "models/original-conversion/b622c1ed39fa89001306e839.json",
+      "size": 980,
+      "sha256": "ba46a4c97b0d8aecfe0fb13ca332526b0bf29e53141bbacb5b7f5f0d6849f0e1",
+      "ttsEmbeddingSHA256": "a1e73fe6c05725c0f112660c5d6f4a4c4d8e58c78e061c78c179a5fc90da2c85",
+      "referenceAudioSHA256": "6b81f4d7a68d6d75335d60a21b5ac75f17cbc17c68e0904c29435b1152d659ce"
+    },
+    {
+      "id": "es_mx_Azucena",
+      "path": "models/original-conversion/898bb13105170ef0ac1db4b3.json",
+      "size": 973,
+      "sha256": "547f6f1305e3804ddadfa80d6970b588f16ad3f6d1dc6dfcaff6a54a9509a366",
+      "ttsEmbeddingSHA256": "dafc946e672c93d9c805e3c029628ce1483d83a6fca16a606ab98f5da3f52d75",
+      "referenceAudioSHA256": "d45785fbfd9534f9b568ffc640c6d9b122592511be4db532f3d9259a7ab15a15"
+    },
+    {
+      "id": "es_mx_Nico",
+      "path": "models/original-conversion/aa4ca7be9137cd2003befbc7.json",
+      "size": 970,
+      "sha256": "b28207600df17424d4b6363cd71f5a38e271d929c9f045d728fdfbe44c5e4255",
+      "ttsEmbeddingSHA256": "47ed86d980b36d8aa65d4cc876d51c25c9916216aa6d59cac4814c0b9e7b6c6c",
+      "referenceAudioSHA256": "67b19ec82ce6c1b8e81f9f1b6abaa75eadad696113b64385185ee7c09104a42c"
+    },
+    {
+      "id": "characters_Fennick the Young Elf",
+      "path": "models/original-conversion/1d48d11aa49beb44623348a1.json",
+      "size": 992,
+      "sha256": "ea6a3c22ab68e62cbebd7c3e56ce4313180912b71694e210323edd5ccfe0bd66",
+      "ttsEmbeddingSHA256": "fad7e162076cccdc961ad978405058cc124e56a31fd06d12d0e93a167c8e5f88",
+      "referenceAudioSHA256": "fb3062ceda200157b2bfe8e67ffccb5bb848b77e8ff76b46b792ccea4fdc4214"
+    },
+    {
+      "id": "es_es_Iker",
+      "path": "models/original-conversion/01964d3ad2c21fbf3a30a846.json",
+      "size": 970,
+      "sha256": "850c9f82eb9602ef8fbbad2040c1915d4481f31a76ad27efa69c1e403ef068b6",
+      "ttsEmbeddingSHA256": "d69cd996d2caed56ddc5c6094abaf23f4fa3935bc93ceadd2643864ffdc860b0",
+      "referenceAudioSHA256": "5b56fc307a0da3529f6876b9ac37a9aa633fc33bc506db946a2d776a8d62de12"
+    },
+    {
+      "id": "en_us_Hadley",
+      "path": "models/original-conversion/7e86f88f9aefe3df7ec5a51c.json",
+      "size": 972,
+      "sha256": "dbd4bd08751f08499e8e00b53986b665e30960d755e5e5a33acfb810740b660d",
+      "ttsEmbeddingSHA256": "4c5e11a691dfe73d6dc307cf83cfb00df8c866cbdbf4e128561adddfbdd0820d",
+      "referenceAudioSHA256": "31e8e7963e10c331bd294a089b311426dd509df0e812dd4cebc590516ac41194"
+    },
+    {
+      "id": "de_de_Jule",
+      "path": "models/original-conversion/fd5fb70462da28e1747a522c.json",
+      "size": 970,
+      "sha256": "a3a928faf97fec7f3f8dcd09a55bdb16545393cd942f3f05c919a9149feca57e",
+      "ttsEmbeddingSHA256": "713d0a27fb7ce75a970b1b64fff6fbf31cdbde715b713a0fdd793256d5bdfe95",
+      "referenceAudioSHA256": "8c8faf272c6681093e8435b32423192cc4c005dde429289621553dc6b5d0fd42"
+    },
+    {
+      "id": "de_de_Svea",
+      "path": "models/original-conversion/4a2154ebf28aae7765fa0ccc.json",
+      "size": 970,
+      "sha256": "27d7e42f8f8c0b3c6967d1814453f3cb5d5b473c26b9b22e9e3922d6b72b5269",
+      "ttsEmbeddingSHA256": "83d72a961814bfe6ed02128658bc6b3ab81ba295283f61f03299ec4aef213351",
+      "referenceAudioSHA256": "a6b96819d1a4e84045d4306a4542bc14d5d297bc445163b22aba347aca99e8cb"
+    },
+    {
+      "id": "es_es_Noa",
+      "path": "models/original-conversion/ed476f6787e52d6875a3edef.json",
+      "size": 969,
+      "sha256": "04a7bd530ce393f3badcd0ead4c1fab2cef39df0423cd7d3966bfb6d4f550b1b",
+      "ttsEmbeddingSHA256": "6fda5345f32b6afe6067e8045790d7988653edb6a317db88f5e12dc36a675059",
+      "referenceAudioSHA256": "a696a12fdaaadf03c5108f20a6a401d3072c08f4bd3f2d9539964dfaf561f1a1"
+    },
+    {
+      "id": "fr_fr_Lilou",
+      "path": "models/original-conversion/a5593ba3d967bd9c93e512cf.json",
+      "size": 971,
+      "sha256": "bf4505c0086df2bb59ba9aeaf72436cdf62af50d92139ee8d1a5d0e6c90d89e8",
+      "ttsEmbeddingSHA256": "b9a0f9e7d5270dc6a4e2f123e24c7a56aa9ce0c94d09582399d504efde107e6f",
+      "referenceAudioSHA256": "ae069e0d336a678c04d540b2c308e5a594ac3c9b1ff296467448b7625bed3555"
+    },
+    {
+      "id": "es_es_Alicia",
+      "path": "models/original-conversion/a7ae78f46bf5426369397e1c.json",
+      "size": 972,
+      "sha256": "bc8fb050e4a5114c3398f1686ce1a251288974f5d1cf92b4328c336f97c962a7",
+      "ttsEmbeddingSHA256": "bae7692b194276e5b13766dea137f8a16fd549e98730838f232abddc7e8da16a",
+      "referenceAudioSHA256": "ea5a0275f3a79b9c5ffdbee06df280652135dd6ba19810d166e9b63f5f138950"
+    },
+    {
+      "id": "en_us_Miles",
+      "path": "models/original-conversion/048565c2ae99c83829b2887f.json",
+      "size": 971,
+      "sha256": "d727b44c9c52c6531350efd052439d6a0953e42c03f5a73565005e55301cb3b5",
+      "ttsEmbeddingSHA256": "eb0e61e9354e1fa7c1647530ff0c5ce4ea6f96fa65729594e443765208fe761e",
+      "referenceAudioSHA256": "ae909dcd6510c042536e1c6cb7b183016520d38ec05e94b2c242f1600b727312"
+    },
+    {
+      "id": "de_de_Leon",
+      "path": "models/original-conversion/35612cc6485921f90fe318c8.json",
+      "size": 970,
+      "sha256": "b03c5d9a90b6fc76eea412cdbd55b111400bd3edaa452774257b660e20ebf13c",
+      "ttsEmbeddingSHA256": "0299630a4fbb49824b86e243ed99fbff5af51871c52739d0ee32cd423bbc3d30",
+      "referenceAudioSHA256": "29cba06085d07d9e439cd4a0403a90d8c8204509669f3e0d86397191b792eb32"
+    },
+    {
+      "id": "pt_br_Davi",
+      "path": "models/original-conversion/82ff3383165663b2af04ee35.json",
+      "size": 970,
+      "sha256": "9de3b9ff7cd3cf71ed1e5a06ec15afe73917cf8db4e249d93faf387ed068e3eb",
+      "ttsEmbeddingSHA256": "2d3271e760deb0366524a1d4626c81e9dd4f766ad2cda88002cb014a5bb0c392",
+      "referenceAudioSHA256": "6bf966ab1592c767aa8ec88b8b942e60ceff6c5465bdace4cd7bdaf019581e12"
+    },
+    {
+      "id": "pt_br_Igor",
+      "path": "models/original-conversion/72f6aa7cb6102962781029ab.json",
+      "size": 970,
+      "sha256": "6ac918a58c58e82a5fa34b7c1e8f182b2cea69fdbf34d0304b38eb734ff51d66",
+      "ttsEmbeddingSHA256": "f5c947f421eecd801d183b0d57f671d8b0516051f0f5c7e25e15e9651094b51e",
+      "referenceAudioSHA256": "e23671937bdbb07817cc1e5bcd2ffc327289c8755e3a982ddee4f946cea62fda"
+    },
+    {
+      "id": "es_mx_Ximena",
+      "path": "models/original-conversion/0e994f09c0b9de19bd9e47e0.json",
+      "size": 972,
+      "sha256": "54c838de0e5bb5c6bf4314bcb380befebcdc303c43b22166c6582cc269e256d9",
+      "ttsEmbeddingSHA256": "1917aa2a8a39daa35ecc656a6bdf5267ea8f9981a6774022a0b2fdaeae063fad",
+      "referenceAudioSHA256": "ddfd2fdd24c31583a95a8287835456256ec0ae75bd00bf63002d250b075ee2e6"
+    },
+    {
+      "id": "es_es_Marcos",
+      "path": "models/original-conversion/358e7a2ec1ffa1d4127deac3.json",
+      "size": 972,
+      "sha256": "a27c80c8abeaff40344d0c32d642cf9ab371e89b361c684c736536319a49fbea",
+      "ttsEmbeddingSHA256": "775626c406771d440660d844cdabe52516ee64f98bce0ece871fa1e66c0cfe41",
+      "referenceAudioSHA256": "8a5370dab7533e36a78ef55588982e40a83ac5b759225800c9d64adf6b1cdadb"
+    },
+    {
+      "id": "en_us_Zoey",
+      "path": "models/original-conversion/caddd3aa2c2edc383aa27682.json",
+      "size": 970,
+      "sha256": "fa912661dc23b994df9f427b554da874bae102a10dc6a0a69ad54df7fc71495e",
+      "ttsEmbeddingSHA256": "d867f9f751360f32540c0cfb32055f95b607e51f1b023b429edd739de2ad04ef",
+      "referenceAudioSHA256": "89c33b72671d13768428a501c6fc32b44e58c7958f9df89bdbee69f0d88baa25"
+    },
+    {
+      "id": "de_de_Anton",
+      "path": "models/original-conversion/93130e28a0d5938d47eb5a63.json",
+      "size": 971,
+      "sha256": "229d3cd6167b77fec4ce82b5be6efc6f23aba394b87dbd4b2c22239ba2e4f38e",
+      "ttsEmbeddingSHA256": "3df7fd83976fda59194bb9ea635c1e599b311d4e626d7ad5446a06fd68e899cc",
+      "referenceAudioSHA256": "790daa097c714766d0ce8d61d8d2f61f565d496ec8ae01cd42061e1e45bd4add"
+    },
+    {
+      "id": "en_gb_Alfie",
+      "path": "models/original-conversion/3e7616e964637aad1ea3732e.json",
+      "size": 971,
+      "sha256": "b419552ca3ffc502c1a7b282ee195e42c7817a17eef1760207257e57c53ef863",
+      "ttsEmbeddingSHA256": "928da5fe853e548488b72e4b021f00235612b5ca2b47facbf2bd0b489a2b955c",
+      "referenceAudioSHA256": "127103401ebbb95d3ec779f33cb9de8794fbde0bb0c78c3abe52b09a25769504"
+    },
+    {
+      "id": "en_us_Trevor",
+      "path": "models/original-conversion/731ed21d496b74ce1a82eb7e.json",
+      "size": 972,
+      "sha256": "e05cb7afcc80c3248b82950ec4fe5cbfca17ab0965e335022f44a94f7d613b6a",
+      "ttsEmbeddingSHA256": "831bd36e9bda1a0471cb02ae281aefdcec403ba5e5abf73f0c240304c2e7a722",
+      "referenceAudioSHA256": "759a7bc5a1ab6713e6bd6e73e27d2b21e4b744a189e8f5864dafd3db5fa2aa8d"
+    },
+    {
+      "id": "en_us_Russell",
+      "path": "models/original-conversion/49cc0c291b763a6a730d9a0a.json",
+      "size": 973,
+      "sha256": "f973aa87048134077f438c878197b9702fcca1f5ba4a38f57873aa46c6caec70",
+      "ttsEmbeddingSHA256": "4f87038dbd52f1304be60288769c422d4335b78f14af6342341a4824e4e06231",
+      "referenceAudioSHA256": "5f63049d2f215ae9c56e61fdeb0bcb3d43673556c5b2955b9466943f2dedec1e"
+    },
+    {
+      "id": "fr_fr_Arnaud",
+      "path": "models/original-conversion/2aace026d384b33942996290.json",
+      "size": 972,
+      "sha256": "a2395bc67f6a1ca4488409cebd6675273f4390ccda6947a497b7aaf02efb5d04",
+      "ttsEmbeddingSHA256": "f19b979dc4dfd4fc11ba3df46e6d6be4d95140fa63bc3cd56f8d35d7f003ff13",
+      "referenceAudioSHA256": "80ef10be803505625ced1cf8727bc80e63b16a78d38fa6d94af9b3c33f8e3d46"
+    },
+    {
+      "id": "characters_Azgorath",
+      "path": "models/original-conversion/5f578be010cb7dfd61c37644.json",
+      "size": 979,
+      "sha256": "6e1d836c6e6bbe54c82c9eb770fc922eda0bf234605b7f493a0a9fdad5addcd3",
+      "ttsEmbeddingSHA256": "36aa733ae6e8255ba507c6d2fefb7583fb80dbc262c50a08755fc78378b3c750",
+      "referenceAudioSHA256": "a944ad98f2f51d40cea4a4470e426211f14fab51abfc7319170cfb8405b8ba91"
+    },
+    {
+      "id": "pt_br_Clarice",
+      "path": "models/original-conversion/0cbdf1beb37c0f936da419a8.json",
+      "size": 973,
+      "sha256": "529d8b3e1c74adddda7e952c0581ee2b851f68434de02d8e36ca020d7bb5763b",
+      "ttsEmbeddingSHA256": "de3a6a5feb9ad9807aa7e994dd178b838ce857fda6b009ef887af4aa0dbcafb3",
+      "referenceAudioSHA256": "ddb2e9db40364b299c4d487d5100f93bf013c0cbc9a3f402c636bcf9366d447c"
+    },
+    {
+      "id": "pt_br_Rafaela",
+      "path": "models/original-conversion/4f097f5bcbaef07476e6ee39.json",
+      "size": 973,
+      "sha256": "f1a0ad9cf33a694ae74f7da4cf87743cccda3cb9079e99d55307787be6c213de",
+      "ttsEmbeddingSHA256": "ee5e11212ab71203faba92ca9d125903b945ed1613c0b3002c55c85d188b52ff",
+      "referenceAudioSHA256": "9010107a24a55f3a6104dcb18499f456e53de9c5878a634157db3f39ec9e14bd"
+    },
+    {
+      "id": "de_de_Nele",
+      "path": "models/original-conversion/4389a4d0172c0361be561a6b.json",
+      "size": 970,
+      "sha256": "7316705a6e23ec5f9161c54ca3116ea59d255389b8bac3e8fa4526580f04127a",
+      "ttsEmbeddingSHA256": "347938b22d97d4662007321c796ed50aa3d145b92b60d8ef98d4d12b123e4398",
+      "referenceAudioSHA256": "5d8c594b2e3f3308433577620b923f63f304a9b6a6a0a895c92f0f28a672fdc8"
+    },
+    {
+      "id": "fr_fr_Ma\u00eblys",
+      "path": "models/original-conversion/093151d2a7d5b10c568b580f.json",
+      "size": 977,
+      "sha256": "ed80bd3c0f26546dbf45439b1cc02b6f5f895416bf0dc3ccdbaf706bd7f7f2db",
+      "ttsEmbeddingSHA256": "31a9aea9fa7cf8cf5d3172efc565037e96d75c7a1ea182bf48512b930860e617",
+      "referenceAudioSHA256": "4d00708d8acc92fc3a43cc174d5bd1e759ade97db86c313225306efd68f66300"
+    },
+    {
+      "id": "fr_fr_Jules",
+      "path": "models/original-conversion/0f41fe09449d509b92577dec.json",
+      "size": 971,
+      "sha256": "8869875df657a377f6b97576043e55b058986ec70138e3554b1617dd5b7dec1a",
+      "ttsEmbeddingSHA256": "2416c25c18eb26f3cd9c545586b4a6c6411b9efc6b5ea374ccf56f7670868ad6",
+      "referenceAudioSHA256": "99c64d3c8dcc4f63a854d2029a8583a320b8c4841d60382ef5381abb2dd02764"
+    },
+    {
+      "id": "pt_br_Ot\u00e1vio",
+      "path": "models/original-conversion/83783b72caa1569e463249d6.json",
+      "size": 977,
+      "sha256": "c14fdedf27c559c1f1cf3ea56197d718c1f4796db06315056d10a7ced1cb84d3",
+      "ttsEmbeddingSHA256": "09a74076d937e689ba192f263279e9e8b389a334e1225891ee22ba241f031e1a",
+      "referenceAudioSHA256": "b97b64862af16fa3e8c5e1f6a5028abc1eb9060ac088ff133a139c1622424c1a"
+    },
+    {
+      "id": "fr_fr_Lucien",
+      "path": "models/original-conversion/e308132e8b11b20037de20f7.json",
+      "size": 972,
+      "sha256": "e814f4b7a5d71f1570f6df705378d8ddc2f67e18c5f17eed02b52edb0096ae50",
+      "ttsEmbeddingSHA256": "454ffba9419d67ebe6837456996a3a186e57f37eef60976d2d93d09a7ad77113",
+      "referenceAudioSHA256": "932254d3c1aa28b4f111844146c02a5ceaf13b634ba2c6f9ed4fceb50f326694"
+    },
+    {
+      "id": "fr_fr_Baptiste",
+      "path": "models/original-conversion/5c401267fc2fb8852ac82936.json",
+      "size": 974,
+      "sha256": "104bf774ccc0e4ccfa3303747a22a211a58306db155e6056abd225486e489326",
+      "ttsEmbeddingSHA256": "d6f3543227d494e5868a75d920f72402abc1200f14ad0d538f387393bb9bb78e",
+      "referenceAudioSHA256": "a928c88fa781f117824ed96a3dace35c34d81f8a755613e07a3ef9757e01f061"
+    },
+    {
+      "id": "fr_fr_Sol\u00e8ne",
+      "path": "models/original-conversion/e8806ced0d16acd92439eca3.json",
+      "size": 977,
+      "sha256": "706bdd05c51848c91859d3e6b8a1c162475b12bf6ed95b9902483e422620429b",
+      "ttsEmbeddingSHA256": "98f82daad7f66ff4651d69456aea3b0b9d4a9f34fe2b2f41bda45cfb3975e559",
+      "referenceAudioSHA256": "2a5fb1a0c000e32b1f117bad35d34199fc34e92dd46226636cfb984207071ffa"
+    },
+    {
+      "id": "es_es_Nuno",
+      "path": "models/original-conversion/c68a7658dd0a24c3fb5208a5.json",
+      "size": 970,
+      "sha256": "fd216c3dddeedfd13ebf3f3d5a82fe878936649bdeee1bf4c6130e9f20898b75",
+      "ttsEmbeddingSHA256": "e464ab2373e386662af2c2f96d53ddddcb57672091ac47e86b3ad56a250ff622",
+      "referenceAudioSHA256": "e975c2a6fd60e48d6d6b2f6ba5148ed4e9cb72d6500c855a60e7ec45ba714113"
+    },
+    {
+      "id": "en_us_Everly",
+      "path": "models/original-conversion/1d68c85b464fc43b3bf0ae90.json",
+      "size": 972,
+      "sha256": "eded5e5a33011464101d44028dc224827602b97bc1e27f2fa5494fae67a5f5df",
+      "ttsEmbeddingSHA256": "64c37adead347b6b4c5acfc3e5883341bcdcd94538a146e521a1f9ec0fad1d6b",
+      "referenceAudioSHA256": "acf969e27c2fe04f38c670d6755c271972478c3613e08994745327971ff5b498"
+    },
+    {
+      "id": "characters_Captain Silas Blackwater",
+      "path": "models/original-conversion/72df71bb170106e4ba5e9fc3.json",
+      "size": 995,
+      "sha256": "fbf885e347dc6508f0d4668079dd7a27cee88b39420524cc412dc3631cc1d08f",
+      "ttsEmbeddingSHA256": "5c9a87d75642352759664539bb39b69ba9662002fcb74e045c04727acb147117",
+      "referenceAudioSHA256": "92877051a78528d5c68010e48607a45e7ba3f0ddfc0b64bf998e14b89654c321"
+    },
+    {
+      "id": "characters_The Snow Queen",
+      "path": "models/original-conversion/b4f9817662ed76b52c7c88bb.json",
+      "size": 985,
+      "sha256": "32cf4a83f10389dc96ade896134bb4971da06076c9f21b42a19dca80ebe6998e",
+      "ttsEmbeddingSHA256": "b0a0e9652970d460a98f593ce4fde45fb4db6fcc78a6641375d997be8e4a0ba6",
+      "referenceAudioSHA256": "b886d7e2998d113877c4be7a20a67f3ee0ad549d77ea94c872d4f9ade1935b95"
+    },
+    {
+      "id": "en_us_Micah",
+      "path": "models/original-conversion/2b3e1f70c04d2a723a2f6ae4.json",
+      "size": 971,
+      "sha256": "0d8baeb09cd5e0110ff240aad9dcdd0da9ea001d32d6c277d318993f8fd162b7",
+      "ttsEmbeddingSHA256": "b32ba16219f3908461dcdeddd2aa9bf4e85a46fa165065b30a6e022476231684",
+      "referenceAudioSHA256": "8b26db975d33fa33465952e9087ca7478194aad1abd32a03f70585571ce6b2eb"
+    },
+    {
+      "id": "es_mx_Jimena",
+      "path": "models/original-conversion/cc1878eb7079bcd8a80a84b0.json",
+      "size": 972,
+      "sha256": "6c5fb65b370809a191f2518f31fd22ae55492b8f5f0e5fbd95e86805269f3c78",
+      "ttsEmbeddingSHA256": "227b2a4e1e9dd750610902bfe67afc26dfb3338c4c359ac029f33bc6b4b0cde5",
+      "referenceAudioSHA256": "8e7c3c32bcec1f45606ce39a675ea225534f72d32656d6118e21123a24d09777"
+    },
+    {
+      "id": "de_de_Mika",
+      "path": "models/original-conversion/6f306be6cd675dbf3fd15afc.json",
+      "size": 970,
+      "sha256": "cd78e3a2685adcb68f8f5f4ae28ab7acbf40ae659415cf0ab3b0415d8910d3eb",
+      "ttsEmbeddingSHA256": "7d0df9f4b5b40a577af94571186f55ad323a2cdd8312b39bda842f9ee4664fd4",
+      "referenceAudioSHA256": "c7fac245c448c4e6fd2b66b016ae4d5cf63985eca0ea03e2df770447e714958f"
+    },
+    {
+      "id": "characters_Grub the Ogre",
+      "path": "models/original-conversion/2c74577cd593b3e4205551bb.json",
+      "size": 984,
+      "sha256": "31c47cbd6ed629b84479f73a7c29308d66894488876b901544f130600f54404f",
+      "ttsEmbeddingSHA256": "65089697f37fdb1570d6bd7cf066841f513979be4cfd83462c1a7d75fb6006c8",
+      "referenceAudioSHA256": "d7d24da27a17bebc6cd86ae1499067b27514799f2ccf8b9ccb2b04374be07456"
+    },
+    {
+      "id": "es_es_Izan",
+      "path": "models/original-conversion/071ec0469cac25a163705226.json",
+      "size": 970,
+      "sha256": "22673946b51f0b46523ff6b61c927b3a808f41a547197a4e36c2bdcc85a3ef60",
+      "ttsEmbeddingSHA256": "8db84d6d6bf2af78af87ee39a51dc280c07b18f3ab65edc85f77190de41f53c7",
+      "referenceAudioSHA256": "d2d02ec6cdb1942da32c7ef4b57e8fac249d5e8c2c5dab63e697959c48069f36"
+    },
+    {
+      "id": "en_gb_Lottie",
+      "path": "models/original-conversion/5b39b78cf373bf3bf3c3756e.json",
+      "size": 972,
+      "sha256": "8778d13cdc06f798b198c1f838aef589ffc7ce351a0036a4827e9be28fda45a0",
+      "ttsEmbeddingSHA256": "4f32bd8a11f8499c8abb333278c799a1c2370e1899c07a9caed07e33322d1233",
+      "referenceAudioSHA256": "04355f51a8398530e7b463067a992f56eff7403d240040ac7fde1da5ac7ab262"
+    },
+    {
+      "id": "de_de_Jette",
+      "path": "models/original-conversion/0954224f5ff66ccb4c24686c.json",
+      "size": 971,
+      "sha256": "70f8c8202d1c29049ff09e5f48488b44c0a23a80e321278b0d475d516692eee0",
+      "ttsEmbeddingSHA256": "f5e7bccd0416cec15747352cfb847ec77b521f915beca01701a05d0ed87db5d1",
+      "referenceAudioSHA256": "01a50dca1c1c1cb37089b89b4820fc8071d3c909599cf479ff195b8a50fb1ebf"
+    },
+    {
+      "id": "es_mx_Aldo",
+      "path": "models/original-conversion/171568590d341dad563f382c.json",
+      "size": 970,
+      "sha256": "57670ec6ba53d05b81719bc5d840903ad006d3725ff4b19da233d07b0f86bbfa",
+      "ttsEmbeddingSHA256": "6a5d7e798cb3f4cac9267500b5bfaa04b3a172e0f58f379671c2de73d72c1645",
+      "referenceAudioSHA256": "f488ac991b385df384bbbe96f0a828d81376b0290e5fc7f0cf205eb909fdd2d3"
+    },
+    {
+      "id": "en_us_Easton",
+      "path": "models/original-conversion/94dcd6bd0376ce9af02f6542.json",
+      "size": 972,
+      "sha256": "e19fbdd46be36f819d147f3dbfdd398ab681823923c43a93837c739e339b55f9",
+      "ttsEmbeddingSHA256": "3fb875c9b120b314d7dac804812aeaf50f5d0c6e3a8be798951b792483078cd1",
+      "referenceAudioSHA256": "cf3517664baf8c626744c3578f67dcf7bd23ef373cfef2576d1872a4f6c3b9df"
+    },
+    {
+      "id": "de_de_Lotta",
+      "path": "models/original-conversion/6f8f616521ca22ed458612aa.json",
+      "size": 971,
+      "sha256": "be450761e6dfb1a71589539c2eb993ebf7c9a4054a8a17c6b3fb927ffb5442f6",
+      "ttsEmbeddingSHA256": "f015a6a654d73bccd9db8e0c43bd90c3bd76d183106a4b9606b14eb6f87f93f3",
+      "referenceAudioSHA256": "69593887a7aea82d506800745093f88fdc9a0e3847cef1d95505a93a43b9f768"
+    },
+    {
+      "id": "fr_fr_Augustin",
+      "path": "models/original-conversion/cce921f63e95e1a69b7a9e05.json",
+      "size": 974,
+      "sha256": "64de2981b94b94a23183e42016fde1c123b643e1005182448df48378b8eb62cf",
+      "ttsEmbeddingSHA256": "68324277cedea74829e337f7c6065af1cd24c428881ea7cf8bcb21c230815012",
+      "referenceAudioSHA256": "9ab3590c4abce676c24100260424df39f4b776989e8df4cfee9adad3a7dfd707"
+    },
+    {
+      "id": "fr_fr_Marius",
+      "path": "models/original-conversion/bce5fa7272d2b3352555599a.json",
+      "size": 972,
+      "sha256": "5933391112ec9237dd4845c0971058f5a328540d4dcd4a5342ea68aa092a87be",
+      "ttsEmbeddingSHA256": "77d44156d0ff9d1b1017bf2096c6e47b7bb7c0dc13b8492e8d5dcc2d363204b4",
+      "referenceAudioSHA256": "68fef15e92736fdaa989444afbda6f952e432b644d6e14983a83719ad6bea3a0"
+    },
+    {
+      "id": "pt_br_Fl\u00e1via",
+      "path": "models/original-conversion/4a5d9f7a29bcfc6f7c075d20.json",
+      "size": 977,
+      "sha256": "57237732ca158b213dff6f9534f871ea8d3756ff9853082fcf3cce7f77d89191",
+      "ttsEmbeddingSHA256": "ea5d722e91a12f042855412738e9a417340a585df7544afa21e498b9026d06ec",
+      "referenceAudioSHA256": "aefeae28aa7b056de08bb9983fe17f6edb374ad3f8f943b1e009e1a64c2dbe6b"
+    },
+    {
+      "id": "pt_br_Marcelo",
+      "path": "models/original-conversion/5a1195a2afddc12a4931cb7a.json",
+      "size": 973,
+      "sha256": "df32d2209a1374da458402b924a6b9fbbdea39aae96432f93ce6318b6cc5c28b",
+      "ttsEmbeddingSHA256": "7028986f929ff3aa0abdff5b035385c357962ce2e9f9b375a121c7ecd9de53df",
+      "referenceAudioSHA256": "9240f207875fa729e68da97fec634aba38c86cdb0ef00a4552641e001001993e"
+    },
+    {
+      "id": "characters_Sir Bramwell",
+      "path": "models/original-conversion/4477dc4d82fe423e68eddbfb.json",
+      "size": 983,
+      "sha256": "e891ca554a85a2186e6cd32a46abb8c2a675778480029a7c7301131f3fc2754a",
+      "ttsEmbeddingSHA256": "3f37d172cb0a669eeaca817754dba555fad8411bcefc5954511e671ffd8ae726",
+      "referenceAudioSHA256": "a5e64f2cb36aea35b628b4f797deae6f95f055f8317c36b1425748f6cc1062a6"
+    },
+    {
+      "id": "de_de_Annika",
+      "path": "models/original-conversion/744c0a53ead7132ee2120d56.json",
+      "size": 972,
+      "sha256": "e6b4b1eed2f6bf3a57dbc467f38b322905a7f0ca6eafa6572a54436e07d656ab",
+      "ttsEmbeddingSHA256": "a3f0b079e4945b903836e92a55e2e50c7dfa7f1b21526e09454977aea0563d8c",
+      "referenceAudioSHA256": "0de1c66de3d3e8027c354df94c658f17e80affa39e1c85ea393035585bd11c02"
+    },
+    {
+      "id": "en_us_Harper",
+      "path": "models/original-conversion/a3c25b21802dd8bc933f32a9.json",
+      "size": 972,
+      "sha256": "40d011254cfaa99270d17adee30e2b4778c26ceab2f2a38a126f5e5823886e0e",
+      "ttsEmbeddingSHA256": "44bbecc069b7c1872ba548ceddde8064ff674feed9989313191449fce72d2a08",
+      "referenceAudioSHA256": "cae92193bfb6892200ddac845b3d49baa4bc92befda7eb5b1c4b0024c51924ef"
+    },
+    {
+      "id": "characters_Master Aldric",
+      "path": "models/original-conversion/6c112b9cb3c4d0c7ab45556e.json",
+      "size": 984,
+      "sha256": "f34b300ebf0a63d1cb820cafe9c0c49be5c1af84d4fb5df34cb4d636040a801b",
+      "ttsEmbeddingSHA256": "1a7227551af7f1c240290068060bd60b340719127098282c957e0f03368ef58b",
+      "referenceAudioSHA256": "05d93990dfd6bef3a61a987874052129441dcb4eb5baea62ea01660b3f05a61d"
+    },
+    {
+      "id": "characters_Vyrmathrax the Ancient",
+      "path": "models/original-conversion/ab958eba4a99d6db96f46eac.json",
+      "size": 993,
+      "sha256": "1814e2391880b9088d5214defa8e91ec035d1269cb5f6f35b245090013f5ba9d",
+      "ttsEmbeddingSHA256": "f7987b9d2de619401492f9e062e154f48ee847bc7b3b7d006500ad39909d3d5f",
+      "referenceAudioSHA256": "7b6a378bd3eefdcb33ce71f9f7a1fbf9fc25f464e50a4a72afaa3b4f2a73abae"
+    },
+    {
+      "id": "es_es_Candela",
+      "path": "models/original-conversion/214f1e1eaca1f7008e1b86b8.json",
+      "size": 973,
+      "sha256": "d85c6efc0c3ff8ed1d7d053ccce5a9cd8663e9d61f8f3f2f0a6805bf4a0466f2",
+      "ttsEmbeddingSHA256": "a0970f493c8442d1eb3963c5c7afbe3f9b5b4eee5ac7be96a18af0967d709bb3",
+      "referenceAudioSHA256": "1722ba3d144ed874697b6cb5df00b7c470c8cc84bcb443dcbc746f4ed2529fa5"
+    },
+    {
+      "id": "pt_br_Isadora",
+      "path": "models/original-conversion/4e1e69ef4c0fbfa3a378174b.json",
+      "size": 973,
+      "sha256": "7f971d6d825f3c46880fab32c47ba799ebbd3ea679e4bff88de9386943c3ecee",
+      "ttsEmbeddingSHA256": "22b8664e27ee670e2d48e6730071813369c045cf585cbae94f258a1151e5dfce",
+      "referenceAudioSHA256": "a43bb61e391197cf517b7ccf1c78668a3d1bf3e5232f47ae41ff7bffbb8bde91"
+    },
+    {
+      "id": "characters_Old Mortlake",
+      "path": "models/original-conversion/d3528c2dcd7a5a28f9297b83.json",
+      "size": 983,
+      "sha256": "fcc000665117d88cb37e2564951aac59578dcc0864d8923f43a6c8971b42010d",
+      "ttsEmbeddingSHA256": "fa310610c7cc25c72ba50456661df7ffaddf5f4c4abe0f4be46fd868483f4e7a",
+      "referenceAudioSHA256": "efec6a4cc3b8a32bc63c23e766664ff7ae3e2958475b8f75b7207009efca9825"
+    },
+    {
+      "id": "en_gb_Bryony",
+      "path": "models/original-conversion/77f8e966ada1ccd4e6c8e0f5.json",
+      "size": 972,
+      "sha256": "20b430390fc025b0fed97ac75da63d59ac68addc4075d43404c80bd6b76fdba5",
+      "ttsEmbeddingSHA256": "c629fa40c4f9e467769fe5762e4957d40e135b64026bd1df1e89bd9e55b951ff",
+      "referenceAudioSHA256": "b26f4966baca20ea35d47aeeb2aea4a9859b65efe9edbbe879e6ab1b6a310ce3"
+    },
+    {
+      "id": "pt_br_Manuela-Lu",
+      "path": "models/original-conversion/8b507ea53ea602c875ff69d8.json",
+      "size": 976,
+      "sha256": "efbfbdf0dc29dd826e81449b6c9e835305b2a4093d150285ec4e7a44dbd45b11",
+      "ttsEmbeddingSHA256": "7a1f125748f3ccc320bd550cbacfccae8c0207781427caf0a9aa915d8fa841e9",
+      "referenceAudioSHA256": "12ff5ae2d5c28a38463217056e8c79af5e557f6c1046b07ef9463771162739cd"
+    },
+    {
+      "id": "en_gb_Pippa",
+      "path": "models/original-conversion/5768d680622e3bc59d2cf7d7.json",
+      "size": 971,
+      "sha256": "2c20876c26daacaf3ecf84631ec6751502094f67398ddd16abf2f328e34e1f2c",
+      "ttsEmbeddingSHA256": "d9dc45f9ebb4b4f702244ff10910929b86d9304f5fb815572355ee815a8e6954",
+      "referenceAudioSHA256": "d17fdcb65f8fbb9e3ba73b948e70955626adc1ea6f89063c49ce0b666d3285f2"
+    },
+    {
+      "id": "en_us_Delia",
+      "path": "models/original-conversion/1aed52c03a2d2df69410275b.json",
+      "size": 971,
+      "sha256": "7fefd8e7abefed91c8a80f391751cfbc950ef246530ec599dd5d1bd0bacd498f",
+      "ttsEmbeddingSHA256": "896122da57b3e7f83886f1c009b9b537cbf63c04e4cc592d72dd935622c3cb77",
+      "referenceAudioSHA256": "737b19cdf918c374faadde0d351dc9a0be0766764400839fdec2c62f78a58f74"
+    },
+    {
+      "id": "fr_fr_Coralie",
+      "path": "models/original-conversion/865da6c3576b373fb6ecbdaa.json",
+      "size": 973,
+      "sha256": "c1082a01001533af8fff7e2a5a3b57a624f51f92928efb312fccc87f759667b3",
+      "ttsEmbeddingSHA256": "a14eae2cb6e6bcaad1c24d9e426d93a8f16c738e2fba0e7ec8813f100e4656d3",
+      "referenceAudioSHA256": "5d28553d98e7d44a9747e33fa84b36dea067d06201ecfbad59611e922ac1191c"
+    },
+    {
+      "id": "es_mx_Danae",
+      "path": "models/original-conversion/d3705fc04780e31750d1dc77.json",
+      "size": 971,
+      "sha256": "56f0048d41147cfa442db434ccb6806a1e8246fa8df5f670a447a2cfa04c573e",
+      "ttsEmbeddingSHA256": "a86b88ca0743b14108c9fdba39d1dab4ebe9cd26e40f7ab650504f8d96c55b7b",
+      "referenceAudioSHA256": "361b8ae90309859466696737d875998684178be6a32aa226c81341c0551a19b7"
+    },
+    {
+      "id": "es_es_Celia",
+      "path": "models/original-conversion/718c4cf69434fad8da98c83c.json",
+      "size": 971,
+      "sha256": "20b830bdc16a8b34cf60770d63ce23a01e1be49e2a4dbfda67a38ba23627de79",
+      "ttsEmbeddingSHA256": "6bfd0ef61afe78dcc18c35aa96ab093341d39b2ec82ff2f1d617c3b087cf1d6b",
+      "referenceAudioSHA256": "abe389021b66096ec20781071f7da5d20269f609556c7d88869f6f64c1337472"
+    },
+    {
+      "id": "fr_fr_Orianne",
+      "path": "models/original-conversion/06c7c5edc7c346ee69468d24.json",
+      "size": 973,
+      "sha256": "767cc7df3826353739393fbbf40610470d412a7a3f0e28b855a4a3b2fff50d8b",
+      "ttsEmbeddingSHA256": "fa75e9246a7235cd0f7e71f87831308af809c1607a6e9ab58bc6346b221fae6b",
+      "referenceAudioSHA256": "19fd68e350d7f324885d30395eff515383331d50d3131a31b3e9204c7346b96b"
+    },
+    {
+      "id": "en_us_Preston",
+      "path": "models/original-conversion/b7b1f55b7bdc8aadbaf10b4b.json",
+      "size": 973,
+      "sha256": "abe31f9b6b4fc8837849773c28c56d1b9d949139d005e99f18963e209531d3a5",
+      "ttsEmbeddingSHA256": "e3448287e6555990069383a6e0bc3f3a27baa6be69b30e28844d6d569f3239c4",
+      "referenceAudioSHA256": "6dbfb774ee609a0ce130737d6b58700b04b5e67c638caa42e7e8b28f6ff7af00"
+    },
+    {
+      "id": "en_gb_Elodie-Rose",
+      "path": "models/original-conversion/2809fce9dbfaaf35332dcf88.json",
+      "size": 977,
+      "sha256": "ebf4f29074c80a2818480d418447464b531c6499dba149d0a6fce7872829a55c",
+      "ttsEmbeddingSHA256": "b55f81a8f4bebba232e9c324126f87253789bbd12608970e0eb837c469e3940a",
+      "referenceAudioSHA256": "bcad33a6e5b6a2d65a5a6e531e85ea79e3ebe6b9a691704aff2689d9c2085b0d"
+    },
+    {
+      "id": "en_gb_Freya",
+      "path": "models/original-conversion/9a5560ce1fbbdfa8c7aa67ec.json",
+      "size": 971,
+      "sha256": "40d357a17c1cd9f9a3cf84bb5d573595b608bea926ae8d2f2c9bfd6d5c215471",
+      "ttsEmbeddingSHA256": "09609a149e2e6331b6ddc75168441e9bea013ad277c17dc8d01806afe7526e03",
+      "referenceAudioSHA256": "26cd8d9cfae1e2724b48732b3d9686d1d3e1e047c9cdde3849d3e55729ad27c9"
+    },
+    {
+      "id": "pt_br_Kau\u00e3",
+      "path": "models/original-conversion/fbeffff14b0a2f5942ed6bdd.json",
+      "size": 975,
+      "sha256": "a2236e2d93cd08aa551053733bf0c52ac7768b40adf1286df9b852ccdc7f7f77",
+      "ttsEmbeddingSHA256": "b398673d83a4901ec4f276ada5a74c175b42c63c35f542589e6fa52b750b3163",
+      "referenceAudioSHA256": "4d30aa334206686f73b5eb8147ee403982bbfb6c05c007d45e7e260130c37992"
+    },
+    {
+      "id": "en_gb_Imogen",
+      "path": "models/original-conversion/880498121a5f479d3c2dd416.json",
+      "size": 972,
+      "sha256": "021c005cdef92391ad3726814b9f01692d5505750dc4097ff0ed05f21c35aab4",
+      "ttsEmbeddingSHA256": "b464982a70d2991318db971173e2f5c3fffb7d2bd11730be256eb3b434d88e2c",
+      "referenceAudioSHA256": "492cca845aa1d2e922300b0f4119142a3ee80dbcbaee6c376d91b1fae75a6b8a"
+    },
+    {
+      "id": "de_de_Josefine",
+      "path": "models/original-conversion/03251743ee023985679a2d88.json",
+      "size": 974,
+      "sha256": "4903f145cc03b32ce309a7e2dab43a15ce1ef932939ce35b610c8daa7f3b8993",
+      "ttsEmbeddingSHA256": "aa89cf88e61a547e55b126e5575e57a787ec51f0363f413b64c98053bde0cc64",
+      "referenceAudioSHA256": "15376e2a615ff06c81a634454c3853b60d16ff316a5b80f04313646ab91ee0af"
+    },
+    {
+      "id": "es_mx_Ulises",
+      "path": "models/original-conversion/747eadaf6a20f64681d76cda.json",
+      "size": 972,
+      "sha256": "9ce263350f0be81de4081147405989a4a9e4083c457dbc01ba043ef140e147b6",
+      "ttsEmbeddingSHA256": "03ad342dff3bc591a726d5ff8e79b45e6f892b48b78ff0da88c84f3a35aad98b",
+      "referenceAudioSHA256": "5a719a05113f8961d44aba123345f14914a04fd16516a9a7192e5a9fd55d9b59"
+    },
+    {
+      "id": "en_gb_Spencer",
+      "path": "models/original-conversion/79ca149996e8c54b7cef4b0d.json",
+      "size": 973,
+      "sha256": "f7bb619c6c36c4c6e647141aa6beecda9f9d0b84af1c341024a7ee9e3448c53c",
+      "ttsEmbeddingSHA256": "44814129100cc56a90ee76c220c2565e3f6ddece97689c7a8eee3692aaaed900",
+      "referenceAudioSHA256": "27342308187cd17f7d47ca1adc7418fd0c7f12bba43fe6d8f22437ccddde5e39"
+    },
+    {
+      "id": "es_es_Nerea",
+      "path": "models/original-conversion/309bc80147404328da29d11f.json",
+      "size": 971,
+      "sha256": "0fb8ab09a75597987ff12a26236bc2a58f3519d847704e063ee5956d34bedfc8",
+      "ttsEmbeddingSHA256": "bea3f4efbc1bad0b160de842797501945b780251dc0e86f392ba68e2b7d7cd48",
+      "referenceAudioSHA256": "0f1738809e72022c3836c7282d18b207a9ba3b6bdaea1937691a587a1052806d"
+    },
+    {
+      "id": "es_es_Alba",
+      "path": "models/original-conversion/31deb8bfc743a5b9e33665ef.json",
+      "size": 970,
+      "sha256": "c1dbc1077e20674a36276022fae799fd9cd96fc274020d4007b40576eff8ea23",
+      "ttsEmbeddingSHA256": "e255a41418c287cd93e250c6726b3db27633d4709501b14ad0ec123888c66500",
+      "referenceAudioSHA256": "413b01b56c00a74ad488da475446451159054478c004c77b1971ceee599ff8be"
+    },
+    {
+      "id": "characters_The Thing Under the Stairs",
+      "path": "models/original-conversion/81ef9d5ad32f8283dadadbb5.json",
+      "size": 997,
+      "sha256": "c2533ef56606578b8a68dc03ce797de7eea04515cb32d5074b7ed63b84fe6da2",
+      "ttsEmbeddingSHA256": "9e32873b7ca6cd3c6b4747eb89fdf59365ca83bf31634ff997b5cb0765bf7282",
+      "referenceAudioSHA256": "0d59d74da2288a85827126e1500633402998923e591816ecca2b9aedbfe0b7a3"
+    },
+    {
+      "id": "fr_fr_No\u00e9mie",
+      "path": "models/original-conversion/705c008dca41201e9b975b18.json",
+      "size": 977,
+      "sha256": "b60a5ffe47a3e179ba878b531fe6470376f08d2572566014a72de8acbceeb261",
+      "ttsEmbeddingSHA256": "8b0eacc2bc07c7568ceda734e591bb0d76a9fa466e6f1eb185da017feb3e144f",
+      "referenceAudioSHA256": "d77d2a92c860781e090b8087001961573c60f1a5ffdf3d476b1327d7a02bc473"
+    },
+    {
+      "id": "es_mx_Lalo",
+      "path": "models/original-conversion/74f2006ba74e61696d21446f.json",
+      "size": 970,
+      "sha256": "da9da0c1234a917611b07dc960d9d972cb4fabfdbf07d6369866ef3f6b34cf66",
+      "ttsEmbeddingSHA256": "4a2d48307e2289f5ffd0cc1d91fd37e7e302b79307ca202157fabfd28fff0036",
+      "referenceAudioSHA256": "6f141606ce38df92c8ec2155df54e539e316bea842fa6460bfbeaf97bcf99a84"
+    },
+    {
+      "id": "de_de_Mirko",
+      "path": "models/original-conversion/da304506511e72873cd35383.json",
+      "size": 971,
+      "sha256": "af7af5a43036cda73323725eb36364ce479dde6bc9057f8a2f8e10c18602bd1a",
+      "ttsEmbeddingSHA256": "1d03c1f3fc5703a883a53e7ce8194678d986ed10efbd376f8db4271f0946dab7",
+      "referenceAudioSHA256": "6403bbdb520546296af6e0e04b72d2785c75ac22537d94d607cc499673048a60"
+    },
+    {
+      "id": "en_us_Juniper",
+      "path": "models/original-conversion/c8c71893e156f64df1fcb9ea.json",
+      "size": 973,
+      "sha256": "2b3a67fb79b6b92696c270a2aaaa523599b0f9a5d0cf9ae242b4a645e109d61d",
+      "ttsEmbeddingSHA256": "c79e69a6f8228c6e31dd5ae9e573a79ab23abfc0d9140f62e57e123f10a41822",
+      "referenceAudioSHA256": "f9676d721a405c90c4444791b96088e6da30f853872428475a4c88c38daa27c4"
+    },
+    {
+      "id": "es_es_Borja",
+      "path": "models/original-conversion/34c4d1a2c462a83d6cd7370b.json",
+      "size": 971,
+      "sha256": "d9fba24fc491346ea1c828baa7a453aca16de495141b5813d9015217e7d74c3a",
+      "ttsEmbeddingSHA256": "84460f715b554f60e0ee0ec1b13ec8e7eb92a75b25cf4129220f2700ee85e813",
+      "referenceAudioSHA256": "93a76ec2f9c3ae877b805a80fa71b79050104accfddcd357b3b9692537054f71"
+    },
+    {
+      "id": "de_de_Henrik",
+      "path": "models/original-conversion/c2049b3e342ff74f3c7bc37f.json",
+      "size": 972,
+      "sha256": "722d4261ab73e82c4b7568d73fdee30d639e53113799f170a35ad5a51c0ab2bf",
+      "ttsEmbeddingSHA256": "0fa7d2e3cee08d45a3995ba9e61fc1f17fa698adaa1d6c2031a10f49061f06d0",
+      "referenceAudioSHA256": "e1826a20b75e2af640f466cf448b9624bdc00fc58cd88b2db2f2aab66a403f2c"
+    },
+    {
+      "id": "characters_Morwenna of the Deep",
+      "path": "models/original-conversion/c5c0d8c244c44c249a46e71f.json",
+      "size": 991,
+      "sha256": "c375870930b7d60dcb7be45df9243d8b13444fc4b5947ecfff08c81facc96e82",
+      "ttsEmbeddingSHA256": "86c8828ed77a4536eeaf8dafe7b020ae1d4964d10342852925a68b66f7b669a1",
+      "referenceAudioSHA256": "953a01ae975e630104149a9adced8d59276bc756c55491b000e49570446bea92"
+    },
+    {
+      "id": "en_gb_Hugh",
+      "path": "models/original-conversion/79d4cb716150aa984d9c4169.json",
+      "size": 970,
+      "sha256": "8aa46cde683e8bc2ca7dfa69dc6582b47c974bb44a28a3cbde7ccbc6e69961ee",
+      "ttsEmbeddingSHA256": "7ce9388b0e5122009280be57d0ce0a46151e92e1a1ec927f88e386b9e6d402a0",
+      "referenceAudioSHA256": "a98f22ed84de7a3d6b16def65f373e2352ce352f2bfa0f8ecf51ae98d0575144"
+    },
+    {
+      "id": "es_es_Guillermo",
+      "path": "models/original-conversion/d8c9419c44fa08fb0ed9424b.json",
+      "size": 975,
+      "sha256": "10b9118c51afdbc6d6c8ecb5865d35ba4c184d43e0fed694c603667843a83dde",
+      "ttsEmbeddingSHA256": "21c9dedc6e5ca0aef118acd285048f5cc198b26ae17bc73d6fb5ea30b8f180cf",
+      "referenceAudioSHA256": "a381c7047a645b8f12be998ea9de01a19e49459a72c54acd71bc6adbadc0a769"
+    },
+    {
+      "id": "characters_Fairy Godmother",
+      "path": "models/original-conversion/1f0b66534628079c31bfe727.json",
+      "size": 986,
+      "sha256": "fe9edd198eb2391dd6d8d505ac4f9b5f3a7f9bb8a0191bee688163b27f887ad9",
+      "ttsEmbeddingSHA256": "b9fa3bb3cdb7149b648d99731ea2ae3752fee3cb079462073037d83f9802ea51",
+      "referenceAudioSHA256": "e997c00e9a027ec9639b664f0e862ee2572be1e5a31d39fa85355506791ed819"
+    },
+    {
+      "id": "en_gb_Teddy",
+      "path": "models/original-conversion/e3b4c23964c4146a6021a4b6.json",
+      "size": 971,
+      "sha256": "11f2d2e6b2d967622f7edc4c54d1ee690e924a40f0e36515b8949b63205489c5",
+      "ttsEmbeddingSHA256": "6cca4e57bb4ebf644be9293bcabacb6f170ac9a7f092ada6567c5931d31db841",
+      "referenceAudioSHA256": "b55e080465b4e7cbcd858901bd92b13531c02f34af9b33b0d5ad8e5a83678d2b"
+    },
+    {
+      "id": "en_gb_Edwin",
+      "path": "models/original-conversion/5f05b90ee586da85323fa1a5.json",
+      "size": 971,
+      "sha256": "f79ca68788d31e54a8be463f18f46156914a35a2ee636e525d1b0f5922f61f73",
+      "ttsEmbeddingSHA256": "46c12febb46f0d21db6ab48842a6bad20440c5670f4f914129c432edc0712bac",
+      "referenceAudioSHA256": "06399b15036148629b2b90a3a5729598d217e7dfd000601ce8de0334a98e7348"
+    },
+    {
+      "id": "pt_br_Vitor",
+      "path": "models/original-conversion/03983e40210da1fa03aeddc8.json",
+      "size": 971,
+      "sha256": "3842c4c60bdbf12e9a5477a675ee9000cd7b8004e2fd3230b9fc9f2761ab1ce5",
+      "ttsEmbeddingSHA256": "aead7135770e858b946be2c3c6bf96d281671f3a761fe9651bd1f06693cf6386",
+      "referenceAudioSHA256": "f890a414c5b418012735fbc5943d34d70845eda1939dc8c5083ec1b847253692"
+    },
+    {
+      "id": "es_mx_Yael",
+      "path": "models/original-conversion/8ec0614e7045967b44fcfbf3.json",
+      "size": 970,
+      "sha256": "05d62a3b72d4b76df05913fa80e5347df8ebe2a826ee642f0ccf665fec186951",
+      "ttsEmbeddingSHA256": "a7946f986ebd5f5dad5b1cef91a52078a29ae89f7b826399de08ae899f69a2c7",
+      "referenceAudioSHA256": "139e836bbab85ecb033bfdae6c884888f9f58353be0c9f8ee46912ea4f476dcc"
+    },
+    {
+      "id": "fr_fr_Ninon",
+      "path": "models/original-conversion/174d122413b32ad45135859b.json",
+      "size": 971,
+      "sha256": "2c54495a59d39d2c74ed20a2621cdc7d255065665d9e42537ab97b3db8dc4c54",
+      "ttsEmbeddingSHA256": "01a314f9537065b2b4f03719c8203a2037fce5e021d7675e0a238817ca1ba198",
+      "referenceAudioSHA256": "983f6ff0915cd35cbccdc903893a900a2e0d1e602f4e76fb79cadedb02661a1c"
+    },
+    {
+      "id": "es_mx_Regina",
+      "path": "models/original-conversion/41ae595f743fec241decd1d7.json",
+      "size": 972,
+      "sha256": "bb3c1abdd2479ed70bb9165ed9a26780ea0360ee0290e0034cc14b1915360678",
+      "ttsEmbeddingSHA256": "ee417d4af72cdd445d5a9395e3c7fc7d72d72d7f1e76a9f6c0aa942c3006b64a",
+      "referenceAudioSHA256": "c0c96a1422a88eae9e59207b5dd184533cd05b0cae75a6e23affaf0568ffc214"
+    },
+    {
+      "id": "en_gb_Maeve",
+      "path": "models/original-conversion/637c89a79aa4e14dc8f3b1e1.json",
+      "size": 971,
+      "sha256": "f837e84e7c9474e769f9e3dcbc36fa3a7e22cf6e100283d6a846e6d04d5d511c",
+      "ttsEmbeddingSHA256": "be1231af76129234ff1aa8b7d03531e2c1410d6599eb085c0e9bc7335bd79eb4",
+      "referenceAudioSHA256": "53b5c4388eeb486da4801602c57e61fcecf19bf3d2a4748955be156863cf5f6a"
+    },
+    {
+      "id": "fr_fr_Tiphaine",
+      "path": "models/original-conversion/1cd12c49d5aeb407d6380702.json",
+      "size": 974,
+      "sha256": "234d1df2e1d6f39f1f023f16572316aba79d18c294dcf33e36e20f275be84c83",
+      "ttsEmbeddingSHA256": "1dba934b09caf679ca2e20ae8b319f6cd1ec8378346df29dec5e5882f6f9c014",
+      "referenceAudioSHA256": "dcba28d65f78ea452cc46d4d404090aa63e7dad08797fc39ff96a560927c0156"
+    },
+    {
+      "id": "de_de_Mats",
+      "path": "models/original-conversion/5c7266921b49c3f4e011b887.json",
+      "size": 970,
+      "sha256": "0177a3ed10a5869809668c9d37c80bb47047c3a13e03dfd063d9af909b30f1e2",
+      "ttsEmbeddingSHA256": "dffda76f059352585dc3f0ae0049db0b0857df354b576ca55aec80374d3318dd",
+      "referenceAudioSHA256": "94e35b02133dd3d7c1e3aff93a13523374be117fa12efcd25d3cd977ece1065f"
+    }
+  ]
+}

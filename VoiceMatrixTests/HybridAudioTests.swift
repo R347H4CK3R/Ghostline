@@ -38,4 +38,31 @@ final class HybridAudioTests: XCTestCase {
         XCTAssertEqual(decoded.embedding, vector)
     }
 
+    func testIntegratedConditionedVoiceHandlesMoreThanOneTextChunk() async throws {
+        let (root, manifest) = try Catalog.read()
+        let voice = try XCTUnwrap(manifest.voices.first { $0.engine == "phonon31m-openvoicev2" })
+        let output = FileManager.default.temporaryDirectory.appendingPathComponent("Speech-\(UUID().uuidString).wav")
+        defer { TemporaryAudio.discard(output) }
+        let engine = NeuralSpeech(computeUnits: .cpuOnly)
+        let duration = try await engine.generate(text: "Please bring three blue notebooks to the quiet room before lunch. After lunch, we will read a longer story together and listen to every word.", voice: voice, root: root, manifest: manifest, output: output)
+        XCTAssertGreaterThan(duration, 5)
+        let file = try AVAudioFile(forReading: output)
+        XCTAssertEqual(file.fileFormat.sampleRate, 22050)
+        XCTAssertEqual(Double(file.length) / 22050, duration, accuracy: 0.001)
+        await engine.unload()
+    }
+    func testCancellationBeforeGenerationCreatesNoAudio() async throws {
+        let (root, manifest) = try Catalog.read()
+        let voice = try XCTUnwrap(manifest.voices.first)
+        let output = FileManager.default.temporaryDirectory.appendingPathComponent("Speech-\(UUID().uuidString).wav")
+        let engine = NeuralSpeech(computeUnits: .cpuOnly)
+        let work = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            return try await engine.generate(text: "This must stop.", voice: voice, root: root, manifest: manifest, output: output)
+        }
+        do { _ = try await work.value; XCTFail("Canceled generation must not succeed") }
+        catch is CancellationError { }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: output.path))
+    }
+
 }

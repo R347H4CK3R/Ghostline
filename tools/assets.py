@@ -60,6 +60,11 @@ def validate_qa_report(report,lock):
  if report['modelRevision']!=lock['revision'] or len(profiles)!=len(expected) or {p['id'] for p in profiles}!=set(expected): raise ValueError('QA profiles do not match bundled model')
  for p in profiles:
   if p['embeddingSHA256']!=expected[p['id']] or p['nonSilentWAVDecoded'] is not True or not math.isfinite(p['audioSeconds']) or p['audioSeconds']<=0.1 or not math.isfinite(p['elapsedSeconds']) or p['elapsedSeconds']<0: raise ValueError('Missing or invalid synthesis proof')
+ if lock.get('requiresVoiceConversionChecks'):
+  converted=report.get('conversionChecks',[])
+  if len(converted)!=len(expected) or {p['id'] for p in converted}!=set(expected):raise ValueError('Missing voice conversion proof')
+  for p in converted:
+   if p['embeddingSHA256']!=expected[p['id']] or p['nonSilentWAVDecoded'] is not True or not math.isfinite(p['audioSeconds']) or p['audioSeconds']<=0.1:raise ValueError('Invalid voice conversion evidence')
  return len(profiles)
 
 def bundle(lock, root):

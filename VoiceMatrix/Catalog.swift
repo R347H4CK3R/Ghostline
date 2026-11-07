@@ -7,7 +7,11 @@ struct VoiceProfile: Codable, Identifiable, Hashable {
     let deviceVerified: Bool
     let baseVoiceID: String?
     let usageRestriction: String?
+    let categories: [String]?
     var description: String { "\(accent) • \(category)" + (usageRestriction.map { " • " + $0 } ?? "") }
+    var allCategories: [String] { Array(Set((categories ?? []) + [category])).sorted() }
+    var searchText: String { ([name, category, accent] + allCategories).joined(separator: " ") }
+    func matchesCategory(_ selected: String) -> Bool { allCategories.contains(selected) }
 }
 struct AssetRecord: Codable { let path, sha256: String; let size: Int }
 struct VoiceManifest: Codable {

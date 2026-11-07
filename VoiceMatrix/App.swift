@@ -40,8 +40,8 @@ struct HomeView: View {
                 Image(systemName: "waveform.circle.fill").font(.system(size: 62)).foregroundStyle(.purple, .blue)
                 Text("Your voice.\nA new dimension.").font(.largeTitle.bold())
                 Text("A private voice studio. No account needed.").foregroundStyle(.secondary)
-                NavigationLink { SpeechView() } label: { HomeCard(title: "MAKE SPEECH", detail: "Type words. Choose a voice. Hear them speak.", icon: "text.bubble.fill") }
-                NavigationLink { RecordingView() } label: { HomeCard(title: "CHANGE MY VOICE", detail: "Record. Choose a voice. Hear your changed voice.", icon: "mic.fill") }
+                NavigationLink { SpeechView() } label: { HomeCard(title: "MAKE SPEECH", detail: "Type words. Choose a voice. Hear them speak.", icon: "text.bubble.fill") }.accessibilityIdentifier("make-speech")
+                NavigationLink { RecordingView() } label: { HomeCard(title: "CHANGE MY VOICE", detail: "Record. Choose a voice. Hear your changed voice.", icon: "mic.fill") }.accessibilityIdentifier("change-my-voice")
                 Text("\(studio.voices.count) bundled English profiles • Experimental\n\(studio.onDeviceSpeechChecks) speech checks completed on this iPhone.").font(.footnote).foregroundStyle(.secondary)
             }.padding(24)
         }.background(Color(red: 0.045, green: 0.025, blue: 0.09)).navigationTitle("VoiceMatrix")
@@ -92,7 +92,7 @@ struct AudioActions: View {
         Button { audio.play(url) } label: { Label("Listen / Replay", systemImage: "play.fill") }
         if audio.playing != nil { Button("Stop") { audio.stop() } }
         Button { audio.save(url) } label: { Label(audio.isSaved(url) ? "Saved" : "Save Recording", systemImage: "square.and.arrow.down") }
-            .disabled(audio.isSaved(url))
+            .disabled(audio.isSaved(url)).accessibilityIdentifier("save-recording")
         ShareLink(item: url) { Label("Share Audio", systemImage: "square.and.arrow.up") }
         if let error = audio.error { Text(error).foregroundStyle(.orange) }
     }
@@ -105,15 +105,15 @@ struct VoicesView: View {
     @State private var filter = "All"
     var filtered: [VoiceProfile] {
         studio.voices.filter { voice in
-            (search.isEmpty || "\(voice.name) \(voice.category) \(voice.accent)".localizedCaseInsensitiveContains(search)) &&
-            (filter == "All" || (filter == "Favorites" && studio.favorites.contains(voice.id)) || (filter == "Recent" && studio.recent.contains(voice.id)) || (filter == "American" && voice.accent == "American") || voice.category == filter)
+            (search.isEmpty || voice.searchText.localizedCaseInsensitiveContains(search)) &&
+            (filter == "All" || (filter == "Favorites" && studio.favorites.contains(voice.id)) || (filter == "Recent" && studio.recent.contains(voice.id)) || (filter == "American" && voice.accent == "American") || voice.matchesCategory(filter))
         }
     }
     var body: some View {
         List {
             Section {
                 Picker("Show", selection: $filter) {
-                    ForEach(["All", "American", "Favorites", "Recent"] + Array(Set(studio.voices.map(\.category))).sorted(), id: \.self) { Text($0).tag($0) }
+                    ForEach(["All", "American", "Favorites", "Recent"] + Array(Set(studio.voices.flatMap(\.allCategories))).sorted(), id: \.self) { Text($0).tag($0) }
                 }
                 Text("Included experimental profiles. No celebrity likenesses or near-indistinguishable quality claims.").font(.caption).foregroundStyle(.secondary)
             }
@@ -125,7 +125,7 @@ struct VoicesView: View {
                             studio.selectedID = voice.id; onChoose?()
                         } label: {
                             HStack { Image(systemName: studio.selectedID == voice.id ? "checkmark.circle.fill" : "circle"); Text(voice.name).font(.headline) }
-                        }.disabled(studio.busy).accessibilityLabel("Choose \(voice.name)")
+                        }.disabled(studio.busy).accessibilityLabel("Choose \(voice.name)").accessibilityValue(studio.selectedID == voice.id ? "Selected" : "Not selected").accessibilityIdentifier("voice-" + voice.id)
                         Spacer()
                         Button { studio.favorite(voice.id) } label: { Image(systemName: studio.favorites.contains(voice.id) ? "heart.fill" : "heart") }.accessibilityLabel("Favorite \(voice.name)")
                     }
@@ -138,7 +138,7 @@ struct VoicesView: View {
             }
             if studio.busy { ProgressView("Creating preview…"); Button("Cancel Preview") { studio.cancel() } }
             Text(studio.status).font(.footnote)
-        }.searchable(text: $search, prompt: "Search voices or styles").navigationTitle("Voices")
+        }.searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search voices or styles").navigationTitle("Voices")
     }
 }
 struct SavedView: View {

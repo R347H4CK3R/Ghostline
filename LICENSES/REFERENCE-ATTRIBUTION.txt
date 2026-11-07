@@ -1,0 +1,15 @@
+VoiceMatrix reference conditioning sources
+
+The bundled reference-provenance.json identifies each reference-derived profile. No endorsement or official fictional-character identity is claimed. Reference recordings are development inputs and are not required or bundled at runtime.
+
+Kyutai Unmute Voice Donation Project (2025-2026), volunteer contributors: CC0-1.0. Source: kyutai/tts-voices/voice-donations at revision 323332d33f997de8394f24a193e1a76df720e01a. Project: https://unmute.sh/voice-donation . Per-recording source paths/checksums are preserved. The project collected voices for open-source TTS.
+
+Yamagishi, Junichi; Veaux, Christophe; MacDonald, Kirsten (2019). CSTR VCTK Corpus: English Multi-speaker Corpus for CSTR Voice Cloning Toolkit (version 0.92). University of Edinburgh, Centre for Speech Technology Research. https://doi.org/10.7488/ds/2645 . CC BY 4.0. References selected by Kyutai in kyutai/tts-voices/vctk at the revision above.
+
+Richter, Julius; Wu, Yi-Chiao; Krenn, Steven; Welker, Simon; Lay, Bunlong; Watanabe, Shinji; Richard, Alexander; Gerkmann, Timo (2024). EARS: An Anechoic Fullband Speech Dataset Benchmarked for Speech Enhancement and Dereverberation. Interspeech 2024, 4873-4877. https://doi.org/10.21437/Interspeech.2024-153 . CC BY-NC 4.0. Noncommercial use only. https://github.com/facebookresearch/ears_dataset . References selected by Kyutai in kyutai/tts-voices/ears at the revision above. These profiles are marked Noncommercial use only in the catalog.
+
+Alba MacKenna: Merchant character performance, released CC BY 4.0 in kyutai/tts-voices/alba-mackenna/merchant.wav at the revision above. VoiceMatrix describes this original performance as Wayfarer Merchant; it is not an official game-character likeness. Source card: https://huggingface.co/kyutai/tts-voices/blob/323332d33f997de8394f24a193e1a76df720e01a/README.md .
+
+Processing changes: remove initial silence, select at most 10 seconds of reference speech, downmix/resample to mono PCM16 at 22050 Hz, extract a 256-dimensional OpenVoice V2 speaker-conditioning vector, and store the same float16 values used during model inference. VoiceMatrix uses shared Phonon synthesis followed by neural tone-color conversion for these profiles. No separate network is trained per voice. Human naturalness, character resemblance and controlled listening results are not asserted by this notice.
+
+Model/code licensing is separate from recording licensing. OpenVoice V2 and the Core ML conversion use their included MIT terms; Phonon and FluidAudio use their included Apache-2.0 terms. The individual reference-derived profiles retain the recording-source conditions above. These notices grant no rights to unrelated recognizable performer replicas. Full Creative Commons legal code is included alongside this notice.
