@@ -60,6 +60,8 @@ jobs:
           assert 'GhostlineRVCWebScreen()' in a
           print("Identity fallback guard and five-tab launch checks passed")
           PY
+      - name: Validate categorized three-source discovery snapshot
+        run: python3 scripts/test_three_source_catalog.py
       - name: Install project generator
         run: brew install xcodegen
       - name: Generate Xcode project
