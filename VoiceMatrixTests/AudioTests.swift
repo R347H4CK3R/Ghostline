@@ -6,18 +6,19 @@ import CryptoKit
 final class AudioTests: XCTestCase {
     func testBundledProfilesHaveUniqueIDsAndAssets() throws {
         let (root, manifest) = try Catalog.read()
-        XCTAssertEqual(manifest.voices.count, 37)
-        XCTAssertEqual(Set(manifest.voices.map(\.id)).count, 37)
-        XCTAssertEqual(Set(manifest.voices.map(\.sha256)).count, 37)
+        XCTAssertEqual(manifest.voices.count, 102)
+        XCTAssertEqual(Set(manifest.voices.map(\.id)).count, 102)
+        XCTAssertEqual(Set(manifest.voices.map(\.sha256)).count, 102)
         try Catalog.validate(root: root, manifest: manifest)
     }
     func testAllBundledNeuralVoicesGenerateDecodableNonSilentWAV() async throws {
-        executionTimeAllowance = 360
+        executionTimeAllowance = 900
         let (root, manifest) = try Catalog.read()
         let engine = NeuralSpeech(computeUnits: .cpuOnly)
         let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("VoiceMatrix-QA")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         var results: [[String: Any]] = []
+        var englishChecks: [[String: Any]] = []
         for voice in manifest.voices {
             let output = folder.appendingPathComponent(voice.id).appendingPathExtension("wav")
             let started = Date()
@@ -32,9 +33,21 @@ final class AudioTests: XCTestCase {
             clipAttachment.name = voice.id + ".wav"; clipAttachment.lifetime = .keepAlways; add(clipAttachment)
             results.append(["id": voice.id, "audioSeconds": duration, "elapsedSeconds": Date().timeIntervalSince(started), "audioSHA256": digest, "embeddingSHA256": voice.sha256, "nonSilentWAVDecoded": true])
             print("VoiceMatrix QA passed profile=\(voice.id) audioSeconds=\(duration)")
+            if voice.category == "International Voices" {
+                let text = "Please bring three blue notebooks to the quiet room before lunch."
+                let varied = folder.appendingPathComponent(voice.id + "-english").appendingPathExtension("wav")
+                let variedDuration = try await engine.generate(text: text, voice: voice, root: root, manifest: manifest, output: varied)
+                XCTAssertGreaterThan(variedDuration, 0.1, voice.id)
+                let variedFile = try AVAudioFile(forReading: varied)
+                XCTAssertGreaterThan(variedFile.length, 2400, voice.id)
+                let variedHash = SHA256.hash(data: try Data(contentsOf: varied)).map { String(format: "%02x", $0) }.joined()
+                englishChecks.append(["id": voice.id, "file": varied.lastPathComponent, "referenceText": text, "audioSHA256": variedHash, "audioSeconds": variedDuration])
+                let attachment = XCTAttachment(contentsOfFile: varied)
+                attachment.name = varied.lastPathComponent; attachment.lifetime = .keepAlways; add(attachment)
+            }
         }
-        XCTAssertEqual(results.count, 37)
-        let report: [String: Any] = ["schemaVersion": 1, "platform": "iOS Simulator", "engine": "phonon31m", "modelRevision": manifest.revision, "physicalDeviceVerified": 0, "listeningVerified": 0, "profiles": results]
+        XCTAssertEqual(results.count, 102)
+        let report: [String: Any] = ["schemaVersion": 1, "platform": "iOS Simulator", "engine": "phonon31m", "modelRevision": manifest.revision, "physicalDeviceVerified": 0, "listeningVerified": 0, "profiles": results, "additionalEnglishChecks": englishChecks]
         let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
         try data.write(to: folder.appendingPathComponent("voice-synthesis-results.json"), options: .atomic)
         let reportAttachment = XCTAttachment(contentsOfFile: folder.appendingPathComponent("voice-synthesis-results.json"))

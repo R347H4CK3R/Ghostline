@@ -8,7 +8,7 @@ def inspect(path):
   prefix='Payload/VoiceMatrix.app/'
   info=plistlib.loads(z.read(prefix+'Info.plist'))
   assert info['CFBundleIdentifier']=='com.voicematrix.app'
-  assert info['CFBundleShortVersionString']=='0.2.1'
+  assert info['CFBundleShortVersionString']=='0.2.2'
   assert tuple(map(int,info['MinimumOSVersion'].split('.'))) >= (26,0)
   binary=z.read(prefix+info['CFBundleExecutable'])
   assert binary[:4]==b'\xcf\xfa\xed\xfe' and struct.unpack_from('<I',binary,4)[0]==0x100000c,'Not arm64 Mach-O'

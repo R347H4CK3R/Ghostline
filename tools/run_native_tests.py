@@ -2,7 +2,7 @@
 import json,os,signal,subprocess,sys,time,shutil,hashlib
 from pathlib import Path
 
-def run(command,log,timeout=600):
+def run(command,log,timeout=1200):
  log=Path(log)
  with log.open('wb') as output:
   process=subprocess.Popen(command,stdout=output,stderr=subprocess.STDOUT,start_new_session=True)
@@ -69,7 +69,7 @@ def collect_qa(lock):
 if __name__=='__main__':
  devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','-j']))
  device=next(d['udid'] for group in devices['devices'].values() for d in group if 'iPhone' in d['name'])
- command=['xcodebuild','-project','VoiceMatrix.xcodeproj','-scheme','VoiceMatrix','-destination','platform=iOS Simulator,id='+device,'-derivedDataPath','test-build','-parallel-testing-enabled','NO','-test-timeouts-enabled','YES','-default-test-execution-time-allowance','120','-maximum-test-execution-time-allowance','360','CODE_SIGNING_ALLOWED=NO','test']
+ command=['xcodebuild','-project','VoiceMatrix.xcodeproj','-scheme','VoiceMatrix','-destination','platform=iOS Simulator,id='+device,'-derivedDataPath','test-build','-parallel-testing-enabled','NO','-test-timeouts-enabled','YES','-default-test-execution-time-allowance','120','-maximum-test-execution-time-allowance','900','CODE_SIGNING_ALLOWED=NO','test']
  code=run(command,'native-tests.log')
  if code==0: collect_qa(json.loads(Path('models/phonon-lock.json').read_text()))
  sys.exit(code)
