@@ -10,6 +10,14 @@ Native ARM64 offline English voice studio for iPhone, LiveContainer and Strata. 
 
 [Download the inspected unsigned IPA](https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-studio-1/VoiceMatrix-v0.3.0-experimental.ipa) · [LiveContainer source](https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/source.json) · [Strata source](https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/strata-source.json)
 
+## Video-conditioned Rick and Morty experiment
+
+The supplied video was successfully downloaded and decoded on the connected laptop after the cloud media routes failed. Its opening character cards were inspected, and the Rick (6–16 seconds) and Morty (22–32 seconds) dialogue sections were isolated. A separate shared F5-TTS v1 CPU engine then synthesized **new sentences conditioned directly on those reference clips**, rather than the previous community RVC candidates.
+
+[Measured results and source hashes](docs/qa/rick-morty-video-conditioned.json) · [Reusable reference helper](tools/video_reference.py) · [Workflow and limits](docs/VIDEO-REFERENCE-WORKFLOW.md). Both generated WAVs are non-silent, gain-limited to prevent clipping, and independently transcribed: Rick had zero word errors; Morty omitted one opening filler. These measurements do not establish listener-perceived resemblance. The downloaded laptop video, extraction files, workspace reference clips and matching synthesis-library reference copies were deleted after processing. Original source recordings are not committed.
+
+This remains a development experiment, **not native iOS integration, authorized likeness verification, or an exported RVC .pth model**. No IPA was built and no app voice-count or feed claim was changed.
+
 ## Rick and Morty development experiment
 
 A two-identity **CPU RVC experiment** now produces labeled Rick Sanchez and Morty Smith AI-imitation WAVs. Eight parameter/sentence trials generated non-silent, unclipped audio, preserved source duration within 150 ms, and independently transcribed with zero word errors on the two short test sentences. This tests intelligibility, not likeness. Multiple trials do not count as extra voices.
