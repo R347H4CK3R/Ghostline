@@ -1,0 +1,16 @@
+name: Video reference source checks
+on:
+  push:
+    branches: ['source/voicematrix-video-*']
+permissions:
+  contents: read
+jobs:
+  reference-helper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the audio decoder used by reference checks
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+      - name: Source regressions and real decoder/cleanup checks
+        run: python3 -m unittest discover -s tests -v
