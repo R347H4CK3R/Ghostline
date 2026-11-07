@@ -307,10 +307,11 @@ struct GhostlineAmericanSettings: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("Advanced engines") {
-                NavigationLink("Piper Speaker Test Lab") { PiperVoiceLabView() }
-                NavigationLink("Kokoro Offline") { KokoroOfflineView() }
-                NavigationLink("PocketTTS Presets") { NeuralStudioView() }
+                NavigationLink("American-English Text to Speech") { GhostlineUSTextToSpeech() }
+                NavigationLink("Private RVC Packs") { RVCPackLibraryView() }
                 NavigationLink("RVC Core ML Experiment") { RVCCoreMLModelView() }
+                Text("Non-American Piper and multilingual legacy engines are excluded from the rebuilt voice selectors.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section("About") {
                 Text("GHOSTLINE · American-English Studio")
