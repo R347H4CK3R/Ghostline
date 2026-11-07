@@ -316,6 +316,9 @@ struct GhostlineLibraryView: View {
                 }
             }
             Section("Local voice sources") {
+                NavigationLink("Three sources • indexed voice model discovery") {
+                    GhostlineThreeSourceCatalogView()
+                }
                 NavigationLink("Community Voices • source and rights browser") {
                     GhostlineCommunityVoicesView()
                 }
