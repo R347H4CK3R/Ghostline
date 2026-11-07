@@ -1,12 +1,13 @@
-# GHOSTLINE v0.13.3 -- offline model bundle, not just a catalog
+# GHOSTLINE v0.13.4 -- offline model bundle, not just a catalog
 
-The experimental iOS IPA embeds the complete ONNX/config/model-card files of five en_US Piper model variants:
+The experimental iOS IPA embeds the complete ONNX/config/model-card files of six en_US Piper model variants:
 - LJ Speech (medium) and LJ Speech (high) -- two quality presets from the same public-domain recording corpus and same speaker identity
 - Kristin (medium) -- source-documented public-domain source
 - Norman (medium) -- public-domain LibriVox recordings
 - John (medium) -- LibriVox source; published Kristin lineage
+- Bryce (medium) -- creator self-recorded US male voice, source dataset declared public domain; model card discloses an unavailable prior training checkpoint
 
-These are four distinct modeled speakers, all still **unverified on a physical iPhone**. The high LJ Speech preset's complete bytes/sha256/model-card are pinned at the immutable rhasspy/piper-voices source revision.
+These are five distinct modeled speakers, all still **unverified on a physical iPhone**. The high LJ Speech preset's complete bytes/sha256/model-card are pinned at the immutable rhasspy/piper-voices source revision.
 
 No network or separate per-voice download is required to find the bundled Piper ONNX weights and settings. The runtime still needs an on-device test to prove conversion and audible speech.
 

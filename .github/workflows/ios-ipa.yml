@@ -254,7 +254,18 @@ jobs:
                   "en_US-john-medium": "en_US-kristin-medium",
                   "nl_NL-alex-medium": "nl_BE-rdh-medium",
               }
-              assert ("Trained from scratch" in lineage or
+              creator_source_ok = (
+                  model["id"] == "en_US-bryce-medium" and
+                  model["rights_review"]["decision"] ==
+                      "SOURCE_DOCUMENTED_CREATOR_SELF_RECORDED_EXPERIMENTAL" and
+                  model["dataset_license"] == "public domain" and
+                  model.get("parent_model_id") is None and
+                  "creator-recorded" in lineage.lower() and
+                  "unreleased 2500-epoch voice" in lineage and
+                  "Unreleased prior model" in
+                      model["rights_review"]["training_parent_disclosure"]
+              )
+              assert ("Trained from scratch" in lineage or creator_source_ok or
                       (model["id"] in approved_parents and
                        model.get("parent_model_id") == approved_parents[model["id"]] and
                        "Finetuned from" in lineage))

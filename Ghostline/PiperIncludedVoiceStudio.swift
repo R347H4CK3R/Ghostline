@@ -164,6 +164,16 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
 
     private func provenanceApproved(_ pack: GhostlineIncludedPiperCatalog.Pack) -> Bool {
         let lineage = pack.training_lineage.lowercased()
+        // The Bryce author explicitly published his own recorded voice
+        // under a public-domain source dataset, with an unreleased prior
+        // training checkpoint disclosed in MODEL_CARD. This does not prove
+        // third-party identity rights or target-device voice generation.
+        if pack.id == "en_US-bryce-medium" && pack.parent_model_id == nil &&
+           pack.dataset_license == "public domain" &&
+           lineage.contains("unreleased 2500-epoch voice") &&
+           lineage.contains("creator-recorded") {
+            return true
+        }
         if lineage.contains("trained from scratch") && pack.parent_model_id == nil {
             return true
         }

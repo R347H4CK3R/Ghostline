@@ -10,7 +10,7 @@ app = Path("Ghostline/App.swift").read_text()
 studio = Path("Ghostline/AmericanStudio.swift").read_text()
 manifest = json.loads(Path("Ghostline/Resources/approved-piper-bundle.json").read_text())
 us = [m for m in manifest["models"] if m["language"] == "en_US" and m["id"].startswith("en_US-")]
-assert len(us) == 5
+assert len(us) == 6
 assert len({m["id"] for m in us}) == len(us)
 assert all(m["device_status"] == "UNVERIFIED_CANDIDATE" for m in us)
 assert all(m["claimed_real_person_identity"] is None for m in us)
@@ -39,5 +39,5 @@ assert "not a replica of a celebrity" in studio
 assert "not supported by Piper" in studio
 assert studio.count('.init(id: "') == 8
 
-assert {m["id"] for m in us} == {"en_US-ljspeech-medium","en_US-ljspeech-high","en_US-kristin-medium","en_US-john-medium","en_US-norman-medium"}
-print(f"PASS: American-only Studio, {len(us)} model variants, 4 speaker identities, 0 device-verified voices.")
+assert {m["id"] for m in us} == {"en_US-ljspeech-medium","en_US-ljspeech-high","en_US-kristin-medium","en_US-john-medium","en_US-norman-medium","en_US-bryce-medium"}
+print(f"PASS: American-only Studio, {len(us)} model variants, 5 speaker identities, 0 device-verified voices.")
