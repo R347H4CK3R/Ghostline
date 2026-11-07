@@ -1,0 +1,78 @@
+name: Finalize verified studio feeds and retain QA audio
+on:
+  push:
+    branches: ['maintenance/voicematrix-studio-*']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require the inspected published release
+        run: |
+          gh run watch 42401837295 --repo "$GITHUB_REPOSITORY" --interval 30 --exit-status
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/42401837295" > studio-publication-run.json
+          python3 - <<'PY'
+          import json
+          r=json.load(open('studio-publication-run.json'))
+          assert r['head_sha']=='6f782847b947e4d8586588323ea755d08f7e7c0f' and r['conclusion']=='success'
+          PY
+          gh release download voicematrix-v0.3.0-studio-1 --repo "$GITHUB_REPOSITORY" --pattern source.json --pattern strata-source.json --pattern catalog-summary.json --pattern phonon-lock.json --pattern asr-intelligibility-results.json --pattern voice-synthesis-results.json --pattern release-verification.json --pattern RELEASE-NOTES-0.3.0.md --clobber
+      - name: Preserve every native test WAV with the release
+        run: |
+          for shard in 0 1 2 3; do
+            gh run download 42401146982 --repo "$GITHUB_REPOSITORY" --name "VoiceMatrix-0.3.0-QA-$shard" --dir "native-artifacts/$shard"
+          done
+          python3 tools/aggregate_native_qa.py native-artifacts --output qa-combined
+          python3 - <<'PY'
+          import hashlib,json,pathlib,zipfile
+          actual=json.load(open('qa-combined/voice-synthesis-results.json'));published=json.load(open('voice-synthesis-results.json'))
+          assert actual==published
+          with zipfile.ZipFile('VoiceMatrix-0.3.0-native-QA-audio.zip','w',compression=zipfile.ZIP_DEFLATED) as z:
+           for p in sorted(pathlib.Path('qa-combined').iterdir()):z.write(p,p.name)
+          p=pathlib.Path('VoiceMatrix-0.3.0-native-QA-audio.zip')
+          with p.open('rb') as f:digest=hashlib.file_digest(f,'sha256').hexdigest()
+          pathlib.Path(str(p)+'.sha256').write_text(digest+'  '+p.name+'\n')
+          PY
+          gh release upload voicematrix-v0.3.0-studio-1 VoiceMatrix-0.3.0-native-QA-audio.zip VoiceMatrix-0.3.0-native-QA-audio.zip.sha256
+      - name: Update both subscribed feeds and publish honest source documentation
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,shutil
+          summary=json.load(open('catalog-summary.json'));verification=json.load(open('release-verification.json'))
+          assert summary['approvedProfiles']>=500 and verification['archiveDownloadedAfterPublication'] is True
+          for name in ['source.json','strata-source.json']:
+           version=json.load(open(name))['apps'][0]['versions'][0]
+           assert version['version']=='0.3.0' and version['buildVersion']=='5' and version['size']==verification['bytes']
+           assert version['downloadURL']=='https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-studio-1/VoiceMatrix-v0.3.0-experimental.ipa'
+          pathlib.Path('docs/qa').mkdir(parents=True,exist_ok=True)
+          for source,target in [('catalog-summary.json','docs/qa/0.3.0-catalog-summary.json'),('asr-intelligibility-results.json','docs/qa/0.3.0-asr-intelligibility.json'),('voice-synthesis-results.json','docs/qa/0.3.0-native-results.json'),('release-verification.json','docs/qa/0.3.0-release-verification.json'),('phonon-lock.json','models/released-voices.json'),('RELEASE-NOTES-0.3.0.md','docs/RELEASE-NOTES-0.3.0.md')]:shutil.copyfile(source,target)
+          PY
+          python3 tools/update_studio_readme.py
+          python3 -m unittest discover -s tests -v
+          git fetch origin main
+          git merge-base --is-ancestor origin/main HEAD
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add source.json strata-source.json README.md docs/RELEASE-NOTES-0.3.0.md docs/qa/0.3.0-catalog-summary.json docs/qa/0.3.0-asr-intelligibility.json docs/qa/0.3.0-native-results.json docs/qa/0.3.0-release-verification.json models/released-voices.json
+          git commit -m "Publish verified 0.3.0 voice categories and update LiveContainer and Strata feeds"
+          git push origin HEAD:refs/heads/main
+          git rev-parse HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: VoiceMatrix-0.3.0-finalization
+          path: |
+            source.json
+            strata-source.json
+            studio-publication-run.json
+            release-verification.json
+            README.md
+          if-no-files-found: warn
