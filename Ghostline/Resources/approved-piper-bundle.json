@@ -5,7 +5,7 @@
   "repo_license": "MIT",
   "engine_runtime_license": "GPL-3.0; source/distribution obligations apply",
   "distribution_scope": "experimental unsigned IPA artifact only; not a public release",
-  "validation_note": "Five source-documented en_US Piper TTS model files bundled for offline use, representing four speaker identities (LJ Speech high and medium are the SAME speaker). 589 directory listings and other character/horror sources remain discovery-only, not licensed or functional offline model files. Zero independently verified iPhone audio or real-person/character identities.",
+  "validation_note": "Six pinned en_US Piper model variants, five distinct modeled source speakers. New Bryce candidate is author-self-recorded and public-domain dataset with explicitly disclosed unreleased parent checkpoint; rights limited to source-documented experimental use. LJ Speech high/medium share a single speaker. Zero physical iPhone audio or identity verification; 589 third-party discovery listings are NOT bundled voices.",
   "verified_identity_count": 0,
   "device_verified_audio_count": 0,
   "models": [
@@ -238,6 +238,52 @@
         "dataset_evidence_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/ljspeech/high/MODEL_CARD",
         "identity_permissions_independently_verified": false,
         "device_generation_verified": false
+      }
+    },
+    {
+      "id": "en_US-bryce-medium",
+      "display_name": "Bryce • Original US English Male",
+      "engine": "piper",
+      "category": "open_licensed_synthetic",
+      "language": "en_US",
+      "speaker_ids": [
+        0
+      ],
+      "license": "MIT-weight-repository / public-domain source dataset; preserve attribution",
+      "dataset_license": "public domain",
+      "training_lineage": "Creator-recorded, public-domain source, finetuned from creator's unreleased 2500-epoch voice; model card explicitly states 'This is my voice'. Parent model not independently available for inspection.",
+      "claimed_real_person_identity": null,
+      "voice_usage_rights": "Author's own public-domain-source voice published within MIT Piper repository. Model ancestry includes unpublished creator checkpoint; character or actor likeness permissions not established.",
+      "device_status": "UNVERIFIED_CANDIDATE",
+      "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/bryce/medium/MODEL_CARD",
+      "files": [
+        {
+          "name": "model.onnx",
+          "upstream_path": "en/en_US/bryce/medium/en_US-bryce-medium.onnx",
+          "size": 63531379,
+          "sha256": "dc9caa6c313199ffb5ac698b6e542fa6cba388aeaf2731e25262e33b9810aef1"
+        },
+        {
+          "name": "model.onnx.json",
+          "upstream_path": "en/en_US/bryce/medium/en_US-bryce-medium.onnx.json",
+          "size": 4966,
+          "sha256": "7ceb1bc4af6d4e41b6d1edbb86c67e91e01eaa71f66db4cd0ae92ac704d415be"
+        },
+        {
+          "name": "MODEL_CARD",
+          "upstream_path": "en/en_US/bryce/medium/MODEL_CARD",
+          "size": 405,
+          "sha256": "96042c4ddbd405f6e40e2938b069987f4016a35832114bbefed1ed04242ee532"
+        }
+      ],
+      "rights_review": {
+        "decision": "SOURCE_DOCUMENTED_CREATOR_SELF_RECORDED_EXPERIMENTAL",
+        "reviewed_at": "2026-11-06",
+        "model_card_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/bryce/medium/MODEL_CARD",
+        "dataset_evidence_url": "https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/en/en_US/bryce/medium/MODEL_CARD",
+        "identity_permissions_independently_verified": false,
+        "device_generation_verified": false,
+        "training_parent_disclosure": "Unreleased prior model (2500 epochs) described by the original self-identified creator; no separately downloadable parent weights."
       }
     }
   ]

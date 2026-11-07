@@ -103,7 +103,7 @@ struct GhostlineAmericanDashboard: View {
                         .font(.subheadline).foregroundStyle(.secondary)
                     Label("\(GhostlineUSVoices.all.count) American-English model variants packaged in IPA",
                           systemImage: "shippingbox")
-                    Text("Offline from first launch. Four distinct source voices; LJ Speech high/medium share one speaker.")
+                    Text("Offline from first launch. Five distinct source voices; LJ Speech high/medium share one speaker.")
                         .font(.caption).foregroundStyle(.secondary)
                         .font(.caption).foregroundStyle(.secondary)
                 }
@@ -160,7 +160,7 @@ struct GhostlineUSVoiceLibrary: View {
                 Text("American English only").font(.headline).foregroundStyle(.purple)
                 Text("The active TTS voice picker uses en_US models exclusively. A category describes a creative usage, not a person's voice identity.")
                     .font(.footnote).foregroundStyle(.secondary)
-                Text("\(GhostlineUSVoices.all.count) bundled offline model variants • 4 speaker identities")
+                Text("\(GhostlineUSVoices.all.count) bundled offline model variants • 5 speaker identities")
                     .font(.caption)
                 Text("0 iPhone audio-verified voices. No celebrity or character identities verified.")
                     .font(.caption)
@@ -287,7 +287,7 @@ struct GhostlineAmericanDownloads: View {
         List {
             Section("Included American English") {
                 Text("\(GhostlineUSVoices.all.count) en_US model variants packaged for offline use immediately.")
-                Text("These represent four distinct source voices; two LJ Speech variants share a speaker. No network download is required for their included Piper ONNX/config files.")
+                Text("These represent five distinct source voices; two LJ Speech variants share a speaker. No network download is required for their included Piper ONNX/config files.")
                     .font(.caption).foregroundStyle(.secondary)
                 Text("Additional languages remain in earlier experimental builds; the new Studio and Voices tabs show American-English TTS models only.")
                     .font(.caption).foregroundStyle(.secondary)

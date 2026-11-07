@@ -71,7 +71,12 @@ def main():
         assert pack["device_status"] == "UNVERIFIED_CANDIDATE"
         assert pack["claimed_real_person_identity"] is None
         review = pack["rights_review"]
-        assert review["decision"] == "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY", key
+        if key == "en_US-bryce-medium":
+            assert review["decision"] == "SOURCE_DOCUMENTED_CREATOR_SELF_RECORDED_EXPERIMENTAL"
+            assert "Unreleased prior model" in review["training_parent_disclosure"]
+            assert "creator-recorded" in pack["training_lineage"].lower()
+        else:
+            assert review["decision"] == "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY", key
         assert review["model_card_url"] == pack["model_card_url"], key
         assert review["dataset_evidence_url"].startswith("https://"), key
         assert review["identity_permissions_independently_verified"] is False, key
@@ -94,7 +99,10 @@ def main():
         else:
             assert pack.get("parent_model_id") is None
             assert pack.get("parent_lineage_card_phrase") is None
-            assert "Trained from scratch" in pack["training_lineage"]
+            if key != "en_US-bryce-medium":
+                assert "Trained from scratch" in pack["training_lineage"]
+            else:
+                assert "unreleased 2500-epoch voice" in pack["training_lineage"]
         assert pack["speaker_ids"] and pack["speaker_ids"] == list(range(len(pack["speaker_ids"])))
         folder = root / key
         folder.mkdir(exist_ok=True)
@@ -138,7 +146,8 @@ def main():
         if config.get("speaker_id_map"):
             assert sorted(config["speaker_id_map"].values()) == pack["speaker_ids"]
         card = (folder / "MODEL_CARD").read_text(encoding="utf-8")
-        expected_lineage = derivative[1].lower() if derivative else "trained from scratch"
+        expected_lineage = ("this is my voice" if key == "en_US-bryce-medium" else
+                            (derivative[1].lower() if derivative else "trained from scratch"))
         if (pack["dataset_license"].lower() not in card.lower()
                 or expected_lineage not in card.lower()):
             raise RuntimeError(f"License/lineage verification failed: {key}")

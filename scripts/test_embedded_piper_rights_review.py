@@ -33,7 +33,11 @@ clean_derivatives = {
 by_id = {p["id"]: p for p in approved["models"]}
 for item in approved["models"]:
     review = item["rights_review"]
-    assert review["decision"] == "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY", item["id"]
+    if item["id"] == "en_US-bryce-medium":
+        assert review["decision"] == "SOURCE_DOCUMENTED_CREATOR_SELF_RECORDED_EXPERIMENTAL"
+        assert "Unreleased prior model" in review["training_parent_disclosure"]
+    else:
+        assert review["decision"] == "SOURCE_DOCUMENTED_EXPERIMENTAL_ONLY", item["id"]
     assert date.fromisoformat(review["reviewed_at"]) <= date.today()
     assert review["model_card_url"] == item["model_card_url"]
     assert review["model_card_url"].startswith("https://huggingface.co/rhasspy/piper-voices/blob/")
@@ -56,8 +60,11 @@ for item in approved["models"]:
         assert review["parent_model_source_url"] == by_id[parent_id]["model_card_url"]
     else:
         assert item.get("parent_model_id") is None
-        assert "Trained from scratch" in item["training_lineage"]
-assert active_ids == {"en_US-ljspeech-medium", "en_US-kristin-medium", "en_US-norman-medium", "en_US-john-medium", "en_US-ljspeech-high"}, "Rebuilt IPA must package American English only"
+        if item["id"] == "en_US-bryce-medium":
+            assert "creator-recorded" in item["training_lineage"].lower()
+        else:
+            assert "Trained from scratch" in item["training_lineage"]
+assert active_ids == {"en_US-ljspeech-medium", "en_US-kristin-medium", "en_US-norman-medium", "en_US-john-medium", "en_US-ljspeech-high", "en_US-bryce-medium"}, "Rebuilt IPA must package American English only"
 assert "sv_SE-nst-medium" in held_ids, "Unreconciled source card cannot be cleared implicitly"
 print(
     f"Source-rights gate passed: {len(active_ids)} source-documented experimental candidate packs, "
