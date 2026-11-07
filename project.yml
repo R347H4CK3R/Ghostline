@@ -11,8 +11,8 @@ settings:
     SWIFT_VERSION: '5.0'
     TARGETED_DEVICE_FAMILY: '1,2'
     GENERATE_INFOPLIST_FILE: YES
-    MARKETING_VERSION: '0.2.2'
-    CURRENT_PROJECT_VERSION: '4'
+    MARKETING_VERSION: '0.3.0'
+    CURRENT_PROJECT_VERSION: '5'
     CODE_SIGNING_ALLOWED: NO
 targets:
   VoiceMatrix:
@@ -23,6 +23,9 @@ targets:
         excludes: [Resources]
       - path: Assets.xcassets
       - path: VoiceMatrix/Resources/Phonon
+        type: folder
+        buildPhase: resources
+      - path: VoiceMatrix/Resources/OpenVoice
         type: folder
         buildPhase: resources
     dependencies:

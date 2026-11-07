@@ -5,3 +5,8 @@ Payload/
 *.xcodeproj/
 __pycache__/
 .DS_Store
+
+VoiceMatrix/Resources/OpenVoice/
+qa-audio/
+voice-synthesis-results.json
+qa-attachments/

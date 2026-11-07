@@ -1,5 +1,5 @@
 """Development-only asset integrity and pinned Phonon bundling; never run by the app."""
-import argparse, hashlib, json, os, urllib.request, urllib.parse, struct, math
+import argparse, hashlib, json, os, urllib.request, urllib.parse, struct, math, base64, shutil
 from pathlib import Path
 
 def validate(root, entries):
@@ -33,10 +33,23 @@ def tensor_digest(data):
  if any(not math.isfinite(v[0]) for v in struct.iter_unpack('<f',raw)): raise ValueError('Non-finite voice conditioning')
  return hashlib.sha256(json.dumps(shape).encode()+raw).hexdigest()
 
+def conversion_tensor(data,profile,profiles):
+ value=json.loads(data)
+ if value['id']!=profile['id']:raise ValueError('Wrong conditioning ID')
+ base=next((p for p in profiles if p['id']==profile.get('baseVoiceID') and p.get('engine')=='phonon31m'),None)
+ if not base or value['ttsEmbeddingSHA256']!=base['sha256']:raise ValueError('Wrong source voice binding')
+ if value['converterRevision']!=profile['converterRevision']:raise ValueError('Wrong conversion model binding')
+ raw=base64.b64decode(value['embeddingFP16Base64'],validate=True)
+ if len(raw)!=512:raise ValueError('Expected 256 half precision speaker values')
+ values=[v[0] for v in struct.iter_unpack('<e',raw)]
+ if not all(math.isfinite(v) for v in values) or sum(v*v for v in values)<=1e-8:raise ValueError('Invalid speaker conditioning')
+ return hashlib.sha256(b'OpenVoiceV2-speaker-fp16-v1'+raw).hexdigest()
+
 def validate_profiles(root, profiles):
  unique_profiles(profiles); seen=set()
  for profile in profiles:
-  digest=tensor_digest((Path(root)/profile['path']).read_bytes())
+  data=(Path(root)/profile['path']).read_bytes()
+  digest=conversion_tensor(data,profile,profiles) if profile.get('engine')=='phonon31m-openvoicev2' else tensor_digest(data)
   if digest in seen: raise ValueError('Duplicate conditioning data: '+profile['id'])
   if profile.get('tensorSha256') and digest!=profile['tensorSha256']: raise ValueError('Conditioning checksum mismatch')
   seen.add(digest)
@@ -55,6 +68,10 @@ def bundle(lock, root):
   path=root/e['path']; path.parent.mkdir(parents=True,exist_ok=True)
   try: validate(root,[e]); continue
   except ValueError: pass
+  if e.get('localPath'):
+   source=Path(e['localPath']).resolve()
+   if not source.is_relative_to(Path.cwd().resolve()) or not source.is_file():raise ValueError('Missing local conditioning profile')
+   shutil.copyfile(source,path);validate(root,[e]);continue
   url=lock['baseURL']+'/'+urllib.parse.quote(e['remotePath'],safe='/')
   tmp=path.with_suffix(path.suffix+'.partial')
   with urllib.request.urlopen(url,timeout=120) as src, tmp.open('wb') as dst:

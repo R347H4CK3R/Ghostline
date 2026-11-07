@@ -1,0 +1,42 @@
+name: VoiceMatrix shared TTS and conversion integration probe
+on:
+  push:
+    branches: ['probe/voicematrix-hybrid-*']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source and packaging regression checks
+        run: python3 -m unittest discover -s tests -v
+      - name: Bundle offline runtime
+        run: |
+          python3 tools/assets.py
+          python3 tools/bundle_openvoice.py
+          brew install xcodegen
+      - name: Build native ARM64 and test integrated audio plumbing
+        env:
+          NSUnbufferedIO: YES
+        run: |
+          xcodegen generate
+          xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 || { tail -120 build.log; exit 1; }
+          python3 - <<'PY'
+          import sys,json,subprocess
+          sys.path.insert(0,'tools')
+          from run_native_tests import run
+          devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','-j']))
+          device=next(d['udid'] for group in devices['devices'].values() for d in group if 'iPhone' in d['name'])
+          code=run(['xcodebuild','-project','VoiceMatrix.xcodeproj','-scheme','VoiceMatrix','-destination','platform=iOS Simulator,id='+device,'-derivedDataPath','hybrid-tests','-parallel-testing-enabled','NO','-only-testing:VoiceMatrixTests/HybridAudioTests','-only-testing:VoiceMatrixTests/ConversionTests','CODE_SIGNING_ALLOWED=NO','test'],'hybrid-tests.log',timeout=1200)
+          sys.exit(code)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: VoiceMatrix-hybrid-probe
+          path: |
+            build.log
+            hybrid-tests.log
+          if-no-files-found: warn

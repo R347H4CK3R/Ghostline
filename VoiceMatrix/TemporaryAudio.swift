@@ -1,7 +1,7 @@
 import Foundation
 
 enum TemporaryAudio {
-    static let prefixes = ["Speech-", "Recording-", "Imported-"]
+    static let prefixes = ["Speech-", "Recording-", "Imported-", "Converted-"]
     static func discard(_ url: URL?) {
         guard let url,
               url.deletingLastPathComponent().standardizedFileURL == FileManager.default.temporaryDirectory.standardizedFileURL,
