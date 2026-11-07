@@ -1,0 +1,8 @@
+{
+  "candidateProfiles": 102,
+  "approvedProfiles": 101,
+  "excludedProfiles": [
+    "es_mx_Rebeca"
+  ],
+  "method": "New profiles require <=10% ASR word error on each of two sentences, no full-scale samples, matching native audio hashes, and non-silent RMS. Not listening or perceptual distinctness verification."
+}

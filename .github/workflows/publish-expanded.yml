@@ -1,0 +1,40 @@
+name: Publish QA-approved expanded VoiceMatrix
+on:
+  push:
+    branches: ['release/voicematrix-expanded-*']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Packaging regression checks
+        run: python3 -m unittest discover -s tests -v
+      - name: Retrieve tested candidate and keep only approved profiles
+        run: |
+          gh run download 42390971417 --repo "$GITHUB_REPOSITORY" --name VoiceMatrix-v0.2.2-experimental --dir candidate
+          python3 tools/prepare_expanded_release.py candidate/VoiceMatrix-v0.2.2-experimental.ipa VoiceMatrix-v0.2.2-experimental.ipa --asr docs/qa/0.2.2-asr-intelligibility.json
+          python3 tools/inspect_ipa.py VoiceMatrix-v0.2.2-experimental.ipa
+          shasum -a 256 VoiceMatrix-v0.2.2-experimental.ipa > VoiceMatrix-v0.2.2-experimental.ipa.sha256
+      - name: Publish inspected IPA and feeds
+        run: |
+          TAG=voicematrix-v0.2.2-expanded-${GITHUB_RUN_NUMBER}
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/VoiceMatrix-v0.2.2-experimental.ipa"
+          python3 tools/install_sources.py "$URL"
+          gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "VoiceMatrix 0.2.2 expanded voices" --notes-file docs/RELEASE-NOTES-0.2.2.md VoiceMatrix-v0.2.2-experimental.ipa VoiceMatrix-v0.2.2-experimental.ipa.sha256 source.json strata-source.json docs/qa/0.2.2-asr-intelligibility.json
+          gh release view "$TAG" --json assets --jq '.assets[].name' > release-assets.txt
+          python3 -c 'from pathlib import Path; a=Path("release-assets.txt").read_text().splitlines(); assert all(x in a for x in ["VoiceMatrix-v0.2.2-experimental.ipa", "source.json", "strata-source.json"])'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceMatrix-0.2.2-approved
+          path: |
+            VoiceMatrix-v0.2.2-experimental.ipa
+            VoiceMatrix-v0.2.2-experimental.ipa.sha256
+            source.json
+            strata-source.json
+          if-no-files-found: error

@@ -533,12 +533,6 @@
       "size": 256208
     },
     {
-      "path": "voices/es_mx_Rebeca.safetensors",
-      "remotePath": "phonon/phonon-31m-en/voices/es_mx_Rebeca.safetensors",
-      "sha256": "3b836fc647a1b77525939e88795d4a037804bda9821c5347c066ba8ff520b599",
-      "size": 256208
-    },
-    {
       "path": "voices/es_mx_Regina.safetensors",
       "remotePath": "phonon/phonon-31m-en/voices/es_mx_Regina.safetensors",
       "sha256": "ee417d4af72cdd445d5a9395e3c7fc7d72d72d7f1e76a9f6c0aa942c3006b64a",
@@ -1330,7 +1324,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "613d9bdd4e2edc70d600d6dc975495cfd5dadb81927384a9d9a3001fa812f00e",
       "sourceLocale": "de_de"
@@ -1347,7 +1341,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "43c81212f7165bb846197e7f7084465b277257380c25ba2326b8f203f66ccf5a",
       "sourceLocale": "de_de"
@@ -1364,7 +1358,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "e4b3fd6cae8e65db3051cf3cde2f8ec27a5e5c915830cc09c2c90efd27e23045",
       "sourceLocale": "de_de"
@@ -1381,7 +1375,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "acc5127a5f0bae56f61f3ce2a6c5874d3c5036b69baca2cbcc3d3f1752b7ca80",
       "sourceLocale": "de_de"
@@ -1398,7 +1392,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "c4697567d3f7ed601ca84fbc7d95fe89a88773b53ae0790274ed3c2f1dbde068",
       "sourceLocale": "de_de"
@@ -1415,7 +1409,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "381ba36a12338450f85c223acd7d80ad046e800c6249b7510c4ae284bbdd2065",
       "sourceLocale": "de_de"
@@ -1432,7 +1426,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "12344f94c1fb95ef1125443b2fe27087c07513bf2bbdef3727c3c0e3a0a63b88",
       "sourceLocale": "de_de"
@@ -1449,7 +1443,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "616b35c92317efc4d36f11ca4381e7ec5572fd3cc07006a785889482f9f50058",
       "sourceLocale": "de_de"
@@ -1466,7 +1460,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "3c80b3714a61c251ae61f2012d6a44665d7d7350b82464767381de90f45a92b3",
       "sourceLocale": "de_de"
@@ -1483,7 +1477,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "d7d798e43251a7d6fd0e22ee81ba7e7fe7ec204111147fb1946e7bca50fac5a8",
       "sourceLocale": "de_de"
@@ -1500,7 +1494,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "ac7336b847e68c7ade2f064e7018cd36714173f9e15c5fc5834032740aa70dbb",
       "sourceLocale": "de_de"
@@ -1517,7 +1511,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "ddd7104e01d5739caa73a805eca53e18a0311a4c4a387d1d464bbb0f4aa10046",
       "sourceLocale": "de_de"
@@ -1534,7 +1528,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "93350874391fae8ba29d6d2ebe6b43275745f4876051fb3c6c7f7001bef2cae3",
       "sourceLocale": "de_de"
@@ -1551,7 +1545,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "5188444b65e8b6adf8fca211f495294cad0d4943a7a26325adac49604183fc5a",
       "sourceLocale": "es_es"
@@ -1568,7 +1562,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "dc59eb1381537240ed9f8fc3ce0c01679d00d0a46de620afb19707451d58d6de",
       "sourceLocale": "es_es"
@@ -1585,7 +1579,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "1af043453e1cd51e3b2e0510a1af79d5ca4e23c246fa86971a5fbbf9144f84dd",
       "sourceLocale": "es_es"
@@ -1602,7 +1596,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "dc8071d561fdca0a4887395151e8cbbeadc24ca689bee50eefd7678c97c270e7",
       "sourceLocale": "es_es"
@@ -1619,7 +1613,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "b51afda0eff09e47e4755679c3a5e43c16e5960df95cf7e4cf80057fd2bdfaae",
       "sourceLocale": "es_es"
@@ -1636,7 +1630,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "30a4da8cdaab76ed45331589ae3bba9a0bcf590dee1ba40dce069c0b5de067b3",
       "sourceLocale": "es_es"
@@ -1653,7 +1647,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "821689ae51bd40df7d9fa260b89b074a737c692111fadf66b45c229ffe30e137",
       "sourceLocale": "es_es"
@@ -1670,7 +1664,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "9ffc9ee115f81e09a52b9d4297ffc56d74964adf17c944172b35b469070fdd7a",
       "sourceLocale": "es_es"
@@ -1687,7 +1681,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "b992d34fc7ef3eff669a69078d374dc39b3d62a5ffdbc8bd74d130ff3f35f20e",
       "sourceLocale": "es_es"
@@ -1704,7 +1698,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "5097ebe7419a45ee0fc44c2984cd5a59b361056cd4e012ea618e4d858a5c8a5f",
       "sourceLocale": "es_es"
@@ -1721,7 +1715,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "e67ee72c9dbdfed33ae001b3159922aaa911145a1462b661884bace35ea67c5c",
       "sourceLocale": "es_es"
@@ -1738,7 +1732,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "f9eeb38a1572d8d33a56ece474b16ed0fe932ac03738fa21a0fc235f0720dec7",
       "sourceLocale": "es_es"
@@ -1755,7 +1749,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "cf8f490041096dc329d115e35f85ab60bc0810260f13f58e510f24c81e2db1f4",
       "sourceLocale": "es_es"
@@ -1772,7 +1766,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "2219da3093866e12da64b2c4fff6a195a426595524bf0d32e1270e3ac33ec81e",
       "sourceLocale": "es_mx"
@@ -1789,7 +1783,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "ad2091af3409ead5c8fe0aefde0f0eb150a865d0da59b4182be83cab62c9ec0e",
       "sourceLocale": "es_mx"
@@ -1806,7 +1800,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "605b0240f14be8ae141c23479037f57caaa9d6adc02748a43bdcac8c07c72019",
       "sourceLocale": "es_mx"
@@ -1823,7 +1817,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "6908566d04d183d571958d4247de4ce464cb2ad8316b4d8fafc9156679d39794",
       "sourceLocale": "es_mx"
@@ -1840,7 +1834,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "2c019a1916021037b181cd61fc446b4b6e0fbe4d9ab37e53714ab0c71297985e",
       "sourceLocale": "es_mx"
@@ -1857,7 +1851,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "f7d469d1c875930b89db51ebe70d2a8fa54deb5eaf8f1f73928067c90804e9d6",
       "sourceLocale": "es_mx"
@@ -1874,26 +1868,9 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "c133a567f18b76a381aa2af23799f08cc424a7e9704afc264607d1bfe4cb3b7c",
-      "sourceLocale": "es_mx"
-    },
-    {
-      "id": "es_mx_Rebeca",
-      "name": "Rebeca",
-      "category": "International Voices",
-      "language": "en",
-      "accent": "Mexican Spanish reference; English speech",
-      "path": "voices/es_mx_Rebeca.safetensors",
-      "sha256": "3b836fc647a1b77525939e88795d4a037804bda9821c5347c066ba8ff520b599",
-      "size": 256208,
-      "engine": "phonon31m",
-      "source": "gradium/phonon-voices",
-      "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
-      "deviceVerified": false,
-      "tensorSha256": "7493c798039fd3c77755eefa86295b56d3742ff63de15f4b53679379393f1b1f",
       "sourceLocale": "es_mx"
     },
     {
@@ -1908,7 +1885,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "2a5490f68d3327e93ff97c14f5c43892101c7f83bde11c299865e9964a50b1e0",
       "sourceLocale": "es_mx"
@@ -1925,7 +1902,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "cdf3c825c86085ec3b061a695a085025021821c8c94a266d457ba3d6d3ef5344",
       "sourceLocale": "es_mx"
@@ -1942,7 +1919,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "1a7fd09b1d2029c6b5b4b79e719e465f45bed3d477f1d9384692d87e9e9645c4",
       "sourceLocale": "es_mx"
@@ -1959,7 +1936,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "97e2a24a88b6ad6aad60b822f2d70e14f1bb41f8945660aef33df42591d899df",
       "sourceLocale": "es_mx"
@@ -1976,7 +1953,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "80cd516da5a7c9d5d0c5da742598026a8108b9d173ddd461b20597dae6435066",
       "sourceLocale": "fr_fr"
@@ -1993,7 +1970,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "7d7aafb4d462c02a5b133680aebe48fb3d738d01141b79e09298f24dc576fbb0",
       "sourceLocale": "fr_fr"
@@ -2010,7 +1987,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "e4fa3b6cae4cc985452d0025fb9d6e8aed3e54a78b4234ff68d607152ba3f6d6",
       "sourceLocale": "fr_fr"
@@ -2027,7 +2004,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "dbac456587ee2c0bbe0961f990b31ccf7e777ba8ca8cfc70b691fb9a71f18f10",
       "sourceLocale": "fr_fr"
@@ -2044,7 +2021,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "691f5587bd114705850db1584717e17791221eb07cdef5363befef4da074f0c5",
       "sourceLocale": "fr_fr"
@@ -2061,7 +2038,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "6573ec6c084046cfc6df185413dc45835e52e0c8a347ee5fb5cd7527af9be062",
       "sourceLocale": "fr_fr"
@@ -2078,7 +2055,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "7aaae58d356b11ee6f4a934f9b31b622ba554de31646cd1d3a2e76ebc6ea2259",
       "sourceLocale": "fr_fr"
@@ -2095,7 +2072,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "4b23e890f3205988a2d6c58581ae4f58be8041bab9bf335ff604fa2ca450f8cc",
       "sourceLocale": "fr_fr"
@@ -2112,7 +2089,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "253dd87568b6c1ade7e1470f027c01fd24d688ed217867c0db9b69aba20b377b",
       "sourceLocale": "fr_fr"
@@ -2129,7 +2106,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "8fd9d8948cf22ceb8ab96e7fcea1a2d0bdeeac2abc3398140cd2b1e0024289f8",
       "sourceLocale": "fr_fr"
@@ -2146,7 +2123,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "5d66c4c0a28ee9e45eeaf9c22b4ddda2c91230a03fa68f55d2a221a09a6cbf75",
       "sourceLocale": "fr_fr"
@@ -2163,7 +2140,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "d79c71f80324a36873969f343a9011f4494f3713c2016a2663072b1759054925",
       "sourceLocale": "fr_fr"
@@ -2180,7 +2157,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "1cca4c1bc9081d703a82a09c0374d5dd7ea4b0cf4e0f461e775224117d8b0dd0",
       "sourceLocale": "fr_fr"
@@ -2197,7 +2174,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "d2bad2f5709f2466c39b81bd133f755696d4e5849461cfdb1f1e6fd93863fff2",
       "sourceLocale": "fr_fr"
@@ -2214,7 +2191,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "a3c2d92bb1397ed6ab9b176a9ed87dc024b21b537a6be354dcc4ab50361ab80f",
       "sourceLocale": "fr_fr"
@@ -2231,7 +2208,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "a6a7fd86d870ac6d671a8f695afcba8d529cffda6c73320f9c7c80912440d3cc",
       "sourceLocale": "pt_br"
@@ -2248,7 +2225,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "9b2541c8713531b425caa483ec27812e2e57910bc661362999077065115b4a6a",
       "sourceLocale": "pt_br"
@@ -2265,7 +2242,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "ad3ca48e09e588ed18f256f782c18902bf1e5df8f11d6adccd5b5f0d08afa150",
       "sourceLocale": "pt_br"
@@ -2282,7 +2259,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "577456c1db92f9dacdd84f3d8170c4dcb6da77707aa5afe5bdb024d0a41df627",
       "sourceLocale": "pt_br"
@@ -2299,7 +2276,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "65fd71b2370af8fbd94735fdab7ff5dacd3d22240fff5a010b50004e226baa6a",
       "sourceLocale": "pt_br"
@@ -2316,7 +2293,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "c44e9e13cae43ed6e8c5521bedf38370dff7ae4db32226019063569221457705",
       "sourceLocale": "pt_br"
@@ -2333,7 +2310,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "d8edb25b1eb880d740395e663349c58ca2ae9bfe80deedf58286f14251b6c6d8",
       "sourceLocale": "pt_br"
@@ -2350,7 +2327,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "17cde93acc4d555546f78b4b666a4669d66aa4cd597ddc78a9dd8766a78e78a7",
       "sourceLocale": "pt_br"
@@ -2367,7 +2344,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "af0a56b4fc6abf34181df99ed29be470b5baaba518015b6459fb2252abe18008",
       "sourceLocale": "pt_br"
@@ -2384,7 +2361,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "a898789ef95a57aba4cf755f7806985be5f47e94c17b121e8e54d7c444ed1c65",
       "sourceLocale": "pt_br"
@@ -2401,7 +2378,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "8a289b36f3dd678c9583bd6d947969ae35e92236e824496ff325f0c743a6bb79",
       "sourceLocale": "pt_br"
@@ -2418,7 +2395,7 @@
       "engine": "phonon31m",
       "source": "gradium/phonon-voices",
       "permissions": "Apache-2.0 publisher catalog; original named performance, no recognizable likeness claim",
-      "qualityStatus": "candidate-not-listening-tested",
+      "qualityStatus": "native-English-audio-and-ASR-checked; not-listening-tested",
       "deviceVerified": false,
       "tensorSha256": "1e5b109b4a023786ad1b1b5140988524be1e3e26bb0006459d01c99b236a1e5b",
       "sourceLocale": "pt_br"

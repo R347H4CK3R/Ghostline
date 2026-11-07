@@ -6,9 +6,9 @@ import CryptoKit
 final class AudioTests: XCTestCase {
     func testBundledProfilesHaveUniqueIDsAndAssets() throws {
         let (root, manifest) = try Catalog.read()
-        XCTAssertEqual(manifest.voices.count, 102)
-        XCTAssertEqual(Set(manifest.voices.map(\.id)).count, 102)
-        XCTAssertEqual(Set(manifest.voices.map(\.sha256)).count, 102)
+        XCTAssertEqual(manifest.voices.count, 101)
+        XCTAssertEqual(Set(manifest.voices.map(\.id)).count, 101)
+        XCTAssertEqual(Set(manifest.voices.map(\.sha256)).count, 101)
         try Catalog.validate(root: root, manifest: manifest)
     }
     func testAllBundledNeuralVoicesGenerateDecodableNonSilentWAV() async throws {
@@ -46,7 +46,7 @@ final class AudioTests: XCTestCase {
                 attachment.name = varied.lastPathComponent; attachment.lifetime = .keepAlways; add(attachment)
             }
         }
-        XCTAssertEqual(results.count, 102)
+        XCTAssertEqual(results.count, 101)
         let report: [String: Any] = ["schemaVersion": 1, "platform": "iOS Simulator", "engine": "phonon31m", "modelRevision": manifest.revision, "physicalDeviceVerified": 0, "listeningVerified": 0, "profiles": results, "additionalEnglishChecks": englishChecks]
         let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
         try data.write(to: folder.appendingPathComponent("voice-synthesis-results.json"), options: .atomic)

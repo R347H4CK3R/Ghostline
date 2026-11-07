@@ -72,5 +72,8 @@
     "default (unnamed; not counted)"
   ],
   "totalDistinctProfiles": 102,
-  "status": "Candidates awaiting native synthesis and English intelligibility tests; no physical or listening verification"
+  "status": "Candidates awaiting native synthesis and English intelligibility tests; no physical or listening verification",
+  "priorIncludedProfiles": 37,
+  "candidateAdditionalProfiles": 65,
+  "defaultExcludedReason": "The unnamed default is not an additional named, proven-distinct profile."
 }

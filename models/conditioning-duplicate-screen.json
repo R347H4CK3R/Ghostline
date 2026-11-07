@@ -1,0 +1,11 @@
+{
+  "method": "Cosine of full flattened conditioning tensors after unit normalization; a numerical duplicate screen, not speaker identity or perceptual similarity",
+  "profiles": 102,
+  "maximumPairwiseCosine": 0.3951037570148342,
+  "closestPair": [
+    "characters_Grub the Ogre",
+    "characters_Master Aldric"
+  ],
+  "nearDuplicateThreshold": 0.9999,
+  "nearDuplicatePairs": []
+}
