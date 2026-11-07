@@ -1,0 +1,33 @@
+name: Core ML inference asset repeatability
+on:
+  push:
+    branches: ['probe/voicematrix-compile-integrity-*']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile identical models independently
+        run: |
+          python3 tools/bundle_openvoice.py
+          mv VoiceMatrix/Resources/OpenVoice compiled-first
+          python3 tools/bundle_openvoice.py
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          first=pathlib.Path('compiled-first');second=pathlib.Path('VoiceMatrix/Resources/OpenVoice')
+          differences=[];checked=0
+          for path in first.rglob('*'):
+              if not path.is_file() or '.mlmodelc/' not in str(path):continue
+              rel=path.relative_to(first);other=second/rel;checked+=1
+              a=path.read_bytes();b=other.read_bytes()
+              if a!=b:differences.append({'path':str(rel),'firstSHA256':hashlib.sha256(a).hexdigest(),'secondSHA256':hashlib.sha256(b).hexdigest(),'firstSize':len(a),'secondSize':len(b)})
+          report={'compiledFilesCompared':checked,'differences':differences}
+          pathlib.Path('compile-integrity.json').write_text(json.dumps(report,indent=2));print(json.dumps(report,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceMatrix-compile-integrity
+          path: compile-integrity.json
