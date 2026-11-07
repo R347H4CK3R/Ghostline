@@ -2,6 +2,7 @@
 import argparse,hashlib,json,subprocess,urllib.request,urllib.parse,shutil
 from pathlib import Path
 from assets import validate
+from inference_fingerprint import create
 
 def seal(root,lock):
  entries=[]
@@ -12,6 +13,7 @@ def seal(root,lock):
  manifest={'schemaVersion':1,'engine':'OpenVoiceV2','sourceRevision':lock['revision'],'sourceRepository':lock['repository'],'sourceFiles':lock['files'],'files':entries}
  (Path(root)/'model-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
  validate(root,entries)
+ if (Path(root).parent/"Phonon/manifest.json").exists():create(Path(root).parent)
 
 if __name__=='__main__':
  p=argparse.ArgumentParser();p.add_argument('--seal');args=p.parse_args();lock=json.loads(Path('models/openvoice-lock.json').read_text())

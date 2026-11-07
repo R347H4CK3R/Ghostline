@@ -38,6 +38,7 @@ def find_qa_folder(root,lock):
 
 def collect_qa(lock):
  from assets import validate_qa_report
+ from inference_fingerprint import verify,validate_evidence
  try:
   source=find_qa_folder(Path.home()/'Library/Developer/CoreSimulator/Devices',lock)
   shutil.copytree(source,'qa-audio',dirs_exist_ok=True)
@@ -55,7 +56,9 @@ def collect_qa(lock):
     validate_qa_report(candidate,relaxed);report=candidate
    except (OSError,ValueError,KeyError,TypeError): pass
   if report is None: raise ValueError('No complete synthesis proof in XCTest attachments')
-  if conversion_report is not None:report['conversionChecks']=conversion_report['profiles']
+  if conversion_report is not None:
+   if validate_evidence(conversion_report)!=validate_evidence(report):raise ValueError('Conversion inference fingerprint mismatch')
+   report['conversionChecks']=conversion_report['profiles']
   Path('qa-audio').mkdir(exist_ok=True)
   files={}
   for p in candidates:
@@ -65,7 +68,12 @@ def collect_qa(lock):
   Path('qa-audio/voice-synthesis-results.json').write_text(json.dumps(report,indent=2)+'\n')
  report=json.loads(Path('qa-audio/voice-synthesis-results.json').read_text())
  converted=Path('qa-audio/voice-conversion-results.json')
- if converted.exists():report['conversionChecks']=json.loads(converted.read_text())['profiles']
+ if converted.exists():
+  conversion_report=json.loads(converted.read_text())
+  if validate_evidence(conversion_report)!=validate_evidence(report):raise ValueError('Conversion inference fingerprint mismatch')
+  report['conversionChecks']=conversion_report['profiles']
+ app=Path('test-build/Build/Products/Debug-iphonesimulator/VoiceMatrix.app')
+ verify(lambda p:(app/p).read_bytes(),json.loads((app/'Phonon/manifest.json').read_text()),json.loads((app/'OpenVoice/model-manifest.json').read_text()),report,[str(p.relative_to(app)) for p in app.rglob('*') if p.is_file()])
  Path('qa-audio/voice-synthesis-results.json').write_text(json.dumps(report,indent=2)+'\n')
  validate_qa_report(report,lock)
  for profile in report['profiles'] + report.get('additionalEnglishChecks',[]) + report.get('conversionChecks',[]):

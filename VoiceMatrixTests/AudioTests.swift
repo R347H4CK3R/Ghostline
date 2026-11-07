@@ -4,6 +4,13 @@ import CryptoKit
 @testable import VoiceMatrix
 
 final class AudioTests: XCTestCase {
+    private func inferenceFingerprint(root: URL) throws -> String {
+        let data = try Data(contentsOf: root.appendingPathComponent("inference-fingerprint.json"))
+        let metadata = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let value = try XCTUnwrap(metadata["sha256"] as? String)
+        XCTAssertEqual(value.count, 64)
+        return value
+    }
     func testBundledProfilesHaveUniqueIDsAndAssets() throws {
         let (root, manifest) = try Catalog.read()
         XCTAssertEqual(manifest.voices.count, 538)
@@ -58,7 +65,7 @@ final class AudioTests: XCTestCase {
             }
         }
         XCTAssertEqual(results.count, selected.count)
-        let report: [String: Any] = ["schemaVersion": 1, "kind": "text-to-speech", "platform": "iOS Simulator", "engine": "phonon31m", "modelRevision": manifest.revision, "physicalDeviceVerified": 0, "listeningVerified": 0, "profiles": results, "additionalEnglishChecks": englishChecks, "shardIndex": shard.index, "shardCount": shard.count, "sampledPeakPhysicalFootprintBytes": await memory.bytes(), "memoryMeasurement": "50ms samples of simulator test-host process physical footprint; not iPhone peak memory"]
+        let report: [String: Any] = ["schemaVersion": 1, "kind": "text-to-speech", "platform": "iOS Simulator", "engine": "phonon31m", "modelRevision": manifest.revision, "inferenceFingerprint": try inferenceFingerprint(root: root), "physicalDeviceVerified": 0, "listeningVerified": 0, "profiles": results, "additionalEnglishChecks": englishChecks, "shardIndex": shard.index, "shardCount": shard.count, "sampledPeakPhysicalFootprintBytes": await memory.bytes(), "memoryMeasurement": "50ms samples of simulator test-host process physical footprint; not iPhone peak memory"]
         let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
         try data.write(to: folder.appendingPathComponent("voice-synthesis-results.json"), options: .atomic)
         let reportAttachment = XCTAttachment(contentsOfFile: folder.appendingPathComponent("voice-synthesis-results.json"))
@@ -95,7 +102,7 @@ final class AudioTests: XCTestCase {
         }
         await engine.unload()
         XCTAssertEqual(checks.count, selected.count)
-        let report: [String: Any] = ["kind": "voice-conversion", "modelRevision": manifest.revision, "profiles": checks]
+        let report: [String: Any] = ["kind": "voice-conversion", "modelRevision": manifest.revision, "inferenceFingerprint": try inferenceFingerprint(root: root), "profiles": checks]
         let url = folder.appendingPathComponent("voice-conversion-results.json")
         try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]).write(to: url)
         let attachment = XCTAttachment(contentsOfFile: url)
