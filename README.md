@@ -20,7 +20,7 @@ Native ARM64 iOS offline voice studio for iPhone, LiveContainer and Strata. This
 - No near-indistinguishable quality claim. 500+ remains the expansion target; no renamed DSP copies are counted.
 
 ## Build
-macOS with Xcode supporting iOS 18+, Swift 6 and XcodeGen:
+macOS with Xcode supporting iOS 26+, Swift 6 and XcodeGen:
 
 ```
 python3 tools/assets.py
@@ -37,3 +37,7 @@ No release URL or installation-source entry is published until an actual IPA has
 [Download VoiceMatrix 0.2.0 experimental](https://github.com/R347H4CK3R/Ghostline/releases/tag/voicematrix-v0.2.0-experimental-20). Ten Python checks and five native tests passed. The CPU simulator smoke test generated 2.24 seconds of non-silent, decodable WAV audio for en_us_Zoey in 3.223 seconds including loading. This is one automated profile check, not verification of all 37 voices or iPhone performance.
 
 [LiveContainer source](https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/source.json) · [Strata source](https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/strata-source.json). Feeds are published; installation remains untested on physical devices.
+
+## Runtime compatibility
+
+The hosted Xcode 16.4 / older iOS simulator timed out inside local Core ML model loading. The same pinned model and code passed synthesis on the macOS 26 runner. VoiceMatrix 0.2.1 therefore targets iOS 26 and later; physical iPhone testing is still pending.
