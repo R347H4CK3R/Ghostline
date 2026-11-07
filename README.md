@@ -10,6 +10,14 @@ Native ARM64 offline English voice studio for iPhone, LiveContainer and Strata. 
 
 [Download the inspected unsigned IPA](https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-studio-1/VoiceMatrix-v0.3.0-experimental.ipa) · [LiveContainer source](https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/source.json) · [Strata source](https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/strata-source.json)
 
+## Rick and Morty development experiment
+
+A two-identity **CPU RVC experiment** now produces labeled Rick Sanchez and Morty Smith AI-imitation WAVs. Eight parameter/sentence trials generated non-silent, unclipped audio, preserved source duration within 150 ms, and independently transcribed with zero word errors on the two short test sentences. This tests intelligibility, not likeness. Multiple trials do not count as extra voices.
+
+[Measured experiment](docs/qa/rick-morty-rvc-prototype.json) · [Independent transcription](docs/qa/rick-morty-rvc-asr.json) · [Run and labeled audio artifacts](https://github.com/R347H4CK3R/Ghostline/actions/runs/42406774670). `tools/prototype_rick_morty.py` is development-only and uses real neural target checkpoints, not renamed system voices. Candidate weights are downloaded only for the experiment and are not committed or distributed with the app. Torch loading remains restricted to weights-only; retrieval indices are not executed or loaded. The source, encoder, target archives and test inputs are pinned or hash-checked.
+
+**Not integrated into iOS.** This experiment does not enable the profiles in VoiceMatrix, establish recognizable-likeness authorization, or verify perceptual resemblance/naturalness. Native inference conversion, device performance and reference-based listening remain incomplete. The public 0.3.0 IPA and feeds are unchanged; no IPA was built for this experiment.
+
 ## Included functionality
 
 - **537 neural conditioning profiles**, with 537 distinct conditioning hashes. Different source speakers and numerical duplicate checks support this library; perceptual distinctness remains unverified by human listeners.

@@ -1,0 +1,178 @@
+{
+  "kind": "AI character-imitation development prototype",
+  "includedInApp": false,
+  "authorizedLikeness": false,
+  "physicalDeviceVerified": false,
+  "listeningVerified": false,
+  "referenceResemblanceVerified": false,
+  "indexRate": 0,
+  "f0Method": "pm",
+  "sourceRevision": "81eed5e8f68b6bed1789f682fe78cdd324495afc",
+  "voices": [
+    {
+      "name": "Rick Sanchez AI imitation",
+      "franchise": "Rick and Morty",
+      "genres": [
+        "Animation & Cartoons",
+        "Science Fiction & Superheroes"
+      ],
+      "repository": "brookieisthatyou/MY-RVC-V2-MODELS",
+      "revision": "e6680da4b9700f32ee689726246f3f6cdee45345",
+      "checkpointSHA256": "ed6ae3e5904610c5642054162c35de038247499cafe0bf2202d218dc538ecb88",
+      "archiveSHA256": "00cd0fb703be068e508f82eaf316a0accbaf62f7c68cc6a1368bc6996a097435",
+      "rights": "Unestablished; development experiment only"
+    },
+    {
+      "name": "Morty Smith AI imitation",
+      "franchise": "Rick and Morty",
+      "genres": [
+        "Animation & Cartoons",
+        "Science Fiction & Superheroes"
+      ],
+      "repository": "MrSpringtroll/morty",
+      "revision": "a66af1de19814391a3b2501bba0a1d25375e7677",
+      "checkpointSHA256": "55eecf1cc660f4c123200fb67986a851f7cb8cd57b5077aa382fe0f390e36ee3",
+      "archiveSHA256": "88cf7460392400356c702022d03e6c45ba6542fcee6fafeb34151006c3e2beaa",
+      "rights": "Unestablished; development experiment only"
+    }
+  ],
+  "outputs": [
+    {
+      "voice": "rick",
+      "file": "rick-speech-pitch+0-AI-IMITATION.wav",
+      "sampleRate": 40000,
+      "audioSeconds": 2.7,
+      "sourceAudioSHA256": "f2e0dc1a21182a189accf8205bcb642bfad04c90c4129ef7bef759be5bd91a4d",
+      "audioSHA256": "a119678396f5777bcd25d2322d0f850195efa069eb8489eff70eb973efc4e92f",
+      "referenceText": "Hello. This is a voice test.",
+      "rms": 0.049361931048213015,
+      "peak": 0.518096923828125,
+      "fullScaleSampleFraction": 0,
+      "pitchSemitones": 0,
+      "elapsedSeconds": 2.627176438999996
+    },
+    {
+      "voice": "rick",
+      "file": "rick-speech-pitch-3-AI-IMITATION.wav",
+      "sampleRate": 40000,
+      "audioSeconds": 2.7,
+      "sourceAudioSHA256": "f2e0dc1a21182a189accf8205bcb642bfad04c90c4129ef7bef759be5bd91a4d",
+      "audioSHA256": "a76c5c562ddfd2da4387f6766920694ece0c15753f161167c649900fc8e74f29",
+      "referenceText": "Hello. This is a voice test.",
+      "rms": 0.04637523786075165,
+      "peak": 0.607818603515625,
+      "fullScaleSampleFraction": 0,
+      "pitchSemitones": -3,
+      "elapsedSeconds": 2.747173929999988
+    },
+    {
+      "voice": "rick",
+      "file": "rick-recording-pitch+0-AI-IMITATION.wav",
+      "sampleRate": 40000,
+      "audioSeconds": 3.58,
+      "sourceAudioSHA256": "93067e239f650dc62150deca9a5e24de77fa3960a6db8ec6e75ed7679ed22e06",
+      "audioSHA256": "d9a5b62f424f400f6d149ff3a143c01c730264ae71cea7861feb9870d1f18e25",
+      "referenceText": "Please bring three blue notebooks to the quiet room before lunch.",
+      "rms": 0.057416809583244494,
+      "peak": 0.690948486328125,
+      "fullScaleSampleFraction": 0,
+      "pitchSemitones": 0,
+      "elapsedSeconds": 3.484357892999995
+    },
+    {
+      "voice": "rick",
+      "file": "rick-recording-pitch-3-AI-IMITATION.wav",
+      "sampleRate": 40000,
+      "audioSeconds": 3.58,
+      "sourceAudioSHA256": "93067e239f650dc62150deca9a5e24de77fa3960a6db8ec6e75ed7679ed22e06",
+      "audioSHA256": "e64516244ce60ed8185fbf099932b1103439ce3a1af16ae8e250e193cac3f5b2",
+      "referenceText": "Please bring three blue notebooks to the quiet room before lunch.",
+      "rms": 0.0531911129818153,
+      "peak": 0.699798583984375,
+      "fullScaleSampleFraction": 0,
+      "pitchSemitones": -3,
+      "elapsedSeconds": 3.167077555000006
+    },
+    {
+      "voice": "morty",
+      "file": "morty-speech-pitch+5-AI-IMITATION.wav",
+      "sampleRate": 40000,
+      "audioSeconds": 2.7,
+      "sourceAudioSHA256": "f2e0dc1a21182a189accf8205bcb642bfad04c90c4129ef7bef759be5bd91a4d",
+      "audioSHA256": "7eca4fbb3487952a9d09b85e1dfc1347951cd052c6f1118fa63c6a2c7991a294",
+      "referenceText": "Hello. This is a voice test.",
+      "rms": 0.09487509540143318,
+      "peak": 0.818115234375,
+      "fullScaleSampleFraction": 0,
+      "pitchSemitones": 5,
+      "elapsedSeconds": 2.5512868890000107
+    },
+    {
+      "voice": "morty",
+      "file": "morty-speech-pitch+8-AI-IMITATION.wav",
+      "sampleRate": 40000,
+      "audioSeconds": 2.7,
+      "sourceAudioSHA256": "f2e0dc1a21182a189accf8205bcb642bfad04c90c4129ef7bef759be5bd91a4d",
+      "audioSHA256": "7238a16e21a36d232bc572cd0f7af2c0042b4042918a8605c477f3cf00f378fe",
+      "referenceText": "Hello. This is a voice test.",
+      "rms": 0.09751005848140706,
+      "peak": 0.840423583984375,
+      "fullScaleSampleFraction": 0,
+      "pitchSemitones": 8,
+      "elapsedSeconds": 2.245442681
+    },
+    {
+      "voice": "morty",
+      "file": "morty-recording-pitch+5-AI-IMITATION.wav",
+      "sampleRate": 40000,
+      "audioSeconds": 3.58,
+      "sourceAudioSHA256": "93067e239f650dc62150deca9a5e24de77fa3960a6db8ec6e75ed7679ed22e06",
+      "audioSHA256": "a88d47a44e5596f16b41d1e63e69e2a68d87604050caaa87d440ad1746a09284",
+      "referenceText": "Please bring three blue notebooks to the quiet room before lunch.",
+      "rms": 0.09921459350483654,
+      "peak": 0.751861572265625,
+      "fullScaleSampleFraction": 0,
+      "pitchSemitones": 5,
+      "elapsedSeconds": 2.7270827700000098
+    },
+    {
+      "voice": "morty",
+      "file": "morty-recording-pitch+8-AI-IMITATION.wav",
+      "sampleRate": 40000,
+      "audioSeconds": 3.58,
+      "sourceAudioSHA256": "93067e239f650dc62150deca9a5e24de77fa3960a6db8ec6e75ed7679ed22e06",
+      "audioSHA256": "c2f289b8913e1d3e1b2395759d32e13e739fcf2d5a2d54e4197d5ec4cf8a44e2",
+      "referenceText": "Please bring three blue notebooks to the quiet room before lunch.",
+      "rms": 0.10756700224562714,
+      "peak": 0.717254638671875,
+      "fullScaleSampleFraction": 0,
+      "pitchSemitones": 8,
+      "elapsedSeconds": 2.8851369810000023
+    }
+  ],
+  "encoder": {
+    "repository": "lj1995/VoiceConversionWebUI",
+    "revision": "e6d0c1a17da07c33557852f9dfa2bd44cc75737d",
+    "files": [
+      {
+        "path": "config.json",
+        "sha256": "0346950779dfb7f9316fa74ed846e2b8a22a08eedfdc5387b73f327cb1a4a7cf",
+        "bytes": 1492
+      },
+      {
+        "path": "preprocessor_config.json",
+        "sha256": "7c1976a680fb7acc757cd36fb08eef878fa36c70b4c9d2d595df9c608bbbbf0e",
+        "bytes": 225
+      },
+      {
+        "path": "pytorch_model.bin",
+        "sha256": "cc8c20f4b90a520757260197a3ff2505705a7adbd20ad9eeaa4e1a9b38442ef5",
+        "bytes": 189206711
+      }
+    ]
+  },
+  "auditRun": "https://github.com/R347H4CK3R/Ghostline/actions/runs/42406774670",
+  "torchVersion": "2.15.0+cpu",
+  "distinctCandidateIdentities": 2,
+  "parameterTrialCount": 8
+}

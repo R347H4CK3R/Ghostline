@@ -27,11 +27,12 @@ def main():
  report=dict(kind='AI character-imitation development prototype',includedInApp=False,authorizedLikeness=False,physicalDeviceVerified=False,listeningVerified=False,referenceResemblanceVerified=False,indexRate=0,f0Method='pm',sourceRevision=os.environ['RVC_SOURCE_REVISION'],voices=[],outputs=[])
  pathlib.Path('prototype-report.json').write_text(json.dumps(report,indent=2))
  # The official encoder snapshot is pinned and every downloaded byte is recorded.
- metadata=json.load(urllib.request.urlopen('https://huggingface.co/api/models/lj1995/VoiceConversionWebUI',timeout=60))
- revision=metadata['sha'];encoder=[]
+ revision='e6d0c1a17da07c33557852f9dfa2bd44cc75737d';encoder=[]
  for name in ['config.json','preprocessor_config.json','pytorch_model.bin']:
   path=root/'assets/hubert_base'/name
   digest=download('https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/'+revision+'/hubert_base/'+name,path)
+  expected={'config.json':'0346950779dfb7f9316fa74ed846e2b8a22a08eedfdc5387b73f327cb1a4a7cf','preprocessor_config.json':'7c1976a680fb7acc757cd36fb08eef878fa36c70b4c9d2d595df9c608bbbbf0e','pytorch_model.bin':'cc8c20f4b90a520757260197a3ff2505705a7adbd20ad9eeaa4e1a9b38442ef5'}
+  if digest!=expected[name]:raise ValueError('Encoder asset mismatch')
   encoder.append(dict(path=name,sha256=digest,bytes=path.stat().st_size))
  report['encoder']=dict(repository='lj1995/VoiceConversionWebUI',revision=revision,files=encoder)
  hubert=load_hubert_model('cpu',False)
