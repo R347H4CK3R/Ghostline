@@ -73,8 +73,8 @@ struct GhostlineThreeSourceCatalogView: View {
             }
             Section("Filters") {
                 Picker("Source", selection: $selectedProvider) {
-                    ForEach(providers, id: \.0) { value in
-                        Text(value.1).tag(value.0)
+                    ForEach(providers.indices, id: \.self) { index in
+                        Text(providers[index].1).tag(providers[index].0)
                     }
                 }
                 Picker("Category", selection: $selectedCategory) {
@@ -111,6 +111,16 @@ struct GhostlineThreeSourceCatalogView: View {
                     }
                     .padding(.vertical, 6)
                 }
+            }
+            Section("Browse complete provider directories") {
+                Link("AI Voices — full community model directory",
+                     destination: URL(string: "https://aivoices.gg/models")!)
+                Link("Hugging Face — complete model directory",
+                     destination: URL(string: "https://huggingface.co/models")!)
+                Link("OpenVoice V2 — official engine weights and license",
+                     destination: URL(string: "https://huggingface.co/myshell-ai/OpenVoiceV2")!)
+                Text("The local snapshot is a bounded, searchable offline index. The provider links access their full live directories when connected. OpenVoice V2 is an engine, not thousands of prepackaged voices.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section("Using a permitted voice pack") {
                 NavigationLink("Import private RVC .pth / .index pack") { RVCPackLibraryView() }
