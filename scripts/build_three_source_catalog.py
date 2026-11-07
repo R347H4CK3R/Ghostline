@@ -160,5 +160,5 @@ if __name__ == "__main__":
     result=build(args.aivoices_pages,args.hf_per_query)
     output=Path(args.output)
     output.parent.mkdir(parents=True,exist_ok=True)
-    output.write_text(json.dumps(result,ensure_ascii=False,separators=(",",":")) + "\n")
+    output.write_text(json.dumps(result,ensure_ascii=False,separators=(",",":")) + "\n", encoding="utf-8")
     print("Metadata-only unique entries:",len(result["entries"]))
