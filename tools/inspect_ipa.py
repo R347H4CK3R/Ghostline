@@ -22,7 +22,7 @@ def inspect(path):
   voices=manifest['voices']
   assert len({v['id'] for v in voices})==len(voices)
   assert len({v['sha256'] for v in voices})==len(voices)
-  qa=json.loads(z.read(root+'voice-synthesis-results.json')))
+  qa=json.loads(z.read(root+'voice-synthesis-results.json'))
   validate_qa_report(qa,manifest)
   print(json.dumps({'bundle':info['CFBundleIdentifier'],'version':info['CFBundleShortVersionString'],'profiles':len(voices),'deviceVerified':0,'archive':'passed'},indent=2))
 if __name__=='__main__': inspect(sys.argv[1])
