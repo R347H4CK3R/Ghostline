@@ -12,7 +12,7 @@ concurrency:
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Asset validator regression tests
@@ -34,8 +34,7 @@ jobs:
         env:
           NSUnbufferedIO: YES
         run: |
-          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if "iPhone" in x["name"]))')
-          xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath test-build -parallel-testing-enabled NO -test-timeouts-enabled YES -default-test-execution-time-allowance 120 -maximum-test-execution-time-allowance 180 CODE_SIGNING_ALLOWED=NO test > native-tests.log 2>&1 || { tail -100 native-tests.log; exit 1; }
+          python3 tools/run_native_tests.py
       - name: Package and inspect experimental IPA
         run: |
           mkdir -p Payload
