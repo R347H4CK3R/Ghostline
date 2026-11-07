@@ -1,0 +1,22 @@
+name: Inspect Rick and Morty model sources only
+on:
+  push:
+    branches: ['research/voicematrix-rick-morty-*']
+permissions:
+  contents: read
+jobs:
+  source-inspection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect model archives without executing or redistributing them
+        run: python3 tools/research_rick_morty_sources.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Rick-Morty-source-audit
+          path: research-results/rick-morty-source-audit.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Print audit report
+        run: cat research-results/rick-morty-source-audit.json
