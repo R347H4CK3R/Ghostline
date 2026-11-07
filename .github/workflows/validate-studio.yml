@@ -1,0 +1,57 @@
+name: Independently validate 538 studio voices
+on:
+  push:
+    branches: ['validation/voicematrix-studio-*']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  intelligibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate packaging and approval regressions
+        run: python3 -m unittest discover -s tests -v
+      - name: Wait for the exact native build and all audio tests
+        run: |
+          gh run watch 42401146982 --repo "$GITHUB_REPOSITORY" --interval 30 --exit-status
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/42401146982" > tested-run.json
+          python3 - <<'PY'
+          import json
+          r=json.load(open('tested-run.json'))
+          assert r['head_sha']=='6733ca642ab5c61100cb1b2d82345555c9958bc8' and r['conclusion']=='success'
+          PY
+      - name: Retrieve and verify all native WAV evidence
+        run: |
+          for shard in 0 1 2 3; do
+            gh run download 42401146982 --repo "$GITHUB_REPOSITORY" --name "VoiceMatrix-0.3.0-QA-$shard" --dir "native-artifacts/$shard"
+          done
+          python3 tools/aggregate_native_qa.py native-artifacts --output qa-combined
+      - name: Build independent English recognizer
+        run: |
+          git clone https://github.com/ggml-org/whisper.cpp.git whisper.cpp
+          git -C whisper.cpp checkout 6a8addd258eadd6563f8c582e8acc535e6325364
+          cmake -S whisper.cpp -B whisper.cpp/build -DCMAKE_BUILD_TYPE=Release -DGGML_NATIVE=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_EXAMPLES=ON
+          cmake --build whisper.cpp/build --config Release -j 2
+          bash whisper.cpp/models/download-ggml-model.sh tiny.en
+          bash whisper.cpp/models/download-ggml-model.sh base.en
+          python3 -m pip install numpy scipy
+      - name: Independently transcribe every final native speech and conversion clip
+        run: |
+          python3 tools/studio_asr_quality.py qa-combined --output asr --whisper-cli "$PWD/whisper.cpp/build/bin/whisper-cli" --model "$PWD/whisper.cpp/models/ggml-tiny.en.bin" --verify-model "$PWD/whisper.cpp/models/ggml-base.en.bin" --whisper-source "$PWD/whisper.cpp"
+          python3 tools/approve_studio_catalog.py --qa qa-combined/voice-synthesis-results.json --asr asr/asr-intelligibility-results.json --output approved
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: VoiceMatrix-0.3.0-independent-validation
+          path: |
+            qa-combined/voice-synthesis-results.json
+            asr/asr-intelligibility-results.json
+            approved
+            tested-run.json
+          if-no-files-found: error
+          retention-days: 90
