@@ -165,16 +165,16 @@ struct ContentView: View {
     private let accent = Color(red: 0.67, green: 0.36, blue: 1.0)
     var body: some View {
         TabView {
-            NavigationStack { GhostlineHomeView() }
-                .tabItem { Label("Home", systemImage: "house.fill") }
-            NavigationStack { GhostlineCategorizedVoiceLibraryView() }
-                .tabItem { Label("Library", systemImage: "square.stack.3d.up.fill") }
-            NavigationStack { GhostlineGeneratorView() }
-                .tabItem { Label("Generate", systemImage: "waveform") }
-            NavigationStack { RVCPackLibraryView() }
-                .tabItem { Label("RVC Packs", systemImage: "shippingbox.fill") }
-            NavigationStack { GhostlineToolsView() }
-                .tabItem { Label("Tools", systemImage: "slider.horizontal.3") }
+            NavigationStack { GhostlineAmericanDashboard() }
+                .tabItem { Label("Studio", systemImage: "house.fill") }
+            NavigationStack { GhostlineUSVoiceLibrary() }
+                .tabItem { Label("Voices", systemImage: "waveform") }
+            NavigationStack { GhostlineVoiceChangerView() }
+                .tabItem { Label("Changer", systemImage: "mic.fill") }
+            NavigationStack { GhostlineAmericanDownloads() }
+                .tabItem { Label("Downloads", systemImage: "arrow.down.circle") }
+            NavigationStack { GhostlineAmericanSettings() }
+                .tabItem { Label("Settings", systemImage: "gearshape.fill") }
         }
         .tint(accent)
         .preferredColorScheme(.dark)

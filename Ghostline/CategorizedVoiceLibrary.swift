@@ -10,35 +10,35 @@ struct GhostlineVoiceCategory: Identifiable {
     let description: String
     static let all: [Self] = [
         .init(id: "film", title: "Movies & film", symbol: "film",
-              modelIDs: ["en_GB-cori-medium", "en_US-norman-medium"],
+              modelIDs: ["en_US-norman-medium", "en_US-john-medium"],
               description: "Original narrative speech demos — not licensed film-character replicas."),
         .init(id: "television", title: "Television", symbol: "tv",
-              modelIDs: ["en_US-kristin-medium"],
+              modelIDs: ["en_US-kristin-medium", "en_US-ljspeech-medium"],
               description: "Synthetic presenter/dialogue demo — not an identifiable TV performer."),
         .init(id: "cartoons", title: "Cartoons", symbol: "face.smiling",
-              modelIDs: ["nl_BE-rdh-medium", "nl_BE-rdh-x_low"],
+              modelIDs: ["en_US-john-medium"],
               description: "Original cartoon-scene demo voices — no character-identity claims."),
         .init(id: "anime", title: "Anime", symbol: "sparkles",
-              modelIDs: ["uk_UA-ukrainian_tts-medium"],
+              modelIDs: ["en_US-kristin-medium"],
               description: "Original animation-scene demos, not named anime voice actors."),
         .init(id: "gaming", title: "Gaming", symbol: "gamecontroller",
-              modelIDs: ["no_NO-nvcc-medium"],
+              modelIDs: ["en_US-norman-medium"],
               description: "Original game-dialogue samples — not an existing game character."),
         .init(id: "singers", title: "Singers", symbol: "music.mic",
-              modelIDs: ["es_ES-carlfm-x_low"],
+              modelIDs: ["en_US-john-medium"],
               description: "Spoken performance demo only. These models are TTS, not singing synthesis."),
         .init(id: "celebrities", title: "Celebrities", symbol: "star",
-              modelIDs: ["nl_BE-nathalie-x_low"],
+              modelIDs: ["en_US-kristin-medium"],
               description: "Original interview-style demo, with no celebrity impersonation."),
         .init(id: "original", title: "Original voices", symbol: "waveform",
-              modelIDs: ["en_US-ljspeech-medium", "el_GR-rapunzelina-medium"],
+              modelIDs: ["en_US-ljspeech-medium", "en_US-norman-medium", "en_US-kristin-medium", "en_US-john-medium"],
               description: "Open-license synthetic voices with published model provenance.")
     ]
 }
 
 struct GhostlineCategorizedVoiceLibraryView: View {
     private let catalog = GhostlineIncludedPiperCatalog.load()
-    private var available: [GhostlineIncludedPiperCatalog.Pack] { catalog?.models ?? [] }
+    private var available: [GhostlineIncludedPiperCatalog.Pack] { (catalog?.models ?? []).filter { $0.language == "en_US" } }
     var body: some View {
         List {
             Section {
