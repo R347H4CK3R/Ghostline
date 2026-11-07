@@ -28,6 +28,8 @@ final class AudioTests: XCTestCase {
             XCTAssertEqual(decoded.fileFormat.sampleRate, 24000, voice.id)
             XCTAssertGreaterThan(decoded.length, 2400, voice.id)
             let digest = SHA256.hash(data: try Data(contentsOf: output)).map { String(format: "%02x", $0) }.joined()
+            let clipAttachment = XCTAttachment(contentsOfFile: output)
+            clipAttachment.name = voice.id + ".wav"; clipAttachment.lifetime = .keepAlways; add(clipAttachment)
             results.append(["id": voice.id, "audioSeconds": duration, "elapsedSeconds": Date().timeIntervalSince(started), "audioSHA256": digest, "embeddingSHA256": voice.sha256, "nonSilentWAVDecoded": true])
             print("VoiceMatrix QA passed profile=\(voice.id) audioSeconds=\(duration)")
         }
@@ -35,6 +37,8 @@ final class AudioTests: XCTestCase {
         let report: [String: Any] = ["schemaVersion": 1, "platform": "iOS Simulator", "engine": "phonon31m", "modelRevision": manifest.revision, "physicalDeviceVerified": 0, "listeningVerified": 0, "profiles": results]
         let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
         try data.write(to: folder.appendingPathComponent("voice-synthesis-results.json"), options: .atomic)
+        let reportAttachment = XCTAttachment(contentsOfFile: folder.appendingPathComponent("voice-synthesis-results.json"))
+        reportAttachment.name = "voice-synthesis-results.json"; reportAttachment.lifetime = .keepAlways; add(reportAttachment)
         await engine.unload()
     }
     func testTemporaryAudioCleanupOnlyRemovesOwnedTemporaryFiles() throws {
