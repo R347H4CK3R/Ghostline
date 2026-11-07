@@ -5,6 +5,8 @@ import AVFoundation
     @Published var message = "Pick a voice. Type a sentence. Tap Speak."
     @Published var voiceID = ""
     @Published var speaking = false
+    @Published var exportedSpeech: URL?
+    @Published var exporting = false
     @Published var rate: Float = 0.48
     @Published var pitch: Float = 1.0
     private let speaker = AVSpeechSynthesizer()
@@ -41,6 +43,61 @@ import AVFoundation
         speaker.speak(text)
         message = "Speaking with the selected English voice."
     }
+    func saveSpeech(_ phrase: String) {
+        let words = phrase.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !words.isEmpty else { message = "Type your sentence first."; return }
+        guard let voice = voices.first(where: { $0.identifier == voiceID }) else {
+            message = "The selected voice is unavailable."
+            return
+        }
+        guard !exporting else { return }
+        exportedSpeech = nil
+        exporting = true
+        message = "Preparing your WAV recording..."
+        let utterance = AVSpeechUtterance(string: words)
+        utterance.voice = voice
+        utterance.rate = rate
+        utterance.pitchMultiplier = pitch
+        let destination = FileManager.default.temporaryDirectory
+            .appendingPathComponent("voicematrix-speech-" + UUID().uuidString + ".wav")
+        var writer: AVAudioFile?
+        var finished = false
+        speaker.write(utterance) { [weak self] buffer in
+            guard let pcm = buffer as? AVAudioPCMBuffer else { return }
+            if pcm.frameLength == 0 {
+                guard !finished else { return }
+                finished = true
+                writer = nil
+                Task { @MainActor [weak self] in
+                    self?.exporting = false
+                    if FileManager.default.fileExists(atPath: destination.path) {
+                        self?.exportedSpeech = destination
+                        self?.message = "WAV audio is ready to save or share."
+                    } else {
+                        self?.message = "Could not create a WAV file for this voice."
+                    }
+                }
+                return
+            }
+            do {
+                if writer == nil {
+                    writer = try AVAudioFile(forWriting: destination,
+                                             settings: pcm.format.settings,
+                                             commonFormat: pcm.format.commonFormat,
+                                             interleaved: pcm.format.isInterleaved)
+                }
+                try writer?.write(from: pcm)
+            } catch {
+                finished = true
+                writer = nil
+                Task { @MainActor [weak self] in
+                    self?.exporting = false
+                    self?.message = "The selected voice could not be saved."
+                }
+            }
+        }
+    }
+
     func stop() {
         speaker.stopSpeaking(at: .immediate)
         speaking = false
@@ -90,6 +147,21 @@ struct SpeechStudioView: View {
                 .disabled(words.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || engine.voices.isEmpty)
                 Button("STOP SPEAKING") { engine.stop() }.disabled(!engine.speaking)
                 Text(engine.message).font(.footnote).foregroundStyle(.secondary)
+            }
+            Section("4. Save or share your speech") {
+                Button { engine.saveSpeech(words) } label: {
+                    Label("CREATE WAV AUDIO", systemImage: "square.and.arrow.down")
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                }
+                .disabled(engine.exporting || words.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || engine.voices.isEmpty)
+                if engine.exporting {
+                    ProgressView("Creating audio...")
+                }
+                if let file = engine.exportedSpeech {
+                    ShareLink(item: file) {
+                        Label("SAVE OR SHARE WAV", systemImage: "square.and.arrow.up")
+                    }
+                }
             }
             Section("Optional sound controls") {
                 Text("Speaking speed")
