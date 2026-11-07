@@ -1,0 +1,36 @@
+{
+  "candidateProfiles": 538,
+  "approvedProfiles": 537,
+  "rejectedProfiles": [
+    {
+      "id": "characters_Sir Bramwell",
+      "failedChecks": [
+        "baseline"
+      ]
+    }
+  ],
+  "categories": {
+    "Animation & Cartoon Styles": 4,
+    "Cinematic & Narration": 3,
+    "Community Voices": 226,
+    "Everyday & Conversation": 525,
+    "Everyday Voices": 25,
+    "Fantasy & Characters": 12,
+    "Gaming Characters": 5,
+    "Higher Voices": 37,
+    "Horror & Monsters": 6,
+    "International Voices": 64,
+    "Lower Voices": 339,
+    "Midrange Voices": 160,
+    "Original Voices": 537,
+    "Studio Voices": 210
+  },
+  "distinctConditioningHashes": 537,
+  "physicalDeviceVerified": 0,
+  "controlledListeningVerified": 0,
+  "authorizedRecognizableLikenesses": 0,
+  "nativeClipCount": 1577,
+  "independentPassedClips": 1576,
+  "inferenceFingerprint": "d1777f59d09675d3c550940b4a3caac7ce66c31cae140ebbb2f0e2d19e461960",
+  "scope": "Automated speech/conditioning/intelligibility; perceptual distinctness and character resemblance not established."
+}
