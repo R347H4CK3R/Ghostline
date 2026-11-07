@@ -46,6 +46,87 @@
       ]
     },
     {
+      "target": "Rick Sanchez (alternate)",
+      "franchise": "Rick and Morty",
+      "genres": [
+        "Animation & Cartoons",
+        "Science Fiction & Superheroes"
+      ],
+      "repository": "brookieisthatyou/MY-RVC-V2-MODELS",
+      "requestedFile": "RickSanchez.zip",
+      "status": "unapproved",
+      "includedInApp": false,
+      "authorizationEstablished": false,
+      "inferenceTested": false,
+      "revision": "e6680da4b9700f32ee689726246f3f6cdee45345",
+      "declaredLicense": null,
+      "repositoryFiles": [
+        ".gitattributes",
+        "06Knuckles.zip",
+        "AmamiNodoka.zip",
+        "AmyRose06.zip",
+        "Asta.zip",
+        "AuctionDayMoony.zip",
+        "BenjaminFairist.zip",
+        "BottBuddy.zip",
+        "CarsMack.zip",
+        "Chloe.zip",
+        "Clara.zip",
+        "DaffyDuck.zip",
+        "DarthVader.zip",
+        "DaveScreaming.zip",
+        "DoesBadThingsGuy.zip",
+        "Eimi-Isami.zip",
+        "ElliePhillips.zip",
+        "Hawkmoth.zip",
+        "HotelMario.zip",
+        "IUsedToBeACow.zip",
+        "MIM-Mario.zip",
+        "March-7th.zip",
+        "MoriCalliope.zip",
+        "MortySmith.zip",
+        "NicoleDemara.zip",
+        "PTDXenophanesNoFX.zip",
+        "RandomAssortiveMommy.zip",
+        "Reckerless.zip",
+        "RickSanchez.zip",
+        "RubyRose.zip",
+        "SorasakiHina.zip",
+        "TheCoon.zip",
+        "TomTGT.zip",
+        "ToyomiKotori.zip",
+        "TrollGirlfriend.zip",
+        "TsuyuAsui.zip",
+        "UziDoorman.zip",
+        "Wallace.zip",
+        "WarakuChise.zip",
+        "ZeebadUS.zip",
+        "Zoey.zip"
+      ],
+      "publishedDocuments": {},
+      "archiveEntries": [
+        {
+          "path": "RickSanchez/added_IVF318_Flat_nprobe_1_RickSanchez_v2.index",
+          "bytes": 39276299
+        },
+        {
+          "path": "RickSanchez/RickSanchez.pth",
+          "bytes": 55225556
+        }
+      ],
+      "containsRVCCheckpoint": true,
+      "containsRetrievalIndex": true,
+      "archiveStatus": "Downloaded and inspected without extracting or executing",
+      "archiveBytes": 75708504,
+      "archiveSHA256": "00cd0fb703be068e508f82eaf316a0accbaf62f7c68cc6a1368bc6996a097435",
+      "blockingChecks": [
+        "Recording provenance and voice/likeness authorization require review",
+        "Redistribution permission requires review",
+        "RVC checkpoint is not a Phonon or OpenVoice conditioning file",
+        "No native iOS inference or resemblance verification"
+      ]
+    },
+    {
       "target": "Morty Smith",
       "franchise": "Rick and Morty",
       "genres": [
@@ -174,5 +255,7 @@
         "No native iOS inference or resemblance verification"
       ]
     }
-  ]
+  ],
+  "auditRun": "https://github.com/R347H4CK3R/Ghostline/actions/runs/42406226729",
+  "replicaCountAdded": 0
 }
