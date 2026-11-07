@@ -90,8 +90,8 @@ struct AudioActions: View {
     var body: some View {
         Button { audio.play(url) } label: { Label("Listen / Replay", systemImage: "play.fill") }
         if audio.playing != nil { Button("Stop") { audio.stop() } }
-        Button { audio.save(url) } label: { Label(audio.recordings.contains { $0.id == url.lastPathComponent } ? "Saved" : "Save Recording", systemImage: "square.and.arrow.down") }
-            .disabled(audio.recordings.contains { $0.id == url.lastPathComponent })
+        Button { audio.save(url) } label: { Label(audio.isSaved(url) ? "Saved" : "Save Recording", systemImage: "square.and.arrow.down") }
+            .disabled(audio.isSaved(url))
         ShareLink(item: url) { Label("Share Audio", systemImage: "square.and.arrow.up") }
         if let error = audio.error { Text(error).foregroundStyle(.orange) }
     }

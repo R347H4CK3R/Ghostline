@@ -12,6 +12,12 @@ struct SavedAudio: Identifiable {
     @Published var error: String?
     @Published var rate: Float = 1
     private var player: AVAudioPlayer?
+    private var savedSources = UserDefaults.standard.dictionary(forKey: "savedSources") as? [String: String] ?? [:]
+    func isSaved(_ url: URL) -> Bool {
+        let name = savedSources[url.lastPathComponent] ?? url.lastPathComponent
+        return recordings.contains { $0.id == name }
+    }
+    private func persistSources() { UserDefaults.standard.set(savedSources, forKey: "savedSources") }
     private var folder: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Recordings", isDirectory: true)
     }
@@ -39,20 +45,26 @@ struct SavedAudio: Identifiable {
     func stop() { player?.stop(); player = nil; playing = nil }
     func save(_ url: URL) {
         do {
-            guard !recordings.contains(where: { $0.id == url.lastPathComponent }) else { return }
+            guard !isSaved(url) else { return }
             _ = try AVAudioFile(forReading: url)
             try FileManager.default.copyItem(at: url, to: folder.appendingPathComponent(url.lastPathComponent))
+            savedSources[url.lastPathComponent] = url.lastPathComponent; persistSources()
             refresh()
         } catch { self.error = "Your recording could not be saved. Check available storage." }
     }
     func delete(_ file: SavedAudio) {
-        do { if playing == file.url { stop() }; try FileManager.default.removeItem(at: file.url); refresh() }
+        do { if playing == file.url { stop() }; try FileManager.default.removeItem(at: file.url); savedSources = savedSources.filter { $0.value != file.id }; persistSources(); refresh() }
         catch { self.error = "This recording could not be deleted." }
     }
     func rename(_ file: SavedAudio, to name: String) {
         let cleaned = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty, cleaned.count <= 80, !cleaned.contains("/"), !cleaned.contains(":"), cleaned != ".", cleaned != ".." else { error = "Use a short name without slashes or colons."; return }
-        do { try FileManager.default.moveItem(at: file.url, to: folder.appendingPathComponent(cleaned).appendingPathExtension(file.url.pathExtension)); refresh() }
+        do {
+            let target = folder.appendingPathComponent(cleaned).appendingPathExtension(file.url.pathExtension)
+            try FileManager.default.moveItem(at: file.url, to: target)
+            for key in Array(savedSources.keys) where savedSources[key] == file.id { savedSources[key] = target.lastPathComponent }
+            persistSources(); refresh()
+        }
         catch { self.error = "That name is already used, or the recording could not be renamed." }
     }
     nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) { Task { @MainActor in self.playing = nil } }

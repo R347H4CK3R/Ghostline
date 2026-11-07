@@ -33,8 +33,13 @@ import UniformTypeIdentifiers
         do {
             let source = try AVAudioFile(forReading: url)
             guard source.length > 0, Double(source.length) / source.fileFormat.sampleRate <= 120 else { status = "Choose an audio file under 2 minutes."; return }
-            let target = FileManager.default.temporaryDirectory.appendingPathComponent("Imported-\(UUID().uuidString)." + url.pathExtension.lowercased())
-            try FileManager.default.copyItem(at: url, to: target)
+            let target = FileManager.default.temporaryDirectory.appendingPathComponent("Imported-\(UUID().uuidString).wav")
+            var writer: AVAudioFile? = try AVAudioFile(forWriting: target, settings: [AVFormatIDKey: Int(kAudioFormatLinearPCM), AVSampleRateKey: source.processingFormat.sampleRate, AVNumberOfChannelsKey: Int(source.processingFormat.channelCount), AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false])
+            guard let buffer = AVAudioPCMBuffer(pcmFormat: source.processingFormat, frameCapacity: 8192) else { throw StudioError.emptyAudio }
+            do {
+                while source.framePosition < source.length { try source.read(into: buffer); try writer?.write(from: buffer) }
+                writer = nil
+            } catch { writer = nil; try? FileManager.default.removeItem(at: target); throw error }
             output = target; status = "Your original audio is ready."
         } catch { status = "That file could not be opened. Try a WAV, M4A, or CAF file." }
     }
