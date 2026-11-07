@@ -2,6 +2,7 @@ import SwiftUI
 import AVFoundation
 
 @main struct VoiceMatrixApp: App {
+    init() { TemporaryAudio.cleanPreviousSession() }
     @StateObject private var studio = SpeechStudio()
     @StateObject private var audio = AudioStore()
     var body: some Scene {

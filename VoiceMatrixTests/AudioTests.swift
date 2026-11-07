@@ -23,6 +23,16 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(decoded.length, 2400)
         await engine.unload()
     }
+    func testTemporaryAudioCleanupOnlyRemovesOwnedTemporaryFiles() throws {
+        let root = FileManager.default.temporaryDirectory
+        let owned = root.appendingPathComponent("Speech-cleanup-\(UUID()).wav")
+        let unrelated = root.appendingPathComponent("Unrelated-\(UUID()).wav")
+        try Data([1]).write(to: owned); try Data([2]).write(to: unrelated)
+        defer { try? FileManager.default.removeItem(at: unrelated) }
+        TemporaryAudio.discard(owned); TemporaryAudio.discard(unrelated)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: owned.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: unrelated.path))
+    }
     func testTraversalRejected() throws {
         let root = FileManager.default.temporaryDirectory
         let manifest = VoiceManifest(schemaVersion: 1, engine: "phonon31m", revision: "test", files: [.init(path: "../invalid", sha256: "0", size: 1)], voices: [])

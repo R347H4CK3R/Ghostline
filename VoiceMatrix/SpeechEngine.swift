@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import AVFoundation
 import FluidAudio
 import CoreML
@@ -91,7 +92,7 @@ actor NeuralSpeech {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !busy, let voice = selected, let pack else { return }
         guard !text.isEmpty, text.count <= 2000 else { status = "Enter between 1 and 2,000 characters."; return }
-        audio.stop(); busy = true; status = "Preparing \(voice.name)…"; output = nil
+        audio.stop(); TemporaryAudio.discard(output); busy = true; status = "Preparing \(voice.name)…"; output = nil
         let token = UUID(); generation = token
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("Speech-\(UUID().uuidString).wav")
         task = Task {
