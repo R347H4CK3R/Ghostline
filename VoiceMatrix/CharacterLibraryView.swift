@@ -236,6 +236,13 @@ struct CharacterLibraryView: View {
                 Button { importKind = .folder; showingImporter = true } label: { Label("Choose Voices Folder", systemImage: "folder.badge.plus") }
                     .disabled(library.busy).accessibilityIdentifier("import-character-folder")
                 Text(library.message).font(.callout).accessibilityAddTraits(.updatesFrequently)
+                if audio.playing != nil {
+                    Label("Playing audio", systemImage: "speaker.wave.2.fill")
+                    Button("Stop playback") { audio.stop() }.accessibilityIdentifier("stop-character-playback")
+                }
+                if let error = audio.error {
+                    Text(error).foregroundStyle(.orange).accessibilityIdentifier("character-playback-error")
+                }
                 if library.busy { ProgressView("Working…"); Button("Stop after current step", role: .cancel) { library.cancel() } }
                 Text("This imports reusable reference profiles, rather than preview recordings or trained voice-conversion models. Their shared speech engine is separate. Existing saved recordings are kept.").font(.caption).foregroundStyle(.secondary)
             }
