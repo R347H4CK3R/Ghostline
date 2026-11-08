@@ -1,0 +1,30 @@
+name: Export simulator crash and screenshot evidence
+on:
+  push:
+    branches: [test/export-listening-evidence]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  export:
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - name: Download exact failed run evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 42450291633 --repo "$GITHUB_REPOSITORY" --name Listening-simulator-evidence --dir evidence
+      - name: Export diagnostics and screenshots
+        run: |
+          xcrun xcresulttool export diagnostics --path evidence/listening-audio.xcresult --output-path diagnostics
+          xcrun xcresulttool export attachments --path evidence/listening-ui.xcresult --output-path screenshots
+          find diagnostics -type f -maxdepth 6 | head -50
+          find diagnostics -name '*.ips' -o -name '*.crash' | while read f; do echo "CRASH FILE: $f"; cat "$f"; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Exported-listening-diagnostics
+          path: |
+            diagnostics
+            screenshots
+          retention-days: 7
