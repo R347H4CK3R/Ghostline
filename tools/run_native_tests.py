@@ -2,10 +2,27 @@
 import json,os,signal,subprocess,sys,time,shutil,hashlib
 from pathlib import Path
 
+def terminate_tree(process):
+ if process.poll() is not None:return
+ if os.name=='nt':
+  # Windows has no killpg. Stop the complete child tree and reap its handles.
+  subprocess.run(['taskkill','/PID',str(process.pid),'/T','/F'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=10)
+ else:
+  try:os.killpg(process.pid,signal.SIGTERM)
+  except ProcessLookupError:pass
+ try:process.wait(timeout=10)
+ except subprocess.TimeoutExpired:
+  if os.name=='nt':process.kill()
+  else:
+   try:os.killpg(process.pid,signal.SIGKILL)
+   except ProcessLookupError:pass
+  process.wait(timeout=10)
+
 def run(command,log,timeout=2100):
  log=Path(log)
  with log.open('wb') as output:
-  process=subprocess.Popen(command,stdout=output,stderr=subprocess.STDOUT,start_new_session=True)
+  group=dict(creationflags=subprocess.CREATE_NEW_PROCESS_GROUP) if os.name=='nt' else dict(start_new_session=True)
+  process=subprocess.Popen(command,stdout=output,stderr=subprocess.STDOUT,**group)
   started=time.monotonic()
   try:
    while True:
@@ -14,15 +31,10 @@ def run(command,log,timeout=2100):
      if time.monotonic()-started>=timeout: break
      print('Native test process is active; elapsed seconds:',round(time.monotonic()-started),flush=True)
    print('Native test process exceeded its wall-clock deadline.',flush=True)
-   try: os.killpg(process.pid,signal.SIGTERM)
-   except ProcessLookupError: pass
-   try: process.wait(timeout=10)
-   except subprocess.TimeoutExpired:
-    try: os.killpg(process.pid,signal.SIGKILL)
-    except ProcessLookupError: pass
-    process.wait()
+   terminate_tree(process)
    return 124
   finally:
+   terminate_tree(process)
    output.flush()
    print('\n'.join(log.read_text(errors='replace').splitlines()[-200:]),flush=True)
 
@@ -96,3 +108,4 @@ if __name__=='__main__':
    shard=json.loads(shard_path.read_text());lock['voices']=[v for i,v in enumerate(lock['voices']) if i%shard['count']==shard['index']]
   collect_qa(lock)
  sys.exit(code)
+

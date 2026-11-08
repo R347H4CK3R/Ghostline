@@ -17,5 +17,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install Windows media test dependency
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg -y --no-progress
       - name: Run source, real queue/files, transport and cancellation regressions
         run: python -m unittest discover -s tests -v
