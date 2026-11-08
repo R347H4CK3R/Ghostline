@@ -8,9 +8,13 @@ import Darwin
     static func main() async throws {
         let args = CommandLine.arguments
         guard args.count == 5, let gpu = MTLCreateSystemDefaultDevice() else { throw NSError(domain: "Calibration", code: 1) }
-        let bundle = URL(fileURLWithPath: args[1]), reference = URL(fileURLWithPath: args[2]), output = URL(fileURLWithPath: args[3])
+        let bundle = URL(fileURLWithPath: args[1]), collection = URL(fileURLWithPath: args[2]), output = URL(fileURLWithPath: args[3])
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
-        let referenceText = "Please close the window and bring the notebook."
+        let store = CharacterFolderStore(root: output.appendingPathComponent("ImportedDiagnostic"))
+        let profiles = try await store.importCollection(at: collection)
+        guard profiles.count == 1, let profile = profiles.first, profile.id == "diagnostic-neutral" else { throw NSError(domain: "DiagnosticImport", code: 1) }
+        let reference = try await store.referenceURL(id: profile.id)
+        let referenceText = profile.referenceText
         let texts = ["Welcome to the voice studio.", "I found a strange device near the portal.", "Please close the window and bring the notebook."]
         var cases: [[String: Any]] = []
         for (steps, seed) in [(16, UInt64(0)), (16, UInt64(347)), (32, UInt64(0)), (32, UInt64(347))] {
@@ -37,7 +41,7 @@ import Darwin
                 } catch { row["status"] = "generation-failed"; row["reason"] = error.localizedDescription }
                 row["synthesisSeconds"] = Date().timeIntervalSince(start)
                 cases.append(row)
-                let report: [String: Any] = ["engine":"F5TTS_v1_Base", "runtimeRevision":"a57702e6f523fa36ac5532d2bdc5f35f701a052c", "adapterSource":"VoiceMatrix/F5ReferenceEngine.swift", "engineProofSHA256":SHA256.hash(data: try Data(contentsOf: bundle.appendingPathComponent("voicematrix-engine.json"))).map { String(format: "%02x", $0) }.joined(), "device":gpu.name, "networkDeniedBySandbox":true, "physicalIPhoneVerified":false, "likenessVerified":false, "referenceKind":"pinned neutral synthetic speech fixture", "referenceAudioSHA256":SHA256.hash(data: try Data(contentsOf: reference)).map { String(format: "%02x", $0) }.joined(), "cases":cases]
+                let report: [String: Any] = ["engine":"F5TTS_v1_Base", "runtimeRevision":"a57702e6f523fa36ac5532d2bdc5f35f701a052c", "adapterSource":"VoiceMatrix/F5ReferenceEngine.swift", "importedProfileID":profile.id, "importedProfileCount":profiles.count, "engineProofSHA256":SHA256.hash(data: try Data(contentsOf: bundle.appendingPathComponent("voicematrix-engine.json"))).map { String(format: "%02x", $0) }.joined(), "device":gpu.name, "networkDeniedBySandbox":true, "physicalIPhoneVerified":false, "likenessVerified":false, "referenceKind":"pinned neutral synthetic speech fixture", "referenceAudioSHA256":SHA256.hash(data: try Data(contentsOf: reference)).map { String(format: "%02x", $0) }.joined(), "cases":cases]
                 try JSONSerialization.data(withJSONObject: report, options: [.sortedKeys,.prettyPrinted]).write(to: URL(fileURLWithPath: args[4]), options: .atomic)
             }
             await engine.unload()

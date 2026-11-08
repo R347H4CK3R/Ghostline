@@ -21,6 +21,7 @@ jobs:
       run: |-
         brew install xcodegen
         mkdir -p VoiceMatrix/Resources/{Phonon,OpenVoice,F5TTS}
+        python3 tools/create_diagnostic_collection.py
         xcodegen generate
         xcodebuild -resolvePackageDependencies -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -derivedDataPath native-build > resolve.log 2>&1 || { tail -100 resolve.log; exit 1; }
         cp VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved Package.resolved
@@ -62,6 +63,7 @@ jobs:
       run: |-
         brew install xcodegen
         mkdir -p VoiceMatrix/Resources/{Phonon,OpenVoice,F5TTS}
+        python3 tools/create_diagnostic_collection.py
         xcodegen generate
         mkdir -p VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
         cp frozen/Package.resolved VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
@@ -132,6 +134,7 @@ jobs:
       run: |-
         brew install xcodegen
         mkdir -p VoiceMatrix/Resources/{Phonon,OpenVoice,F5TTS}
+        python3 tools/create_diagnostic_collection.py
         xcodegen generate
         mkdir -p VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
         cp frozen/Package.resolved VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
@@ -145,8 +148,8 @@ jobs:
     - name: Generate 12 calibration clips plus an actual chunked message offline
       run: |-
         python3 tools/check_conversion_inputs.py
-        cp tests/fixtures/conversion-reference.wav reference.wav
-        sandbox-exec -p '(version 1)(allow default)(deny network*)' native-build/Build/Products/Release/CharacterSpeechDiagnostic VoiceMatrix/Resources/F5TTS reference.wav speech-evidence speech-evidence.json
+        python3 tools/create_diagnostic_collection.py
+        sandbox-exec -p '(version 1)(allow default)(deny network*)' native-build/Build/Products/Release/CharacterSpeechDiagnostic VoiceMatrix/Resources/F5TTS tests/fixtures/DiagnosticVoices speech-evidence speech-evidence.json
     - uses: actions/checkout@v4
       with:
         repository: ggml-org/whisper.cpp
@@ -221,6 +224,7 @@ jobs:
         python3 tools/check_conversion_inputs.py
         brew install xcodegen
         mkdir -p VoiceMatrix/Resources/{Phonon,OpenVoice,F5TTS}
+        python3 tools/create_diagnostic_collection.py
         xcodegen generate
         mkdir -p VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
         cp frozen/Package.resolved VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved

@@ -40,6 +40,9 @@ def verify(ipa_root,speech_root,conversion_root,expected):
    checked_wav(speech_root/'speech-evidence'/row['file'],row['generatedWAVSHA256'],24000)
  conversion=json.loads((conversion_root/'conversion-evidence/conversion-result.json').read_text())
  assert conversion['passed'] and not conversion['physicalDeviceVerified'] and not conversion['likenessVerified']
+ assert speech['importedProfileID']==conversion['importedProfileID']=='diagnostic-neutral'
+ assert speech['importedProfileCount']==conversion['importedProfileCount']==1
+ assert speech['referenceAudioSHA256']==conversion['referenceAudioSHA256']
  assert conversion['sharedModelManifestSHA256']==BASE_FILES['OpenVoice/model-manifest.json']['sha256']
  assert abs(conversion['sourceSeconds']-conversion['outputSeconds'])<.04
  assert any(x['recognizerModelSHA256'] in MODEL_HASHES.values() and x['wordErrorRate']<=.1 for x in conversion['independentASR'])
