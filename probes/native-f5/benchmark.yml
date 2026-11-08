@@ -12,7 +12,7 @@ targets:
   NativeF5Benchmark:
     type: tool
     platform: macOS
-    sources: [F5ReferenceEngine.swift, Benchmark.swift]
+    sources: [../../VoiceMatrix/F5ReferenceEngine.swift, Benchmark.swift]
     dependencies:
       - package: SpeechSwift
         product: F5TTS

@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import Metal
 import Darwin
+import CryptoKit
 
 @main struct NativeF5Benchmark {
     static func main() async throws {
@@ -26,7 +27,7 @@ import Darwin
         guard samples.allSatisfy({ $0.isFinite && abs($0) < 1 }), energy > 1e-8 else { throw NSError(domain: "VoiceMatrix.Benchmark", code: 4) }
         var usage = rusage()
         getrusage(RUSAGE_SELF, &usage)
-        let report: [String: Any] = ["engine":"F5TTS_v1_Base", "runtimeRevision":"a57702e6f523fa36ac5532d2bdc5f35f701a052c", "device":gpu.name, "loadSeconds":loadSeconds, "synthesisSeconds":elapsed, "audioSeconds":Double(file.length)/file.fileFormat.sampleRate, "rms":sqrt(energy), "peakRSSBytes":usage.ru_maxrss, "decodedNonSilentWAV":true, "networkDeniedBySandbox":true, "physicalIPhoneVerified":false, "likenessVerified":false, "intelligibilityVerified":false, "reference":"macOS generated diagnostic reference; no character likeness asserted"]
+        let report: [String: Any] = ["engine":"F5TTS_v1_Base", "flowSteps":32, "seed":347, "adapterSource":"VoiceMatrix/F5ReferenceEngine.swift", "generatedWAVSHA256":SHA256.hash(data: try Data(contentsOf: destination)).map { String(format: "%02x", $0) }.joined(), "runtimeRevision":"a57702e6f523fa36ac5532d2bdc5f35f701a052c", "device":gpu.name, "loadSeconds":loadSeconds, "synthesisSeconds":elapsed, "audioSeconds":Double(file.length)/file.fileFormat.sampleRate, "rms":sqrt(energy), "peakRSSBytes":usage.ru_maxrss, "decodedNonSilentWAV":true, "networkDeniedBySandbox":true, "physicalIPhoneVerified":false, "likenessVerified":false, "intelligibilityVerified":false, "reference":"macOS generated diagnostic reference; no character likeness asserted"]
         try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]).write(to: URL(fileURLWithPath: args[4]), options: .atomic)
     }
 }

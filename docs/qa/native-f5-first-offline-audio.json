@@ -1,0 +1,30 @@
+{
+  "audioSeconds": 1.3973333333333333,
+  "decodedNonSilentWAV": true,
+  "device": "Apple Paravirtual device",
+  "engine": "F5TTS_v1_Base",
+  "intelligibilityVerified": false,
+  "likenessVerified": false,
+  "loadSeconds": 0.28048503398895264,
+  "networkDeniedBySandbox": true,
+  "peakRSSBytes": 766132224,
+  "physicalIPhoneVerified": false,
+  "reference": "macOS generated diagnostic reference; no character likeness asserted",
+  "rms": 0.10048565721298777,
+  "runtimeRevision": "a57702e6f523fa36ac5532d2bdc5f35f701a052c",
+  "synthesisSeconds": 22.828621983528137,
+  "independentAudioCheck": {
+    "expectedText": "Welcome to the voice studio.",
+    "recognizedText": "Welcome to the Voice Studio.",
+    "wordErrorRate": 0,
+    "recognizer": "whisper.cpp tiny.en",
+    "recognizerModelSHA256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f",
+    "generatedWAVSHA256": "72fb6054ee28c19d1568dbc02886649dd2b3bd9bcbe7a809bbb52d56ba4d6eb9",
+    "fullScaleSamples": 0,
+    "scope": "One synthetic diagnostic reference on a hosted Apple Metal runner; not character or physical iPhone verification."
+  },
+  "actionsRun": 42439798861,
+  "sourceCommit": "800860536713733288e4394d48b49df9f3df123c",
+  "flowSteps": 16,
+  "scope": "One hosted macOS synthetic-reference diagnostic, not the app's 32-step adapter, character verification, or physical iPhone measurement."
+}
