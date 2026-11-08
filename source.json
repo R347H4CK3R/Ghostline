@@ -3,12 +3,21 @@
   "identifier": "com.voicematrix.source",
   "apps": [
     {
-      "name": "VoiceMatrix Experimental",
+      "name": "VoiceMatrix \u2014 Character Folder Test",
       "bundleIdentifier": "com.voicematrix.app",
       "developerName": "VoiceMatrix",
-      "localizedDescription": "Fully bundled offline speech and voice conversion. 537 conditioning profiles with automated English audio checks, searchable categories and vocal-depth filters. Conversion supports recordings up to 10 seconds. Physical per-profile listening and character resemblance remain unverified. Some reference-derived voices are noncommercial only.",
+      "localizedDescription": "Separate character-folder import, fully offline new-text speech and neural recording conversion. No characters or stock voices bundled. Native diagnostic audio checks passed; character likeness and physical iPhone tests remain pending.",
       "iconURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
       "versions": [
+        {
+          "version": "0.4.0",
+          "buildVersion": "1",
+          "date": "2026-11-08",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.0-character-test-1/VoiceMatrix-0.4.0-character-test.ipa",
+          "localizedDescription": "Separate character-folder import, fully offline new-text speech and neural recording conversion. No characters or stock voices bundled. Native diagnostic audio checks passed; character likeness and physical iPhone tests remain pending.",
+          "minOSVersion": "26.0",
+          "size": 730977029
+        },
         {
           "version": "0.3.0",
           "buildVersion": "5",
