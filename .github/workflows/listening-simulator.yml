@@ -41,6 +41,7 @@ jobs:
           with open(os.environ['GITHUB_ENV'],'a') as f:f.write('SIMULATOR_ID='+candidates[0]['udid']+'\n')
           PY
       - name: Resolve pinned dependencies and apply simulator-only heap diagnostic
+        id: mlx_patch
         run: |
           xcodebuild -resolvePackageDependencies -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -derivedDataPath simulator-build
           python3 tools/simulator_mlx_patch.py simulator-build/SourcePackages/checkouts --evidence simulator-mlx-patch.json
@@ -48,7 +49,7 @@ jobs:
         run: |
           xcodebuild test -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath simulator-build -resultBundlePath listening-ui.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixTests/CharacterImportReviewTests -only-testing:VoiceMatrixTests/AudioOwnershipTests -only-testing:VoiceMatrixTests/AudioTests/testStockFreeCatalogRetainsValidEngineAssets -only-testing:VoiceMatrixUITests/NavigationTests > simulator-ui.log 2>&1 || { tail -160 simulator-ui.log; exit 1; }
       - name: Exercise actual offline F5 audio separately from UI coverage
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.mlx_patch.outcome == 'success' }}
         run: |
           xcodebuild test -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath simulator-build -resultBundlePath listening-audio.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixTests/F5SimulatorTests > simulator-audio.log 2>&1 || { tail -160 simulator-audio.log; exit 1; }
       - name: Export readable test attachments and crash diagnostics

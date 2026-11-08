@@ -7,6 +7,7 @@ It does not replace audio, disable Metal validation, or claim device equivalence
 import argparse
 import hashlib
 import json
+import stat
 from pathlib import Path
 
 EXPECTED_SHA256 = '2e7ea0bccec1c2e2b962b579f838b8d088b7197f1c7c2cda98535c9b53070dd0'
@@ -30,7 +31,14 @@ def main():
     target = candidates[0]
     original = target.read_text()
     modified = patch_source(original)
-    target.write_text(modified)
+    # SwiftPM marks dependency files read-only. Temporarily enable owner writes
+    # only for this verified CI checkout file, then restore its original mode.
+    mode = target.stat().st_mode
+    try:
+        target.chmod(mode | stat.S_IWUSR)
+        target.write_text(modified)
+    finally:
+        target.chmod(mode)
     args.evidence.write_text(json.dumps({'scope':'simulator-only diagnostic; never release packaging', 'upstreamMLXRevision':'ce45c52505c8158ea48d2a54e8caae05efd86bfe', 'originalSHA256':hashlib.sha256(original.encode()).hexdigest(), 'modifiedSHA256':hashlib.sha256(modified.encode()).hexdigest(), 'sharedBufferAllocationPreserved':True, 'physicalDeviceValidated':False}, indent=2) + '\n')
 
 if __name__ == '__main__':
