@@ -17,6 +17,6 @@ Task 2 — `.github/workflows/queue-recovery.yml`, `docs/QUEUE-RECOVERY.md`:
 - [x] Add lightweight Linux/Windows queue and HTTP integration checks.
 - [x] Document token migration, heartbeat requirements and remaining processor/export gates.
 - [x] Independent review found stale time captured before a blocking SQLite lock. Two real lock-wait regression tests failed before the fix and passed afterward; all72 source tests passed.
-- [ ] Commit and verify Windows/Linux hosted checks before integration.
+- [x] Hosted run42459103748 passed both Windows and Linux queue/HTTP checks before integration. No app release was replaced.
 
 Review focus: stale writers after a reclaim; repeated crashes exhausting the budget; existing names surviving schema migration; invalid times/progress; no leaked tokens or false completion. Automated generation remains disconnected. No private voice assets are read or published by this change.
