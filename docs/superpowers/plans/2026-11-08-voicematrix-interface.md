@@ -18,9 +18,13 @@
 - Cancellation and mode changes retain microphone ownership rules.
 
 ## Tasks
-- [ ] Restyle Home in App.swift with compact primary and secondary actions; preserve accessibility identifiers.
-- [ ] Extract selection into CharacterPickerView in CharacterLibraryView.swift; keep model class byte-identical.
-- [ ] Organize composer and reference controls, retain output identity checks and errors.
-- [ ] Update CharacterEmptyStateUITests and add synthetic import/selection/playback/relaunch workflow.
-- [ ] Run character-ui-smoke and native compile; inspect failures/screenshots.
-- [ ] Review final diff, integrate tested changes, then produce gated IPA with feeds held until verified.
+- [x] Restyle Home in App.swift with compact primary and secondary actions; preserve accessibility identifiers.
+- [x] Extract selection into CharacterPickerView in CharacterLibraryView.swift; keep model class byte-identical.
+- [x] Organize composer and reference controls, retain output identity checks and errors.
+- [x] Update CharacterEmptyStateUITests and add synthetic import/selection/playback/relaunch workflow.
+- [x] Run character-ui-smoke and native compile; inspect failures/screenshots.
+- [x] Review final diff, integrate tested changes, then produce gated IPA with feeds held until verified.
+
+## Verification outcome
+
+Published 0.4.4 after [native release gates](https://github.com/R347H4CK3R/Ghostline/actions/runs/42520114505), [13 simulator checks](https://github.com/R347H4CK3R/Ghostline/actions/runs/42519869947), screenshot inspection and review. PR #42 is merged. All three feeds were re-audited in [run 42522371606](https://github.com/R347H4CK3R/Ghostline/actions/runs/42522371606). Device UI and updater handoff verification remain outstanding.
