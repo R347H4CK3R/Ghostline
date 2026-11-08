@@ -1,0 +1,19 @@
+{
+  "sourceCommit": "d6c26ef4400969437cd6d95ee6e0e353c6dc44ad",
+  "queueSourceSHA256": "e86f371f3c5a533a11cf95739ad4f615aca4d8df6462a21233375add0b86dc4d",
+  "localSourceTestsPassed": 72,
+  "hostedQueueWorkflow": 42459103748,
+  "hostedPlatforms": [
+    "windows-latest",
+    "ubuntu-latest"
+  ],
+  "hostedQueueTestsPerPlatform": 15,
+  "laptopSyntheticFourAttemptCheck": true,
+  "laptopEndpointRestarted": true,
+  "authenticatedLoopbackHTTP": 200,
+  "sameAccountHTTPS": 200,
+  "anonymousLoopbackHTTP": 401,
+  "pendingJobsBeforeAndAfter": 0,
+  "automaticGenerationConnected": false,
+  "scope": "Queue ownership/retry and transport checks only; no new character generation, physical-device listening, or app release."
+}
