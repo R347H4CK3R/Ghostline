@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "scope": "Current no-stock SwiftUI empty-library and interrupted file-import flows",
+  "regressionRun": 42495707590,
+  "regression": "Two fileImporter presenters on the same view prevented Choose Voices Folder from presenting a picker. Actual simulator hierarchy and video reproduced the missing picker.",
+  "fix": "One presenter routes folder and audio selection to the existing handlers. Private laptop sync code is preserved.",
+  "testedSource": "17110713b134fbdbd0694d06e44d1ad450b1b0a7",
+  "uiRun": 42500647584,
+  "uiTests": 3,
+  "uiFailures": 0,
+  "uiSeconds": 192.066,
+  "arm64CompileRun": 42500647581,
+  "nativeFolderRun": 42500647538,
+  "localPythonTests": 190,
+  "coverage": [
+    "Empty character speech is disabled with model-availability markers present; no output or listening approval shown",
+    "Empty character conversion is disabled without a recording or selected character",
+    "Repeated folder cancellation, audio cancellation, tab destinations and folder reopening after audio use"
+  ],
+  "fixtures": "UI-only model-availability marker JSON, not model weights; no inference invoked",
+  "physicalDeviceVerified": false,
+  "characterLikenessVerified": false,
+  "newAudioGenerated": false,
+  "releaseOrFeedsChanged": false,
+  "integrationBase": "b11de7fcf6e78fbaff3173e635c37574ab3e21b5",
+  "integrationNote": "Preserves concurrent 0.4.1 packaging and feeds. Only intervening project setting change was MARKETING_VERSION 0.4.0 to 0.4.1; production UI/sync sources are identical to the tested source except this importer fix."
+}
