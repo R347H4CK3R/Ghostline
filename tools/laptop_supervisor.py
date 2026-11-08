@@ -12,6 +12,17 @@ def gaming():
  names={line.split(',')[0].strip('"').lower() for line in result.stdout.splitlines()}
  return bool(names & {'cod.exe','cod22-cod.exe','modernwarfare.exe','fortniteclient-win64-shipping.exe','halo.exe'})
 
+def queue_rows(q):
+ q.db.execute('CREATE TABLE IF NOT EXISTS names (video_id TEXT PRIMARY KEY,name TEXT NOT NULL)')
+ names=dict(q.db.execute('SELECT video_id,name FROM names'));rows=q.export()['videos']
+ for row in rows:row['name']=names.get(row['id'],'')
+ return rows
+
+def database_snapshot(root):
+ q=VideoQueue(str(root/'queue.db'))
+ try:return queue_rows(q)
+ finally:q.close()
+
 def queue_snapshot(root):
  path=root/'video-queue.txt'
  if path.is_symlink():raise ValueError('The pending text file cannot be a symbolic link')
@@ -19,12 +30,11 @@ def queue_snapshot(root):
  if path.stat().st_size>1048576:raise ValueError('Pending text exceeds 1 MiB; entries were retained')
  raw=path.read_bytes();text=raw.decode('utf-8-sig');incoming={}
  for line in text.splitlines():
-  if not line.strip() or line.lstrip().startswith('#'):continue
+  if not line.strip() or (line.lstrip().startswith('#') and '\t' not in line):continue
   name,url=line.rsplit('\t',1) if '\t' in line else ('',line)
   identifier=video_id(url.strip());name=name.strip()
   if len(name)>1000:raise ValueError('A pending name exceeds 1000 characters')
   incoming[identifier]=(name,url.strip())
- if len(incoming)>1000:raise ValueError('Pending text exceeds 1000 unique links')
  q=VideoQueue(str(root/'queue.db'))
  try:
   q.add([row[1] for row in incoming.values()])
@@ -32,10 +42,9 @@ def queue_snapshot(root):
    q.db.execute('CREATE TABLE IF NOT EXISTS names (video_id TEXT PRIMARY KEY,name TEXT NOT NULL)')
    for identifier,(name,url) in incoming.items():
     if name:q.db.execute("INSERT INTO names VALUES (?,?) ON CONFLICT(video_id) DO UPDATE SET name=excluded.name WHERE names.name=''",(identifier,name))
-  videos=q.export()['videos'];names=dict(q.db.execute('SELECT video_id,name FROM names'))
+  videos=queue_rows(q)
   additions=[]
   for row in videos:
-   row['name']=names.get(row['id'],'')
    if row['id'] not in incoming:
     # Append only: comments, user edits and review/failed links are never erased.
     label=' '.join(row['name'].split())
@@ -55,7 +64,8 @@ def tick(root):
   state['videos']=queue_snapshot(root);state['pendingLines']=len(state['videos'])
   if state['videos']:state['status']='queue-active'
  except (ValueError,UnicodeError,OSError) as error:
-  state.update(status='queue-input-error',reason=str(error))
+  rows=database_snapshot(root)
+  state.update(status='queue-input-error',reason=str(error),videos=rows,pendingLines=len(rows))
  if (root/'pause').exists():state['status']='paused'
  if gaming():state.update(gamingDetected=True,status='paused-for-game' if state['pendingLines'] else state['status'])
  atomic(root/'status.json',state)
