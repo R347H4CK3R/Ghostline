@@ -1,0 +1,22 @@
+name: Native reference pack validation parity
+on:
+  push:
+    paths: ['tools/voice_pack.py', 'VoiceMatrix/CharacterFolderStore.swift', 'tests/test_native_pack_parity.py', 'tests/prepare_pack_parity.py', 'tests/native/PackParityChecks.swift', '.github/workflows/native-pack-parity.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_native_pack_parity.py' -v
+      - run: python -m tests.prepare_pack_parity parity-fixtures
+      - name: Test identical corpus with the production native importer
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/CharacterFolderStore.swift tests/native/PackParityChecks.swift -o pack-parity-checks
+          ./pack-parity-checks parity-fixtures

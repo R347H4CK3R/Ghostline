@@ -1,22 +1,31 @@
 """Portable F5 reference packs. These are conditioning assets, not RVC weights."""
-import array,hashlib,io,json,os,pathlib,re,shutil,sys,tempfile,wave,zipfile
+import array,hashlib,json,os,pathlib,re,shutil,sys,tempfile,zipfile
 
 MAX_AUDIO_BYTES=24_000*2*15+128_000
 
 def _audio(data):
- try:
-  with wave.open(io.BytesIO(data)) as w:
-   if w.getnchannels()!=1 or w.getsampwidth()!=2 or w.getframerate()!=24000 or w.getcomptype()!='NONE':
-    raise ValueError('Reference must be mono 24 kHz PCM16 WAV')
-   frames=w.getnframes()
-   if not 12000<=frames<=360000:raise ValueError('Reference must be 0.5–15 seconds')
-   pcm=w.readframes(frames)
-   if len(pcm)!=frames*2:raise ValueError('Truncated reference')
- except (wave.Error,EOFError) as e:raise ValueError('Invalid WAV') from e
+ # Match CharacterFolderStore.waveSeconds, not wave.open's permissive first-data
+ # decoding: phone import rejects malformed RIFF sizes and duplicate chunks.
+ def invalid():return ValueError('Reference must contain valid mono 24 kHz PCM16 WAV audio')
+ def number(offset,size):return int.from_bytes(data[offset:offset+size],'little')
+ if len(data)<44 or data[:4]!=b'RIFF' or data[8:12]!=b'WAVE' or number(4,4)!=len(data)-8:raise invalid()
+ offset=12;pcm=None;format_ok=False
+ while offset+8<=len(data):
+  tag=data[offset:offset+4];size=number(offset+4,4);start=offset+8
+  if size>len(data)-start:raise invalid()
+  if tag==b'fmt ':
+   if size<16 or format_ok or (number(start,2),number(start+2,2),number(start+4,4),number(start+8,4),number(start+12,2),number(start+14,2))!=(1,1,24000,48000,2,16):raise invalid()
+   format_ok=True
+  if tag==b'data':
+   # Retain the desktop decoder's fmt-before-data requirement as well.
+   if not format_ok or pcm is not None:raise invalid()
+   pcm=data[start:start+size]
+  offset=start+size+(size%2)
+ if offset!=len(data) or not format_ok or pcm is None or len(pcm)%2 or not 24000<=len(pcm)<=720000:raise invalid()
  samples=array.array('h',pcm)
  if sys.byteorder!='little':samples.byteswap()
  if sum(x*x for x in samples)/len(samples)<16:raise ValueError('Silent reference')
- return frames/24000
+ return len(pcm)/48000
 
 def _metadata(m):
  for key in ('id','name','source','permission','referenceText'):
