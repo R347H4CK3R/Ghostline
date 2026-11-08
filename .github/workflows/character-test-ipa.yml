@@ -212,7 +212,7 @@ jobs:
         xcodebuild -resolvePackageDependencies -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -derivedDataPath native-build > resolve.log 2>&1 || { tail -100 resolve.log; exit 1; }
         python3 -m tools.character_evidence source VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved source-proof.json
     - name: Create synthetic diagnostic recordings and owned simulator
-      run: |-
+      run: |
         command -v ffmpeg >/dev/null || brew install ffmpeg
         say -r 150 -o source.aiff "I found a strange device near the portal."
         say -r 145 -o reference.aiff "This is another clear reference recording. We are testing local voice conversion."
@@ -223,9 +223,12 @@ jobs:
         r=json.loads(subprocess.check_output(['xcrun','simctl','list','runtimes','-j']))['runtimes']
         runtime=next(x['identifier'] for x in reversed(r) if x.get('isAvailable') and 'iOS' in x['name'])
         sim=subprocess.check_output(['xcrun','simctl','create','VoiceMatrix-Character-QA','com.apple.CoreSimulator.SimDeviceType.iPhone-16-Plus',runtime],text=True).strip()
-        with open(os.environ['GITHUB_ENV'],'a') as f:f.write('CHARACTER_SIM='+sim+'
-        ')
+        with open(os.environ['GITHUB_ENV'],'a') as f:f.write('CHARACTER_SIM='+sim+'\n')
         PYCODE
+        xcodegen generate
+        cp frozen/Package.resolved VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+    - name: Boot the simulator created by this job
+      run: |-
         xcrun simctl boot "$CHARACTER_SIM"
         xcrun simctl bootstatus "$CHARACTER_SIM" -b
     - name: Run actual neural conversion and WAV export in iOS simulator
