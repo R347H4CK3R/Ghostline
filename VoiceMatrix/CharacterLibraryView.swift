@@ -270,6 +270,7 @@ struct CharacterLibraryView: View {
                 Button { editingWords = false; audio.stop(); library.speak(words, audio: audio, studio: studio) } label: { Label("Create speech", systemImage: "waveform").font(.headline).frame(maxWidth: .infinity, minHeight: 48) }
                     .buttonStyle(.borderedProminent).accessibilityIdentifier("create-character-speech")
                     .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.engineAvailable || words.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || words.count > 500)
+                if library.busy { ProgressView(library.message); Button("Stop after current step", role: .cancel) { library.cancel() } }
                 if !library.engineAvailable { Text("The shared F5 engine is absent from this build. Your imported voice samples remain saved; speech testing becomes available in a build containing that engine.").foregroundStyle(.secondary) }
                 Text("Creates new words using your selected voice.").font(.caption).foregroundStyle(.secondary)
                 if let output = library.output, library.outputKind == "speech", library.outputMatchesSelection { AudioActions(url: output) }
@@ -291,6 +292,7 @@ struct CharacterLibraryView: View {
                         if let source = recorder.output { library.convertRecording(source, audio: audio, studio: studio) }
                     } label: { Label("CONVERT", systemImage: "waveform").frame(minHeight: 52) }.buttonStyle(.borderedProminent)
                         .disabled(library.busy || recorder.recording || recorder.requestingPermission || recorder.output == nil || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.conversionAvailable)
+                if library.busy { ProgressView(library.message); Button("Stop after current step", role: .cancel) { library.cancel() } }
                     if !library.conversionAvailable { Text("This build needs the shared voice-changing engine before conversion can run.").foregroundStyle(.secondary) }
                     if let source = recorder.output, !recorder.recording { Button("Listen to my original recording") { audio.play(source) }.disabled(library.busy) }
                     Text("Changes a recording on your iPhone. Not for live calls.").font(.caption).foregroundStyle(.secondary)
@@ -299,7 +301,6 @@ struct CharacterLibraryView: View {
             }
             Section("Playback & comparison") {
                 Text(library.message).font(.callout).accessibilityAddTraits(.updatesFrequently)
-                if library.busy { ProgressView("Working…"); Button("Stop after current step", role: .cancel) { library.cancel() } }
                 Text("Compare the original voice with your new audio.").font(.subheadline).foregroundStyle(.secondary)
                 if let selected = library.profiles.first(where: { $0.id == library.selectedID }) {
                     Text("Selected: " + selected.name)
@@ -357,7 +358,15 @@ struct CharacterLibraryView: View {
                library.profiles.isEmpty,
                let fixture = Bundle.main.url(forResource: "F5TTS", withExtension: nil)?.appendingPathComponent("UITestVoices"),
                FileManager.default.fileExists(atPath: fixture.path) {
-                library.importFolder(fixture)
+                do {
+                    let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("UIImport-" + UUID().uuidString)
+                    try FileManager.default.copyItem(at: fixture, to: temporary)
+                    library.importFolder(temporary)
+                    while library.busy { try await Task.sleep(for: .milliseconds(100)) }
+                    // Make the original source unavailable before restart: only the
+                    // private imported copy can satisfy the persistence/playback test.
+                    try FileManager.default.removeItem(at: temporary)
+                } catch { library.message = "UI fixture import failed: " + error.localizedDescription }
             } else { await library.loadAndRefresh() }
             #else
             await library.loadAndRefresh()
@@ -407,7 +416,7 @@ struct CharacterPickerView: View {
                             }
                             Spacer()
                         }.padding(.vertical, 8)
-                    }.disabled(library.busy)
+                    }.buttonStyle(.plain).disabled(library.busy)
                         .accessibilityIdentifier("select-character-" + voice.id)
                         .accessibilityValue(library.selectedID == voice.id ? "Selected" : "Not selected")
                     DisclosureGroup("Voice details") {

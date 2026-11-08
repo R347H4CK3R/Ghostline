@@ -21,6 +21,10 @@ import XCTest
         search.tap(); search.typeText("Synthetic")
         let voice = app.buttons["select-character-diagnostic-neutral"]
         XCTAssertTrue(voice.waitForExistence(timeout: 20))
+        let details = app.buttons["Voice details"]
+        XCTAssertTrue(details.exists)
+        details.tap()
+        XCTAssertTrue(app.navigationBars["Choose a voice"].exists, "Expanding details must not select a voice")
         voice.tap()
         XCTAssertTrue(app.navigationBars["Make Speech"].waitForExistence(timeout: 15))
         XCTAssertTrue(app.buttons["choose-character"].label.contains("Synthetic diagnostic voice"))
@@ -50,6 +54,12 @@ import XCTest
         XCTAssertTrue(voice.waitForExistence(timeout: 30), "Imported references must survive an app restart")
         voice.tap()
         XCTAssertTrue(app.navigationBars["Make Speech"].waitForExistence(timeout: 15))
+        reveal(reference, in: app)
+        reference.tap()
+        XCTAssertTrue(stop.waitForExistence(timeout: 10), "Reference must play from its private copy with the import source gone")
+        stop.tap()
+        XCTAssertTrue(stop.waitForNonExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["character-playback-error"].exists)
     }
 
     private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
