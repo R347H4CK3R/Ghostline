@@ -89,7 +89,7 @@ struct VideoQueueView: View {
             if !message.isEmpty { Text(message).accessibilityAddTraits(.updatesFrequently) }
         }.navigationTitle("Video List")
             .task(id: saved) {
-                guard !saved.isEmpty, !sending else { return }
+                guard !saved.isEmpty else { return }
                 do {
                     let pending = try JSONDecoder().decode([QueuedVideo].self, from: saved)
                     guard !pending.isEmpty else { return }
