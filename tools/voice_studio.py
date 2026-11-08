@@ -12,6 +12,8 @@ def main(argv=None):
  inspect=commands.add_parser('inspect',help='Validate pack integrity and show voice details');inspect.add_argument('pack')
  collection=commands.add_parser('export-folder',help='Export packs as a separate importable Voices collection folder')
  collection.add_argument('--output',required=True);collection.add_argument('packs',nargs='+')
+ publish=commands.add_parser('publish-folder',help='Add voices to the master folder; preserve changed voices separately for review')
+ publish.add_argument('--master',required=True);publish.add_argument('packs',nargs='+')
  audit=commands.add_parser('audit-training',help='Check whether clean recordings provide enough unique audio');audit.add_argument('dataset')
  training=commands.add_parser('train-rvc',help='Run the pinned local RVC training stages; outputs require independent conversion checks')
  for flag in ['root','dataset','experiment','permission']:training.add_argument('--'+flag,required=True)
@@ -25,6 +27,9 @@ def main(argv=None):
    print(json.dumps(dict(file=str(path),profile=validate_pack(path)),indent=2))
   elif args.command=='inspect':print(json.dumps(validate_pack(args.pack),indent=2))
   elif args.command=='export-folder':print(json.dumps(dict(folder=str(export_collection_folder(args.packs,args.output))),indent=2))
+  elif args.command=='publish-folder':
+   from tools.master_voices import publish
+   print(json.dumps(publish(args.packs,args.master),indent=2))
   elif args.command=='audit-training':
    from tools.rvc_training import audit_dataset
    print(json.dumps(audit_dataset(args.dataset),indent=2))

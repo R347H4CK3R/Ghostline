@@ -1,0 +1,34 @@
+name: Master Voices incremental publishing
+on:
+  push:
+    paths: ['tools/master_voices.py', 'tools/voice_studio.py', 'tools/voice_pack.py', 'tests/test_master_publish.py', 'tests/prepare_master_publish.py', 'tests/native/MasterPublishChecks.swift', '.github/workflows/master-publish.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  publish-checks:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p "test_master*.py" -v
+      - run: python -m tests.prepare_master_publish master-fixture
+  native-import:
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m tests.prepare_master_publish master-fixture
+      - name: Import actual published folders through production Swift store
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/CharacterFolderStore.swift tests/native/MasterPublishChecks.swift -o master-publish-checks
+          ./master-publish-checks master-fixture
