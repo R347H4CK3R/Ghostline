@@ -1,0 +1,1217 @@
+{
+  "sourceURL": "https://www.youtube.com/watch?v=EAT0nWoEzJ8",
+  "engine": "F5TTS_v1_Base",
+  "generatedPreviewCount": 60,
+  "newCandidatePreviewCount": 58,
+  "previouslyUserAcceptedPreviewCount": 2,
+  "passingIndependentWordAndAudioChecks": 60,
+  "distinctSelectedWAVHashes": 60,
+  "trainedRVCModels": 0,
+  "nativeCharacterInferenceVerified": 0,
+  "physicalDeviceVerified": 0,
+  "controlledLikenessVerified": 0,
+  "authorizedRecognizableLikenesses": 0,
+  "scope": "Generated AI-imitation preview speech only; not trained model files or native voice profiles. Names come from on-screen labels, not biometric speaker identification. Independent ASR is an intelligibility check, not a resemblance score.",
+  "profiles": [
+    {
+      "id": "rick",
+      "name": "Rick",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "0428938c66a09fbd4db3d999e79a7dc96b26cf5a0c0e042103b79b6a7d294182",
+      "seed": null,
+      "seconds": 4.213333333333333,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": true,
+      "attemptCount": 1
+    },
+    {
+      "id": "morty",
+      "name": "Morty",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "1a4d08339d36b9e67e1f2fd2368f13f2c837236fe8505d27a46d5ba1eee801e3",
+      "seed": null,
+      "seconds": 2.72,
+      "wordErrorRate": 0.06666666666666667,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": true,
+      "attemptCount": 1
+    },
+    {
+      "id": "mr-meeseeks",
+      "name": "Mr. Meeseeks",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "0a11f4154f971764de1e0cd14bf4623e08c2429efc29e8dc3aa744b0ac6e1881",
+      "seed": 347,
+      "seconds": 3.232,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "mr-top-hat-jones",
+      "name": "Mr. Top Hat Jones",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "e113f7e038cca5d56255c779e26b0d68712699370c86f322ea93012cfc8c741b",
+      "seed": 347,
+      "seconds": 2.176,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "ants-in-my-eyes-johnson",
+      "name": "Ants-in-My-Eyes Johnson",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "9f6543f9f1ac9fe486d1b6390191877b1d08abb05edd78dde7dc7e1272362a03",
+      "seed": 347,
+      "seconds": 2.2186666666666666,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "the-eyehole-man",
+      "name": "The Eyehole Man",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "78007c9a66eb2e6293c7aa3ae263defd8e90fde89f2a4730dc9936d9a93f70fa",
+      "seed": 347,
+      "seconds": 6.133333333333334,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "stealy",
+      "name": "Stealy",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "5236bd5a4e7dce5bd2aa0cdea5b3458d071153d4b0ce4d4039c8a602eda34244",
+      "seed": 347,
+      "seconds": 2.688,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "mr-poopybutthole",
+      "name": "Mr. Poopybutthole",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "c24b015b58bd288ef8918c69bd824699f49ed25b9790cd2007de8bc7cdece846",
+      "seed": 347,
+      "seconds": 2.912,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "beth",
+      "name": "Beth",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "5d153fa76fe23138467b4070b7028e4a99a76e05267a4de289d5635c61875fd5",
+      "seed": 347,
+      "seconds": 1.984,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "jerry",
+      "name": "Jerry",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "49b3c5954fbd1836d3cfe178a55470af37853fe498894a8b19925c2826b6277d",
+      "seed": 347,
+      "seconds": 2.474666666666667,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "summer",
+      "name": "Summer",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "62f5e5f608916afe85efeb50cb45c985af2884b0788a01b8f7d9ea25cd310444",
+      "seed": 347,
+      "seconds": 2.058666666666667,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "principal-vagina",
+      "name": "Principal Vagina",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "a949f02798a9725bf659c0fa2c22e00320c83674d0581d8dacb273397c359497",
+      "seed": 347,
+      "seconds": 2.1866666666666665,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "mr-goldenfold",
+      "name": "Mr. Goldenfold",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "05bce2f45d7eda84d5f01cdead951685034ae115f7b65d556c407967a323320d",
+      "seed": 347,
+      "seconds": 1.984,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "jessica",
+      "name": "Jessica",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "439a641b9f3c99fe7542d9c767728869e047b15e3be1d2cdc577ca5b7cad1e57",
+      "seed": 347,
+      "seconds": 3.36,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "brad",
+      "name": "Brad",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "4a4896a484503a9cbafb20f435fdf087c84bac0ca508c44f33f2b3f9f2c04bdf",
+      "seed": 347,
+      "seconds": 2.7093333333333334,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "jacob",
+      "name": "Jacob",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "17ea3554399294604ac7c2f216f8fe100c471dbbc0d467c491fbdd3f8cf687d0",
+      "seed": 349,
+      "seconds": 2.56,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 3
+    },
+    {
+      "id": "tammy",
+      "name": "Tammy",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "76018363387252a2c0dbe69713c1e8995316f16b6e0cec398b0aa59a98a0c360",
+      "seed": 347,
+      "seconds": 4.0,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "ethan",
+      "name": "Ethan",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "b01ef6b41094bebcba0776f48a96118b202589598fc0baf537595c3da200db30",
+      "seed": 347,
+      "seconds": 2.112,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "nancy",
+      "name": "Nancy",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "826f54abde89f2209aa0ed6d07d2f85c15d03f1cc292b350d757a8f498012b36",
+      "seed": 347,
+      "seconds": 2.208,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "toby-matthews",
+      "name": "Toby Matthews",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "ec47881f8c598bd9d89fd3663405ac84d887ac0063383d4276370af73c95cf1f",
+      "seed": 349,
+      "seconds": 3.498666666666667,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 3
+    },
+    {
+      "id": "frank-palicky",
+      "name": "Frank Palicky",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "6a22d51bcb87adc9525486f16582f133858ad331442314b4a575383aed40f610",
+      "seed": 347,
+      "seconds": 1.9413333333333334,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "cousin-nicky",
+      "name": "Cousin Nicky",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "1f1bf34c750085950818eecaa41370ae09edf83972899f152ffaf8bb9c84b718",
+      "seed": 347,
+      "seconds": 4.416,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "birdperson",
+      "name": "Birdperson",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "4f5500dd05bd696f4703c92bb74a173bf50be8db438e1f59b1e35237869efd42",
+      "seed": 347,
+      "seconds": 2.026666666666667,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "mc-haps",
+      "name": "MC Haps",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "2d7ca383f1439b62887b993e41f923395461b39026de1fb18673cf63f95e44d8",
+      "seed": 347,
+      "seconds": 1.9413333333333334,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "ice-t-fictional-portrayal",
+      "name": "Ice-T (fictional portrayal)",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "7947b7a9bf66dab63ff7ec41ab3da2e6f7402c3dfb8b715e9fc301db781762c5",
+      "seed": 347,
+      "seconds": 2.6986666666666665,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "scary-terry",
+      "name": "Scary Terry",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "08ec92a2cb555124dffb5149b374a62961cc02c049a446e7f0742679a8451b3b",
+      "seed": 347,
+      "seconds": 3.936,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "dr-xenon-bloom",
+      "name": "Dr. Xenon Bloom",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "b91dc3beceb620f702433e1c08df532c120feb2cc070599ed4ead1c7d1bfd231",
+      "seed": 347,
+      "seconds": 4.192,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "annie",
+      "name": "Annie",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "65b1738d65a0792ab735e3e9de9df16103f650e0ccc9146903d883a2426ad2b4",
+      "seed": 347,
+      "seconds": 2.1226666666666665,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "revolio-clockberg-jr",
+      "name": "Revolio Clockberg Jr.",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "5c7f3d69fbafb4213e536f49e51b754fcddce771b0857d920fa62b25f7c5e0b7",
+      "seed": 348,
+      "seconds": 4.1066666666666665,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 2
+    },
+    {
+      "id": "squanchy",
+      "name": "Squanchy",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "dddf669d9076620e78c8f89d60c4f11f103bae56099d3fc8916fcf2193988e0d",
+      "seed": 347,
+      "seconds": 2.4106666666666667,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "mr-jellybean",
+      "name": "Mr. Jellybean",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "7e0b09627c89849854d363eeb8308070805599aa66b50b7599f3071e25d9795f",
+      "seed": 347,
+      "seconds": 2.72,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "baby-morty-jr",
+      "name": "Baby Morty Jr.",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "cd89bcd7975f7d755acf8ca0aacbb6d7e59e55481b3d7dfbb30df42cb3813c1e",
+      "seed": 347,
+      "seconds": 3.466666666666667,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "teen-morty-jr",
+      "name": "Teen Morty Jr.",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "4186af8d44f3c25ade0a0f10ca9569b2394474490b92f0d6f7712a9f7aa0c07e",
+      "seed": 347,
+      "seconds": 2.2613333333333334,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "adult-morty-jr",
+      "name": "Adult Morty Jr.",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "4a6df88538290a0e88ac1c546174b9138b4637615d0afa5f2247a801636f744e",
+      "seed": 347,
+      "seconds": 3.968,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "abradolf-lincler",
+      "name": "Abradolf Lincler",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "fdedb7b92da7c744677c55259a3a774b0fb01298b49b66530944cf1687e82e0c",
+      "seed": 347,
+      "seconds": 2.6346666666666665,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "krombopulos-michael",
+      "name": "Krombopulos Michael",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "46010ffa205f10c13639992af47b4296695de2e63a554305e05c4dad8f157dbb",
+      "seed": 347,
+      "seconds": 2.1866666666666665,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "unity",
+      "name": "Unity",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "130b628ce61e04e0afc71caf55d4cea882d106a971ea81621adcfc7b6d0673fd",
+      "seed": 347,
+      "seconds": 2.453333333333333,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "prince-nebulon",
+      "name": "Prince Nebulon",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "4976f10ea3b217884ad66405c7f745a6e6809ab41cab1e16f01cbc53f1abfdd6",
+      "seed": 347,
+      "seconds": 4.032,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "king-flippy-nips",
+      "name": "King Flippy Nips",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "e1a6a444cdd49bed7e1e7a6f23e8f94c958b13ae03d986981af6dd3aff25bf5e",
+      "seed": 347,
+      "seconds": 2.6986666666666665,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "scroopy-noopers",
+      "name": "Scroopy Noopers",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "02c29fa19ba50256858c43a433f192dccebfa948eb6110d093457c3fe6484829",
+      "seed": 347,
+      "seconds": 2.6986666666666665,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "frankenstein-s-monster",
+      "name": "Frankenstein's Monster",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "9e94c272aaed093b57cf4f15e5645a4914894303ba193a33098e41de287bb5be",
+      "seed": 347,
+      "seconds": 2.304,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "sleepy-gary",
+      "name": "Sleepy Gary",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "d9174802d835127ae67f68e0de63cb94f47eb24afd0bf80474f1087c7b93bc10",
+      "seed": 347,
+      "seconds": 2.517333333333333,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "tinkles",
+      "name": "Tinkles",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "06fb25425686ee75e2b7e4b690f2dd7d52d60ac0db39b07d3f69e8052e612e80",
+      "seed": 347,
+      "seconds": 2.453333333333333,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "reverse-giraffe",
+      "name": "Reverse Giraffe",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "fd13a34a01f38f5ab6a4921f9e4f8e508392c8fe809d8e12ecc9c035dc308fd0",
+      "seed": 348,
+      "seconds": 1.4506666666666668,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 2
+    },
+    {
+      "id": "the-president-fictional-character",
+      "name": "The President (fictional character)",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "5c9896d497ba1911b5e8ee87cdcd4b1b5501f92df2cc78fc9019a1cd64967543",
+      "seed": 347,
+      "seconds": 2.3893333333333335,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "general-nathan",
+      "name": "General Nathan",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "ba861a0fb55aafa57229274fc904a0699e0eb33ac7d2f9f229abfbaffbcacb89",
+      "seed": 347,
+      "seconds": 2.570666666666667,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "mr-lucius-needful",
+      "name": "Mr. Lucius Needful",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "96e9bbe18fc851cf21675e33a5b5835ed7d6e9d348afe7fce9187ef2b9d18b69",
+      "seed": 347,
+      "seconds": 2.538666666666667,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "snuffles",
+      "name": "Snuffles",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "f678cf7c05344e79d3e08bbd1868bf174f15faaf24dabde6cf57f3b2ed950f7b",
+      "seed": 347,
+      "seconds": 2.986666666666667,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "fart",
+      "name": "Fart",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "dacf08c4a7d6e1ed181ac817a59b92892f5c9b56d063ce38e57a3565e1c93bfb",
+      "seed": 348,
+      "seconds": 2.112,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 2
+    },
+    {
+      "id": "donna-gueterman",
+      "name": "Donna Gueterman",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "0438f3440f30329e1ca53a60a8eb44a9aa3173dea62f0924e2d3dc8fc9b7ec11",
+      "seed": 348,
+      "seconds": 2.6026666666666665,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 2
+    },
+    {
+      "id": "joyce-smith",
+      "name": "Joyce Smith",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "29cb1f5c549a08ebec1fecca1d4f268f8e72158f262c12c223d1efb2d0c9ec26",
+      "seed": 347,
+      "seconds": 2.144,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "leonard",
+      "name": "Leonard",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "49ec5d2efedc7a05d63e053b867aac8fd0496e1bf00dcd602d37ab4434c7dec3",
+      "seed": 347,
+      "seconds": 3.1146666666666665,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "ma-sha",
+      "name": "Ma-Sha",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "58d06bbf6672d699a8858336ff5501f26f0e685f13570aed9084643aaae4b401",
+      "seed": 347,
+      "seconds": 2.965333333333333,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "glaxo-slimslom",
+      "name": "Glaxo Slimslom",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "806c8028a8b0e83e3d6e8edba883e087327867c1acc5e3df3cefffa8d80c3046",
+      "seed": 347,
+      "seconds": 3.509333333333333,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "shrimply-pibbles",
+      "name": "Shrimply Pibbles",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "3e1462125f72902ddfcdf391bf266b10d80deffafcd36741695c32932d2ed80f",
+      "seed": 347,
+      "seconds": 3.0613333333333332,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "zeep-xanflorp",
+      "name": "Zeep Xanflorp",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "27dfcf3343ef4b5dee1df9806788196f3a0d6e0bdcdc1ce8a16f18334169c8e0",
+      "seed": 347,
+      "seconds": 2.1333333333333333,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "pensylvester",
+      "name": "Pensylvester",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "ec9acd5ce84aefbbae80cde868bddee4844ef23be2c65cb15830c0904064618a",
+      "seed": 347,
+      "seconds": 2.058666666666667,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "child-morty-jr",
+      "name": "Child Morty Jr.",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "0ecfe23e75ec9185b6c217c0676a5140193d01743974d69a91903120332ad876",
+      "seed": 347,
+      "seconds": 3.4346666666666668,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    },
+    {
+      "id": "beta-vii",
+      "name": "Beta VII",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "49fdc0f4871707edd09e35f55fdfc660b4515507c03ea8a032fbffaa68c36d44",
+      "seed": 348,
+      "seconds": 2.2613333333333334,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 2
+    },
+    {
+      "id": "pat-gueterman",
+      "name": "Pat Gueterman",
+      "franchise": "Rick and Morty",
+      "categories": [
+        "Animation & Cartoons",
+        "Rick and Morty"
+      ],
+      "status": "generated-words-checked",
+      "selectedAudioSHA256": "b7410f38c934b997957b9e65f9af79064724b0284a1417e89b3e891baa387cec",
+      "seed": 347,
+      "seconds": 2.432,
+      "wordErrorRate": 0.0,
+      "fullScaleSamples": 0,
+      "nativeCharacterInferenceVerified": false,
+      "physicalDeviceVerified": false,
+      "controlledLikenessVerified": false,
+      "informalUserAccepted": false,
+      "attemptCount": 1
+    }
+  ]
+}

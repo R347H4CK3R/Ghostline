@@ -1,0 +1,33 @@
+{
+  "adapterSource": "VoiceMatrix/F5ReferenceEngine.swift",
+  "audioSeconds": 1.2266666666666666,
+  "decodedNonSilentWAV": true,
+  "device": "Apple Paravirtual device",
+  "engine": "F5TTS_v1_Base",
+  "flowSteps": 32,
+  "generatedWAVSHA256": "ce8873610f83e9faf4d27739c5ea631e7b7adebd70356464e19c275b628b4721",
+  "intelligibilityVerified": false,
+  "likenessVerified": false,
+  "loadSeconds": 1.2438290119171143,
+  "networkDeniedBySandbox": true,
+  "peakRSSBytes": 1336868864,
+  "physicalIPhoneVerified": false,
+  "reference": "macOS generated diagnostic reference; no character likeness asserted",
+  "rms": 0.041406133031525856,
+  "runtimeRevision": "a57702e6f523fa36ac5532d2bdc5f35f701a052c",
+  "seed": 347,
+  "synthesisSeconds": 12.413619995117188,
+  "independentAudioCheck": {
+    "expectedText": "Welcome to the voice studio.",
+    "recognizedText": "This is about my father's life.",
+    "wordErrorRate": 1.4,
+    "passed": false,
+    "recognizer": "whisper.cpp tiny.en",
+    "recognizerModelSHA256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f",
+    "verificationRecognizedText": "So good my son, love you.",
+    "verificationModelSHA256": "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002",
+    "verificationModel": "whisper.cpp base.en"
+  },
+  "actionsRun": 42440882168,
+  "sourceCommit": "b71886e7cdbdb69a7b43760f7c5a7f3775f8f4cb"
+}
