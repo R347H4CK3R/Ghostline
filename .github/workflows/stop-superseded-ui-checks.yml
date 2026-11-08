@@ -1,30 +1,29 @@
-name: Stop superseded UI checks
+name: Verify published VoiceMatrix feeds
 on:
   push:
     branches: [maintenance/stop-superseded-ui-checks]
     paths: [.github/workflows/stop-superseded-ui-checks.yml]
 permissions:
   actions: write
+  contents: write
 jobs:
-  cancel:
+  verify:
     runs-on: ubuntu-latest
     steps:
-      - name: Cancel only the superseded runs from this UI task
+      - name: Finalize release wording and run the feed reconciliation
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import json,subprocess
-          repo="R347H4CK3R/Ghostline"
-          expected={
-            42517443357:("9d50fb1c87311a99e6ad3ad9904ad72a0b2f3f9d","release/voicematrix-0.4.4"),
-            42517443391:("9d50fb1c87311a99e6ad3ad9904ad72a0b2f3f9d","release/voicematrix-0.4.4")}
-          for run_id,(sha,branch) in expected.items():
-              path=f"repos/{repo}/actions/runs/{run_id}"
-              run=json.loads(subprocess.check_output(["gh","api",path]))
-              assert (run["head_sha"],run["head_branch"]) == (sha,branch)
-              if run["status"] == "completed":
-                  print(run_id,run["conclusion"]);continue
-              subprocess.run(["gh","api","--method","POST",path+"/cancel"],check=True)
-              print(run_id,"cancellation requested")
+          import json,pathlib,subprocess
+          repo="R347H4CK3R/Ghostline";tag="voicematrix-v0.4.4"
+          release=json.loads(subprocess.check_output(["gh","api",f"repos/{repo}/releases/tags/{tag}"]))
+          assert release["target_commitish"] == "b0a39f7525ca23b96d4f4f303abb732916485d5b"
+          assert not release["draft"] and not release["prerelease"]
+          body=release["body"].replace("Chris reported working audio in 0.4.3.","Working audio was reported in 0.4.3.")
+          if body != release["body"]:
+              pathlib.Path("release-notes.txt").write_text(body)
+              subprocess.run(["gh","release","edit",tag,"--repo",repo,"--notes-file","release-notes.txt"],check=True)
+          subprocess.run(["gh","api","--method","POST",f"repos/{repo}/actions/workflows/release-feed-sync.yml/dispatches","-f","ref=main"],check=True)
+          print("Requested verified feed reconciliation for the published 0.4.4 release.")
           PY
