@@ -75,14 +75,14 @@ jobs:
         mkdir Payload
         cp -R native-build/Build/Products/Release-iphoneos/VoiceMatrix.app Payload/
         cp source-proof.json Payload/VoiceMatrix.app/VoiceMatrix-Source-Proof.json
-        python3 tools/package_ipa.py Payload VoiceMatrix-0.4.1-character-test.ipa
-        python3 tools/character_package.py inspect VoiceMatrix-0.4.1-character-test.ipa --dependency-proof dependency-notices.json > character-inspection.json
-        shasum -a 256 VoiceMatrix-0.4.1-character-test.ipa > character-ipa.sha256
+        python3 tools/package_ipa.py Payload VoiceMatrix-0.4.3-character-test.ipa
+        python3 tools/character_package.py inspect VoiceMatrix-0.4.3-character-test.ipa --dependency-proof dependency-notices.json --expected-version 0.4.3 > character-inspection.json
+        shasum -a 256 VoiceMatrix-0.4.3-character-test.ipa > character-ipa.sha256
     - uses: actions/upload-artifact@v4
       with:
         name: Character-test-IPA
         path: |-
-          VoiceMatrix-0.4.1-character-test.ipa
+          VoiceMatrix-0.4.3-character-test.ipa
           character-inspection.json
           character-ipa.sha256
           source-proof.json
