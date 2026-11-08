@@ -1,0 +1,34 @@
+{
+  "name": "VoiceMatrix \u2014 LiveContainer Test Builds",
+  "identifier": "com.voicematrix.test-source",
+  "apps": [
+    {
+      "name": "VoiceMatrix \u2014 Laptop Pairing Test",
+      "bundleIdentifier": "com.voicematrix.app",
+      "developerName": "VoiceMatrix",
+      "localizedDescription": "Experimental laptop queue pairing with the existing offline speech runtime. Automatic character generation, new character model inference and physical iPhone pairing are not yet verified.",
+      "iconURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+      "versions": [
+        {
+          "version": "0.3.0",
+          "buildVersion": "6",
+          "date": "2026-11-08",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-queue-test-6/VoiceMatrix-Laptop-Test.ipa",
+          "localizedDescription": "Laptop HTTPS pairing and video-list submission test. Offline runtime resources included. Not a completed character model workflow.",
+          "minOSVersion": "26.0",
+          "size": 206006781
+        },
+        {
+          "version": "0.3.0",
+          "buildVersion": "5",
+          "date": "2026-11-07",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-studio-1/VoiceMatrix-v0.3.0-experimental.ipa",
+          "localizedDescription": "537 bundled profiles. Real offline neural conversion and speech; automated simulator audio checks, no near-indistinguishable claim.",
+          "minOSVersion": "26.0",
+          "size": 205958246
+        }
+      ]
+    }
+  ],
+  "sourceURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/livecontainer-test.json"
+}
