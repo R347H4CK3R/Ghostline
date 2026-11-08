@@ -1,28 +1,99 @@
 {
   "schemaVersion": 1,
-  "status": "source-validation-in-progress-not-deployed",
-  "scope": "Private audio activity suggestions and explicit source-bound review",
-  "automaticDiarization": false,
-  "automaticVisualLabels": false,
-  "likenessVerified": false,
-  "newCharacters": 0,
-  "physicalDeviceChecks": 0,
+  "status": "deployed-and-verified",
+  "runtimeSource": "41a9a6f650d82a93c1bcb5f85c20a7e4bddab938",
+  "scope": "Private audio activity proposals and explicit source-bound review; not speaker diarization or visual labels",
   "tests": {
     "local": {
-      "count": 209,
+      "count": 210,
       "passed": true,
       "skipped": 0
     },
-    "hosted": "not-yet-run",
-    "windowsLaptop": "not-yet-run",
-    "browser": "Local Chromium launch blocked by sandbox sockets; hosted check pending"
+    "actualWindowsLaptop": {
+      "count": 210,
+      "passed": true,
+      "skipped": 0,
+      "filesGitBlobVerified": 118
+    },
+    "hosted": {
+      "run": 42516165634,
+      "windowsJob": 128839542395,
+      "linuxJob": 128839542336,
+      "eachCount": 210,
+      "eachSkipped": 0,
+      "passed": true
+    },
+    "mobileBrowser": {
+      "job": 128839542200,
+      "artifact": 13631208484,
+      "width": 390,
+      "actualHTTPAndOwnedWorker": true,
+      "audioPlayback": true,
+      "blankNamesAndUnreviewedBases": true,
+      "explicitFinalApproval": true,
+      "sourceHashBinding": true,
+      "noJavaScriptErrors": true,
+      "noHorizontalOverflow": true
+    }
+  },
+  "historicalFailure": {
+    "run": 42515914084,
+    "windows": "Exact final-handle path comparison rejected an unresolved temporary directory alias; fixed canonical request expansion after symlink/junction rejection. Original guard unchanged.",
+    "linuxAndBrowser": "passed"
+  },
+  "independentReview": {
+    "blockingDefectsRemaining": 0,
+    "overflowProbe": "Real 1900-second compressed fixture with false 5-second metadata rejected after about 57.6 MB decoded output",
+    "linkedParentsAndOutsideRoot": "Rejected before download",
+    "requestRoot": "Uses canonical queue database parent, independent of synthesis work folder"
   },
   "limits": {
-    "maxSourceSeconds": 1800,
-    "maxSourceBytes": 268435456,
-    "maxProposals": 32,
-    "maxProposalSeconds": 12,
-    "inspectionDeadlineSeconds": 600
+    "sourceSeconds": 1800,
+    "sourceBytes": 268435456,
+    "downloadSeconds": 300,
+    "inspectionSeconds": 600,
+    "analysisSeconds": 90,
+    "clipSecondsDeadline": 30,
+    "maximumProposals": 32,
+    "proposalDurationSeconds": [
+      0.5,
+      12
+    ],
+    "neuralModelLoadedForInspection": false
   },
-  "deployment": "Not changed; existing endpoint and worker preserved"
+  "deployment": {
+    "backup": "source-inspection-backup-1794167015",
+    "endpointAndSoleWorkerUpgraded": true,
+    "oldWorkerGracefullyStoppedBeforeReplacement": true,
+    "monitorRestarted": false,
+    "actualWorkerPIDObserved": 14708,
+    "lifetimeDatabaseLockHeld": true,
+    "idleWorkerRSSBytesObserved": 23638016,
+    "liveJobs": 0,
+    "privateProfiles": 60,
+    "distinctReferences": 60,
+    "privateIndexSHA256": "57566a540aa0f06dbf5b09a1c8096aaff812a9027189d9448596ba3cc7783013",
+    "sameOwnerHTTPSReview": 200,
+    "privateInspectionStatus": 200,
+    "anonymousInspection": 401,
+    "missingNonce": 403,
+    "malformedSelection": 400,
+    "voiceCatalogFiles": 121,
+    "noLiveInspectionSubmitted": true,
+    "pipelineConnected": false
+  },
+  "release": {
+    "unchanged": "0.4.3 build 1",
+    "allThreeFeedSizes": 731052434,
+    "newIPA": false
+  },
+  "claims": {
+    "automaticSpeakerDiarization": false,
+    "automaticVisualLabeling": false,
+    "newNeuralInference": false,
+    "newCharacters": 0,
+    "physicalDeviceChecks": 0,
+    "likenessVerified": false,
+    "reviewedReplacementPromotion": false
+  }
 }
