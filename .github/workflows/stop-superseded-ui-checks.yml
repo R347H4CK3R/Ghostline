@@ -17,10 +17,8 @@ jobs:
           import json,subprocess
           repo="R347H4CK3R/Ghostline"
           expected={
-            42515379297:("84ccf9af0a79d562dc936f4d3bb0fd8529d4a3ce","feature/voicematrix-studio-refresh"),
-            42515876308:("440cbfbe59dbc2eedb3cd5520c30c2f75817dabe","feature/voicematrix-studio-refresh"),
-            42517030181:("7a4bb8bf4d3b8c1b12bc648e088e1d2799f1cac5","feature/voicematrix-studio-refresh"),
-            42516353265:("42512bff6971e80eaa4015e512e69ae08b1a1aea","release/voicematrix-0.4.4")}
+            42517443357:("9d50fb1c87311a99e6ad3ad9904ad72a0b2f3f9d","release/voicematrix-0.4.4"),
+            42517443391:("9d50fb1c87311a99e6ad3ad9904ad72a0b2f3f9d","release/voicematrix-0.4.4")}
           for run_id,(sha,branch) in expected.items():
               path=f"repos/{repo}/actions/runs/{run_id}"
               run=json.loads(subprocess.check_output(["gh","api",path]))
