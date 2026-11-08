@@ -12,101 +12,128 @@ settings:
   base:
     IPHONEOS_DEPLOYMENT_TARGET: '26.0'
     SWIFT_VERSION: '5.0'
-    TARGETED_DEVICE_FAMILY: '1,2'
-    GENERATE_INFOPLIST_FILE: YES
-    MARKETING_VERSION: '0.4.0'
+    TARGETED_DEVICE_FAMILY: 1,2
+    GENERATE_INFOPLIST_FILE: true
+    MARKETING_VERSION: 0.4.0
     CURRENT_PROJECT_VERSION: '1'
-    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGNING_ALLOWED: false
 targets:
   VoiceMatrix:
     type: application
     platform: iOS
     sources:
-      - path: VoiceMatrix
-        excludes: [Resources]
-      - path: Assets.xcassets
-      - path: VoiceMatrix/Resources/Phonon
-        type: folder
-        buildPhase: resources
-      - path: VoiceMatrix/Resources/OpenVoice
-        type: folder
-        buildPhase: resources
-      - path: VoiceMatrix/Resources/F5TTS
-        type: folder
-        buildPhase: resources
+    - path: VoiceMatrix
+      excludes:
+      - Resources
+    - path: Assets.xcassets
+    - path: VoiceMatrix/Resources/Phonon
+      type: folder
+      buildPhase: resources
+    - path: VoiceMatrix/Resources/OpenVoice
+      type: folder
+      buildPhase: resources
+    - path: VoiceMatrix/Resources/F5TTS
+      type: folder
+      buildPhase: resources
     dependencies:
-      - package: FluidAudio
-      - package: SpeechSwift
-        product: F5TTS
+    - package: FluidAudio
+    - package: SpeechSwift
+      product: F5TTS
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.voicematrix.app
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_CFBundleDisplayName: VoiceMatrix
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Record audio privately on your iPhone.
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UIFileSharingEnabled: NO
-        INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        INFOPLIST_KEY_UIFileSharingEnabled: false
+        INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: true
   VoiceMatrixTests:
     type: bundle.unit-test
     platform: iOS
-    sources: [VoiceMatrixTests]
+    sources:
+    - VoiceMatrixTests
     dependencies:
-      - target: VoiceMatrix
+    - target: VoiceMatrix
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.voicematrix.tests
   VoiceMatrixUITests:
     type: bundle.ui-testing
     platform: iOS
-    sources: [VoiceMatrixUITests]
+    sources:
+    - VoiceMatrixUITests
     dependencies:
-      - target: VoiceMatrix
+    - target: VoiceMatrix
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.voicematrix.uitests
   CharacterRuntimeTests:
     type: bundle.unit-test
     platform: iOS
-    sources: [CharacterRuntimeTests]
+    sources:
+    - CharacterRuntimeTests
+    - path: tests/fixtures/conversion-source.wav
+      buildPhase: resources
+    - path: tests/fixtures/conversion-reference.wav
+      buildPhase: resources
     dependencies:
-      - target: VoiceMatrix
+    - target: CharacterRuntimeHost
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.voicematrix.character-tests
-        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/VoiceMatrix.app/VoiceMatrix"
-        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/CharacterRuntimeHost.app/CharacterRuntimeHost
+        BUNDLE_LOADER: $(TEST_HOST)
   CharacterSpeechDiagnostic:
     type: tool
     platform: macOS
     sources:
-      - path: probes/native-f5/Calibration.swift
-      - path: VoiceMatrix/F5ReferenceEngine.swift
-      - path: VoiceMatrix/F5SpeechChunks.swift
+    - path: probes/native-f5/Calibration.swift
+    - path: VoiceMatrix/F5ReferenceEngine.swift
+    - path: VoiceMatrix/F5SpeechChunks.swift
     dependencies:
-      - package: SpeechSwift
-        product: F5TTS
+    - package: SpeechSwift
+      product: F5TTS
     settings:
       base:
         MACOSX_DEPLOYMENT_TARGET: '15.0'
-
+  CharacterRuntimeHost:
+    type: application
+    platform: iOS
+    sources:
+    - path: probes/native-conversion/RuntimeHost.swift
+    - path: VoiceMatrix/Catalog.swift
+    - path: VoiceMatrix/ConversionAudio.swift
+    - path: VoiceMatrix/OfflineVoiceConverter.swift
+    - path: VoiceMatrix/CharacterVoiceConversion.swift
+    - path: VoiceMatrix/Resources/OpenVoice
+      type: folder
+      buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.voicematrix.character-runtime-host
 schemes:
   VoiceMatrix:
     build:
       targets:
         VoiceMatrix: all
-        VoiceMatrixTests: [test]
-        VoiceMatrixUITests: [test]
+        VoiceMatrixTests:
+        - test
+        VoiceMatrixUITests:
+        - test
     test:
-      targets: [VoiceMatrixTests, VoiceMatrixUITests]
-
+      targets:
+      - VoiceMatrixTests
+      - VoiceMatrixUITests
   CharacterRuntimeChecks:
     build:
       targets:
-        VoiceMatrix: all
-        CharacterRuntimeTests: [test]
+        CharacterRuntimeHost: all
+        CharacterRuntimeTests:
+        - test
     test:
-      targets: [CharacterRuntimeTests]
+      targets:
+      - CharacterRuntimeTests
   CharacterSpeechDiagnostic:
     build:
       targets:

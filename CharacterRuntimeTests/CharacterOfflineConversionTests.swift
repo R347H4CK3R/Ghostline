@@ -1,18 +1,18 @@
 import XCTest
 import AVFoundation
 import CryptoKit
-@testable import VoiceMatrix
+@testable import CharacterRuntimeHost
 
 final class CharacterOfflineConversionTests: XCTestCase {
     func testImportedReferenceProducesDecodableChangedRecording() async throws {
         let testBundle = Bundle(for: Self.self)
-        let source = try XCTUnwrap(testBundle.url(forResource: "diagnostic-source", withExtension: "wav"))
-        let reference = try XCTUnwrap(testBundle.url(forResource: "diagnostic-reference", withExtension: "wav"))
+        let source = try XCTUnwrap(testBundle.url(forResource: "conversion-source", withExtension: "wav"))
+        let reference = try XCTUnwrap(testBundle.url(forResource: "conversion-reference", withExtension: "wav"))
         let root = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("CharacterConversionQA")
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let destination = root.appendingPathComponent("reference-conditioned-conversion.wav")
         let converter = CharacterVoiceConversion()
-        let result = try await converter.run(reference: reference, source: source, destination: destination)
+        let result = try await converter.run(reference: reference, source: source, destination: destination) { print("Character conversion stage: " + $0) }
         XCTAssertLessThan(abs(result.sourceSeconds - result.outputSeconds), 0.04)
         let samples = try ConversionAudio.readMono(destination, minimumSeconds: 0.15)
         XCTAssertGreaterThan(samples.count, 2205)

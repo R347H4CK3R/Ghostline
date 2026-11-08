@@ -4,7 +4,7 @@ MODEL_HASHES={'tiny.en.bin':'921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75
 def digest(path):
  with pathlib.Path(path).open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
 def source_proof(resolved):
- paths=list(pathlib.Path('VoiceMatrix').glob('*.swift'))+list(pathlib.Path('Assets.xcassets').rglob('*'))+[pathlib.Path('project.yml'),pathlib.Path('VoiceMatrix/LaptopSettings.json'),pathlib.Path('tools/f5-listening-lock.json'),pathlib.Path('tools/no-stock-resource-lock.json')]
+ paths=[pathlib.Path('probes/native-conversion/RuntimeHost.swift')]+list(pathlib.Path('VoiceMatrix').glob('*.swift'))+list(pathlib.Path('Assets.xcassets').rglob('*'))+[pathlib.Path('project.yml'),pathlib.Path('VoiceMatrix/LaptopSettings.json'),pathlib.Path('tools/f5-listening-lock.json'),pathlib.Path('tools/no-stock-resource-lock.json')]
  files={p.as_posix():digest(p) for p in sorted(set(paths)) if p.is_file()}
  record=dict(sourceCommit=os.environ['GITHUB_SHA'],files=files,dependencyResolvedSHA256=digest(resolved))
  record['inferenceSourceFingerprint']=hashlib.sha256(json.dumps(record,sort_keys=True,separators=(',',':')).encode()).hexdigest();return record
@@ -30,7 +30,7 @@ def check_conversion(root,cli,models):
  for model in map(pathlib.Path,models):
   assert digest(model)==MODEL_HASHES[model.name]
   prefix=root/('independent-'+model.stem);subprocess.run([str(cli),'-m',str(model),'-f',str(decoded),'-l','en','-t','2','-nf','-otxt','-of',str(prefix)],check=True,capture_output=True,timeout=120)
-  text=prefix.with_suffix('.txt').read_text().strip();wer=edits(words(report['expectedText']),words(text))/len(words(report['expectedText']));attempts.append(dict(recognizerModelSHA256=digest(model),recognizedText=text,wordErrorRate=wer))
+  text=pathlib.Path(str(prefix)+'.txt').read_text().strip();wer=edits(words(report['expectedText']),words(text))/len(words(report['expectedText']));attempts.append(dict(recognizerModelSHA256=digest(model),recognizedText=text,wordErrorRate=wer))
   if wer<=.1:break
  passed=min(x['wordErrorRate'] for x in attempts)<=.1 and rms>.0001 and fullscale==0 and abs(report['sourceSeconds']-report['outputSeconds'])<.04
  report.update(independentASR=attempts,rms=rms,fullScaleSamples=fullscale,passed=passed,physicalDeviceVerified=False,likenessVerified=False)

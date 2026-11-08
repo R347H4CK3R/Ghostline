@@ -1,0 +1,56 @@
+{
+  "cpu": {
+    "computeUnits": "cpu",
+    "expectedText": "I found a strange device near the portal.",
+    "likenessVerified": false,
+    "outputSeconds": 2.159455782312925,
+    "outputSHA256": "3963beb1704f00e4259d7125d2b26d2f9b636fb764eda03f75a0e2f0d31648fa",
+    "physicalDeviceVerified": false,
+    "referenceAudioSHA256": "0840a3b08d2d438804e760afa54bc1c9cdf1c8b33bffdc1ab458be4ab3740cd2",
+    "scope": "Hosted macOS CoreML diagnostic using actual production converter sources",
+    "sharedModelManifestSHA256": "3b25215dedc4876b263082d0ac36f35a519b13f93c0ccb1698c908b56df8f8b1",
+    "sourceAudioSHA256": "8741b5ebb943f4c39006b6c7a7dd5ca92f344edb402744ad7132ee1f94ff45b4",
+    "sourceSeconds": 2.1653514739229025,
+    "wallSeconds": 1.3589730262756348,
+    "independentASR": [
+      {
+        "recognizerModelSHA256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f",
+        "recognizedText": "I found a strange device near the portal.",
+        "wordErrorRate": 0.0
+      }
+    ],
+    "rms": 0.08748125502693122,
+    "fullScaleSamples": 0,
+    "passed": true,
+    "sourceCommit": "fa331018a0f5dc38aa966e1af0c0691235cb8118",
+    "modelExecutionRun": 42454336837,
+    "independentVerifier": "Corrected transcript filename handling, local pinned whisper.cpp727d3e7666485e12450746b523bfb4e7f057cc5e; no prompt"
+  },
+  "cpu-and-gpu": {
+    "computeUnits": "cpu-and-gpu",
+    "expectedText": "I found a strange device near the portal.",
+    "likenessVerified": false,
+    "outputSeconds": 2.159455782312925,
+    "outputSHA256": "3963beb1704f00e4259d7125d2b26d2f9b636fb764eda03f75a0e2f0d31648fa",
+    "physicalDeviceVerified": false,
+    "referenceAudioSHA256": "0840a3b08d2d438804e760afa54bc1c9cdf1c8b33bffdc1ab458be4ab3740cd2",
+    "scope": "Hosted macOS CoreML diagnostic using actual production converter sources",
+    "sharedModelManifestSHA256": "3b25215dedc4876b263082d0ac36f35a519b13f93c0ccb1698c908b56df8f8b1",
+    "sourceAudioSHA256": "8741b5ebb943f4c39006b6c7a7dd5ca92f344edb402744ad7132ee1f94ff45b4",
+    "sourceSeconds": 2.1653514739229025,
+    "wallSeconds": 0.9271481037139893,
+    "independentASR": [
+      {
+        "recognizerModelSHA256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f",
+        "recognizedText": "I found a strange device near the portal.",
+        "wordErrorRate": 0.0
+      }
+    ],
+    "rms": 0.08748125502693122,
+    "fullScaleSamples": 0,
+    "passed": true,
+    "sourceCommit": "fa331018a0f5dc38aa966e1af0c0691235cb8118",
+    "modelExecutionRun": 42454336837,
+    "independentVerifier": "Corrected transcript filename handling, local pinned whisper.cpp727d3e7666485e12450746b523bfb4e7f057cc5e; no prompt"
+  }
+}

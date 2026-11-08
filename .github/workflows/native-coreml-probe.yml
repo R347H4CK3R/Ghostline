@@ -1,8 +1,10 @@
 name: Native CoreML CPU and GPU diagnosis
 'on':
   push:
-    paths: ['.github/workflows/native-coreml-probe.yml']
-  workflow_dispatch:
+    paths:
+    - .github/workflows/native-coreml-probe.yml
+    - tools/character_evidence.py
+  workflow_dispatch: null
 permissions:
   contents: read
 jobs:
@@ -10,54 +12,55 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - uses: actions/cache@v4
-        with:
-          path: character-cache
-          key: character-assets-685e8816-716d2f41
-      - name: Stage exact pinned conversion models and validated speech inputs
-        run: |
-          python3 tools/character_package.py prepare --cache character-cache --resources conversion-resources --skip-f5
-          python3 tools/check_conversion_inputs.py
-          mkdir -p CoreMLProbe.app/Contents/{MacOS,Resources}
-          cp -R conversion-resources/OpenVoice CoreMLProbe.app/Contents/Resources/
-          python3 - <<'PY'
-          import plistlib,pathlib
-          pathlib.Path('CoreMLProbe.app/Contents/Info.plist').write_bytes(plistlib.dumps(dict(CFBundleExecutable='CoreMLProbe',CFBundleIdentifier='com.voicematrix.coreml-probe',CFBundlePackageType='APPL')))
-          PY
-      - name: Compile actual production conversion sources without unrelated neural packages
-        run: xcrun swiftc -parse-as-library -O VoiceMatrix/Catalog.swift VoiceMatrix/ConversionAudio.swift VoiceMatrix/OfflineVoiceConverter.swift probes/native-conversion/CoreMLProbe.swift -o CoreMLProbe.app/Contents/MacOS/CoreMLProbe
-      - name: Run actual CPU and GPU conversion with a bounded diagnostic deadline
-        run: |
-          python3 - <<'PY'
-          import subprocess
-          with open('coreml-probe.log','w') as log:
-              subprocess.run(['CoreMLProbe.app/Contents/MacOS/CoreMLProbe','tests/fixtures/conversion-source.wav','tests/fixtures/conversion-reference.wav','coreml-evidence'],stdout=log,stderr=log,check=True,timeout=240)
-          PY
-      - uses: actions/checkout@v4
-        with:
-          repository: ggml-org/whisper.cpp
-          ref: 727d3e7666485e12450746b523bfb4e7f057cc5e
-          path: whisper-runtime
-      - name: Build pinned independent recognizer
-        run: |
-          command -v ffmpeg >/dev/null || brew install ffmpeg
-          cmake -S whisper-runtime -B whisper-runtime/build -DGGML_METAL=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_SERVER=OFF -DCMAKE_BUILD_TYPE=Release
-          cmake --build whisper-runtime/build --target whisper-cli -j 3
-          curl -fL --retry 3 -o tiny.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin
-          curl -fL --retry 3 -o base.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
-      - name: Require real decoded non-silent timing-preserving intelligible audio in both modes
-        run: |
-          python3 -m tools.character_evidence conversion coreml-evidence/cpu whisper-runtime/build/bin/whisper-cli tiny.en.bin base.en.bin
-          python3 -m tools.character_evidence conversion coreml-evidence/cpu-and-gpu whisper-runtime/build/bin/whisper-cli tiny.en.bin base.en.bin
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: Native-CoreML-compute-diagnosis
-          path: |
-            coreml-evidence/
-            coreml-probe.log
-          if-no-files-found: warn
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - uses: actions/cache@v4
+      with:
+        path: character-cache
+        key: character-assets-685e8816-716d2f41
+    - name: Stage exact pinned conversion models and validated speech inputs
+      run: |
+        python3 tools/character_package.py prepare --cache character-cache --resources conversion-resources --skip-f5
+        python3 tools/check_conversion_inputs.py
+        mkdir -p CoreMLProbe.app/Contents/{MacOS,Resources}
+        cp -R conversion-resources/OpenVoice CoreMLProbe.app/Contents/Resources/
+        python3 - <<'PY'
+        import plistlib,pathlib
+        pathlib.Path('CoreMLProbe.app/Contents/Info.plist').write_bytes(plistlib.dumps(dict(CFBundleExecutable='CoreMLProbe',CFBundleIdentifier='com.voicematrix.coreml-probe',CFBundlePackageType='APPL')))
+        PY
+    - name: Compile actual production conversion sources without unrelated neural packages
+      run: xcrun swiftc -parse-as-library -O VoiceMatrix/Catalog.swift VoiceMatrix/ConversionAudio.swift VoiceMatrix/OfflineVoiceConverter.swift
+        probes/native-conversion/CoreMLProbe.swift -o CoreMLProbe.app/Contents/MacOS/CoreMLProbe
+    - name: Run actual CPU and GPU conversion with a bounded diagnostic deadline
+      run: |
+        python3 - <<'PY'
+        import subprocess
+        with open('coreml-probe.log','w') as log:
+            subprocess.run(['CoreMLProbe.app/Contents/MacOS/CoreMLProbe','tests/fixtures/conversion-source.wav','tests/fixtures/conversion-reference.wav','coreml-evidence'],stdout=log,stderr=log,check=True,timeout=240)
+        PY
+    - uses: actions/checkout@v4
+      with:
+        repository: ggml-org/whisper.cpp
+        ref: 727d3e7666485e12450746b523bfb4e7f057cc5e
+        path: whisper-runtime
+    - name: Build pinned independent recognizer
+      run: |
+        command -v ffmpeg >/dev/null || brew install ffmpeg
+        cmake -S whisper-runtime -B whisper-runtime/build -DGGML_METAL=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_SERVER=OFF -DCMAKE_BUILD_TYPE=Release
+        cmake --build whisper-runtime/build --target whisper-cli -j 3
+        curl -fL --retry 3 -o tiny.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin
+        curl -fL --retry 3 -o base.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
+    - name: Require real decoded non-silent timing-preserving intelligible audio in both modes
+      run: |
+        python3 -m tools.character_evidence conversion coreml-evidence/cpu whisper-runtime/build/bin/whisper-cli tiny.en.bin base.en.bin
+        python3 -m tools.character_evidence conversion coreml-evidence/cpu-and-gpu whisper-runtime/build/bin/whisper-cli tiny.en.bin base.en.bin
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: Native-CoreML-compute-diagnosis
+        path: |
+          coreml-evidence/
+          coreml-probe.log
+        if-no-files-found: warn
