@@ -56,4 +56,5 @@ jobs:
           ./f5-speech-chunk-checks
 
       - name: Run collection export and source regression tests
+        if: always()
         run: python3 -m unittest discover -s tests -v

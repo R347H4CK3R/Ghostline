@@ -136,7 +136,9 @@ actor CharacterFolderStore {
         try fm.createDirectory(at: root, withIntermediateDirectories: true)
         var next = try index()
         var referenceOwners: [String: String] = [:]
-        for voice in try profiles() {
+        let savedProfiles = try profiles()
+        let savedByID = Dictionary(uniqueKeysWithValues: savedProfiles.map { ($0.id, $0) })
+        for voice in savedProfiles {
             guard referenceOwners[voice.referenceSHA256] == nil else { throw CharacterImportError.invalid("The library contains repeated reference audio.") }
             referenceOwners[voice.referenceSHA256] = voice.id
         }
@@ -144,6 +146,10 @@ actor CharacterFolderStore {
             try Task.checkCancellation()
             let (voice, manifest, audio) = try validated(external.appendingPathComponent(entry.folder))
             guard voice.id == entry.id else { throw CharacterImportError.invalid("The collection and voice IDs do not match.") }
+            if let saved = savedByID[voice.id],
+               saved.referenceSHA256 != voice.referenceSHA256 || saved.referenceText != voice.referenceText {
+                throw CharacterImportError.invalid("A changed reference or transcript for " + saved.name + " needs a reviewed replacement. Your existing voices were kept.")
+            }
             if let owner = referenceOwners[voice.referenceSHA256], owner != voice.id {
                 throw CharacterImportError.invalid("This reference is already stored under another voice name.")
             }

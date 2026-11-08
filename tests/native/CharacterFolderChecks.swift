@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 @main struct CharacterFolderChecks {
     static func expectFailure(_ operation: () async throws -> Void) async throws {
@@ -34,8 +35,25 @@ import Foundation
         var changedMetadata = try JSONSerialization.jsonObject(with: Data(contentsOf: changedManifest)) as! [String: Any]
         changedMetadata["referenceText"] = "Different conditioning words."
         try JSONSerialization.data(withJSONObject: changedMetadata).write(to: changedManifest)
-        let retained = try await store.importCollection(at: changedText)
+        try await expectFailure { _ = try await store.importCollection(at: changedText) }
+        let retained = try await store.profiles()
         precondition(retained == revised, "Unreviewed conditioning replaced the active reference")
+        let changedAudioFolder = work.appendingPathComponent("changed-audio")
+        try fm.copyItem(at: input, to: changedAudioFolder)
+        let changedAudioURL = changedAudioFolder.appendingPathComponent("original-test/reference.wav")
+        var changedAudio = try Data(contentsOf: changedAudioURL)
+        changedAudio[44] ^= 1
+        try changedAudio.write(to: changedAudioURL)
+        let audioManifest = changedAudioFolder.appendingPathComponent("original-test/manifest.json")
+        var audioMetadata = try JSONSerialization.jsonObject(with: Data(contentsOf: audioManifest)) as! [String: Any]
+        audioMetadata["referenceSHA256"] = SHA256.hash(data: changedAudio).map { String(format: "%02x", $0) }.joined()
+        try JSONSerialization.data(withJSONObject: audioMetadata).write(to: audioManifest)
+        try await expectFailure { _ = try await store.importCollection(at: changedAudioFolder) }
+        let unchangedActive = try await store.profiles()
+        precondition(unchangedActive == revised)
+        let unchangedURL = try await store.referenceURL(id: "original-test")
+        let unchangedBytes = try Data(contentsOf: unchangedURL)
+        precondition(unchangedBytes == cachedBytes)
         // A later corrupt refresh must not replace a usable private revision.
         try Data("broken".utf8).write(to: updated.appendingPathComponent("original-test/reference.wav"))
         try await expectFailure { _ = try await store.importCollection(at: updated) }
