@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'VoiceMatrix/VideoQueueView.swift'
+      - 'VoiceMatrix/LaptopConnection.swift'
       - '.github/workflows/native-queue.yml'
   workflow_dispatch:
 permissions:
@@ -16,4 +17,4 @@ jobs:
       - name: Typecheck queue screen against iPhone SDK
         run: |
           SDKROOT="$(xcrun --sdk iphoneos --show-sdk-path)"
-          xcrun swiftc -typecheck -sdk "$SDKROOT" -target arm64-apple-ios26.0 VoiceMatrix/VideoQueueView.swift
+          xcrun swiftc -typecheck -sdk "$SDKROOT" -target arm64-apple-ios26.0 VoiceMatrix/VideoQueueView.swift VoiceMatrix/LaptopConnection.swift

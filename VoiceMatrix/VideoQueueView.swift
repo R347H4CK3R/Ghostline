@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 private struct QueuedVideo: Codable, Identifiable {
     let id: String
@@ -13,6 +14,8 @@ struct VideoQueueView: View {
     @State private var link = ""
     @State private var message = ""
     @State private var exported: URL?
+    @State private var pairing = false
+    @State private var sending = false
 
     private func persist() {
         do {
@@ -72,10 +75,25 @@ struct VideoQueueView: View {
             Section("Step 2 · Export your list") {
                 Button("Prepare Updated List", action: exportList).disabled(videos.isEmpty)
                 if let exported { ShareLink(item: exported) { Label("Share List", systemImage: "square.and.arrow.up") } }
-                Text("This saves your list on this iPhone. Automatic delivery and laptop processing are still being connected; exporting does not create voices.").font(.caption).foregroundStyle(.secondary)
+                Button("Connect Laptop") { pairing = true }
+                Button(sending ? "Sending…" : "Send List to Laptop") {
+                    sending = true
+                    Task { @MainActor in
+                        defer { sending = false }
+                        do {
+                            let data = try JSONEncoder().encode(["videos": videos])
+                            message = try await LaptopConnection.send(data)
+                        } catch { message = error.localizedDescription }
+                    }
+                }.disabled(sending || videos.isEmpty)
+                Text("Connect using your laptop companion’s HTTPS pairing file. Sending adds requests to its queue; voice creation and review are separate steps. Offline speech does not need this connection.").font(.caption).foregroundStyle(.secondary)
             }
             if !message.isEmpty { Text(message).accessibilityAddTraits(.updatesFrequently) }
         }.navigationTitle("Video List")
+            .fileImporter(isPresented: $pairing, allowedContentTypes: [.json]) { result in
+                do { try LaptopConnection.pair(from: result.get()); message = "Laptop connection saved. Send your list when ready." }
+                catch { message = error.localizedDescription }
+            }
             .onAppear {
                 guard !saved.isEmpty else { return }
                 do { videos = try JSONDecoder().decode([QueuedVideo].self, from: saved) }
