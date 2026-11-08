@@ -28,6 +28,7 @@ jobs:
         retention-days: 7
 'on':
   push:
+    branches-ignore: ['release/**']
     paths:
     - VoiceMatrix/**
     - project.yml

@@ -1,6 +1,7 @@
 name: Current no-stock character UI smoke
 on:
   push:
+    branches-ignore: ['release/**']
     paths:
       - 'VoiceMatrix/App.swift'
       - 'VoiceMatrix/AudioStore.swift'

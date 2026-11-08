@@ -309,4 +309,4 @@ jobs:
         path: release-evidence/publication-report.json
         if-no-files-found: warn
 
-# Publication waits for the corrected, duration-bounded UI workflow before release.
+# Final grouped layout; publication waits for search-aware UI assertions.

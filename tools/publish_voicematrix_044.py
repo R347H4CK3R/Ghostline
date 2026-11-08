@@ -8,7 +8,7 @@ REPO = "R347H4CK3R/Ghostline"
 VERSION = "0.4.4"
 TAG = "voicematrix-v0.4.4"
 IPA = "VoiceMatrix-0.4.4.ipa"
-TESTED = "a61198821034bdc27a2b8946b005406a11fe71bb"
+TESTED = "198b26dc755f49ac9cacd02f4660d0e2de84db21"
 ROOT = pathlib.Path("release-evidence")
 NOTES = """VoiceMatrix 0.4.4
 
@@ -18,7 +18,7 @@ The working audio engines, playback lifecycle and private voice storage are unch
 
 Verification includes source regressions, native ARM64 compilation, existing playback/updater checks, simulator import of a neutral synthetic voice through the real store, selection, reference playback and persistence after relaunch. Full native speech/conversion and package gates bind this IPA to the tested source. No synthetic UI fixture, private character audio or stock profiles are included in the release.
 
-Chris reported working audio in0.4.3. The0.4.4 interface, update handoff and individual character resemblance still require physical iPhone evaluation. Simulator results do not establish character likeness.
+Chris reported working audio in 0.4.3. The 0.4.4 interface, update handoff and individual character resemblance still require physical iPhone evaluation. Simulator results do not establish character likeness.
 """
 
 def gh(*args, check=True):
@@ -37,8 +37,8 @@ def main():
     # The publication job depends on actual speech/conversion/package jobs.
     # Also bind the already-passed playback/updater tests to every shipped app source.
     for run_id, tested_sha in (
-        (42515876335, "440cbfbe59dbc2eedb3cd5520c30c2f75817dabe"),
-        (42517190096, TESTED),
+        (42518210598, "10638f191419a03d23b9de39ae58382061eb192f"),
+        (42519869947, TESTED),
     ):
         deadline = time.monotonic() + 1200
         while True:

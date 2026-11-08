@@ -8,6 +8,7 @@ import XCTest
         app.launchArguments = ["-tutorialSeen", "YES"]
         app.launch()
         XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 30))
+        capture("Refreshed studio home", app: app)
         return app
     }
 

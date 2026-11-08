@@ -271,6 +271,7 @@ struct CharacterLibraryView: View {
                     .buttonStyle(.borderedProminent).accessibilityIdentifier("create-character-speech")
                     .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.engineAvailable || words.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || words.count > 500)
                 if library.busy { ProgressView(library.message); Button("Stop after current step", role: .cancel) { library.cancel() } }
+                Text(library.message).font(.caption).foregroundStyle(.secondary).accessibilityAddTraits(.updatesFrequently)
                 if !library.engineAvailable { Text("The shared F5 engine is absent from this build. Your imported voice samples remain saved; speech testing becomes available in a build containing that engine.").foregroundStyle(.secondary) }
                 Text("Creates new words using your selected voice.").font(.caption).foregroundStyle(.secondary)
                 if let output = library.output, library.outputKind == "speech", library.outputMatchesSelection { AudioActions(url: output) }
@@ -293,6 +294,7 @@ struct CharacterLibraryView: View {
                     } label: { Label("CONVERT", systemImage: "waveform").frame(minHeight: 52) }.buttonStyle(.borderedProminent)
                         .disabled(library.busy || recorder.recording || recorder.requestingPermission || recorder.output == nil || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.conversionAvailable)
                 if library.busy { ProgressView(library.message); Button("Stop after current step", role: .cancel) { library.cancel() } }
+                    Text(library.message).font(.caption).foregroundStyle(.secondary).accessibilityAddTraits(.updatesFrequently)
                     if !library.conversionAvailable { Text("This build needs the shared voice-changing engine before conversion can run.").foregroundStyle(.secondary) }
                     if let source = recorder.output, !recorder.recording { Button("Listen to my original recording") { audio.play(source) }.disabled(library.busy) }
                     Text("Changes a recording on your iPhone. Not for live calls.").font(.caption).foregroundStyle(.secondary)
@@ -300,7 +302,6 @@ struct CharacterLibraryView: View {
                 }
             }
             Section("Playback & comparison") {
-                Text(library.message).font(.callout).accessibilityAddTraits(.updatesFrequently)
                 Text("Compare the original voice with your new audio.").font(.subheadline).foregroundStyle(.secondary)
                 if let selected = library.profiles.first(where: { $0.id == library.selectedID }) {
                     Text("Selected: " + selected.name)
@@ -337,7 +338,6 @@ struct CharacterLibraryView: View {
         .navigationTitle(mode == .speech ? "Make Speech" : "Change My Voice")
         .scrollContentBackground(.hidden)
         .background(StudioPalette.background)
-        .listRowSpacing(8)
         .scrollDismissesKeyboard(.interactively)
         .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Done") { editingWords = false } } }
         .sheet(isPresented: $choosingVoice) { NavigationStack { CharacterPickerView() } }

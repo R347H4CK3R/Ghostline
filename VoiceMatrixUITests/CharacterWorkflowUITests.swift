@@ -25,7 +25,10 @@ import XCTest
         let details = app.buttons["Voice details"]
         XCTAssertTrue(details.exists)
         details.tap()
-        XCTAssertTrue(app.navigationBars["Choose a voice"].exists, "Expanding details must not select a voice")
+        XCTAssertTrue(voice.waitForExistence(timeout: 5), "Expanding details must keep the picker open")
+        XCTAssertEqual(voice.value as? String, "Not selected")
+        let sourceDetails = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Source: ")).firstMatch
+        XCTAssertTrue(sourceDetails.waitForExistence(timeout: 5), "Voice details must expand")
         voice.tap()
         XCTAssertTrue(app.navigationBars["Make Speech"].waitForExistence(timeout: 15))
         XCTAssertTrue(app.buttons["choose-character"].label.contains("Synthetic diagnostic voice"))
