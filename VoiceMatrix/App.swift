@@ -244,22 +244,14 @@ struct HelpView: View {
 struct SettingsView: View {
     @EnvironmentObject var studio: SpeechStudio
     @EnvironmentObject var audio: AudioStore
+    @EnvironmentObject var library: CharacterLibrary
     @State private var report: URL?
     var body: some View {
         Form {
-            Section("VoiceMatrix \(DeviceVoiceChecks.appVersion) · Experimental") {
-                Text("\(studio.voices.count) bundled English profiles\n\(studio.automatedChecks) automated speech checks passed (simulator)\n\(studio.onDeviceSpeechChecks) speech checks completed on this iPhone\n0 authorized recognizable likenesses\nQuality listening tests pending")
-                Text("All speech and voice-changing files are included. No account or model download is needed.")
-                Text("Profile storage: \(ByteCountFormatter.string(fromByteCount: Int64(studio.voices.reduce(0) { $0 + $1.size }), countStyle: .file))")
-            }
-            Section("Check included voices") {
-                Button("CHECK ALL VOICES") { studio.checkIncludedVoices(audio: audio) }.disabled(studio.busy || studio.recordingInProgress)
-                if studio.checkingVoices {
-                    ProgressView(value: studio.checkProgress)
-                    Button("Stop Checks") { studio.cancel() }
-                }
-                Text("Tests every included voice without saving recordings. Keep the app open. These audio checks do not replace listening comparisons.").font(.caption)
-                Text(studio.status).font(.caption)
+            Section("VoiceMatrix \(DeviceVoiceChecks.appVersion)") {
+                Label("\(library.profiles.count) imported voices", systemImage: "person.2.wave.2")
+                Text("Your collection and saved recordings stay on this iPhone. Speech and voice changing run locally.")
+                    .font(.subheadline).foregroundStyle(.secondary)
             }
             Section("App updates") {
                 NavigationLink("Check for Updates") { AppUpdatesView() }.accessibilityIdentifier("app-updates")
@@ -273,7 +265,7 @@ struct SettingsView: View {
                 if let report { ShareLink(item: report) { Label("Share Error Report", systemImage: "square.and.arrow.up") } }
                 Text("Nothing is uploaded automatically. Reports contain engine events and profile IDs, without entered text or audio.").font(.caption)
             }
-            Section("Licenses") { Text("FluidAudio and Phonon: Apache 2.0. OpenVoice V2: MIT. Reference voices use CC0, CC BY 4.0, or CC BY-NC 4.0 as marked. Some voices are for noncommercial use only. Full notices and source records are bundled. No official character or performer endorsement is claimed.") }
+            Section("Licenses") { Text("Full engine licenses and notices are included in the app. F5 weights carry noncommercial terms. Imported references retain their own permission records. No official character or performer endorsement is claimed.") }
         }.navigationTitle("Settings")
     }
 }
