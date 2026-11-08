@@ -1,0 +1,27 @@
+{
+  "sourceCommit": "830532244ebeede81434071eca3a357b3bfda037",
+  "inferenceSourceFingerprint": "fac9b3d06645713f0e898becd479527341bac628cdf963129d17b77fed439342",
+  "dependencyResolvedSHA256": "82dd5d8632defe7edd5f72b76ae6fafcb11e7728fa8b725a2dab7019758f0215",
+  "ipaSHA256": "4eee281478db0fd12056a0c1b6de060e1f26c092450ad4911c60fab0c889220a",
+  "ipaBytes": 730977029,
+  "inspection": {
+    "archive": "passed",
+    "compiledSpeechShaders": true,
+    "version": "0.4.0",
+    "build": "1",
+    "bundleIdentifier": "com.voicematrix.app",
+    "runtimeRevision": "a57702e6f523fa36ac5532d2bdc5f35f701a052c",
+    "stockProfiles": 0,
+    "f5AssetBytes": 702250584,
+    "modelRevision": "685e88161a2841a5f102a6f8094613ba7131e350",
+    "physicalIPhoneVerified": false,
+    "characterLikenessVerified": false
+  },
+  "nativeDiagnosticSpeechPassed": true,
+  "nativeSimulatorConversionPassed": true,
+  "physicalIPhoneVerified": false,
+  "characterLikenessVerified": false,
+  "bundledCharacterProfiles": 0,
+  "scope": "Synthetic diagnostic checks only; imported characters still require individual device and likeness review.",
+  "workflowRun": 42455907106
+}

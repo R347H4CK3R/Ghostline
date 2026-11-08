@@ -1,0 +1,25 @@
+{
+  "decodedNonSilentWAV": true,
+  "expectedText": "I found a strange device near the portal.",
+  "importedProfileCount": 1,
+  "importedProfileID": "diagnostic-neutral",
+  "likenessVerified": false,
+  "outputSeconds": 2.159455782312925,
+  "outputSHA256": "f3ff755134d53d9250daa420882d165ff5a63a9ab6dea20c69c6728a490db435",
+  "physicalDeviceVerified": false,
+  "referenceAudioSHA256": "b47bd1c40c8951fcf5062ef816d9b561b6fed47972ff237d72b0a463608226e4",
+  "scope": "iOS simulator diagnostic reference conversion using actual CoreML models",
+  "sharedModelManifestSHA256": "3b25215dedc4876b263082d0ac36f35a519b13f93c0ccb1698c908b56df8f8b1",
+  "sourceAudioSHA256": "8741b5ebb943f4c39006b6c7a7dd5ca92f344edb402744ad7132ee1f94ff45b4",
+  "sourceSeconds": 2.1653514739229025,
+  "independentASR": [
+    {
+      "recognizerModelSHA256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f",
+      "recognizedText": "I found a strange device near the portal.",
+      "wordErrorRate": 0
+    }
+  ],
+  "rms": 0.0868605513847468,
+  "fullScaleSamples": 0,
+  "passed": true
+}

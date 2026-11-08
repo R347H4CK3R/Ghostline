@@ -1,5 +1,9 @@
 # Character test kit
 
+**Published for initial physical testing: VoiceMatrix 0.4.0 build 1.** [LiveContainer source](https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/livecontainer-test.json). The source includes the inspected unsigned IPA; the private character collection is delivered separately. Save its ZIP in Files, tap it to extract, then import the **Voices** folder in the app. No JSON pairing file is required. Initial folder access still uses the normal iOS permission picker.
+
+All four native audio/package jobs passed in [run 42455907106](https://github.com/R347H4CK3R/Ghostline/actions/runs/42455907106), and the uploaded IPA was downloaded and inspected again. These are diagnostic engine checks, not per-character or physical-device verification. [Release evidence](qa/0.4.0-character-release-verification.json).
+
 The completed video batch contains 60 distinct generated previews, all passing final SHA-256, PCM decoding, non-silence, clipping and independent word checks. These checks measure intelligibility, not likeness. The two earlier Rick and Morty previews remain unchanged.
 
 The separate private collection contains 60 actual F5 reference-conditioning candidates with stable IDs and overlapping categories. The original 58 use their reference recordings. Rick and Morty use explicitly experimental second-generation conditioning from the accepted generated previews; new text passed desktop word checks, but these derived outputs have not been approved for likeness. They are not trained RVC networks or precomputed speaker embeddings. Character references are excluded from public source and the IPA.
