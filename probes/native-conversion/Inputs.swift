@@ -1,7 +1,9 @@
 import Foundation
 import AVFoundation
+import Darwin
 @main struct Inputs {
  static func main() throws {
+  setbuf(stdout,nil)
   for (index,path) in CommandLine.arguments.dropFirst().enumerated() {
    let url=URL(fileURLWithPath:path), f=try AVAudioFile(forReading:url)
    print("INPUT \(path) seconds=\(Double(f.length)/f.processingFormat.sampleRate) rate=\(f.processingFormat.sampleRate) frames=\(f.length)")

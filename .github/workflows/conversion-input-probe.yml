@@ -1,9 +1,4 @@
 name: Conversion input duration diagnosis
-true:
-  push:
-    paths:
-    - .github/workflows/conversion-input-probe.yml
-  workflow_dispatch: null
 permissions:
   contents: read
 jobs:
@@ -23,3 +18,8 @@ jobs:
         name: Conversion-diagnostic-inputs
         path: tests/fixtures/conversion-inputs.json
         if-no-files-found: error
+'on':
+  push:
+    paths:
+    - .github/workflows/conversion-input-probe.yml
+  workflow_dispatch: null
