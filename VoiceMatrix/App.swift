@@ -7,7 +7,7 @@ import AVFoundation
     @StateObject private var audio = AudioStore()
     @StateObject private var characters = CharacterLibrary()
     var body: some Scene {
-        WindowGroup { RootView().environmentObject(studio).environmentObject(audio).environmentObject(characters).preferredColorScheme(.dark).tint(.purple)
+        WindowGroup { RootView().environmentObject(studio).environmentObject(audio).environmentObject(characters).preferredColorScheme(.dark).tint(StudioPalette.accent)
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in studio.memoryWarning() }
         }
     }
@@ -36,32 +36,76 @@ struct RootView: View {
         }
     }
 }
+enum StudioPalette {
+    static let background = Color(red: 0.035, green: 0.04, blue: 0.075)
+    static let surface = Color(red: 0.085, green: 0.09, blue: 0.14)
+    static let accent = Color(red: 0.68, green: 0.53, blue: 1)
+    static let mint = Color(red: 0.35, green: 0.85, blue: 0.77)
+}
 struct HomeView: View {
-    @EnvironmentObject var studio: SpeechStudio
+    @EnvironmentObject var library: CharacterLibrary
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                Image(systemName: "waveform.circle.fill").font(.system(size: 62)).foregroundStyle(.purple, .blue)
-                Text("Your voice.\nA new dimension.").font(.largeTitle.bold())
-                Text("A private voice studio. No account needed.").foregroundStyle(.secondary)
-                NavigationLink { CharacterLibraryView() } label: { HomeCard(title: "MAKE SPEECH", detail: "Type words. Choose a voice. Hear them speak.", icon: "text.bubble.fill") }.accessibilityIdentifier("make-speech")
-                NavigationLink { CharacterLibraryView(mode: .conversion) } label: { HomeCard(title: "CHANGE MY VOICE", detail: "Record. Choose a voice. Hear your changed voice.", icon: "mic.fill") }.accessibilityIdentifier("change-my-voice")
-                NavigationLink { VideoQueueView() } label: { HomeCard(title: "VIDEO LIST", detail: "Add videos and export your character requests.", icon: "list.bullet.rectangle") }
-                NavigationLink { CharacterLibraryView() } label: { HomeCard(title: "MY CHARACTER FOLDER", detail: "Import and refresh your separate character collection.", icon: "folder.badge.plus") }
-                Text("Your character library\nChoose your separate Voices folder once. Added and updated references are copied privately to this iPhone. Keep using imported voices while offline. Character match is checked by your listening decisions.").font(.footnote).foregroundStyle(.secondary)
+                HStack {
+                    Label("YOUR PRIVATE STUDIO", systemImage: "waveform")
+                        .font(.caption.weight(.bold)).tracking(2).foregroundStyle(StudioPalette.mint)
+                    Spacer()
+                }
+                Text("Give your words\na new voice.")
+                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                Text("Pick a character. Create something worth hearing.")
+                    .foregroundStyle(.secondary)
+                VStack(spacing: 12) {
+                    NavigationLink { CharacterLibraryView() } label: {
+                        HomeCard(title: "Make speech", detail: "Type a message. Bring it to life.", icon: "text.bubble.fill", prominent: true)
+                    }.accessibilityIdentifier("make-speech")
+                    NavigationLink { CharacterLibraryView(mode: .conversion) } label: {
+                        HomeCard(title: "Change my voice", detail: "Record or import your own words.", icon: "mic.fill")
+                    }.accessibilityIdentifier("change-my-voice")
+                }
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Your collection").font(.title3.bold())
+                    NavigationLink { CharacterLibraryView() } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: "person.2.wave.2.fill").font(.title2).foregroundStyle(StudioPalette.mint)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(library.profiles.isEmpty ? "Add your voices" : "\(library.profiles.count) voices on this iPhone").font(.headline)
+                                Text("Browse, import or sync your collection").font(.subheadline).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.caption.bold())
+                        }.padding(20).background(StudioPalette.surface, in: RoundedRectangle(cornerRadius: 22))
+                    }
+                    NavigationLink { VideoQueueView() } label: {
+                        Label("Video requests", systemImage: "list.bullet.rectangle").font(.subheadline.weight(.semibold))
+                    }.padding(.vertical, 8)
+                }
+                Label("Your saved voices work offline", systemImage: "lock.shield")
+                    .font(.footnote).foregroundStyle(.secondary)
             }.padding(24)
-        }.background(Color(red: 0.045, green: 0.025, blue: 0.09)).navigationTitle("VoiceMatrix")
+        }
+        .background(StudioPalette.background).navigationTitle("VoiceMatrix")
+        .task { await library.loadAndRefresh() }
     }
 }
 struct HomeCard: View {
     let title, detail, icon: String
+    var prominent = false
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: icon).font(.largeTitle)
-            Text(title).font(.title2.bold())
-            Text(detail).font(.body)
-        }.foregroundStyle(.white).frame(maxWidth: .infinity, minHeight: 140, alignment: .leading).padding(22)
-            .background(LinearGradient(colors: [.purple.opacity(0.8), .indigo.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 26))
+        HStack(spacing: 18) {
+            Image(systemName: icon).font(.title2)
+                .frame(width: 52, height: 52)
+                .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title).font(.title3.bold())
+                Text(detail).font(.subheadline).foregroundStyle(.white.opacity(0.8))
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "arrow.up.right").font(.headline)
+        }
+        .foregroundStyle(.white).padding(20).frame(maxWidth: .infinity, alignment: .leading)
+        .background(LinearGradient(colors: prominent ? [Color(red: 0.38, green: 0.23, blue: 0.7), Color(red: 0.24, green: 0.19, blue: 0.46)] : [StudioPalette.surface, StudioPalette.surface], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 24))
     }
 }
 struct SpeechView: View {
@@ -200,22 +244,14 @@ struct HelpView: View {
 struct SettingsView: View {
     @EnvironmentObject var studio: SpeechStudio
     @EnvironmentObject var audio: AudioStore
+    @EnvironmentObject var library: CharacterLibrary
     @State private var report: URL?
     var body: some View {
         Form {
-            Section("VoiceMatrix \(DeviceVoiceChecks.appVersion) · Experimental") {
-                Text("\(studio.voices.count) bundled English profiles\n\(studio.automatedChecks) automated speech checks passed (simulator)\n\(studio.onDeviceSpeechChecks) speech checks completed on this iPhone\n0 authorized recognizable likenesses\nQuality listening tests pending")
-                Text("All speech and voice-changing files are included. No account or model download is needed.")
-                Text("Profile storage: \(ByteCountFormatter.string(fromByteCount: Int64(studio.voices.reduce(0) { $0 + $1.size }), countStyle: .file))")
-            }
-            Section("Check included voices") {
-                Button("CHECK ALL VOICES") { studio.checkIncludedVoices(audio: audio) }.disabled(studio.busy || studio.recordingInProgress)
-                if studio.checkingVoices {
-                    ProgressView(value: studio.checkProgress)
-                    Button("Stop Checks") { studio.cancel() }
-                }
-                Text("Tests every included voice without saving recordings. Keep the app open. These audio checks do not replace listening comparisons.").font(.caption)
-                Text(studio.status).font(.caption)
+            Section("VoiceMatrix \(DeviceVoiceChecks.appVersion)") {
+                Label("\(library.profiles.count) imported voices", systemImage: "person.2.wave.2")
+                Text("Your collection and saved recordings stay on this iPhone. Speech and voice changing run locally.")
+                    .font(.subheadline).foregroundStyle(.secondary)
             }
             Section("App updates") {
                 NavigationLink("Check for Updates") { AppUpdatesView() }.accessibilityIdentifier("app-updates")
@@ -229,7 +265,7 @@ struct SettingsView: View {
                 if let report { ShareLink(item: report) { Label("Share Error Report", systemImage: "square.and.arrow.up") } }
                 Text("Nothing is uploaded automatically. Reports contain engine events and profile IDs, without entered text or audio.").font(.caption)
             }
-            Section("Licenses") { Text("FluidAudio and Phonon: Apache 2.0. OpenVoice V2: MIT. Reference voices use CC0, CC BY 4.0, or CC BY-NC 4.0 as marked. Some voices are for noncommercial use only. Full notices and source records are bundled. No official character or performer endorsement is claimed.") }
+            Section("Licenses") { Text("Full engine licenses and notices are included in the app. F5 weights carry noncommercial terms. Imported references retain their own permission records. No official character or performer endorsement is claimed.") }
         }.navigationTitle("Settings")
     }
 }

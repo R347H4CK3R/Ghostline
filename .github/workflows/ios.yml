@@ -1,4 +1,4 @@
-name: VoiceMatrix full offline catalog validation
+name: Source tests and legacy catalog validation
 on:
   push:
     branches: ['feature/voicematrix-*']
@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install media test dependency
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: python3 -m unittest discover -s tests -v
       - run: python3 tools/validate_source_catalog.py
   audio:
@@ -64,6 +66,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
   arm64:
+    # The 0.3.0 stock catalog is historical. Current releases use character-test-ipa.yml.
+    if: github.event_name == 'workflow_dispatch'
     needs: source
     runs-on: macos-26
     timeout-minutes: 25

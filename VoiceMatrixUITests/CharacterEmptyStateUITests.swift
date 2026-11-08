@@ -8,6 +8,7 @@ import XCTest
         app.launchArguments = ["-tutorialSeen", "YES"]
         app.launch()
         XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 30))
+        capture("Refreshed studio home", app: app)
         return app
     }
 
@@ -32,8 +33,8 @@ import XCTest
         XCTAssertTrue(make.waitForExistence(timeout: 20))
         reveal(make, in: app); make.tap()
         XCTAssertTrue(app.navigationBars["Make Speech"].waitForExistence(timeout: 20))
-        XCTAssertTrue(app.buttons["import-character-folder"].exists)
-        let speak = app.buttons["Create Test Speech"]
+        XCTAssertTrue(app.buttons["choose-character"].exists)
+        let speak = app.buttons["create-character-speech"]
         reveal(speak, in: app)
         XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label == %@", "The shared F5 engine is absent from this build. Your imported voice samples remain saved; speech testing becomes available in a build containing that engine.")).firstMatch.exists)
         XCTAssertFalse(speak.isEnabled, "An empty library must not synthesize a stock fallback")
@@ -73,6 +74,7 @@ import XCTest
         let app = launch()
         app.tabBars.buttons["Voices"].tap()
         XCTAssertTrue(app.navigationBars["Make Speech"].waitForExistence(timeout: 20))
+        app.buttons["Manage your collection"].tap()
         let choose = app.buttons["import-character-folder"]
         for _ in 0..<2 {
             XCTAssertTrue(choose.waitForExistence(timeout: 20))

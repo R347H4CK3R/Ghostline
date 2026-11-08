@@ -213,44 +213,47 @@ struct CharacterLibraryView: View {
     private enum ImportKind { case folder, audio }
     @State private var importKind: ImportKind = .folder
     @State private var showingImporter = false
+    @State private var choosingVoice = false
+    @FocusState private var editingWords: Bool
     init(mode: CharacterStudioMode = .speech) { _mode = State(initialValue: mode) }
     @EnvironmentObject private var library: CharacterLibrary
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var audio: AudioStore
     @EnvironmentObject private var studio: SpeechStudio
-    @State private var search = ""
-    @State private var category = "All"
     @State private var words = "Hello! Welcome to the character voice studio."
-    private var categories: [String] { ["All"] + Set(library.profiles.flatMap(\.categories)).sorted() }
-    private var filtered: [CharacterReference] {
-        library.profiles.filter {
-            (category == "All" || $0.categories.contains(category)) &&
-            (search.isEmpty || ([$0.name] + $0.categories).joined(separator: " ").localizedCaseInsensitiveContains(search))
-        }
-    }
     var body: some View {
         List {
             Section {
-                Button { library.syncVoices() } label: { Label("Sync voices from laptop", systemImage: "arrow.triangle.2.circlepath") }.disabled(library.busy || library.syncing || !LaptopConnection.paired)
-                if library.syncing { ProgressView("Syncing laptop voices…"); Button("Stop sync", role: .cancel) { library.cancelSync() } }
-                Button { importKind = .folder; showingImporter = true } label: { Label("Choose Voices Folder", systemImage: "folder.badge.plus") }
-                    .disabled(library.busy).accessibilityIdentifier("import-character-folder")
-                Text(library.message).font(.callout).accessibilityAddTraits(.updatesFrequently)
-                if library.busy { ProgressView("Working…"); Button("Stop after current step", role: .cancel) { library.cancel() } }
-                Text("This imports reusable reference profiles, rather than preview recordings or trained voice-conversion models. Their shared speech engine is separate. Existing saved recordings are kept.").font(.caption).foregroundStyle(.secondary)
+                Button { choosingVoice = true } label: {
+                    HStack(spacing: 14) {
+                        Image(systemName: "person.wave.2.fill").font(.title2)
+                            .foregroundStyle(StudioPalette.mint)
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("YOUR VOICE").font(.caption.weight(.bold)).tracking(1.5).foregroundStyle(.secondary)
+                            Text(library.profiles.first(where: { $0.id == library.selectedID })?.name ?? "Choose a character")
+                                .font(.title3.bold()).foregroundStyle(.primary)
+                            Text(library.profiles.isEmpty ? "Import or sync your collection to get started" : "Tap to browse \(library.profiles.count) voices")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.down").font(.caption.bold())
+                    }.padding(.vertical, 8)
+                }.disabled(library.busy || recorder.recording).accessibilityIdentifier("choose-character")
+                if library.selectedID.isEmpty {
+                    Text("Choose a voice first, then type or record your words.")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                        .accessibilityIdentifier("character-selection-guidance")
+                }
             }
-            Section("\(library.profiles.count) imported voice samples") {
-                Picker("Category", selection: $category) { ForEach(categories, id: \.self) { Text($0).tag($0) } }
-                if library.profiles.isEmpty { Text("Your collection appears here after import. Choose the folder containing collection.json; you do not need to select the JSON file.").foregroundStyle(.secondary) }
-                ForEach(filtered) { voice in
-                    DisclosureGroup {
-                        Button { library.selectedID = voice.id } label: { Label(library.selectedID == voice.id ? "Selected" : "Choose this voice", systemImage: library.selectedID == voice.id ? "checkmark.circle.fill" : "circle") }.disabled(library.busy)
-                        Text("Categories: " + voice.categories.joined(separator: ", "))
-                        Text("Source: " + voice.source)
-                        Text("Permission record: " + voice.permission)
-                        Text("Engine: F5TTS_v1_Base · native synthesis not verified yet")
-                        Text(library.matchDescription(voice))
-                    } label: { Label(voice.name, systemImage: "person.wave.2") }
+            Section {
+                DisclosureGroup("Manage your collection") {
+                    Button { library.syncVoices() } label: { Label("Sync voices from laptop", systemImage: "arrow.triangle.2.circlepath") }
+                        .disabled(library.busy || library.syncing || !LaptopConnection.paired)
+                    if library.syncing { ProgressView("Syncing laptop voices…"); Button("Stop sync", role: .cancel) { library.cancelSync() } }
+                    Button { importKind = .folder; showingImporter = true } label: { Label("Choose Voices Folder", systemImage: "folder.badge.plus") }
+                        .disabled(library.busy).accessibilityIdentifier("import-character-folder")
+                    Text("Imported voices are saved privately on this iPhone and kept when the laptop is unavailable.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             }
             Section {
@@ -262,11 +265,15 @@ struct CharacterLibraryView: View {
             if mode == .speech {
             Section("Make character speech") {
                 Text(library.profiles.first(where: { $0.id == library.selectedID })?.name ?? "Choose an imported character above")
-                TextEditor(text: $words).frame(minHeight: 110).accessibilityLabel("Words for your character")
-                Button { audio.stop(); library.speak(words, audio: audio, studio: studio) } label: { Label("Create Test Speech", systemImage: "play.fill") }
-                    .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.engineAvailable)
+                TextEditor(text: $words).focused($editingWords).frame(minHeight: 140).accessibilityLabel("Words for your character")
+                Text("\(words.count) / 500 characters").font(.caption.monospacedDigit()).foregroundStyle(words.count > 500 ? .orange : .secondary)
+                Button { editingWords = false; audio.stop(); library.speak(words, audio: audio, studio: studio) } label: { Label("Create speech", systemImage: "waveform").font(.headline).frame(maxWidth: .infinity, minHeight: 48) }
+                    .buttonStyle(.borderedProminent).accessibilityIdentifier("create-character-speech")
+                    .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.engineAvailable || words.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || words.count > 500)
+                if library.busy { ProgressView(library.message); Button("Stop after current step", role: .cancel) { library.cancel() } }
+                Text(library.message).font(.caption).foregroundStyle(.secondary).accessibilityAddTraits(.updatesFrequently)
                 if !library.engineAvailable { Text("The shared F5 engine is absent from this build. Your imported voice samples remain saved; speech testing becomes available in a build containing that engine.").foregroundStyle(.secondary) }
-                Text("Experimental F5 speech. Up to 500 characters per test. This creates new words using the selected reference; it does not convert a recording. Character-match listening and iPhone performance tests are still required.").font(.caption).foregroundStyle(.secondary)
+                Text("Creates new words using your selected voice.").font(.caption).foregroundStyle(.secondary)
                 if let output = library.output, library.outputKind == "speech", library.outputMatchesSelection { AudioActions(url: output) }
                 else { Text("Create speech with this character to listen or save.").foregroundStyle(.secondary) }
             }
@@ -286,19 +293,20 @@ struct CharacterLibraryView: View {
                         if let source = recorder.output { library.convertRecording(source, audio: audio, studio: studio) }
                     } label: { Label("CONVERT", systemImage: "waveform").frame(minHeight: 52) }.buttonStyle(.borderedProminent)
                         .disabled(library.busy || recorder.recording || recorder.requestingPermission || recorder.output == nil || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.conversionAvailable)
+                if library.busy { ProgressView(library.message); Button("Stop after current step", role: .cancel) { library.cancel() } }
+                    Text(library.message).font(.caption).foregroundStyle(.secondary).accessibilityAddTraits(.updatesFrequently)
                     if !library.conversionAvailable { Text("This build needs the shared voice-changing engine before conversion can run.").foregroundStyle(.secondary) }
                     if let source = recorder.output, !recorder.recording { Button("Listen to my original recording") { audio.play(source) }.disabled(library.busy) }
-                    Text("Experimental neural voice changing. Character resemblance and iPhone performance require testing; this is not real-time calling.").font(.caption).foregroundStyle(.secondary)
+                    Text("Changes a recording on your iPhone. Not for live calls.").font(.caption).foregroundStyle(.secondary)
                     if let output = library.output, library.outputKind == "conversion", library.outputMatchesSelection { AudioActions(url: output) }
                 }
             }
-            Section("Does it sound like your character?") {
-                Text("Listen to the reference, then the new speech. Your answer records a listening judgment, separate from technical audio checks.").font(.callout)
+            Section("Playback & comparison") {
+                Text("Compare the original voice with your new audio.").font(.subheadline).foregroundStyle(.secondary)
                 if let selected = library.profiles.first(where: { $0.id == library.selectedID }) {
                     Text("Selected: " + selected.name)
                 } else {
-                    Text("Open a character above and tap Choose this voice before listening.")
-                        .accessibilityIdentifier("character-selection-guidance")
+                    Text("Choose a character at the top to hear its reference.")
                 }
                 Button { library.listenToReference(audio: audio) } label: { Label("1 · Listen to reference", systemImage: "person.wave.2") }
                     .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse)
@@ -328,7 +336,11 @@ struct CharacterLibraryView: View {
             }
         }
         .navigationTitle(mode == .speech ? "Make Speech" : "Change My Voice")
-        .searchable(text: $search, prompt: "Find a character or category")
+        .scrollContentBackground(.hidden)
+        .background(StudioPalette.background)
+        .scrollDismissesKeyboard(.interactively)
+        .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Done") { editingWords = false } } }
+        .sheet(isPresented: $choosingVoice) { NavigationStack { CharacterPickerView() } }
         // One presenter avoids the audio importer masking the folder importer.
         .fileImporter(isPresented: $showingImporter,
                       allowedContentTypes: importKind == .folder ? [.folder] : [.wav, .mpeg4Audio, .audio]) { result in
@@ -340,7 +352,84 @@ struct CharacterLibraryView: View {
             }
         }
         .onDisappear { recorder.discard(); audio.stop() }
-        .task { await library.loadAndRefresh() }
+        .task {
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-ui-test-import"),
+               library.profiles.isEmpty,
+               let fixture = Bundle.main.url(forResource: "F5TTS", withExtension: nil)?.appendingPathComponent("UITestVoices"),
+               FileManager.default.fileExists(atPath: fixture.path) {
+                do {
+                    let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("UIImport-" + UUID().uuidString)
+                    try FileManager.default.copyItem(at: fixture, to: temporary)
+                    library.importFolder(temporary)
+                    while library.busy { try await Task.sleep(for: .milliseconds(100)) }
+                    // Make the original source unavailable before restart: only the
+                    // private imported copy can satisfy the persistence/playback test.
+                    try FileManager.default.removeItem(at: temporary)
+                } catch { library.message = "UI fixture import failed: " + error.localizedDescription }
+            } else { await library.loadAndRefresh() }
+            #else
+            await library.loadAndRefresh()
+            #endif
+        }
         .onChange(of: scenePhase) { _, value in if value == .active { Task { await library.loadAndRefresh() } } }
+    }
+}
+
+struct CharacterPickerView: View {
+    @EnvironmentObject private var library: CharacterLibrary
+    @Environment(\.dismiss) private var dismiss
+    @State private var search = ""
+    @State private var category = "All"
+    private var categories: [String] { ["All"] + Set(library.profiles.flatMap(\.categories)).sorted() }
+    private var filtered: [CharacterReference] {
+        library.profiles.filter {
+            (category == "All" || $0.categories.contains(category)) &&
+            (search.isEmpty || ([$0.name] + $0.categories).joined(separator: " ").localizedCaseInsensitiveContains(search))
+        }
+    }
+    var body: some View {
+        List {
+            Section {
+                Picker("Category", selection: $category) {
+                    ForEach(categories, id: \.self) { Text($0).tag($0) }
+                }
+                Text("\(filtered.count) voices").font(.caption).foregroundStyle(.secondary)
+            }
+            if filtered.isEmpty {
+                ContentUnavailableView(library.profiles.isEmpty ? "Add your voices" : "No matching voices",
+                    systemImage: "person.2.wave.2",
+                    description: Text(library.profiles.isEmpty ? "Close this picker and open Manage your collection to import or sync voices." : "Try a different name or category."))
+            }
+            ForEach(filtered) { voice in
+                VStack(alignment: .leading, spacing: 8) {
+                    Button {
+                        library.selectedID = voice.id
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: library.selectedID == voice.id ? "checkmark.circle.fill" : "person.crop.circle")
+                                .font(.title2).foregroundStyle(StudioPalette.mint)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(voice.name).font(.headline).foregroundStyle(.primary)
+                                Text(voice.categories.joined(separator: " · ")).font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                        }.padding(.vertical, 8)
+                    }.buttonStyle(.plain).disabled(library.busy)
+                        .accessibilityIdentifier("select-character-" + voice.id)
+                        .accessibilityValue(library.selectedID == voice.id ? "Selected" : "Not selected")
+                    DisclosureGroup("Voice details") {
+                        Text("Source: " + voice.source)
+                        Text("Permission record: " + voice.permission)
+                        Text(library.matchDescription(voice)).font(.caption)
+                    }.font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .navigationTitle("Choose a voice")
+        .searchable(text: $search, prompt: "Search names or categories")
+        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+        .scrollContentBackground(.hidden).background(StudioPalette.background)
     }
 }
