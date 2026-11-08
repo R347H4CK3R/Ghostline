@@ -1,0 +1,19 @@
+name: Native queue UI checks
+on:
+  push:
+    paths:
+      - 'VoiceMatrix/VideoQueueView.swift'
+      - '.github/workflows/native-queue.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-queue:
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Typecheck queue screen against iPhone SDK
+        run: |
+          SDKROOT="$(xcrun --sdk iphoneos --show-sdk-path)"
+          xcrun swiftc -typecheck -sdk "$SDKROOT" -target arm64-apple-ios26.0 VoiceMatrix/VideoQueueView.swift
