@@ -5,8 +5,9 @@ import AVFoundation
     init() { TemporaryAudio.cleanPreviousSession() }
     @StateObject private var studio = SpeechStudio()
     @StateObject private var audio = AudioStore()
+    @StateObject private var characters = CharacterLibrary()
     var body: some Scene {
-        WindowGroup { RootView().environmentObject(studio).environmentObject(audio).preferredColorScheme(.dark).tint(.purple)
+        WindowGroup { RootView().environmentObject(studio).environmentObject(audio).environmentObject(characters).preferredColorScheme(.dark).tint(.purple)
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in studio.memoryWarning() }
         }
     }

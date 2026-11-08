@@ -1,13 +1,18 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import CryptoKit
 
 @MainActor final class CharacterLibrary: ObservableObject {
     @Published var profiles: [CharacterReference] = []
     @Published var busy = false
     @Published var selectedID = ""
     @Published var output: URL?
+    @Published private(set) var outputCharacterID = ""
+    @Published private(set) var outputReferenceHash = ""
+    @Published private(set) var reviewSummaries: [String: CharacterListeningReview] = [:]
     @Published var message = "Choose your Voices collection folder once. Imported references are copied privately to this iPhone."
     private let store: CharacterFolderStore
+    private let reviewStore: CharacterReviewStore
     private let engine = F5ReferenceEngine()
     private var job: Task<Void, Never>?
     var engineAvailable: Bool {
@@ -17,9 +22,10 @@ import UniformTypeIdentifiers
     init() {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         store = CharacterFolderStore(root: support.appendingPathComponent("CharacterReferences", isDirectory: true))
+        reviewStore = CharacterReviewStore(root: support.appendingPathComponent("CharacterReviews", isDirectory: true))
     }
     func loadAndRefresh() async {
-        do { profiles = try await store.profiles() }
+        do { profiles = try await store.profiles(); await refreshReviewSummaries() }
         catch { message = error.localizedDescription; return }
         guard !busy, let data = UserDefaults.standard.data(forKey: "characterFolderBookmark.v1") else { return }
         do {
@@ -36,6 +42,7 @@ import UniformTypeIdentifiers
             defer { if access { url.stopAccessingSecurityScopedResource() }; busy = false }
             do {
                 profiles = try await store.importCollection(at: url)
+                await refreshReviewSummaries()
                 // Save access only after the whole collection passes validation.
                 if let bookmark = try? url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil) {
                     UserDefaults.standard.set(bookmark, forKey: "characterFolderBookmark.v1")
@@ -44,6 +51,46 @@ import UniformTypeIdentifiers
             } catch {
                 message = error is CancellationError ? "Import stopped. Previously imported voices were kept." : "Import failed. Previously imported voices were kept. " + error.localizedDescription
             }
+        }
+    }
+    private func refreshReviewSummaries() async {
+        var next: [String: CharacterListeningReview] = [:]
+        for voice in profiles {
+            do { next[voice.id] = try await reviewStore.latest(id: voice.id, referenceHash: voice.referenceSHA256) }
+            catch { message = "Listening history could not be read. Your voices are still saved." }
+        }
+        reviewSummaries = next
+    }
+    func matchDescription(_ voice: CharacterReference) -> String {
+        switch reviewSummaries[voice.id]?.decision {
+        case .matches: return "You marked this reference as a character match. Engine and audio checks remain separate."
+        case .different: return "Doesn’t match. Waiting for a better reference; this decision is kept in your history."
+        case .unsure: return "Unsure. Compare the recordings again before approving this character."
+        case nil: return "Character match: awaiting your listening comparison"
+        }
+    }
+    var canReview: Bool {
+        !busy && output != nil && selectedID == outputCharacterID && profiles.contains(where: { $0.id == selectedID && $0.referenceSHA256 == outputReferenceHash })
+    }
+    func listenToReference(audio: AudioStore) {
+        guard !busy, let voice = profiles.first(where: { $0.id == selectedID }) else { return }
+        Task {
+            do { let url = try await store.referenceURL(id: voice.id); audio.play(url) }
+            catch { message = error.localizedDescription }
+        }
+    }
+    func review(_ decision: CharacterMatchDecision) {
+        guard canReview, let output, let voice = profiles.first(where: { $0.id == selectedID }) else { return }
+        busy = true
+        job = Task {
+            defer { busy = false }
+            do {
+                _ = try await store.referenceURL(id: voice.id)
+                let hash = SHA256.hash(data: try Data(contentsOf: output)).map { String(format: "%02x", $0) }.joined()
+                try await reviewStore.record(id: voice.id, referenceHash: voice.referenceSHA256, generatedHash: hash, decision: decision, categories: voice.categories)
+                await refreshReviewSummaries()
+                message = matchDescription(voice)
+            } catch { message = "Your listening decision could not be saved. " + error.localizedDescription }
         }
     }
     func cancel() { job?.cancel() }
@@ -68,6 +115,7 @@ import UniformTypeIdentifiers
                 try await engine.speak(text: text, referenceAudio: reference, referenceText: voice.referenceText, destination: destination)
                 try Task.checkCancellation()
                 TemporaryAudio.discard(output); output = destination
+                outputCharacterID = voice.id; outputReferenceHash = voice.referenceSHA256
                 message = "Ready to listen, save or share. Please judge the character resemblance by listening; it has not been verified."
             } catch {
                 try? FileManager.default.removeItem(at: destination)
@@ -79,7 +127,7 @@ import UniformTypeIdentifiers
 }
 
 struct CharacterLibraryView: View {
-    @StateObject private var library = CharacterLibrary()
+    @EnvironmentObject private var library: CharacterLibrary
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var audio: AudioStore
     @EnvironmentObject private var studio: SpeechStudio
@@ -113,7 +161,7 @@ struct CharacterLibraryView: View {
                         Text("Source: " + voice.source)
                         Text("Permission record: " + voice.permission)
                         Text("Engine: F5TTS_v1_Base · native synthesis not verified yet")
-                        Text("Character match: awaiting a listening comparison")
+                        Text(library.matchDescription(voice))
                     } label: { Label(voice.name, systemImage: "person.wave.2") }
                 }
             }
@@ -125,6 +173,18 @@ struct CharacterLibraryView: View {
                 if !library.engineAvailable { Text("The shared F5 engine is absent from this build. Your imported references remain saved; speech testing becomes available in a build containing that engine.").foregroundStyle(.secondary) }
                 Text("Experimental F5 speech. Up to 500 characters per test. This creates new words using the selected reference; it does not convert a recording. Character-match listening and iPhone performance tests are still required.").font(.caption).foregroundStyle(.secondary)
                 if let output = library.output { AudioActions(url: output) }
+            }
+            Section("Does it sound like your character?") {
+                Text("Listen to the reference, then the new speech. Your answer records a listening judgment, separate from technical audio checks.").font(.callout)
+                Button { library.listenToReference(audio: audio) } label: { Label("1 · Listen to reference", systemImage: "person.wave.2") }
+                    .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse)
+                if let output = library.output, library.canReview {
+                    Button { audio.play(output) } label: { Label("2 · Listen to generated speech", systemImage: "waveform") }
+                    Button("Matches") { library.review(.matches) }.accessibilityIdentifier("character-match-yes")
+                    Button("Doesn’t Match") { library.review(.different) }.accessibilityIdentifier("character-match-no")
+                    Button("Unsure") { library.review(.unsure) }.accessibilityIdentifier("character-match-unsure")
+                } else { Text("Create speech with the selected reference before reviewing it.").foregroundStyle(.secondary) }
+                if let voice = library.profiles.first(where: { $0.id == library.selectedID }) { Text(library.matchDescription(voice)).font(.caption) }
             }
         }
         .navigationTitle("My Character Folder")
