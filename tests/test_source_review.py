@@ -27,6 +27,10 @@ class SourceReviewTests(unittest.TestCase):
   token=self.token();self.assertEqual(self.request('/review',self.recipe)[0],403)
   self.assertEqual(self.request('/review',self.recipe,auth=False,csrf=token)[0],401)
   self.assertFalse((self.root/'recipes/SYNTHETIC03.json').exists())
+ def test_review_link_accepts_only_canonical_video_selection(self):
+  self.assertEqual(self.request('/review?video=SYNTHETIC03')[0],200)
+  self.assertEqual(self.request('/review?video=../bad')[0],400)
+  self.assertEqual(self.request('/review?video=SYNTHETIC03&video=SYNTHETIC04')[0],400)
  def test_initial_review_saved_in_actual_processor_recipe_format(self):
   self.assertEqual(self.request('/review',self.recipe,csrf=self.token())[0],200)
   saved=json.loads((self.root/'recipes/SYNTHETIC03.json').read_text());self.assertEqual(saved,self.recipe)

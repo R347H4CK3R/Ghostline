@@ -1,4 +1,6 @@
 """Persistent local queue monitor. A configured, validated pipeline is still required."""
+from urllib.parse import urlsplit,urlunsplit,quote
+import re
 import argparse,ctypes,json,os,pathlib,subprocess,sys,time,html
 from tools.video_queue import VideoQueue,video_id
 
@@ -58,6 +60,24 @@ def queue_snapshot(root):
   return videos
  finally:q.close()
 
+def review_url(root):
+ try:
+  path=root/'LaptopSettings.json'
+  if path.is_symlink() or not path.is_file() or path.stat().st_size>16384:return None
+  settings=json.loads(path.read_text(encoding='utf-8-sig'))
+  if not isinstance(settings,dict) or not isinstance(settings.get('url'),str):return None
+  if set(settings)!={'url','authentication'} or settings['authentication']!='tailscale-same-account':return None
+  raw=settings['url']
+  if '\\' in raw or any(ord(c)<33 or ord(c)==127 for c in raw):return None
+  parsed=urlsplit(raw)
+  if parsed.scheme!='https' or not (parsed.hostname or '').endswith('.ts.net') or parsed.username or parsed.password or parsed.query or parsed.fragment or parsed.path not in ('','/'):return None
+  host=parsed.hostname
+  if len(host)>253 or not re.fullmatch(r'(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+ts\.net',host):return None
+  port=parsed.port
+  if port is not None and not 1<=port<=65535:return None
+  return urlunsplit(('https',host+(':'+str(port) if port is not None else ''),'/review','',''))
+ except (OSError,ValueError,TypeError,KeyError):return None
+
 def tick(root):
  state=dict(updated=time.time(),pendingLines=0,status='waiting-for-videos',pipelineConnected=False,videos=[])
  try:
@@ -68,12 +88,19 @@ def tick(root):
   state.update(status='queue-input-error',reason=str(error),videos=rows,pendingLines=len(rows))
  if (root/'pause').exists():state['status']='paused'
  if gaming():state.update(gamingDetected=True,status='paused-for-game' if state['pendingLines'] else state['status'])
+ review=review_url(root)
+ if review:state['sourceReviewURL']=review
  atomic(root/'status.json',state)
  rows=[]
  for row in state['videos']:
   cells=[row.get('name') or row['id'],row['status'],str(round(row['progress']*100))+'%',str(row['attempts'])+'/4',row.get('reason','')]
-  rows.append('<tr>'+''.join('<td>'+html.escape(str(c))+'</td>' for c in cells)+'</tr>')
- page='<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="15"><title>VoiceMatrix</title><style>body{background:#10091d;color:#eee;font:20px system-ui;padding:32px}h1{color:#bc91ff}td,th{text-align:left;padding:12px;border-bottom:1px solid #65437c}table{width:100%}</style><h1>VoiceMatrix Studio</h1><p>'+html.escape(state['status'].replace('-',' '))+'</p><p>'+html.escape(state.get('reason','Prepared references and reviewed recipes process automatically. Raw links still need source review.'))+'</p><p>Queued videos: '+str(state['pendingLines'])+'</p><table><tr><th>Voice / video</th><th>Stage</th><th>Progress</th><th>Attempt</th><th>Reason</th></tr>'+''.join(rows)+'</table><p>Listening review is separate from audio checks. No links are cleared by this monitor.</p>'
+  action='Separate recovery / replacement review required'
+  if row['status'] in ['waiting','awaiting-preparation','paused']:
+   if (root/'recipes'/(row['id']+'.json')).exists() or (root/'specifications'/(row['id']+'.json')).exists():action='Review saved'
+   elif review:action='<a href="'+html.escape(review+'?video='+quote(row['id']),quote=True)+'" target="_blank" rel="noopener noreferrer">Review source</a>'
+   else:action='Review connection is not configured'
+  rows.append('<tr>'+''.join('<td>'+html.escape(str(c))+'</td>' for c in cells)+'<td>'+action+'</td></tr>')
+ page='<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="15"><title>VoiceMatrix</title><style>body{background:#10091d;color:#eee;font:20px system-ui;padding:32px}h1{color:#bc91ff}td,th{text-align:left;padding:12px;border-bottom:1px solid #65437c}table{width:100%}</style><h1>VoiceMatrix Studio</h1><p>'+html.escape(state['status'].replace('-',' '))+'</p><p>'+html.escape(state.get('reason','Prepared references and reviewed recipes process automatically. Raw links still need source review.'))+'</p><p>Queued videos: '+str(state['pendingLines'])+'</p><table><tr><th>Voice / video</th><th>Stage</th><th>Progress</th><th>Attempt</th><th>Reason</th><th>Source review</th></tr>'+''.join(rows)+'</table><p>Listening review is separate from audio checks. No links are cleared by this monitor.</p>'
  (root/'Progress.html').write_text(page,encoding='utf8')
  return state
 

@@ -1,5 +1,6 @@
 """Authenticated queue API; loopback only until an encrypted device transport is paired."""
-import hmac,json,pathlib,threading,secrets
+import hmac,json,pathlib,threading,secrets,re
+from urllib.parse import urlsplit,parse_qs
 from tools.source_review import save_initial_review,page
 from tools.master_voices import PublishBusy
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
@@ -23,7 +24,10 @@ def create_server(root,token,port=0,trusted_login=None,master=None):
    return bool(trusted_login and login and hmac.compare_digest(login,trusted_login))
   def do_GET(self):
    if not self.authorized():return self.respond(401,dict(error='Pairing required'))
-   if self.path=='/review':
+   address=urlsplit(self.path)
+   if address.path=='/review':
+    selection=parse_qs(address.query,keep_blank_values=True)
+    if selection and (set(selection)!={'video'} or len(selection['video'])!=1 or not re.fullmatch(r'[A-Za-z0-9_-]{11}',selection['video'][0])):return self.respond(400,dict(error='Invalid source selection'))
     body=page(csrf);self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.send_header('Content-Security-Policy',"default-src 'none'; script-src 'nonce-"+csrf+"'; style-src 'nonce-"+csrf+"'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");self.end_headers();self.wfile.write(body);return
    if self.path=='/voices' or self.path.startswith('/voices/'):
     if voices is None:return self.respond(404,dict(error='Private master is not configured'))
