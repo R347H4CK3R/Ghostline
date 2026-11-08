@@ -55,6 +55,41 @@ enum LaptopConnection {
         }
         return "Your laptop accepted the list. This does not mean voice processing is finished."
     }
+    static func syncVoices(to folder: URL, previousRevision: String?) async throws -> String? {
+        guard let address = UserDefaults.standard.string(forKey: "laptopURL") ?? bundledURL,
+              let root = URL(string: address), root.scheme == "https", root.host != nil,
+              root.user == nil, root.password == nil, root.query == nil, root.fragment == nil,
+              root.path.isEmpty || root.path == "/" else { throw failure("Your laptop connection is unavailable. Saved voices remain offline.") }
+        var lookup = query; lookup[kSecReturnData as String] = true; lookup[kSecMatchLimit as String] = kSecMatchLimitOne
+        var stored: CFTypeRef?
+        let found = SecItemCopyMatching(lookup as CFDictionary, &stored)
+        let token = found == errSecSuccess ? (stored as? Data).flatMap { String(data: $0, encoding: .utf8) } : nil
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = 15
+        configuration.timeoutIntervalForResource = 120
+        let session = URLSession(configuration: configuration, delegate: RejectRedirects(), delegateQueue: nil)
+        defer { session.invalidateAndCancel() }
+        let started = Date()
+        return try await VoiceFolderSync.download(to: folder, previousRevision: previousRevision) { path, limit in
+            try Task.checkCancellation()
+            guard Date().timeIntervalSince(started) < 120 else { throw failure("Voice sync timed out. Your saved voices were kept.") }
+            var request = URLRequest(url: root.appendingPathComponent(path))
+            if let token { request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization") }
+            let (stream, response) = try await session.bytes(for: request)
+            guard let response = response as? HTTPURLResponse, response.statusCode == 200,
+                  response.expectedContentLength <= Int64(limit) else { throw failure("Your laptop voice folder is unavailable or changed. Your saved voices were kept.") }
+            var bytes = Data(); bytes.reserveCapacity(limit)
+            for try await byte in stream {
+                if bytes.count % 32768 == 0 {
+                    try Task.checkCancellation()
+                    guard Date().timeIntervalSince(started) < 120 else { throw failure("Voice sync timed out.") }
+                }
+                guard bytes.count < limit else { throw failure("The laptop sent an oversized voice file.") }
+                bytes.append(byte)
+            }
+            return bytes
+        }
+    }
     private static func failure(_ message: String) -> NSError { NSError(domain: "VoiceMatrix.Connection", code: 1, userInfo: [NSLocalizedDescriptionKey: message]) }
 }
 

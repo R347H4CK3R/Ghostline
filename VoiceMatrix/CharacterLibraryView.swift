@@ -5,6 +5,7 @@ import CryptoKit
 @MainActor final class CharacterLibrary: ObservableObject {
     @Published var profiles: [CharacterReference] = []
     @Published var busy = false
+    @Published private(set) var syncing = false
     @Published var selectedID = ""
     @Published var output: URL?
     @Published private(set) var outputKind = "speech"
@@ -18,6 +19,7 @@ import CryptoKit
     private let voiceChanger = CharacterVoiceConversion()
     private var operationID = UUID()
     private var job: Task<Void, Never>?
+    private var syncJob: Task<Void, Never>?
     private var catalogRefresh = UUID()
     private var reviewRefresh = UUID()
     var engineAvailable: Bool {
@@ -42,12 +44,36 @@ import CryptoKit
             profiles = saved; await refreshReviewSummaries()
         }
         catch { message = error.localizedDescription; return }
+        if LaptopConnection.paired { syncVoices(); return }
         guard !busy, let data = UserDefaults.standard.data(forKey: "characterFolderBookmark.v1") else { return }
         do {
             var stale = false
             let url = try URL(resolvingBookmarkData: data, options: .withoutUI, relativeTo: nil, bookmarkDataIsStale: &stale)
             importFolder(url)
         } catch { message = "The master folder is unavailable. Your imported voices remain on this iPhone. Choose the folder again to refresh it." }
+    }
+    func cancelSync() { syncJob?.cancel() }
+    func syncVoices() {
+        guard !busy, !syncing, LaptopConnection.paired else { return }
+        syncing = true
+        syncJob = Task {
+            let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("VoiceSync-" + UUID().uuidString)
+            defer { syncing = false; try? FileManager.default.removeItem(at: temporary) }
+            do {
+                let previous = profiles.isEmpty ? nil : UserDefaults.standard.string(forKey: "remoteVoiceRevision.v1")
+                guard let revision = try await LaptopConnection.syncVoices(to: temporary, previousRevision: previous) else { return }
+                try Task.checkCancellation()
+                guard !busy else { return } // Never interrupt active speech, recording conversion or listening review.
+                busy = true
+                defer { busy = false }
+                profiles = try await store.importCollection(at: temporary)
+                UserDefaults.standard.set(revision, forKey: "remoteVoiceRevision.v1")
+                await refreshReviewSummaries()
+                message = "\(profiles.count) character references saved for offline use. Character resemblance still needs listening review."
+            } catch {
+                if !busy { message = Task.isCancelled ? "Sync stopped. Your saved voices were kept." : "Laptop sync unavailable. Your saved voices remain usable offline. " + error.localizedDescription }
+            }
+        }
     }
     func importFolder(_ url: URL) {
         guard !busy else { return }
@@ -204,6 +230,8 @@ struct CharacterLibraryView: View {
     var body: some View {
         List {
             Section {
+                Button { library.syncVoices() } label: { Label("Sync voices from laptop", systemImage: "arrow.triangle.2.circlepath") }.disabled(library.busy || library.syncing || !LaptopConnection.paired)
+                if library.syncing { ProgressView("Syncing laptop voices…"); Button("Stop sync", role: .cancel) { library.cancelSync() } }
                 Button { choosing = true } label: { Label("Choose Voices Folder", systemImage: "folder.badge.plus") }
                     .disabled(library.busy).accessibilityIdentifier("import-character-folder")
                 Text(library.message).font(.callout).accessibilityAddTraits(.updatesFrequently)

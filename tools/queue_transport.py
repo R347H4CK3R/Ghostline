@@ -2,14 +2,16 @@
 import hmac,json,pathlib,threading
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from tools.video_queue import VideoQueue,video_id
+from tools.private_voices import PrivateVoices,TransferError
 
-def create_server(root,token,port=0,trusted_login=None):
+def create_server(root,token,port=0,trusted_login=None,master=None):
  if len(token)<32:raise ValueError('Use a strong pairing token')
  root=pathlib.Path(root);root.mkdir(parents=True,exist_ok=True);lock=threading.Lock()
+ voices=PrivateVoices(master) if master is not None else None
  class Handler(BaseHTTPRequestHandler):
   def log_message(self,*args):pass # Do not log tokens or submitted names/links.
   def respond(self,code,data):
-   body=json.dumps(data).encode();self.send_response(code);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
+   body=json.dumps(data).encode();self.send_response(code);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
   def authorized(self):
    if hmac.compare_digest(self.headers.get('Authorization',''),'Bearer '+token):return True
    # Opt-in only, on this loopback-bound server behind Tailscale Serve.
@@ -18,6 +20,14 @@ def create_server(root,token,port=0,trusted_login=None):
    return bool(trusted_login and login and hmac.compare_digest(login,trusted_login))
   def do_GET(self):
    if not self.authorized():return self.respond(401,dict(error='Pairing required'))
+   if self.path=='/voices' or self.path.startswith('/voices/'):
+    if voices is None:return self.respond(404,dict(error='Private master is not configured'))
+    try:
+     if self.path=='/voices':return self.respond(200,voices.catalog())
+     parts=self.path.split('/',3)
+     if len(parts)!=4:return self.respond(404,dict(error='Unknown voice asset'))
+     data=voices.file(parts[2],parts[3]);self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','application/octet-stream');self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data);return
+    except TransferError as error:return self.respond(error.status,dict(error='Private voice snapshot unavailable or changed; refresh the catalog'))
    if self.path!='/status':return self.respond(404,dict(error='Unknown action'))
    q=VideoQueue(str(root/'queue.db'))
    try:
@@ -49,3 +59,4 @@ def create_server(root,token,port=0,trusted_login=None):
     self.respond(200,dict(result,namesStored=True,pipelineConnected=False))
    except (ValueError,KeyError,TypeError,json.JSONDecodeError):self.respond(400,dict(error='Invalid queue request; no valid list was imported'))
  server=ThreadingHTTPServer(('127.0.0.1',port),Handler);server.daemon_threads=True;return server
+
