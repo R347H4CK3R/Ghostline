@@ -24,7 +24,7 @@ class CharacterPackageTests(unittest.TestCase):
                       for name in self.module.F5_FILES}
         self.entries = {
             'Info.plist': plistlib.dumps({'CFBundleIdentifier':'com.voicematrix.app',
-                'CFBundleExecutable':'VoiceMatrix','CFBundleShortVersionString':'0.4.1',
+                'CFBundleExecutable':'VoiceMatrix','CFBundleShortVersionString':'0.4.2',
                 'CFBundleVersion':'1','MinimumOSVersion':'26.0'}),
             'VoiceMatrix': b'\xcf\xfa\xed\xfe'+struct.pack('<I',0x100000c)+b'\0'*24,
             'Assets.car': b'icon',

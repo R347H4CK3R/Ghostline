@@ -265,7 +265,7 @@ def inspect_ipa(path, files=None, base_files=None, dependency_proof=None):
             if archive.getinfo(PREFIX+'Info.plist').file_size > 1_000_000:
                 raise ValueError('Oversized Info.plist')
             info = plistlib.loads(archive.read(PREFIX+'Info.plist'))
-            if (info.get('CFBundleIdentifier'), info.get('CFBundleShortVersionString'), info.get('CFBundleVersion')) != ('com.voicematrix.app','0.4.1','1'):
+            if (info.get('CFBundleIdentifier'), info.get('CFBundleShortVersionString'), info.get('CFBundleVersion')) != ('com.voicematrix.app','0.4.2','1'):
                 raise ValueError('Unexpected listening-candidate app identity')
             if tuple(map(int, info['MinimumOSVersion'].split('.'))) < (26,0):
                 raise ValueError('Unexpected deployment target')
@@ -309,7 +309,7 @@ def inspect_ipa(path, files=None, base_files=None, dependency_proof=None):
                 expected = (HERE/'listening_licenses'/name).read_bytes()
                 verify_entry(archive, PREFIX+'F5TTS/Notices/'+name,
                              {'size':len(expected),'sha256':hashlib.sha256(expected).hexdigest()})
-        return {'archive':'passed','compiledSpeechShaders':True,'version':'0.4.1','build':'1','bundleIdentifier':'com.voicematrix.app','runtimeRevision':RUNTIME_REVISION,'stockProfiles':0,'f5AssetBytes':sum(x['size'] for x in files.values()),
+        return {'archive':'passed','compiledSpeechShaders':True,'version':'0.4.2','build':'1','bundleIdentifier':'com.voicematrix.app','runtimeRevision':RUNTIME_REVISION,'stockProfiles':0,'f5AssetBytes':sum(x['size'] for x in files.values()),
                 'modelRevision':MODEL_REVISION,'physicalIPhoneVerified':False,'characterLikenessVerified':False}
     except (KeyError, zipfile.BadZipFile, json.JSONDecodeError, plistlib.InvalidFileException) as error:
         raise ValueError('Incomplete or invalid listening archive') from error
