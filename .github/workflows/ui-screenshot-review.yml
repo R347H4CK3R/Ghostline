@@ -13,16 +13,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python3 -m pip install Pillow
+      - run: python3 -m pip install Pillow imageio-ffmpeg
       - name: Read synthetic simulator screenshots
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh run download 42517190096 --repo R347H4CK3R/Ghostline --name Current-character-UI-evidence --dir evidence
           python3 - <<'PY'
-          import base64,io,json,pathlib
+          import base64,io,json,pathlib,subprocess
+          import imageio_ffmpeg
           from PIL import Image
           paths=[p for folder in ('workflow-screenshots','ui-screenshots') for p in pathlib.Path('evidence',folder).rglob('*') if p.suffix.lower() in ('.png','.jpeg','.jpg')]
+          for video in pathlib.Path('evidence/workflow-screenshots').glob('*.mp4'):
+              frame=pathlib.Path('evidence/failed-picker.png')
+              subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(),'-v','error','-y','-sseof','-4','-i',str(video),'-frames:v','1',str(frame)],check=True)
+              paths.insert(0,frame)
           print("Screenshot count:",len(paths))
           for path in paths[:2]:
               im=Image.open(path).convert('RGB')
