@@ -10,6 +10,13 @@ jobs:
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install media fixture dependency
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: brew install ffmpeg
       - name: Run collection export and source regression tests
         run: python3 -m unittest discover -s tests -v
       - name: Prepare synthetic reference collection
