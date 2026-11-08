@@ -3,6 +3,10 @@ on:
   push:
     paths:
       - 'VoiceMatrix/App.swift'
+      - 'VoiceMatrix/AudioStore.swift'
+      - 'VoiceMatrix/AppUpdates.swift'
+      - 'VoiceMatrixTests/AppUpdateTests.swift'
+      - 'VoiceMatrixTests/PlaybackTests.swift'
       - 'VoiceMatrix/CharacterLibraryView.swift'
       - 'VoiceMatrix/LaptopConnection.swift'
       - 'VoiceMatrixUITests/CharacterEmptyStateUITests.swift'
@@ -41,12 +45,12 @@ jobs:
           PY
       - name: Build UI tests before starting the simulator
         run: |
-          xcodebuild build-for-testing -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests > character-ui-build.log 2>&1 || { tail -160 character-ui-build.log; exit 1; }
+          xcodebuild build-for-testing -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests -only-testing:VoiceMatrixTests/PlaybackTests -only-testing:VoiceMatrixTests/AppUpdateTests > character-ui-build.log 2>&1 || { tail -160 character-ui-build.log; exit 1; }
       - name: Wait for the simulator launch services to finish booting
         run: xcrun simctl bootstatus "$SIMULATOR_ID" -b
-      - name: Exercise actual current SwiftUI empty-library flows
+      - name: Exercise native playback and current SwiftUI empty-library flows
         run: |
-          xcodebuild test-without-building -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build -resultBundlePath character-ui.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests > character-ui.log 2>&1 || { tail -160 character-ui.log; exit 1; }
+          xcodebuild test-without-building -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build -resultBundlePath character-ui.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests -only-testing:VoiceMatrixTests/PlaybackTests -only-testing:VoiceMatrixTests/AppUpdateTests > character-ui.log 2>&1 || { tail -160 character-ui.log; exit 1; }
       - name: Export screenshots
         if: ${{ !cancelled() }}
         run: |

@@ -253,7 +253,7 @@ def check_dependency_notices(archive, expected):
             raise ValueError('Dependency lacks captured license notices')
     return {'DependencyNotices/'+name for name in proof['files']} | {'dependency-notices.json'}
 
-def inspect_ipa(path, files=None, base_files=None, dependency_proof=None):
+def inspect_ipa(path, files=None, base_files=None, dependency_proof=None, expected_version='0.4.1'):
     """Default pins are trusted repository data, never the archive's own proof."""
     files = F5_FILES if files is None else files
     base_files = BASE_FILES if base_files is None else base_files
@@ -265,7 +265,7 @@ def inspect_ipa(path, files=None, base_files=None, dependency_proof=None):
             if archive.getinfo(PREFIX+'Info.plist').file_size > 1_000_000:
                 raise ValueError('Oversized Info.plist')
             info = plistlib.loads(archive.read(PREFIX+'Info.plist'))
-            if (info.get('CFBundleIdentifier'), info.get('CFBundleShortVersionString'), info.get('CFBundleVersion')) != ('com.voicematrix.app','0.4.1','1'):
+            if (info.get('CFBundleIdentifier'), info.get('CFBundleShortVersionString'), info.get('CFBundleVersion')) != ('com.voicematrix.app',expected_version,'1'):
                 raise ValueError('Unexpected listening-candidate app identity')
             if tuple(map(int, info['MinimumOSVersion'].split('.'))) < (26,0):
                 raise ValueError('Unexpected deployment target')
@@ -309,7 +309,7 @@ def inspect_ipa(path, files=None, base_files=None, dependency_proof=None):
                 expected = (HERE/'listening_licenses'/name).read_bytes()
                 verify_entry(archive, PREFIX+'F5TTS/Notices/'+name,
                              {'size':len(expected),'sha256':hashlib.sha256(expected).hexdigest()})
-        return {'archive':'passed','compiledSpeechShaders':True,'version':'0.4.1','build':'1','bundleIdentifier':'com.voicematrix.app','runtimeRevision':RUNTIME_REVISION,'stockProfiles':0,'f5AssetBytes':sum(x['size'] for x in files.values()),
+        return {'archive':'passed','compiledSpeechShaders':True,'version':expected_version,'build':'1','bundleIdentifier':'com.voicematrix.app','runtimeRevision':RUNTIME_REVISION,'stockProfiles':0,'f5AssetBytes':sum(x['size'] for x in files.values()),
                 'modelRevision':MODEL_REVISION,'physicalIPhoneVerified':False,'characterLikenessVerified':False}
     except (KeyError, zipfile.BadZipFile, json.JSONDecodeError, plistlib.InvalidFileException) as error:
         raise ValueError('Incomplete or invalid listening archive') from error
@@ -319,10 +319,10 @@ if __name__ == '__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     sub=parser.add_subparsers(dest='command',required=True)
     stage=sub.add_parser('prepare');stage.add_argument('--cache',required=True);stage.add_argument('--resources',required=True);stage.add_argument('--skip-f5',action='store_true')
-    inspect=sub.add_parser('inspect');inspect.add_argument('ipa');inspect.add_argument('--dependency-proof',required=True)
+    inspect=sub.add_parser('inspect');inspect.add_argument('ipa');inspect.add_argument('--dependency-proof',required=True);inspect.add_argument('--expected-version',default='0.4.1')
     notices=sub.add_parser('notices');notices.add_argument('--checkouts',required=True);notices.add_argument('--resolved',required=True);notices.add_argument('--resources',required=True)
     args=parser.parse_args()
     if args.command=='prepare':result=prepare_resources(args.cache,args.resources,include_f5=not args.skip_f5)
     elif args.command=='notices':result=collect_dependency_notices(args.checkouts,args.resolved,args.resources)
-    else:result=inspect_ipa(args.ipa,dependency_proof=json.loads(Path(args.dependency_proof).read_text())['proof'])
+    else:result=inspect_ipa(args.ipa,expected_version=args.expected_version,dependency_proof=json.loads(Path(args.dependency_proof).read_text())['proof'])
     print(json.dumps(result,indent=2))

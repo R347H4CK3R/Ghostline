@@ -294,8 +294,30 @@ struct CharacterLibraryView: View {
             }
             Section("Does it sound like your character?") {
                 Text("Listen to the reference, then the new speech. Your answer records a listening judgment, separate from technical audio checks.").font(.callout)
+                if let selected = library.profiles.first(where: { $0.id == library.selectedID }) {
+                    Text("Selected: " + selected.name)
+                } else {
+                    Text("Open a character above and tap Choose this voice before listening.")
+                        .accessibilityIdentifier("character-selection-guidance")
+                }
                 Button { library.listenToReference(audio: audio) } label: { Label("1 · Listen to reference", systemImage: "person.wave.2") }
                     .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse)
+                TimelineView(.periodic(from: .now, by: 0.5)) { _ in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Output: " + audio.outputRoute + " · Volume: " + String(audio.outputVolumePercent) + "%")
+                            .font(.caption)
+                        if audio.playing != nil {
+                            Text(String(format: "Playing · %.1f / %.1f seconds", audio.elapsedSeconds, audio.durationSeconds))
+                                .monospacedDigit().accessibilityIdentifier("character-playback-progress")
+                        }
+                    }
+                }
+                if audio.playing != nil {
+                    Button("Stop playback") { audio.stop() }.accessibilityIdentifier("stop-character-playback")
+                }
+                if let error = audio.error {
+                    Text(error).foregroundStyle(.orange).accessibilityIdentifier("character-playback-error")
+                }
                 if let output = library.output, library.canReview {
                     Button { audio.play(output) } label: { Label("2 · Listen to result", systemImage: "waveform") }
                     Button("Matches") { library.review(.matches) }.accessibilityIdentifier("character-match-yes")

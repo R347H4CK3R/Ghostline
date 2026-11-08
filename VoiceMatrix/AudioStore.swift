@@ -13,6 +13,14 @@ struct SavedAudio: Identifiable {
     @Published var error: String?
     @Published var rate: Float = 1
     private var player: AVAudioPlayer?
+    var elapsedSeconds: TimeInterval { player?.currentTime ?? 0 }
+    var durationSeconds: TimeInterval { player?.duration ?? 0 }
+    var outputVolumePercent: Int { Int((AVAudioSession.sharedInstance().outputVolume * 100).rounded()) }
+    var outputRoute: String {
+        let outputs = AVAudioSession.sharedInstance().currentRoute.outputs
+        // Show route types, never personal Bluetooth device names.
+        return outputs.isEmpty ? "No audio output" : outputs.map { $0.portType.rawValue }.joined(separator: ", ")
+    }
     @Published private var activity = StudioActivity()
     var microphoneInUse: Bool { activity.microphoneInUse }
     var processingInUse: Bool { activity.processingInUse }
@@ -44,15 +52,25 @@ struct SavedAudio: Identifiable {
     func play(_ url: URL) {
         guard !microphoneInUse else { error = "Stop recording before listening to audio."; return }
         stop(); error = nil
+        var stage = "configuring audio output"
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
+            stage = "opening the recording"
             let sound = try AVAudioPlayer(contentsOf: url)
             guard sound.duration > 0 else { throw StudioError.emptyAudio }
             sound.delegate = self; sound.enableRate = true; sound.rate = rate
+            stage = "preparing playback"
+            guard sound.prepareToPlay() else { throw StudioError.emptyAudio }
+            player = sound
+            stage = "starting playback"
             guard sound.play() else { throw StudioError.emptyAudio }
-            player = sound; playing = url
-        } catch { self.error = "This recording could not play. Check your sound volume or try another recording." }
+            playing = url
+        } catch {
+            stop()
+            let failure = error as NSError
+            self.error = "Could not play audio while \(stage) (\(failure.domain), code \(failure.code)). Try again or try another recording."
+        }
     }
     func stop() { player?.stop(); player = nil; playing = nil }
     func save(_ url: URL) {
@@ -79,5 +97,18 @@ struct SavedAudio: Identifiable {
         }
         catch { self.error = "That name is already used, or the recording could not be renamed." }
     }
-    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) { Task { @MainActor in self.playing = nil } }
+    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Task { @MainActor in
+            guard self.player === player else { return }
+            self.stop()
+            if !flag { self.error = "Playback ended before the recording finished. Try replaying it." }
+        }
+    }
+    nonisolated func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        Task { @MainActor in
+            guard self.player === player else { return }
+            self.stop()
+            self.error = "The recording could not be decoded during playback. Try another recording."
+        }
+    }
 }
