@@ -1,6 +1,7 @@
 """Authenticated queue API; loopback only until an encrypted device transport is paired."""
 import hmac,json,pathlib,threading,secrets,re
 from urllib.parse import urlsplit,parse_qs
+from tools.listening_review import ListeningReview,page as listening_page
 from tools.source_review import save_initial_review,page,save_inspection,stop_inspection
 from tools.source_inspection import read_index,preview
 from tools.master_voices import PublishBusy
@@ -26,6 +27,17 @@ def create_server(root,token,port=0,trusted_login=None,master=None):
   def do_GET(self):
    if not self.authorized():return self.respond(401,dict(error='Pairing required'))
    address=urlsplit(self.path)
+   if self.path=='/listening':
+    body=listening_page(csrf);self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.send_header('Content-Security-Policy',"default-src 'none'; script-src 'nonce-"+csrf+"'; style-src 'nonce-"+csrf+"'; connect-src 'self'; media-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");self.end_headers();self.wfile.write(body);return
+   if self.path=='/listening/catalog' or address.path.startswith('/listening/assets/'):
+    try:
+     listening=ListeningReview(root,root/'queue.db')
+     if self.path=='/listening/catalog':return self.respond(200,listening.catalog())
+     match=re.fullmatch(r'/listening/assets/([A-Za-z0-9_-]{11})/([1-4])/([0-9]{1,2})/([a-f0-9]{64})/(reference|preview)',self.path)
+     if not match:return self.respond(404,dict(error='Unknown listening asset'))
+     video,attempt,index,token,kind=match.groups();data=listening.audio(video,int(attempt),int(index),token,kind)
+     self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','audio/wav');self.send_header('Content-Length',str(len(data)));self.send_header('X-Content-Type-Options','nosniff');self.end_headers();self.wfile.write(data);return
+    except (OSError,ValueError,TypeError):return self.respond(409,dict(error='Listening audio or evidence changed; refresh before reviewing'))
    if address.path=='/review':
     selection=parse_qs(address.query,keep_blank_values=True)
     if selection and (set(selection)!={'video'} or len(selection['video'])!=1 or not re.fullmatch(r'[A-Za-z0-9_-]{11}',selection['video'][0])):return self.respond(400,dict(error='Invalid source selection'))
@@ -66,12 +78,12 @@ def create_server(root,token,port=0,trusted_login=None,master=None):
    finally:q.close()
   def do_POST(self):
    if not self.authorized():return self.respond(401,dict(error='Pairing required'))
-   if self.path in ['/review','/inspection','/inspection/stop']:
+   if self.path in ['/review','/inspection','/inspection/stop','/listening/decisions']:
     if not hmac.compare_digest(self.headers.get('X-VoiceMatrix-Review',''),csrf):return self.respond(403,dict(error='Reload the source review page before submitting'))
     try:
      length=int(self.headers.get('Content-Length','0'))
      if not 0<length<=512000 or self.headers.get('Content-Type','')!='application/json':raise ValueError('Invalid review request')
-     action={'/review':save_initial_review,'/inspection':save_inspection,'/inspection/stop':stop_inspection}[self.path]
+     action={'/review':save_initial_review,'/inspection':save_inspection,'/inspection/stop':stop_inspection,'/listening/decisions':lambda root,body:ListeningReview(root,root/'queue.db').decide(body)}[self.path]
      result=action(root,json.loads(self.rfile.read(length)));return self.respond(200,result)
     except (FileExistsError,PublishBusy):return self.respond(409,dict(error='An existing review or busy writer was preserved; replacements need a separate reviewed update'))
     except (ValueError,TypeError,KeyError,OverflowError):return self.respond(400,dict(error='Review rejected: check queued video, source-use record, labels and 0.5–15 second segments'))

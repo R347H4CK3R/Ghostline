@@ -1,7 +1,7 @@
 name: Prepared voice queue processor checks
 on:
   push:
-    paths: ['tools/source_inspection.py', 'tests/test_source_inspection.py', 'tools/source_review.py', 'tools/source_review.html', 'tests/test_source_review.py', 'tests/source_review_browser.cjs', 'tests/source_review_browser_server.py', 'tools/private_voices.py', 'tests/test_private_voice_transfer.py', 'tools/queue_transport.py', 'tools/laptop_supervisor.py', 'tests/test_queue_dashboard.py', 'tools/companion_runtime.py', 'tests/test_companion_runtime.py', 'tools/video_prepare.py', 'tools/video_reference.py', 'tools/video_download.py', 'tools/process_control.py', 'tools/voice_pack.py', 'tests/test_video_preparation.py', 'tools/queue_processor.py', 'tools/video_queue.py', 'tools/master_voices.py', 'tools/pack_speech.py', 'tests/test_queue_processor.py', 'tests/test_queue_publication.py', '.github/workflows/queue-processor.yml']
+    paths: ['tools/listening_review.py', 'tools/listening_review.html', 'tests/test_listening_review.py', 'tools/source_inspection.py', 'tests/test_source_inspection.py', 'tools/source_review.py', 'tools/source_review.html', 'tests/test_source_review.py', 'tests/source_review_browser.cjs', 'tests/source_review_browser_server.py', 'tools/private_voices.py', 'tests/test_private_voice_transfer.py', 'tools/queue_transport.py', 'tools/laptop_supervisor.py', 'tests/test_queue_dashboard.py', 'tools/companion_runtime.py', 'tests/test_companion_runtime.py', 'tools/video_prepare.py', 'tools/video_reference.py', 'tools/video_download.py', 'tools/process_control.py', 'tools/voice_pack.py', 'tests/test_video_preparation.py', 'tools/queue_processor.py', 'tools/video_queue.py', 'tools/master_voices.py', 'tools/pack_speech.py', 'tests/test_queue_processor.py', 'tests/test_queue_publication.py', '.github/workflows/queue-processor.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -53,7 +53,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Source-review-mobile
-          path: source-*-mobile.png
+          path: "*-mobile.png"
           if-no-files-found: error
         if: always()
 

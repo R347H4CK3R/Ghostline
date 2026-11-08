@@ -32,6 +32,13 @@ const assert=require('node:assert/strict');
   await page.locator('#approved').check();const saved=page.waitForResponse(r=>r.url().endsWith('/review')&&r.request().method()==='POST');await page.locator('#submit').click();const sent=await saved;assert.equal(sent.status(),200);assert.match(sent.request().postDataJSON().inspectedSourceSHA256,/^[a-f0-9]{64}$/);
   await page.locator('#status').filter({hasText:'Reviewed segments saved'}).waitFor();
   assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'source-inspection-mobile.png',fullPage:true});
+  await page.goto('http://127.0.0.1:'+port+'/listening');await page.locator('#candidates section').waitFor();
+  assert.equal(await page.locator('select[name=decision]').inputValue(),'');
+  for(const audio of await page.locator('audio').all())await audio.evaluate(async a=>{await a.play();a.pause();});
+  await page.locator('input[name=reviewer]').fill('Original fixture reviewer');await page.locator('select[name=decision]').selectOption('Unsure');await page.locator('form button').click();await page.locator('.status').filter({hasText:'Decision saved'}).waitFor();
+  await page.locator('#refresh').click();await page.locator('#candidates section').filter({hasText:'Original fixture reviewer: Unsure'}).waitFor();
+  assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'listening-review-mobile.png',fullPage:true});
+  console.log('Private reference/preview browser playback, explicit Unsure decision and durable refresh passed');
   console.log('Real mobile browser inspection request, owned-worker AV activity previews, audio playback, explicit label review and source-bound HTTP save passed');
  }finally{if(browser)await browser.close();lines.close();server.kill();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
