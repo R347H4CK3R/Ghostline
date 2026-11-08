@@ -1,7 +1,5 @@
 name: Publish LiveContainer test source
 on:
-  push:
-    paths: ['.github/workflows/livecontainer-test-source.yml']
   workflow_dispatch:
 permissions:
   contents: write

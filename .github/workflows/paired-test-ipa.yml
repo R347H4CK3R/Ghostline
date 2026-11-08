@@ -1,7 +1,5 @@
 name: Paired laptop test IPA
 on:
-  push:
-    paths: ['.github/workflows/paired-test-ipa.yml']
   workflow_dispatch:
 permissions:
   contents: write

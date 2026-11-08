@@ -1,0 +1,28 @@
+{
+  "release": "voicematrix-v0.4.1-character-test-1",
+  "sourceCommit": "02b2624aa3548d7e7d38da1dbc7007ba2b002e02",
+  "requiredNativeGate": {
+    "run": 42498246809,
+    "jobs": 4,
+    "allPassed": true
+  },
+  "unexpectedTagTriggeredLegacyRuns": [
+    {
+      "run": 42500143748,
+      "purpose": "Historical 0.3.0 paired baseline build",
+      "failedStep": "Restore inspected offline resources"
+    },
+    {
+      "run": 42500143730,
+      "purpose": "Historical build7 source publisher pinned to old run"
+    }
+  ],
+  "fix": "Retire automatic push triggers on the two historical pinned publication workflows; retain manual dispatch and all historical releases. Current 0.4.1 native/package/word/hash gates are unchanged.",
+  "intentionalDuplicateCancellations": [
+    42500735057,
+    42500143742,
+    42500143727,
+    42500143725
+  ],
+  "otherThreadUntouched": true
+}
