@@ -1,0 +1,48 @@
+name: Verified release feed sync
+on:
+  release:
+    types: [published]
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main, maintenance/verified-release-feeds]
+    paths:
+      - tools/sync_verified_release_feeds.py
+      - tools/test_release_feed_sync.py
+      - .github/workflows/release-feed-sync.yml
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: verified-release-feed-sync
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m unittest tools.test_release_feed_sync -v
+      - run: python3 -m tools.sync_verified_release_feeds
+        env:
+          GH_TOKEN: ${{ github.token }}
+  sync:
+    needs: verify
+    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m tools.sync_verified_release_feeds --write
+        env:
+          GH_TOKEN: ${{ github.token }}
