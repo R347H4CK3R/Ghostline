@@ -44,6 +44,15 @@ import CryptoKit
         } catch { }
         let stillSaved = try await store.profiles()
         precondition(stillSaved == profiles)
+        let started = ContinuousClock.now
+        do {
+            _ = try await VoiceFolderSync.bounded(seconds: 0.02, onTimeout: {}) {
+                try await Task.sleep(nanoseconds: 1_000_000_000)
+                return true
+            }
+            fatalError("Overall transfer deadline was ignored")
+        } catch { }
+        precondition(started.duration(to: .now) < .seconds(0.5))
         print("Private transfer staging, native folder import, unchanged catalog and unsafe/corrupt transfer checks passed")
     }
 }
