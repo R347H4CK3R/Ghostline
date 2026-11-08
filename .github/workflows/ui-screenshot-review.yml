@@ -18,13 +18,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run download 42515379297 --repo R347H4CK3R/Ghostline --name Current-character-UI-evidence --dir evidence
+          gh run download 42517190096 --repo R347H4CK3R/Ghostline --name Current-character-UI-evidence --dir evidence
           python3 - <<'PY'
           import base64,io,json,pathlib
           from PIL import Image
           paths=list(pathlib.Path('evidence').glob('workflow-screenshots/**/*.png'))+list(pathlib.Path('evidence').glob('ui-screenshots/**/*.png'))
           print("Screenshot count:",len(paths))
-          for path in paths[:4]:
+          for path in paths[:2]:
               im=Image.open(path).convert('RGB')
               im.thumbnail((390,900))
               data=io.BytesIO();im.save(data,format='JPEG',quality=55)
