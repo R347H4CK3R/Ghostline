@@ -1,8 +1,5 @@
 name: Character test kit native audio gates
 'on':
-  push:
-    paths:
-    - .github/workflows/character-test-ipa.yml
   workflow_dispatch: null
 permissions:
   contents: read
@@ -16,7 +13,9 @@ jobs:
       with:
         python-version: '3.12'
     - name: Run source and packaging regressions
-      run: python3 -m unittest discover -s tests -v
+      run: |-
+        command -v ffmpeg >/dev/null || brew install ffmpeg
+        python3 -m unittest discover -s tests -v
     - name: Freeze exact shared package graph
       run: |-
         brew install xcodegen
@@ -76,14 +75,14 @@ jobs:
         mkdir Payload
         cp -R native-build/Build/Products/Release-iphoneos/VoiceMatrix.app Payload/
         cp source-proof.json Payload/VoiceMatrix.app/VoiceMatrix-Source-Proof.json
-        python3 tools/package_ipa.py Payload VoiceMatrix-0.4.0-character-test.ipa
-        python3 tools/character_package.py inspect VoiceMatrix-0.4.0-character-test.ipa --dependency-proof dependency-notices.json > character-inspection.json
-        shasum -a 256 VoiceMatrix-0.4.0-character-test.ipa > character-ipa.sha256
+        python3 tools/package_ipa.py Payload VoiceMatrix-0.4.1-character-test.ipa
+        python3 tools/character_package.py inspect VoiceMatrix-0.4.1-character-test.ipa --dependency-proof dependency-notices.json > character-inspection.json
+        shasum -a 256 VoiceMatrix-0.4.1-character-test.ipa > character-ipa.sha256
     - uses: actions/upload-artifact@v4
       with:
         name: Character-test-IPA
         path: |-
-          VoiceMatrix-0.4.0-character-test.ipa
+          VoiceMatrix-0.4.1-character-test.ipa
           character-inspection.json
           character-ipa.sha256
           source-proof.json

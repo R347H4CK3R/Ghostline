@@ -1,3 +1,11 @@
+# Latest published test kit: 0.4.1 build 1
+
+All four jobs of native audio/package run42498246809 passed at source02b2624aa3548d7e7d38da1dbc7007ba2b002e02. Owner finalization independently bound IPA/speech/conversion source and dependency proofs, imported neutral reference hashes, model/shader/license checks and actual independent word/audio results. All13hosted-Mac F5 clips had zero word errors, including the two-chunk message; iOS-simulator CoreML conversion also had zero word errors. The uploaded IPA was downloaded again and re-inspected:731005708bytes, SHA256fa3855e635f5a9608a64cc37025dc0dca5ce406f9cba344d5db4e89ca9fdc0b6. All three feeds were freshly verified to the exact0.4.1build1 asset and retain0.4.0fallback. The finalizer finished; do not restart it or rebuild this candidate unnecessarily.
+
+This release includes private laptop voice synchronization and the changed-conditioning preservation guard. Connect same-account Tailscale and open MAKE SPEECH/Voices to check the configured private collection; no manual JSON is required. Successful imports are privately cached for offline speech/conversion. The actual companion transfer verified60profiles/121files, but physical iPhone synchronization, individual native character inference and likeness remain unverified. The test gates use ONE neutral diagnostic profile, not60characters. No characters/stock voices are bundled. No new RVC networks were trained. Reviewed candidate promotion, source label proposals/review UX, full queue completion ledger and physical benchmarks remain unfinished. The healthy speech worker and monitor remain on their pinned snapshots; APIpipelineConnected remainsfalse. See0.4.1-character-release-verification.json,0.4.1-native-speech.json and0.4.1-native-conversion.json under docs/qa.
+
+The historical development log below records earlier states; statements that0.4.0is current, sync is unpublished or the0.4.1build/finalizer is running are superseded by this verified release.
+
 # Current character milestone
 
 Read fresh GitHub refs, run statuses and release feeds before acting. Preserve prior working releases and private assets.
