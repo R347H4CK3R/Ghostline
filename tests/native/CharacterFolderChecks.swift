@@ -54,6 +54,20 @@ import CryptoKit
         let unchangedURL = try await store.referenceURL(id: "original-test")
         let unchangedBytes = try Data(contentsOf: unchangedURL)
         precondition(unchangedBytes == cachedBytes)
+        // A valid addition earlier in the same batch cannot leak into the active
+        // library when a later entry attempts to replace conditioning.
+        let mixed = work.appendingPathComponent("mixed")
+        try fm.copyItem(at: changedText, to: mixed)
+        let addition = mixed.appendingPathComponent("new-test")
+        try fm.copyItem(at: changedAudioFolder.appendingPathComponent("original-test"), to: addition)
+        let additionManifest = addition.appendingPathComponent("manifest.json")
+        var additionMetadata = try JSONSerialization.jsonObject(with: Data(contentsOf: additionManifest)) as! [String: Any]
+        additionMetadata["id"] = "new-test"
+        try JSONSerialization.data(withJSONObject: additionMetadata).write(to: additionManifest)
+        try JSONSerialization.data(withJSONObject: ["schemaVersion":1,"voices":[["id":"new-test","folder":"new-test"],["id":"original-test","folder":"original-test"]]]).write(to: mixed.appendingPathComponent("collection.json"))
+        try await expectFailure { _ = try await store.importCollection(at: mixed) }
+        let afterMixedBatch = try await store.profiles()
+        precondition(afterMixedBatch == revised, "A rejected batch partially changed the active library")
         // A later corrupt refresh must not replace a usable private revision.
         try Data("broken".utf8).write(to: updated.appendingPathComponent("original-test/reference.wav"))
         try await expectFailure { _ = try await store.importCollection(at: updated) }
