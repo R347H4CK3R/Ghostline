@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "status": "deployed",
+  "runtime": "b57a8dd10a1a4465150a217b0a4e01af527cb6d6",
+  "tests": {
+    "local": 219,
+    "actualWindowsLaptop": 219,
+    "hostedWindows": 219,
+    "hostedLinux": 219,
+    "skips": 0,
+    "hostedRun": 42520631578,
+    "realMobileBrowserJob": 128853122086,
+    "referenceAndPreviewPlayback": true,
+    "explicitUnsure": true,
+    "durableRefresh": true
+  },
+  "review": {
+    "importantDefectsFound": [
+      "Malformed report/ZIP could abort catalog",
+      "Valid generated preview larger than reference cap rejected",
+      "Stale asset served after queue state change"
+    ],
+    "allFixedWithRegressions": true,
+    "catalogLongPreviewPerformance": "Follow-up; validates at most 200 outputs, linear PCM cost"
+  },
+  "deployment": {
+    "endpointOnly": true,
+    "sourceFilesGitBlobVerified": 121,
+    "backup": "listening-review-backup-1794170109",
+    "workerPID": 14708,
+    "workerSource": "41a9a6f650d82a93c1bcb5f85c20a7e4bddab938",
+    "workerRestarted": false,
+    "monitorRestarted": false,
+    "workerLockHeld": true,
+    "idleWorkerRSSBytes": 13123584,
+    "liveHTTPS": 200,
+    "anonymous": 401,
+    "missingNonce": 403,
+    "traversal": 404,
+    "liveJobs": 0,
+    "liveCandidates": 0,
+    "privateHumanDecisionSubmitted": false
+  },
+  "preservation": {
+    "profiles": 60,
+    "distinctReferenceHashes": 60,
+    "indexSHA256": "57566a540aa0f06dbf5b09a1c8096aaff812a9027189d9448596ba3cc7783013",
+    "activeVoiceChanges": 0,
+    "newInference": false,
+    "newCharacters": 0,
+    "physicalDeviceChecks": 0,
+    "likenessVerified": false,
+    "reviewedReplacementPromotion": false,
+    "queueCompletion": false,
+    "pipelineConnected": false,
+    "releaseAndFeeds": "0.4.3 preserved; no IPA/feed changes"
+  }
+}
