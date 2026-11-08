@@ -4,7 +4,7 @@ from tools.queue_processor import run_once
 
 class InspectionTests(unittest.TestCase):
  def setUp(self):
-  self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=pathlib.Path(self.temp.name)
+  self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=pathlib.Path(self.temp.name).resolve()
   self.request=dict(schemaVersion=1,videoURL='https://youtu.be/SYNTHETIC03',decision='approved-local-inspection',reviewer='Fixture creator',record='Original synthetic AV fixture')
   folder=self.root/'inspections';folder.mkdir();self.path=folder/'SYNTHETIC03.json';self.path.write_text(json.dumps(self.request))
  def inspector(self):
