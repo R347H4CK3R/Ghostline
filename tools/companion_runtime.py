@@ -43,6 +43,10 @@ def configure_torch(threads,runtime=None):
 def lower_priority():
  if os.name=='nt':
   # BELOW_NORMAL_PRIORITY_CLASS; never request administrator access.
-  kernel=ctypes.windll.kernel32
-  if not kernel.SetPriorityClass(kernel.GetCurrentProcess(),0x4000):raise OSError('Cannot lower companion process priority')
+  from ctypes import wintypes
+  kernel=ctypes.WinDLL('kernel32',use_last_error=True)
+  kernel.GetCurrentProcess.restype=wintypes.HANDLE
+  kernel.SetPriorityClass.argtypes=[wintypes.HANDLE,wintypes.DWORD]
+  kernel.SetPriorityClass.restype=wintypes.BOOL
+  if not kernel.SetPriorityClass(kernel.GetCurrentProcess(),0x4000):raise ctypes.WinError(ctypes.get_last_error())
  elif hasattr(os,'nice'):os.nice(10)
