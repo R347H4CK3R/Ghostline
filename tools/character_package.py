@@ -278,6 +278,11 @@ def inspect_ipa(path, files=None, base_files=None, dependency_proof=None):
                 raise ValueError('Not an ARM64 Mach-O executable')
             if PREFIX+'Assets.car' not in names:
                 raise ValueError('Missing app icons')
+            shader = PREFIX+'mlx-swift_Cmlx.bundle/default.metallib'
+            if shader not in names or archive.getinfo(shader).file_size < 1024:
+                raise ValueError('Missing compiled speech shader library')
+            with archive.open(shader) as stream:
+                if stream.read(4) != b'MTLB':raise ValueError('Invalid compiled speech shader library')
             settings = json_entry(archive, PREFIX + 'LaptopSettings.json')
             from urllib.parse import urlsplit
             if set(settings) != {'url','authentication'} or settings.get('authentication') != 'tailscale-same-account':
@@ -304,7 +309,7 @@ def inspect_ipa(path, files=None, base_files=None, dependency_proof=None):
                 expected = (HERE/'listening_licenses'/name).read_bytes()
                 verify_entry(archive, PREFIX+'F5TTS/Notices/'+name,
                              {'size':len(expected),'sha256':hashlib.sha256(expected).hexdigest()})
-        return {'archive':'passed','version':'0.4.0','build':'1','bundleIdentifier':'com.voicematrix.app','runtimeRevision':RUNTIME_REVISION,'stockProfiles':0,'f5AssetBytes':sum(x['size'] for x in files.values()),
+        return {'archive':'passed','compiledSpeechShaders':True,'version':'0.4.0','build':'1','bundleIdentifier':'com.voicematrix.app','runtimeRevision':RUNTIME_REVISION,'stockProfiles':0,'f5AssetBytes':sum(x['size'] for x in files.values()),
                 'modelRevision':MODEL_REVISION,'physicalIPhoneVerified':False,'characterLikenessVerified':False}
     except (KeyError, zipfile.BadZipFile, json.JSONDecodeError, plistlib.InvalidFileException) as error:
         raise ValueError('Incomplete or invalid listening archive') from error

@@ -28,6 +28,7 @@ class CharacterPackageTests(unittest.TestCase):
                 'CFBundleVersion':'1','MinimumOSVersion':'26.0'}),
             'VoiceMatrix': b'\xcf\xfa\xed\xfe'+struct.pack('<I',0x100000c)+b'\0'*24,
             'Assets.car': b'icon',
+            'mlx-swift_Cmlx.bundle/default.metallib': b'MTLB'+b'\0'*1024,
             'Phonon/manifest.json': json.dumps({'voices':[],'files':[]}).encode(),
             'OpenVoice/model-manifest.json': json.dumps({'files':[]}).encode(),
         }
@@ -212,5 +213,14 @@ class CharacterPackageTests(unittest.TestCase):
         destination=self.root/'model'
         self.module.download_verified(source.as_uri(),destination,{'size':5,'sha256':hashlib.sha256(b'exact').hexdigest()})
         self.assertEqual(destination.read_bytes(),b'exact')
+
+
+    def test_missing_compiled_speech_shader_is_rejected(self):
+        self.entries.pop('mlx-swift_Cmlx.bundle/default.metallib',None)
+        with self.assertRaises(ValueError): self.module.inspect_ipa(self.archive(),self.files,self.base_files,self.dependency_proof)
+
+    def test_invalid_compiled_speech_shader_is_rejected(self):
+        self.entries['mlx-swift_Cmlx.bundle/default.metallib']=b'not-a-metal-library'*100
+        with self.assertRaises(ValueError): self.module.inspect_ipa(self.archive(),self.files,self.base_files,self.dependency_proof)
 
 if __name__=='__main__':unittest.main()
