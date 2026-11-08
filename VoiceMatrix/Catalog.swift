@@ -69,7 +69,7 @@ enum Catalog {
     static func read() throws -> (URL, VoiceManifest) {
         guard let root = Bundle.main.url(forResource: "Phonon", withExtension: nil) else { throw StudioError.missingPack }
         let manifest = try JSONDecoder().decode(VoiceManifest.self, from: Data(contentsOf: root.appendingPathComponent("manifest.json")))
-        guard manifest.schemaVersion == 1, manifest.engine == "phonon31m", !manifest.voices.isEmpty,
+        guard manifest.schemaVersion == 1, manifest.engine == "phonon31m",
               Set(manifest.voices.map(\.id)).count == manifest.voices.count,
               Set(manifest.voices.map(\.sha256)).count == manifest.voices.count else { throw StudioError.invalidAsset("catalog") }
         for voice in manifest.voices {

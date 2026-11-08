@@ -1,0 +1,166 @@
+{
+  "OpenVoice/Model-Card.md": {
+    "size": 3808,
+    "sha256": "6333da40c9e6c9135c695326645a5392b476d6bfb9e5492af974e98392ccdbd1"
+  },
+  "OpenVoice/NOTICE.txt": {
+    "size": 218,
+    "sha256": "966d31c09cafe8538901e191199220c7702e38f022abdb3c693228fb8b6bcf2b"
+  },
+  "OpenVoice/OpenVoice-LICENSE.txt": {
+    "size": 1057,
+    "sha256": "bb3541f421e6273d3a3e3dd5bdba2bd3b79a3c2eadca65cde9c62c2467903ac0"
+  },
+  "OpenVoice/OpenVoice_SpeakerEncoder.mlmodelc/analytics/coremldata.bin": {
+    "size": 243,
+    "sha256": "2fdd94762763b7f6ff0bfca952c669001ffa9b1ea4250d2e516fd505692a5c30"
+  },
+  "OpenVoice/OpenVoice_SpeakerEncoder.mlmodelc/coremldata.bin": {
+    "size": 518,
+    "sha256": "cf5b0a8053ad6f24284605a3dbe3c6b2236a52eaaec2b3948eb2940187d2e4ed"
+  },
+  "OpenVoice/OpenVoice_SpeakerEncoder.mlmodelc/metadata.json": {
+    "size": 2412,
+    "sha256": "baec47dde3285bdf6ee3820ca6bffea0176c7696b54fddd8aec1a5b2c1832451"
+  },
+  "OpenVoice/OpenVoice_SpeakerEncoder.mlmodelc/model.mil": {
+    "size": 30492,
+    "sha256": "252653c18faf2e1bb4e5ff84cf646b250857fb833b5f28d372fe6b81d5f605b4"
+  },
+  "OpenVoice/OpenVoice_SpeakerEncoder.mlmodelc/weights/weight.bin": {
+    "size": 1627840,
+    "sha256": "6b50c4ca00b72862f7cd974f9bef7d1dd36d2a86adc0b6b626116fb26b5cc6de"
+  },
+  "OpenVoice/OpenVoice_VoiceConverter.mlmodelc/analytics/coremldata.bin": {
+    "size": 243,
+    "sha256": "4c4b231704b8ce4f26590721b0b0278bf9aaf124dc1bba41b5282e01e17bf7dc"
+  },
+  "OpenVoice/OpenVoice_VoiceConverter.mlmodelc/coremldata.bin": {
+    "size": 584,
+    "sha256": "158137710fa2cb662a2d96dab6ee4edcf3bef02de6725243a627bc1ca39633c3"
+  },
+  "OpenVoice/OpenVoice_VoiceConverter.mlmodelc/metadata.json": {
+    "size": 3238,
+    "sha256": "784980c55c440845b4a4f2c48cadf27fa56ccbd889d3aee561c64edbbe6de9eb"
+  },
+  "OpenVoice/OpenVoice_VoiceConverter.mlmodelc/model.mil": {
+    "size": 558682,
+    "sha256": "f7a14025b46f01189467b280bce11ef978581fa6a5fb1e15739ee1c53e0e0070"
+  },
+  "OpenVoice/OpenVoice_VoiceConverter.mlmodelc/weights/weight.bin": {
+    "size": 63887808,
+    "sha256": "bc5c2c0952a4146a74ae7c4dce9ccda8c294af8b41ee4dbadc7d47077d8104ea"
+  },
+  "OpenVoice/REFERENCE-ATTRIBUTION.txt": {
+    "size": 2807,
+    "sha256": "b2fe31b47db16789905c0fdb439d8b5bd16440a737e59c12b6ce42289fd55c18"
+  },
+  "OpenVoice/REFERENCE-CC-BY-4.0.txt": {
+    "size": 18657,
+    "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+  },
+  "OpenVoice/REFERENCE-CC-BY-NC-4.0.txt": {
+    "size": 19347,
+    "sha256": "41003d4a74749c0220e33dd415042164b5a1093ed401f36277234f772d22d3d0"
+  },
+  "OpenVoice/REFERENCE-CC0-1.0.txt": {
+    "size": 7048,
+    "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+  },
+  "OpenVoice/model-manifest.json": {
+    "size": 4800,
+    "sha256": "3b25215dedc4876b263082d0ac36f35a519b13f93c0ccb1698c908b56df8f8b1"
+  },
+  "OpenVoice/original-conversion-lock.json": {
+    "size": 41771,
+    "sha256": "619a7bdfef6b9ccd5799e3cd14cf38928800374e249442714efbf2b33aa056d2"
+  },
+  "OpenVoice/reference-provenance.json": {
+    "size": 546570,
+    "sha256": "d9fbc54bc2d26e6c64f3740ced822e80281b0fbc37cfa014c3b6155363721e96"
+  },
+  "Phonon/FluidAudio-LICENSE.txt": {
+    "size": 11357,
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  "Phonon/LICENSE": {
+    "size": 11357,
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  "Phonon/README.md": {
+    "size": 2767,
+    "sha256": "a4707c3c6a3dac3fb2e561bdc257f921f4e556df31bed3cff9d31934028f8a93"
+  },
+  "Phonon/VoiceMatrix-NOTICE.txt": {
+    "size": 705,
+    "sha256": "f1cf1bb65eef6d340a2e7a4f894556ff8c5a336f6106f2927a0845b2d73aa1d4"
+  },
+  "Phonon/arch.json": {
+    "size": 811,
+    "sha256": "15f402005db3f2cf2274cfa6173c3661ee906111b2a7722d967af30e188e32d8"
+  },
+  "Phonon/constants_bin/bos_emb.bin": {
+    "size": 128,
+    "sha256": "1010476e005ac8b08a2fb3d73d853327148d818ec09e4df99611840233081fac"
+  },
+  "Phonon/constants_bin/input_bias.bin": {
+    "size": 2048,
+    "sha256": "413a43837805c4c2aecb37743799c7773b21a7decd9edd5d3c065600846a3871"
+  },
+  "Phonon/constants_bin/speaker_proj_weight.bin": {
+    "size": 1048576,
+    "sha256": "0f5d6b5433ce622fcb9b93885c5cab82ba1537ef6cea60de56a811f2b6f1c79c"
+  },
+  "Phonon/constants_bin/text_embed_table.bin": {
+    "size": 8194048,
+    "sha256": "4a41cf481b98ddad78ec6f50dda7eca2a5033ea75cd1fa54d7381231d65818e7"
+  },
+  "Phonon/constants_bin/tokenizer.json": {
+    "size": 277967,
+    "sha256": "691a00068fa7b989f2f3e5ae5daa2d1a5bb319f2d5360deafcfb19a8bb6e7936"
+  },
+  "Phonon/constants_bin/tokenizer.model": {
+    "size": 65045,
+    "sha256": "82e4572006d64d483317074c22c368e87779640b6f3a9dcd07b7caae32b030ce"
+  },
+  "Phonon/manifest.json": {
+    "size": 4600,
+    "sha256": "0b5cf1cabe83d7384540ad4e4bb6ba4965f62cc9a482935cb7f46ae66c6b9490"
+  },
+  "Phonon/mimi_decoder.mlmodelc/analytics/coremldata.bin": {
+    "size": 243,
+    "sha256": "12f9e3aea28056a789b9a35c7ffcb6eeb53a607d8358998c1d25a41fdc49ee17"
+  },
+  "Phonon/mimi_decoder.mlmodelc/coremldata.bin": {
+    "size": 1852,
+    "sha256": "89525846d461c4dbc7a593c9719bfee18a7284b8d11f464d8860f37199dc875a"
+  },
+  "Phonon/mimi_decoder.mlmodelc/model.mil": {
+    "size": 95070,
+    "sha256": "f6ca7ee07fe0cacb6fea7558a1f5c8b10ed80e8e94f965585946326f731db830"
+  },
+  "Phonon/mimi_decoder.mlmodelc/weights/weight.bin": {
+    "size": 44897216,
+    "sha256": "fc998dd13becc51a05e74b2f7efd4bc0f05defafdc6baefe0a424ee6f7427e5a"
+  },
+  "Phonon/pocket_state.json": {
+    "size": 2918,
+    "sha256": "9675b15fd9d221ea935df8f9ed60698735e14a5855693c65de2a125efab3b62c"
+  },
+  "Phonon/pocket_state.mlmodelc/analytics/coremldata.bin": {
+    "size": 243,
+    "sha256": "931c1ec027815fbcfd55c4757a3d21c3c46ad12586a366ec24b16ed64e8439ef"
+  },
+  "Phonon/pocket_state.mlmodelc/coremldata.bin": {
+    "size": 4771,
+    "sha256": "10091f1e21e7be6ad7be9f7509697b8ff075cdce3806f2eef3f582f5d45556c2"
+  },
+  "Phonon/pocket_state.mlmodelc/model.mil": {
+    "size": 744313,
+    "sha256": "70df3c50476ba5c9526bfc3e5a9f8a2d2912652bb8d4a41f91904f45a1d23070"
+  },
+  "Phonon/pocket_state.mlmodelc/weights/weight.bin": {
+    "size": 79068864,
+    "sha256": "cbe7fe8d1843021a9ad2995fda682ef85f949290ef65a58b8976b2c2e2a64502"
+  }
+}

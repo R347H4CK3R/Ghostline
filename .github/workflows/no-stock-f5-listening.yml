@@ -1,0 +1,77 @@
+name: No-stock F5 listening candidate (artifact only)
+on:
+  workflow_dispatch:
+  push:
+    branches: [build/no-stock-f5-listening]
+permissions:
+  contents: read
+jobs:
+  listening-candidate:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run source and packaging regressions
+        run: python3 -m unittest discover -s tests -v
+      - uses: actions/cache@v4
+        with:
+          path: listening-cache
+          key: listening-assets-685e88161a2841a5f102a6f8094613ba7131e350-build9-716d2f41
+      - name: Stage pinned engine, zero-stock resources and license notices
+        run: |
+          python3 tools/listening_package.py prepare --cache listening-cache --resources listening-resources > listening-assets.json
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          for name in ('Phonon','OpenVoice','F5TTS'):
+              target=Path('VoiceMatrix/Resources')/name
+              if target.is_symlink():raise SystemExit('Unexpected resource symlink')
+              if target.exists():shutil.rmtree(target)
+              shutil.copytree(Path('listening-resources')/name,target)
+          PY
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('project.yml');text=path.read_text()
+          for old,new in [("MARKETING_VERSION: '0.3.0'", "MARKETING_VERSION: '0.3.2'"), ("CURRENT_PROJECT_VERSION: '5'", "CURRENT_PROJECT_VERSION: '10'")]:
+              if text.count(old)!=1:raise SystemExit('Unexpected project identity; review candidate version before building')
+              text=text.replace(old,new)
+          path.write_text(text)
+          PY
+      - name: Check native listening decisions and audio ownership
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/CharacterReviewStore.swift tests/native/CharacterReviewChecks.swift -o character-review-checks
+          ./character-review-checks
+          xcrun swiftc -parse-as-library VoiceMatrix/StudioActivity.swift tests/native/StudioActivityChecks.swift -o studio-activity-checks
+          ./studio-activity-checks
+      - name: Compile current app and package unsigned ARM64 candidate
+        run: |
+          brew install xcodegen
+          xcodegen generate
+          xcodebuild -resolvePackageDependencies -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -derivedDataPath listening-build
+          python3 tools/listening_package.py notices --checkouts listening-build/SourcePackages/checkouts --resolved VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved --resources VoiceMatrix/Resources > listening-dependency-notices.json
+          xcodebuild -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath listening-build CODE_SIGNING_ALLOWED=NO build > listening-build.log 2>&1 || { tail -160 listening-build.log; exit 1; }
+          mkdir Payload
+          cp -R listening-build/Build/Products/Release-iphoneos/VoiceMatrix.app Payload/
+          python3 tools/package_ipa.py Payload VoiceMatrix-0.3.2-listening-candidate.ipa
+          python3 tools/listening_package.py inspect VoiceMatrix-0.3.2-listening-candidate.ipa --dependency-proof listening-dependency-notices.json > listening-inspection.json
+          shasum -a 256 VoiceMatrix-0.3.2-listening-candidate.ipa > VoiceMatrix-0.3.2-listening-candidate.ipa.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceMatrix-no-stock-F5-listening-candidate
+          path: |
+            VoiceMatrix-0.3.2-listening-candidate.ipa
+            VoiceMatrix-0.3.2-listening-candidate.ipa.sha256
+            listening-assets.json
+            listening-inspection.json
+            listening-dependency-notices.json
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: Listening-candidate-build-log
+          path: listening-build.log
+          if-no-files-found: warn
