@@ -1,0 +1,58 @@
+name: Paired laptop test IPA
+on:
+  push:
+    paths: ['.github/workflows/paired-test-ipa.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  test-build:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore inspected offline resources
+        run: |
+          python3 - <<'PY'
+          import urllib.request,hashlib,zipfile,pathlib,shutil
+          url='https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-studio-1/VoiceMatrix-v0.3.0-experimental.ipa'
+          urllib.request.urlretrieve(url,'baseline.ipa')
+          assert hashlib.sha256(pathlib.Path('baseline.ipa').read_bytes()).hexdigest()=='9d6a48ef402d76162ef04f3f653f151d0413605e97575397cad86027fe5ad951'
+          with zipfile.ZipFile('baseline.ipa') as z:
+           assert z.testzip() is None
+           for entry in z.infolist():
+            prefix='Payload/VoiceMatrix.app/'
+            if not entry.filename.startswith(prefix):continue
+            relative=entry.filename[len(prefix):]
+            if not relative.startswith(('Phonon/','OpenVoice/')) or entry.is_dir():continue
+            target=pathlib.Path('VoiceMatrix/Resources')/relative
+            assert '..' not in target.parts
+            target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(z.read(entry))
+          p=pathlib.Path('project.yml');p.write_text(p.read_text().replace("CURRENT_PROJECT_VERSION: '5'","CURRENT_PROJECT_VERSION: '6'"))
+          PY
+          brew install xcodegen
+          xcodegen generate
+      - name: Compile and inspect complete unsigned test app
+        run: |
+          xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath paired-build CODE_SIGNING_ALLOWED=NO build > paired-build.log 2>&1 || { tail -160 paired-build.log; exit 1; }
+          mkdir Payload
+          cp -R paired-build/Build/Products/Release-iphoneos/VoiceMatrix.app Payload/
+          python3 tools/package_ipa.py Payload VoiceMatrix-Laptop-Test.ipa
+          python3 tools/inspect_ipa.py VoiceMatrix-Laptop-Test.ipa > paired-inspection.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceMatrix-Laptop-Test
+          path: |
+            VoiceMatrix-Laptop-Test.ipa
+            paired-inspection.json
+          if-no-files-found: error
+      - name: Publish inspected experimental test build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create voicematrix-v0.3.0-queue-test-6 VoiceMatrix-Laptop-Test.ipa paired-inspection.json --prerelease --target "$GITHUB_SHA" --title "VoiceMatrix laptop pairing test — build 6" --notes "Unsigned native ARM64 test app with the existing offline engine resources and new HTTPS laptop queue pairing. Archive and model integrity checked; physical iPhone pairing, new character inference and automatic generation pipeline remain unverified. Character-preview WAVs are not included as models. Existing stable release and installation feeds are unchanged."
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: Paired-test-build-log
+          path: paired-build.log
