@@ -75,7 +75,7 @@ struct VideoQueueView: View {
             Section("Step 2 · Export your list") {
                 Button("Prepare Updated List", action: exportList).disabled(videos.isEmpty)
                 if let exported { ShareLink(item: exported) { Label("Share List", systemImage: "square.and.arrow.up") } }
-                Button("Connect Laptop") { pairing = true }
+                Button("Import Pairing File (optional)") { pairing = true }
                 Button(sending ? "Sending…" : "Send List to Laptop") {
                     sending = true
                     Task { @MainActor in
@@ -86,7 +86,7 @@ struct VideoQueueView: View {
                         } catch { message = error.localizedDescription }
                     }
                 }.disabled(sending || videos.isEmpty)
-                Text("Connect using your laptop companion’s HTTPS pairing file. Sending adds requests to its queue; voice creation and review are separate steps. Offline speech does not need this connection.").font(.caption).foregroundStyle(.secondary)
+                Text("Your laptop address is included. Connect Tailscale on both devices using the same account, then tap Send List to Laptop. No JSON selection is needed. Voice creation and review are separate steps. Offline speech does not need this connection.").font(.caption).foregroundStyle(.secondary)
             }
             if !message.isEmpty { Text(message).accessibilityAddTraits(.updatesFrequently) }
         }.navigationTitle("Video List")

@@ -3,14 +3,19 @@ import hmac,json,pathlib,threading
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from tools.video_queue import VideoQueue,video_id
 
-def create_server(root,token,port=0):
+def create_server(root,token,port=0,trusted_login=None):
  if len(token)<32:raise ValueError('Use a strong pairing token')
  root=pathlib.Path(root);root.mkdir(parents=True,exist_ok=True);lock=threading.Lock()
  class Handler(BaseHTTPRequestHandler):
   def log_message(self,*args):pass # Do not log tokens or submitted names/links.
   def respond(self,code,data):
    body=json.dumps(data).encode();self.send_response(code);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
-  def authorized(self):return hmac.compare_digest(self.headers.get('Authorization',''),'Bearer '+token)
+  def authorized(self):
+   if hmac.compare_digest(self.headers.get('Authorization',''),'Bearer '+token):return True
+   # Opt-in only, on this loopback-bound server behind Tailscale Serve.
+   # Serve strips client-supplied identity headers before injecting authenticated identity.
+   login=self.headers.get('Tailscale-User-Login','')
+   return bool(trusted_login and login and hmac.compare_digest(login,trusted_login))
   def do_GET(self):
    if not self.authorized():return self.respond(401,dict(error='Pairing required'))
    if self.path!='/status':return self.respond(404,dict(error='Unknown action'))

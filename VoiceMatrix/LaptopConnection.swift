@@ -7,7 +7,11 @@ enum LaptopConnection {
     private static var query: [String: Any] {
         [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: "pairing"]
     }
-    static var paired: Bool { UserDefaults.standard.string(forKey: "laptopURL") != nil }
+    private static var bundledURL: String? {
+        guard let file = Bundle.main.url(forResource: "LaptopSettings", withExtension: "json"), let data = try? Data(contentsOf: file), let settings = try? JSONDecoder().decode([String: String].self, from: data) else { return nil }
+        return settings["url"]
+    }
+    static var paired: Bool { (UserDefaults.standard.string(forKey: "laptopURL") ?? bundledURL) != nil }
     static func pair(from file: URL) throws {
         let access = file.startAccessingSecurityScopedResource()
         defer { if access { file.stopAccessingSecurityScopedResource() } }
@@ -29,13 +33,13 @@ enum LaptopConnection {
         UserDefaults.standard.set(url.absoluteString, forKey: "laptopURL")
     }
     static func send(_ videos: Data) async throws -> String {
-        guard let address = UserDefaults.standard.string(forKey: "laptopURL"), let root = URL(string: address), root.scheme == "https" else {
+        guard let address = UserDefaults.standard.string(forKey: "laptopURL") ?? bundledURL, let root = URL(string: address), root.scheme == "https" else {
             throw failure("Connect your laptop using its pairing file first.")
         }
         var lookup = query; lookup[kSecReturnData as String] = true; lookup[kSecMatchLimit as String] = kSecMatchLimitOne
         var stored: CFTypeRef?
-        guard SecItemCopyMatching(lookup as CFDictionary, &stored) == errSecSuccess,
-              let data = stored as? Data, let token = String(data: data, encoding: .utf8) else { throw failure("Reconnect your laptop to restore pairing.") }
+        let found = SecItemCopyMatching(lookup as CFDictionary, &stored)
+        let token = found == errSecSuccess ? (stored as? Data).flatMap { String(data: $0, encoding: .utf8) } : nil
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 20
         let session = URLSession(configuration: configuration, delegate: RejectRedirects(), delegateQueue: nil)
@@ -43,11 +47,11 @@ enum LaptopConnection {
         var request = URLRequest(url: root.appendingPathComponent("queue"))
         request.httpMethod = "POST"; request.httpBody = videos
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization")
+        if let token { request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization") }
         let (_, response) = try await session.data(for: request)
         guard let response = response as? HTTPURLResponse else { throw failure("Your laptop returned an unreadable response.") }
         guard response.statusCode == 200 else {
-            throw failure(response.statusCode == 401 ? "Pairing expired. Reconnect your laptop." : "Your laptop could not accept the list. Your saved list is unchanged.")
+            throw failure(response.statusCode == 401 ? "Connect Tailscale using the same account as your laptop, or import its pairing file." : "Your laptop could not accept the list. Your saved list is unchanged.")
         }
         return "Your laptop accepted the list. This does not mean voice processing is finished."
     }
