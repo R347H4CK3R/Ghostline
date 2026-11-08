@@ -1,0 +1,52 @@
+name: Publish LiveContainer test source
+on:
+  push:
+    paths: ['.github/workflows/livecontainer-test-source.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for inspected test IPA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run watch 42435066247 --repo "$GITHUB_REPOSITORY" --exit-status
+      - name: Download published asset and repeat integrity checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view voicematrix-v0.3.0-queue-test-6 --json assets,targetCommitish > test-release.json
+          gh release download voicematrix-v0.3.0-queue-test-6 --pattern VoiceMatrix-Laptop-Test.ipa --dir test-ipa
+          python3 tools/inspect_ipa.py test-ipa/VoiceMatrix-Laptop-Test.ipa
+      - name: Generate exact LiveContainer source
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,plistlib,zipfile,hashlib
+          release=json.loads(pathlib.Path('test-release.json').read_text())
+          assert release['targetCommitish']=='f5b53a6f90179adbaf60adfd96660a7670867717'
+          ipa=pathlib.Path('test-ipa/VoiceMatrix-Laptop-Test.ipa')
+          asset=next(a for a in release['assets'] if a['name']==ipa.name)
+          assert asset['size']==ipa.stat().st_size
+          with zipfile.ZipFile(ipa) as z:
+           info=plistlib.loads(z.read('Payload/VoiceMatrix.app/Info.plist'))
+           assert info['CFBundleVersion']=='6'
+          feed=json.loads(pathlib.Path('source.json').read_text())
+          feed.update(name='VoiceMatrix — LiveContainer Test Builds',identifier='com.voicematrix.test-source',sourceURL='https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/livecontainer-test.json')
+          app=feed['apps'][0]
+          app.update(name='VoiceMatrix — Laptop Pairing Test',localizedDescription='Experimental laptop queue pairing with the existing offline speech runtime. Automatic character generation, new character model inference and physical iPhone pairing are not yet verified.')
+          app['versions'].insert(0,dict(version='0.3.0',buildVersion='6',date='2026-11-08',downloadURL=asset['url'],localizedDescription='Laptop HTTPS pairing and video-list submission test. Offline runtime resources included. Not a completed character model workflow.',minOSVersion='26.0',size=ipa.stat().st_size))
+          pathlib.Path('livecontainer-test.json').write_text(json.dumps(feed,indent=2)+'\n')
+          pathlib.Path('docs/qa/queue-test-ipa-integrity.json').write_text(json.dumps(dict(version='0.3.0',build='6',bytes=ipa.stat().st_size,sha256=hashlib.sha256(ipa.read_bytes()).hexdigest(),downloadURL=asset['url'],deviceVerified=False),indent=2)+'\n')
+          PY
+      - name: Publish test source without replacing stable source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add livecontainer-test.json docs/qa/queue-test-ipa-integrity.json
+          git commit -m "Publish inspected laptop pairing LiveContainer test source"
+          git push origin HEAD:main
