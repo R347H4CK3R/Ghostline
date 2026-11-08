@@ -16,13 +16,13 @@ def checked_wav(path,expected,rate):
   pcm=array.array('h',f.readframes(f.getnframes()))
  assert pcm and math.sqrt(sum(x*x for x in pcm)/len(pcm))/32768>.0001 and not any(abs(x)>=32767 for x in pcm),'Silent or clipped WAV'
 
-def verify(ipa_root,speech_root,conversion_root,expected):
+def verify(ipa_root,speech_root,conversion_root,expected,expected_version='0.4.1'):
  ipa_root,speech_root,conversion_root=map(pathlib.Path,(ipa_root,speech_root,conversion_root))
  proofs=[checked_source(json.loads((p/'source-proof.json').read_text()),expected) for p in (ipa_root,speech_root,conversion_root)]
  assert proofs[0]==proofs[1]==proofs[2],'Native tests and packaged app differ'
- ipa=ipa_root/'VoiceMatrix-0.4.1-character-test.ipa'
+ ipa=ipa_root/f'VoiceMatrix-{expected_version}-character-test.ipa'
  dependency=json.loads((ipa_root/'dependency-notices.json').read_text())['proof']
- inspection=inspect_ipa(ipa,dependency_proof=dependency)
+ inspection=inspect_ipa(ipa,dependency_proof=dependency,expected_version=expected_version)
  with zipfile.ZipFile(ipa) as z:
   assert json.loads(z.read(PREFIX+'VoiceMatrix-Source-Proof.json'))==proofs[0]
   assert hashlib.sha256(z.read(PREFIX+'F5TTS/DependencyNotices/Package.resolved')).hexdigest()==proofs[0]['dependencyResolvedSHA256']
@@ -49,5 +49,5 @@ def verify(ipa_root,speech_root,conversion_root,expected):
  checked_wav(conversion_root/'conversion-evidence/reference-conditioned-conversion.wav',conversion['outputSHA256'],22050)
  return dict(sourceCommit=expected,inferenceSourceFingerprint=proofs[0]['inferenceSourceFingerprint'],dependencyResolvedSHA256=proofs[0]['dependencyResolvedSHA256'],ipaSHA256=digest(ipa),ipaBytes=ipa.stat().st_size,inspection=inspection,nativeDiagnosticSpeechPassed=True,nativeSimulatorConversionPassed=True,physicalIPhoneVerified=False,characterLikenessVerified=False,bundledCharacterProfiles=0,scope='Synthetic diagnostic checks only; imported characters still require individual device and likeness review.')
 if __name__=='__main__':
- p=argparse.ArgumentParser();p.add_argument('ipa_root');p.add_argument('speech_root');p.add_argument('conversion_root');p.add_argument('source_commit');p.add_argument('output');a=p.parse_args()
- pathlib.Path(a.output).write_text(json.dumps(verify(a.ipa_root,a.speech_root,a.conversion_root,a.source_commit),indent=2)+'\n')
+ p=argparse.ArgumentParser();p.add_argument('ipa_root');p.add_argument('speech_root');p.add_argument('conversion_root');p.add_argument('source_commit');p.add_argument('output');p.add_argument('--expected-version',default='0.4.1');a=p.parse_args()
+ pathlib.Path(a.output).write_text(json.dumps(verify(a.ipa_root,a.speech_root,a.conversion_root,a.source_commit,a.expected_version),indent=2)+'\n')
