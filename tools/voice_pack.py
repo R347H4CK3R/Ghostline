@@ -1,5 +1,5 @@
 """Portable F5 reference packs. These are conditioning assets, not RVC weights."""
-import array,hashlib,io,json,os,pathlib,re,sys,tempfile,wave,zipfile
+import array,hashlib,io,json,os,pathlib,re,shutil,sys,tempfile,wave,zipfile
 
 MAX_AUDIO_BYTES=24_000*2*15+128_000
 
@@ -60,3 +60,33 @@ def validate_pack(path):
  if m.get('referenceBytes')!=len(data) or m.get('referenceSHA256')!=hashlib.sha256(data).hexdigest():raise ValueError('Reference checksum mismatch')
  if m.get('seconds')!=_audio(data):raise ValueError('Reference duration mismatch')
  return m
+
+def export_collection_folder(packs,destination):
+ """Publish a new importable collection; existing revision folders stay untouched."""
+ destination=pathlib.Path(destination)
+ destination.parent.mkdir(parents=True,exist_ok=True)
+ stage=pathlib.Path(tempfile.mkdtemp(prefix='.voices-',dir=destination.parent))
+ try:
+  entries=[];identifiers=set();references=set()
+  for pack in packs:
+   m=validate_pack(pack);identifier=m['id']
+   if identifier in identifiers:raise ValueError('Repeated voice ID: '+identifier)
+   if m['referenceSHA256'] in references:raise ValueError('Repeated reference audio under another voice name')
+   identifiers.add(identifier)
+   references.add(m['referenceSHA256'])
+   with zipfile.ZipFile(pack) as z:data=z.read('reference.wav')
+   if hashlib.sha256(data).hexdigest()!=m['referenceSHA256'] or len(data)!=m['referenceBytes']:
+    raise ValueError('Reference changed while exporting')
+   _audio(data)
+   folder=stage/identifier;folder.mkdir()
+   (folder/'manifest.json').write_text(json.dumps(m,indent=2)+'\n',encoding='utf-8')
+   (folder/'reference.wav').write_bytes(data)
+   entries.append(dict(id=identifier,folder=identifier))
+  if not entries:raise ValueError('Choose at least one reusable reference pack')
+  if len(entries)>1000:raise ValueError('At most 1,000 profiles per collection')
+  (stage/'collection.json').write_text(json.dumps(dict(schemaVersion=1,voices=entries),indent=2)+'\n',encoding='utf-8')
+  if destination.exists():raise FileExistsError('Export to a new revision folder; existing files are preserved')
+  os.rename(stage,destination)
+  return destination
+ finally:
+  if stage.exists():shutil.rmtree(stage)

@@ -1,6 +1,6 @@
 """Desktop companion entry point. Run python -m tools.voice_studio --help."""
 import argparse,json,pathlib
-from tools.voice_pack import export_reference_pack,validate_pack
+from tools.voice_pack import export_reference_pack,validate_pack,export_collection_folder
 from tools.pack_speech import speak
 from tools.local_f5 import load_local_model
 
@@ -10,6 +10,8 @@ def main(argv=None):
  create=commands.add_parser('create',help='Save an authorized reference as a reusable voice pack')
  create.add_argument('--audio',required=True);create.add_argument('--metadata',required=True);create.add_argument('--output',required=True)
  inspect=commands.add_parser('inspect',help='Validate pack integrity and show voice details');inspect.add_argument('pack')
+ collection=commands.add_parser('export-folder',help='Export packs as a separate importable Voices collection folder')
+ collection.add_argument('--output',required=True);collection.add_argument('packs',nargs='+')
  audit=commands.add_parser('audit-training',help='Check whether clean recordings provide enough unique audio');audit.add_argument('dataset')
  training=commands.add_parser('train-rvc',help='Run the pinned local RVC training stages; outputs require independent conversion checks')
  for flag in ['root','dataset','experiment','permission']:training.add_argument('--'+flag,required=True)
@@ -22,6 +24,7 @@ def main(argv=None):
    path=export_reference_pack(args.audio,json.loads(pathlib.Path(args.metadata).read_text()),args.output)
    print(json.dumps(dict(file=str(path),profile=validate_pack(path)),indent=2))
   elif args.command=='inspect':print(json.dumps(validate_pack(args.pack),indent=2))
+  elif args.command=='export-folder':print(json.dumps(dict(folder=str(export_collection_folder(args.packs,args.output))),indent=2))
   elif args.command=='audit-training':
    from tools.rvc_training import audit_dataset
    print(json.dumps(audit_dataset(args.dataset),indent=2))

@@ -1,0 +1,30 @@
+name: Native character folder checks
+on:
+  push:
+    paths: ['VoiceMatrix/CharacterFolderStore.swift', 'VoiceMatrix/CharacterLibraryView.swift', 'tests/native/CharacterFolderChecks.swift', 'tests/test_character_folder.py', 'tools/voice_pack.py', '.github/workflows/native-character-folder.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  import-checks:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run collection export and source regression tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Prepare synthetic reference collection
+        run: |
+          python3 - <<'PY'
+          import pathlib,wave
+          from tools.voice_pack import export_reference_pack,export_collection_folder
+          root=pathlib.Path('folder-check-fixture');root.mkdir()
+          with wave.open(str(root/'original.wav'),'wb') as w:
+            w.setparams((1,2,24000,0,'NONE','not compressed'));w.writeframes(b'\x00\x10'*24000)
+          m=dict(id='original-test',name='Original Test',categories=['Animation','Fantasy'],source='Synthetic test fixture',permission='Original synthetic fixture',referenceText='A test reference.')
+          pack=export_reference_pack(root/'original.wav',m,root/'test.vmpack')
+          export_collection_folder([pack],root/'Voices')
+          PY
+      - name: Compile and execute native private-import checks
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/CharacterFolderStore.swift tests/native/CharacterFolderChecks.swift -o character-folder-checks
+          ./character-folder-checks folder-check-fixture/Voices

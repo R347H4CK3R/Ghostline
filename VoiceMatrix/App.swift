@@ -46,6 +46,7 @@ struct HomeView: View {
                 NavigationLink { SpeechView() } label: { HomeCard(title: "MAKE SPEECH", detail: "Type words. Choose a voice. Hear them speak.", icon: "text.bubble.fill") }.accessibilityIdentifier("make-speech")
                 NavigationLink { RecordingView() } label: { HomeCard(title: "CHANGE MY VOICE", detail: "Record. Choose a voice. Hear your changed voice.", icon: "mic.fill") }.accessibilityIdentifier("change-my-voice")
                 NavigationLink { VideoQueueView() } label: { HomeCard(title: "VIDEO LIST", detail: "Add videos and export your character requests.", icon: "list.bullet.rectangle") }
+                NavigationLink { CharacterLibraryView() } label: { HomeCard(title: "MY CHARACTER FOLDER", detail: "Import and refresh your separate character collection.", icon: "folder.badge.plus") }
                 Text("Your character library\nYour approved Rick and Morty previews are saved separately. Reusable iPhone character voices are still being prepared. The optional speaker library is not your character collection.").font(.footnote).foregroundStyle(.secondary)
             }.padding(24)
         }.background(Color(red: 0.045, green: 0.025, blue: 0.09)).navigationTitle("VoiceMatrix")
