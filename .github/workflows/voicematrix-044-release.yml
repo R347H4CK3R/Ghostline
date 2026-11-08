@@ -308,3 +308,5 @@ jobs:
         name: VoiceMatrix-0.4.4-publication-report
         path: release-evidence/publication-report.json
         if-no-files-found: warn
+
+# Publication waits for the corrected, duration-bounded UI workflow before release.

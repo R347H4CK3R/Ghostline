@@ -1,5 +1,5 @@
 """Publish only the 0.4.4 IPA whose native gates and playback source have passed."""
-import base64, datetime, hashlib, json, os, pathlib, shutil, subprocess
+import base64, datetime, hashlib, json, os, pathlib, shutil, subprocess, time
 from tools.verify_character_kit import verify
 from tools.character_package import inspect_ipa
 from tools.character_evidence import digest
@@ -8,7 +8,7 @@ REPO = "R347H4CK3R/Ghostline"
 VERSION = "0.4.4"
 TAG = "voicematrix-v0.4.4"
 IPA = "VoiceMatrix-0.4.4.ipa"
-TESTED = "440cbfbe59dbc2eedb3cd5520c30c2f75817dabe"
+TESTED = "a61198821034bdc27a2b8946b005406a11fe71bb"
 ROOT = pathlib.Path("release-evidence")
 NOTES = """VoiceMatrix 0.4.4
 
@@ -36,9 +36,19 @@ def main():
     assert os.environ["GITHUB_REPOSITORY"] == REPO
     # The publication job depends on actual speech/conversion/package jobs.
     # Also bind the already-passed playback/updater tests to every shipped app source.
-    for run_id in (42515876335, 42515876308):
-        run = api(f"repos/{REPO}/actions/runs/{run_id}")
-        assert run["head_sha"] == TESTED and run["conclusion"] == "success"
+    for run_id, tested_sha in (
+        (42515876335, "440cbfbe59dbc2eedb3cd5520c30c2f75817dabe"),
+        (42517190096, TESTED),
+    ):
+        deadline = time.monotonic() + 1200
+        while True:
+            run = api(f"repos/{REPO}/actions/runs/{run_id}")
+            assert run["head_sha"] == tested_sha
+            if run["status"] == "completed":
+                assert run["conclusion"] == "success", f"Required check failed: {run_id}"
+                break
+            assert time.monotonic() < deadline, f"Required check still pending: {run_id}"
+            time.sleep(20)
     subprocess.run(["git", "fetch", "--depth=1", "origin", TESTED], check=True)
     report = verify(ROOT / "ipa", ROOT / "speech", ROOT / "conversion", source, VERSION)
     proof = json.loads((ROOT / "ipa/source-proof.json").read_text())
