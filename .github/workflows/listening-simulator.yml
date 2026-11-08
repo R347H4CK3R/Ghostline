@@ -44,7 +44,7 @@ jobs:
         run: |
           xcodebuild test -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath simulator-build -resultBundlePath listening-ui.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixTests/CharacterImportReviewTests -only-testing:VoiceMatrixTests/AudioOwnershipTests -only-testing:VoiceMatrixTests/AudioTests/testStockFreeCatalogRetainsValidEngineAssets -only-testing:VoiceMatrixUITests/NavigationTests > simulator-ui.log 2>&1 || { tail -160 simulator-ui.log; exit 1; }
       - name: Exercise actual offline F5 audio separately from UI coverage
-        if: success()
+        if: ${{ !cancelled() }}
         run: |
           xcodebuild test -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath simulator-build -resultBundlePath listening-audio.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixTests/F5SimulatorTests > simulator-audio.log 2>&1 || { tail -160 simulator-audio.log; exit 1; }
       - uses: actions/upload-artifact@v4

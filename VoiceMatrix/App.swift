@@ -19,7 +19,10 @@ struct RootView: View {
     var body: some View {
         TabView {
             NavigationStack { HomeView() }.tabItem { Label("Home", systemImage: "house.fill") }
-            NavigationStack { VoicesView() }.tabItem { Label("Voices", systemImage: "waveform") }
+            NavigationStack {
+                if studio.voices.isEmpty { CharacterLibraryView() }
+                else { VoicesView() }
+            }.tabItem { Label("Voices", systemImage: "waveform") }
             NavigationStack { SavedView() }.tabItem { Label("Saved", systemImage: "folder.fill") }
             NavigationStack { HelpView() }.tabItem { Label("Help", systemImage: "questionmark.circle") }
             NavigationStack { SettingsView() }.tabItem { Label("Settings", systemImage: "gearshape") }

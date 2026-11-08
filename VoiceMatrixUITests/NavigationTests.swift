@@ -14,14 +14,17 @@ import XCTest
             XCTAssertTrue(app.tabBars.buttons[tab].exists); app.tabBars.buttons[tab].tap()
         }
     }
-    func testStockLibraryIsEmptyAndSearchCannotRestoreRemovedVoices() {
+    func testVoicesTabOpensCharactersAndPickerCancellationKeepsScreenUsable() {
         let app = launch(); app.tabBars.buttons["Voices"].tap()
-        let notice = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Stock voices removed.")).firstMatch
-        XCTAssertTrue(notice.waitForExistence(timeout: 10))
-        let search = app.searchFields.firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 10)); search.tap(); search.typeText("horror")
-        XCTAssertTrue(notice.exists)
-        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "voice-")).count, 0)
+        let choose = app.buttons["import-character-folder"]
+        XCTAssertTrue(choose.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.navigationBars["My Character Folder"].exists)
+        XCTAssertTrue(app.otherElements["character-import-guide"].exists || app.staticTexts["Add your characters"].exists)
+        choose.tap()
+        let cancel = app.buttons["Cancel"].firstMatch
+        XCTAssertTrue(cancel.waitForExistence(timeout: 10)); cancel.tap()
+        XCTAssertTrue(choose.waitForExistence(timeout: 10)); XCTAssertTrue(choose.isEnabled)
+        let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = "Empty character library with import steps"; shot.lifetime = .keepAlways; add(shot)
     }
     func testMakeSpeechOpensCharacterFolderWithoutStockFallback() {
         let app = launch()

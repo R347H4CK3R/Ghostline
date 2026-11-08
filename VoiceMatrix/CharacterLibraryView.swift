@@ -167,7 +167,13 @@ struct CharacterLibraryView: View {
             }
             Section("\(library.profiles.count) imported references") {
                 Picker("Category", selection: $category) { ForEach(categories, id: \.self) { Text($0).tag($0) } }
-                if library.profiles.isEmpty { Text("Your collection appears here after import. Choose the folder containing collection.json; you do not need to select the JSON file.").foregroundStyle(.secondary) }
+                if library.profiles.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Label("Add your characters", systemImage: "person.crop.rectangle.stack.fill").font(.headline)
+                        Text("1. Save your character ZIP in Files.\n2. Tap the ZIP to extract it.\n3. Tap Choose Voices Folder above and select Voices.")
+                        Text("Choose the folder containing collection.json, not the ZIP or JSON file. To refresh from your laptop, keep this folder in iCloud Drive and select it here. Imported voices remain available offline.").font(.caption).foregroundStyle(.secondary)
+                    }.padding(.vertical, 8).accessibilityIdentifier("character-import-guide")
+                }
                 ForEach(filtered) { voice in
                     DisclosureGroup {
                         Button { library.selectedID = voice.id } label: { Label(library.selectedID == voice.id ? "Selected" : "Choose this voice", systemImage: library.selectedID == voice.id ? "checkmark.circle.fill" : "circle") }.disabled(library.busy)
