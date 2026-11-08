@@ -70,6 +70,8 @@ actor F5ReferenceEngine {
         var samples: [Float] = []
         for (index, chunk) in chunks.enumerated() {
             try Task.checkCancellation()
+            let tokens = try engine.tokenizer.encode(F5SpeechChunks.normalizedReference(referenceText) + chunk)
+            try F5SpeechChunks.validateTokenCount(tokens.count)
             progress(index + 1, chunks.count)
             let clip = try await engine.generate(text: chunk, referenceAudio: referenceAudio, referenceText: referenceText, options: options)
             try Task.checkCancellation()

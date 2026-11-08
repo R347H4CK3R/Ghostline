@@ -14,11 +14,15 @@ enum F5ChunkError: LocalizedError {
 // Matches the upstream F5 duration formula and its Python22second batch budget.
 // Dynamic programming keeps complete words, including short-text speed behavior.
 enum F5SpeechChunks {
-    private static func normalizedReference(_ text: String) -> String {
+    static func normalizedReference(_ text: String) -> String {
         var result = text
         if !result.hasSuffix(". "), !result.hasSuffix("。") { result += result.hasSuffix(".") ? " " : ". " }
         if result.last?.utf8.count == 1 { result += " " }
         return result
+    }
+    static func validateTokenCount(_ count: Int) throws {
+        // The native sampler also takes max(duration, tokenIds.count + 1).
+        guard count > 0, count <= 2061 else { throw F5ChunkError.wordTooLong }
     }
     static func estimatedSeconds(text: String, referenceText: String, referenceSeconds: Double) -> Double {
         let referenceFrames = Int(referenceSeconds * 24000) / 256
