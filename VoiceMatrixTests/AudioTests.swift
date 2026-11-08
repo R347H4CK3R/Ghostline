@@ -11,16 +11,17 @@ final class AudioTests: XCTestCase {
         XCTAssertEqual(value.count, 64)
         return value
     }
-    func testBundledProfilesHaveUniqueIDsAndAssets() throws {
+    func testStockFreeCatalogHasNoProfilesAndRetainsValidEngineAssets() throws {
         let (root, manifest) = try Catalog.read()
-        XCTAssertEqual(manifest.voices.count, 538)
-        XCTAssertEqual(Set(manifest.voices.map(\.id)).count, 538)
-        XCTAssertEqual(Set(manifest.voices.map(\.sha256)).count, 538)
+        XCTAssertEqual(manifest.voices.count, 0)
+        XCTAssertEqual(Set(manifest.voices.map(\.id)).count, 0)
+        XCTAssertEqual(Set(manifest.voices.map(\.sha256)).count, 0)
         try Catalog.validate(root: root, manifest: manifest)
     }
     func testAllBundledNeuralVoicesGenerateDecodableNonSilentWAV() async throws {
         executionTimeAllowance = 1500
         let (root, manifest) = try Catalog.read()
+        try XCTSkipIf(manifest.voices.isEmpty, "No bundled voices remain to synthesize or convert.")
         let engine = NeuralSpeech(computeUnits: .cpuOnly)
         let memory = SampledMemoryPeak()
         let monitoring = Task {
@@ -84,6 +85,7 @@ final class AudioTests: XCTestCase {
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let source = folder.appendingPathComponent("controlled-recording.wav")
         let text = "Please bring three blue notebooks to the quiet room before lunch."
+        try XCTSkipIf(manifest.voices.isEmpty, "No bundled voices remain to synthesize or convert.")
         let base = try XCTUnwrap(manifest.voices.first { $0.id == "en_us_Micah" })
         let engine = NeuralSpeech(computeUnits: .cpuOnly)
         _ = try await engine.generate(text: text, voice: base, root: root, manifest: manifest, output: source)

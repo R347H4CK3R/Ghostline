@@ -28,8 +28,8 @@ struct RootView: View {
             VStack(spacing: 26) {
                 Image(systemName: "waveform.circle.fill").font(.system(size: 80)).foregroundStyle(.purple)
                 Text("Welcome to VoiceMatrix").font(.largeTitle.bold())
-                Text("1. Choose a voice\n2. Type a message\n3. Tap Speak\n4. Listen or Save").font(.title2).lineSpacing(12)
-                Text("Your words and recordings stay on your iPhone. Included profiles are experimental; sound quality still needs listening tests.").foregroundStyle(.secondary)
+                Text("Stock voices removed.\nImport your character folder.\nRecord and listen to your audio.").font(.title2).lineSpacing(12)
+                Text("Your recordings and imported character references stay on your iPhone. Character speech still needs a compatible native engine.").foregroundStyle(.secondary)
                 Button("LET’S START") { tutorialSeen = true }.buttonStyle(.borderedProminent).controlSize(.large)
             }.padding(28).presentationDetents([.large])
         }
@@ -47,7 +47,7 @@ struct HomeView: View {
                 NavigationLink { RecordingView() } label: { HomeCard(title: "CHANGE MY VOICE", detail: "Record. Choose a voice. Hear your changed voice.", icon: "mic.fill") }.accessibilityIdentifier("change-my-voice")
                 NavigationLink { VideoQueueView() } label: { HomeCard(title: "VIDEO LIST", detail: "Add videos and export your character requests.", icon: "list.bullet.rectangle") }
                 NavigationLink { CharacterLibraryView() } label: { HomeCard(title: "MY CHARACTER FOLDER", detail: "Import and refresh your separate character collection.", icon: "folder.badge.plus") }
-                Text("Your character library\nYour approved Rick and Morty previews are saved separately. Reusable iPhone character voices are still being prepared. The optional speaker library is not your character collection.").font(.footnote).foregroundStyle(.secondary)
+                Text("Your character library\nYour approved Rick and Morty previews are saved separately. Reusable iPhone character voices are still being prepared. The stock speaker library has been removed; your imported character collection is preserved.").font(.footnote).foregroundStyle(.secondary)
             }.padding(24)
         }.background(Color(red: 0.045, green: 0.025, blue: 0.09)).navigationTitle("VoiceMatrix")
     }
@@ -136,7 +136,7 @@ struct VoicesView: View {
                 }
                 Text("Replicas require a named target and authorization records. Original character styles and other speakers are separate. Character resemblance still requires listening comparisons.").font(.caption).foregroundStyle(.secondary)
             }
-            if filtered.isEmpty { Text(library == "Replicas" ? "Your character voices are not ready to use on this iPhone yet. The Rick and Morty samples you approved are preserved as previews. Adding a video request does not install a reusable voice." : "No matching voices. Try another search or filter.").foregroundStyle(.secondary) }
+            if filtered.isEmpty { Text(studio.voices.isEmpty ? "Stock voices removed. Your recordings and imported character references are preserved. Open My Character Folder from Home to view your collection; native character speech is not ready yet." : library == "Replicas" ? "Your character voices are not ready to use on this iPhone yet. The Rick and Morty samples you approved are preserved as previews. Adding a video request does not install a reusable voice." : "No matching voices. Try another search or filter.").foregroundStyle(.secondary) }
             ForEach(filtered) { voice in
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
@@ -189,10 +189,10 @@ struct SavedView: View {
 struct HelpView: View {
     var body: some View {
         Form {
-            Section("Make speech") { Text("Choose Make Speech, select a voice, type your message, then tap Speak. Raise your iPhone volume if you cannot hear it. Tap Save to keep the WAV in Saved Recordings.") }
+            Section("Make speech") { Text("The stock speech library has been removed. My Character Folder preserves your imported references, but native character speech still needs the compatible engine.") }
             Section("Recording") { Text("Allow microphone access when asked. If it was denied, open iPhone Settings and enable the microphone for VoiceMatrix or your LiveContainer / Strata host. Recordings remain private unless you tap Share.") }
             Section("Voice changing") { Text("Record or import up to 10 seconds of clear speech, choose a voice, and tap Convert. This uses the included offline voice-changing model. Your words and timing are preserved as closely as the model permits; this is not live voice changing.") }
-            Section("Troubleshooting") { Text("If a voice cannot start, try another voice. If the included files are missing or damaged, reinstall the complete build. No model downloads happen inside this app. Reports in Settings exclude your messages and recordings.") }
+            Section("Troubleshooting") { Text("The empty stock voice library is intentional; reinstalling will not restore stock profiles. No model downloads happen inside this app. Reports in Settings exclude your messages and recordings.") }
         }.navigationTitle("Help")
     }
 }
@@ -204,11 +204,11 @@ struct SettingsView: View {
         Form {
             Section("VoiceMatrix \(DeviceVoiceChecks.appVersion) · Experimental") {
                 Text("\(studio.voices.count) bundled English profiles\n\(studio.automatedChecks) automated speech checks passed (simulator)\n\(studio.onDeviceSpeechChecks) speech checks completed on this iPhone\n0 authorized recognizable likenesses\nQuality listening tests pending")
-                Text("All speech and voice-changing files are included. No account or model download is needed.")
+                Text("Stock voice profiles are removed. Engine model files remain, but speech requires a usable profile. Imported character references are managed separately.")
                 Text("Profile storage: \(ByteCountFormatter.string(fromByteCount: Int64(studio.voices.reduce(0) { $0 + $1.size }), countStyle: .file))")
             }
             Section("Check included voices") {
-                Button("CHECK ALL VOICES") { studio.checkIncludedVoices(audio: audio) }.disabled(studio.busy || studio.recordingInProgress)
+                Button("CHECK ALL VOICES") { studio.checkIncludedVoices(audio: audio) }.disabled(studio.busy || studio.recordingInProgress || studio.voices.isEmpty)
                 if studio.checkingVoices {
                     ProgressView(value: studio.checkProgress)
                     Button("Stop Checks") { studio.cancel() }

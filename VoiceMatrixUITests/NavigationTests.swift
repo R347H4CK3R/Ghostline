@@ -14,24 +14,23 @@ import XCTest
             XCTAssertTrue(app.tabBars.buttons[tab].exists); app.tabBars.buttons[tab].tap()
         }
     }
-    func testGenreSearchAndSelectionAccessibility() {
+    func testStockLibraryIsEmptyAndSearchCannotRestoreRemovedVoices() {
         let app = launch(); app.tabBars.buttons["Voices"].tap()
+        let notice = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Stock voices removed.")).firstMatch
+        XCTAssertTrue(notice.waitForExistence(timeout: 10))
         let search = app.searchFields.firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 10)); search.tap(); search.typeText("horror")
-        let voice = app.buttons["voice-characters_Azgorath"]
-        XCTAssertTrue(voice.waitForExistence(timeout: 10)); voice.tap()
-        XCTAssertEqual(voice.value as? String, "Selected")
+        XCTAssertTrue(notice.exists)
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "voice-")).count, 0)
     }
-    func testMakeSpeechProducesSaveableAudioInBeginnerFlow() {
+    func testMakeSpeechIsDisabledWithoutAUsableProfile() {
         let app = launch()
         let make = app.buttons["make-speech"]
         XCTAssertTrue(make.waitForExistence(timeout: 20)); make.tap()
         let speak = app.buttons["SPEAK"]
-        XCTAssertTrue(speak.waitForExistence(timeout: 10)); speak.tap()
-        let save = app.buttons["save-recording"]
-        XCTAssertTrue(save.waitForExistence(timeout: 90)); XCTAssertTrue(save.isEnabled); save.tap()
-        XCTAssertEqual(save.label, "Saved"); XCTAssertFalse(save.isEnabled)
-        app.tabBars.buttons["Saved"].tap()
-        XCTAssertFalse(app.staticTexts["No recordings yet"].exists)
+        XCTAssertTrue(speak.waitForExistence(timeout: 10)); XCTAssertFalse(speak.isEnabled)
+        XCTAssertFalse(app.buttons["save-recording"].exists)
+        app.tabBars.buttons["Home"].tap()
+        XCTAssertTrue(app.staticTexts["MY CHARACTER FOLDER"].exists)
     }
 }

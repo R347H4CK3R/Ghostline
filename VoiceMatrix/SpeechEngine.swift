@@ -153,6 +153,7 @@ actor NeuralSpeech {
                 return a.name < b.name
             }
             selectedID = voices.first?.id ?? ""
+            if voices.isEmpty { status = "Stock voices removed. No usable voices are available in this build yet." }
             let local = DeviceVoiceChecks.load(manifest: loaded.1)
             onDeviceSpeechChecks = local.physicalDevice ? local.checkedProfiles.count : 0
             let proofURL = loaded.0.appendingPathComponent("voice-synthesis-results.json")

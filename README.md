@@ -1,5 +1,9 @@
 # VoiceMatrix
 
+## Stock-free update: 0.3.1 build 9
+
+Built from main fe62a07, preserving automatic laptop pairing, queue submission, and private character-folder import. Packaging removes all 537 bundled stock profiles and 100 converter profiles, retaining engine models. Imported references and recordings remain untouched. Native character speech integration is preserved, but its F5 model bundle is still pending. Earlier release details below are historical.
+
 ## Character-replica objective — source development
 
 The current IPA contains 12 original character performances and 525 other speakers, with **0 verified recognizable character replicas**. Its 537-profile count is a functional speech-library milestone, not completion of the 500-character-replica objective. Character resemblance, naturalness and perceptual distinctness still need reference-based listening tests.

@@ -1,4 +1,4 @@
-name: Paired laptop test IPA
+name: Stock-free VoiceMatrix update
 on:
   push:
     paths: ['.github/workflows/paired-test-ipa.yml']
@@ -28,29 +28,50 @@ jobs:
             target=pathlib.Path('VoiceMatrix/Resources')/relative
             assert '..' not in target.parts
             target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(z.read(entry))
-          p=pathlib.Path('project.yml');p.write_text(p.read_text().replace("CURRENT_PROJECT_VERSION: '5'","CURRENT_PROJECT_VERSION: '8'"))
           PY
+          python3 tools/remove_stock_library.py VoiceMatrix/Resources > removed-stock-profiles.json
+          python3 -m unittest discover -s tests -v
           brew install xcodegen
           xcodegen generate
+      - name: Prepare synthetic reference collection
+        run: |
+          python3 - <<'PY'
+          import pathlib,wave
+          from tools.voice_pack import export_reference_pack,export_collection_folder
+          root=pathlib.Path('folder-check-fixture');root.mkdir()
+          with wave.open(str(root/'original.wav'),'wb') as w:
+            w.setparams((1,2,24000,0,'NONE','not compressed'));w.writeframes(b'\x00\x10'*24000)
+          m=dict(id='original-test',name='Original Test',categories=['Animation','Fantasy'],source='Synthetic test fixture',permission='Original synthetic fixture',referenceText='A test reference.')
+          pack=export_reference_pack(root/'original.wav',m,root/'test.vmpack')
+          export_collection_folder([pack],root/'Voices')
+          PY
+      - name: Compile and execute native private-import checks
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/CharacterFolderStore.swift tests/native/CharacterFolderChecks.swift -o character-folder-checks
+          ./character-folder-checks folder-check-fixture/Voices
+      - name: Check shared recording and character-speech ownership
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/StudioActivity.swift tests/native/StudioActivityChecks.swift -o studio-activity-checks
+          ./studio-activity-checks
       - name: Compile and inspect complete unsigned test app
         run: |
-          xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath paired-build CODE_SIGNING_ALLOWED=NO build > paired-build.log 2>&1 || { tail -160 paired-build.log; exit 1; }
+          xcodebuild -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath paired-build CODE_SIGNING_ALLOWED=NO build > paired-build.log 2>&1 || { tail -160 paired-build.log; exit 1; }
           mkdir Payload
           cp -R paired-build/Build/Products/Release-iphoneos/VoiceMatrix.app Payload/
-          python3 tools/package_ipa.py Payload VoiceMatrix-Laptop-Test.ipa
-          python3 tools/inspect_ipa.py VoiceMatrix-Laptop-Test.ipa > paired-inspection.json
+          python3 tools/package_ipa.py Payload VoiceMatrix-0.3.1.ipa
+          python3 tools/inspect_ipa.py VoiceMatrix-0.3.1.ipa > paired-inspection.json
       - uses: actions/upload-artifact@v4
         with:
-          name: VoiceMatrix-Laptop-Test
+          name: VoiceMatrix-0.3.1
           path: |
-            VoiceMatrix-Laptop-Test.ipa
+            VoiceMatrix-0.3.1.ipa
             paired-inspection.json
           if-no-files-found: error
       - name: Publish inspected experimental test build
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create voicematrix-v0.3.0-queue-test-8 VoiceMatrix-Laptop-Test.ipa paired-inspection.json --prerelease --target "$GITHUB_SHA" --title "VoiceMatrix laptop pairing test — build 8" --notes "Unsigned native ARM64 test app with the existing offline engine resources and new HTTPS laptop queue pairing. Archive and model integrity checked; physical iPhone pairing, new character inference and automatic generation pipeline remain unverified. Character-preview WAVs are not included as models. Existing stable release and installation feeds are unchanged."
+          gh release create voicematrix-v0.3.1-no-stock-9 VoiceMatrix-0.3.1.ipa paired-inspection.json removed-stock-profiles.json --prerelease --target "$GITHUB_SHA" --title "VoiceMatrix 0.3.1 — stock profiles removed (build 9)" --notes "All 537 bundled stock profiles and their conversion profile companions are removed. Empty voice library; engine model files retained. No user recordings or personal files are deleted by the update. Synthesis is unavailable until a usable voice is supplied; Automatic laptop pairing, automatic queue submission, and private character-folder import are preserved from main. Imported references still require compatible native synthesis; character inference remains unfinished. Unsigned ARM64 IPA, iOS 26+. Existing installation feeds unchanged."
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
