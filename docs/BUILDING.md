@@ -13,6 +13,6 @@ Source-only compilation additionally creates empty resource directories for Phon
 
 ## Published updates
 
-0.4.3 passed the complete [release gates](https://github.com/R347H4CK3R/Ghostline/actions/runs/42512465176). Keep the version in project.yml, packaging commands and release evidence consistent. Test artifacts are not installation-feed releases.
+0.4.4 passed the complete [release gates](https://github.com/R347H4CK3R/Ghostline/actions/runs/42520114505). Keep the version in project.yml, packaging commands and release evidence consistent. Test artifacts are not installation-feed releases.
 
 A public release must include its IPA, dependency-notices.json and character-release-verification.json with successful native speech/conversion and playback/updater evidence. The feed synchronizer checks the completed release pipeline, exact source, asset SHA-256, downloaded archive and zero-stock/private-profile audit before advancing all three existing sources. Publication performs immediate synchronization; release events and an hourly reconciliation provide repair. Run `python3 -m tools.sync_verified_release_feeds` for a read-only check; `--write` applies SHA-guarded updates. The maintenance workflow runs tests and a read-only audit before its write job. It never creates releases or advances to an Actions test artifact.
