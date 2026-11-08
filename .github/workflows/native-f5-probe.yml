@@ -1,0 +1,26 @@
+name: Native F5 reference engine probe
+on:
+  push:
+    paths: ['.github/workflows/native-f5-probe.yml', 'probes/native-f5/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ios-compile:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - name: Generate isolated native engine probe
+        working-directory: probes/native-f5
+        run: xcodegen generate
+      - name: Compile reference-conditioned F5 API for ARM64 iOS
+        working-directory: probes/native-f5
+        run: |
+          xcodebuild -project NativeF5Probe.xcodeproj -scheme NativeF5Probe -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > native-f5.log 2>&1 || { tail -160 native-f5.log; exit 1; }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Native-F5-probe-log
+          path: probes/native-f5/native-f5.log

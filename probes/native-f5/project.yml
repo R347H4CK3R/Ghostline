@@ -1,0 +1,27 @@
+name: NativeF5Probe
+packages:
+  SpeechSwift:
+    url: https://github.com/soniqo/speech-swift.git
+    revision: a57702e6f523fa36ac5532d2bdc5f35f701a052c
+settings:
+  base:
+    IPHONEOS_DEPLOYMENT_TARGET: '26.0'
+    SWIFT_VERSION: '5.0'
+    CODE_SIGNING_ALLOWED: NO
+targets:
+  NativeF5Probe:
+    type: framework
+    platform: iOS
+    sources: [F5ReferenceEngine.swift]
+    dependencies:
+      - package: SpeechSwift
+        product: F5TTS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.voicematrix.f5probe
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  NativeF5Probe:
+    build:
+      targets:
+        NativeF5Probe: all

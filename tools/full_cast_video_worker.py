@@ -1,6 +1,6 @@
 """Resumable full-cast reference-conditioned preview worker. Not RVC training or iOS admission."""
 import os,pathlib,json,time,hashlib,re,subprocess,wave,tempfile,zipfile,contextlib,traceback
-from local_f5 import load_local_model
+from local_f5 import load_local_model,MODEL_SHA256
 from retry_policy import attempt_with_retries
 ROOT=pathlib.Path(os.environ.get('VOICEMATRIX_CAST_JOB',str(pathlib.Path.cwd()/'full-cast-video'))).resolve()
 REF=ROOT/'references';OUT=ROOT/'generated';OUT.mkdir(exist_ok=True)
@@ -75,13 +75,16 @@ try:
    if len(words(text))<3 or re.fullmatch(r'\s*[\[(](music|laughter|applause)[\])]\s*',text,re.I):
     raise ValueError('Reference has insufficient intelligible speech')
    convert(source,reference,24000)
+   with wave.open(str(reference)) as audio:reference_seconds=audio.getnframes()/audio.getframerate()
+   fixed_duration=reference_seconds+4 if os.environ.get('VOICEMATRIX_BOUND_SPARSE_DURATION')=='1' and len(words(text))/reference_seconds<1 else None
+   row['experimentalFixedTotalSeconds']=fixed_duration
    processed_key=hashlib.md5(reference.read_bytes()).hexdigest()
    update(status='generating',currentCharacter=profile['name'])
    def generate_attempt(attempt):
     seed=347+attempt
     started=time.monotonic()
     with open(ROOT/'synthesis-private.log','a') as log,contextlib.redirect_stdout(log),contextlib.redirect_stderr(log):
-     samples,sr,_=model.infer(ref_file=str(reference),ref_text=text,gen_text=TEXT,nfe_step=32,seed=seed,speed=1.0)
+     samples,sr,_=model.infer(ref_file=str(reference),ref_text=text,gen_text=TEXT,nfe_step=32,seed=seed,speed=1.0,**({'fix_duration':fixed_duration} if fixed_duration else {}))
     if not np.isfinite(samples).all() or len(samples)<sr*.3:raise ValueError('Invalid generated audio')
     gain=min(1,.98/max(float(np.max(np.abs(samples))),1e-8));samples=np.asarray(samples)*gain
     rms=float(np.sqrt(np.mean(samples**2)))
@@ -95,7 +98,17 @@ try:
      pcm=np.frombuffer(f.readframes(f.getnframes()),dtype='<i2').astype(float)
     fullscale=int(np.sum(np.abs(pcm)>=32767))
     return dict(file=path.name,audioSHA256=sha(path),sampleRate=sr,seconds=len(samples)/sr,gain=gain,rms=rms,fullScaleSamples=fullscale,seed=seed,text=TEXT,transcript=transcript,wordErrors=errors,wordErrorRate=wer,elapsedSeconds=time.monotonic()-started,passed=wer<=.1 and fullscale==0,reason=None if wer<=.1 and fullscale==0 else f'Word error rate {wer:.1%}; full-scale samples {fullscale}')
-   outcome=attempt_with_retries(generate_attempt)
+   checkpoint=OUT/(identifier+'.attempts.json')
+   descriptor=dict(referenceSHA256=profile['referenceSHA256'],engineSHA256=MODEL_SHA256,text=TEXT,steps=32,fixedDuration=fixed_duration)
+   previous=[]
+   if checkpoint.exists():
+    saved=json.loads(checkpoint.read_text())
+    if saved.get('descriptor')==descriptor:
+     previous=saved['attempts']
+     for trial in previous:
+      if 'file' in trial and sha(OUT/trial['file'])!=trial['audioSHA256']:raise ValueError('Saved attempt audio is damaged')
+   def checkpoint_attempts(attempts):write(checkpoint,dict(descriptor=descriptor,attempts=attempts))
+   outcome=attempt_with_retries(generate_attempt,previous=previous,on_attempt=checkpoint_attempts)
    trials=outcome['attempts']
    row['trials']=trials
    candidates=[t for t in trials if 'wordErrorRate' in t]
