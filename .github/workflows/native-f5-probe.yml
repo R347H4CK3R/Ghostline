@@ -18,7 +18,7 @@ jobs:
       - name: Compile reference-conditioned F5 API for ARM64 iOS
         working-directory: probes/native-f5
         run: |
-          xcodebuild -project NativeF5Probe.xcodeproj -scheme NativeF5Probe -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > native-f5.log 2>&1 || { tail -160 native-f5.log; exit 1; }
+          xcodebuild -skipPackagePluginValidation -project NativeF5Probe.xcodeproj -scheme NativeF5Probe -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > native-f5.log 2>&1 || { tail -160 native-f5.log; exit 1; }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
