@@ -33,6 +33,8 @@ jobs:
           assert devices,'No iOS 26 simulator available'
           with open(os.environ['GITHUB_ENV'],'a') as f:f.write('SIMULATOR_ID='+devices[0]['udid']+'\n')
           PY
+      - name: Wait for the simulator launch services to finish booting
+        run: xcrun simctl bootstatus "$SIMULATOR_ID" -b
       - name: Exercise actual current SwiftUI empty-library flows
         run: |
           xcodebuild test -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build -resultBundlePath character-ui.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests > character-ui.log 2>&1 || { tail -160 character-ui.log; exit 1; }
