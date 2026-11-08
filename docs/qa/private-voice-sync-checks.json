@@ -1,0 +1,45 @@
+{
+  "sourceCommit": "d6799389e993c131167df06434e9c069f582bb42",
+  "localPythonTests": 190,
+  "laptopWindowsPythonTests": 190,
+  "hosted": {
+    "windowsLinux": {
+      "run": 42497259546,
+      "conclusion": "success",
+      "testsPerPlatform": 190,
+      "skips": 0
+    },
+    "macNativeAndPython": {
+      "run": 42497259539,
+      "conclusion": "success",
+      "pythonTests": 190,
+      "skips": 0,
+      "productionSwiftTransferImport": true,
+      "deadlineCancellation": true
+    },
+    "nativeIPhoneSDK": {
+      "run": 42497259584,
+      "conclusion": "success"
+    }
+  },
+  "actualCompanionTransfer": {
+    "httpsStatus": 200,
+    "files": 121,
+    "bytes": 25103331,
+    "profiles": 60,
+    "distinctReferenceHashes": 60,
+    "elapsedSeconds": 5.119984149932861,
+    "anonymousLocalStatus": 401,
+    "queueJobs": 0,
+    "masterModified": false
+  },
+  "reviewRegressions": [
+    "Configured root parent redirected outside collection: reproduced, then rejected by opened-root/path validation",
+    "Trickle download exceeded an overall deadline: bounded Swift operation cancels URLSession; native regression passed"
+  ],
+  "newNeuralInference": false,
+  "newTrainedModels": 0,
+  "physicalIPhoneVerified": false,
+  "characterLikenessVerified": false,
+  "publishedAppUpdated": false
+}
