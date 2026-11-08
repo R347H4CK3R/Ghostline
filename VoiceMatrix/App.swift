@@ -12,6 +12,8 @@ import AVFoundation
     }
 }
 struct RootView: View {
+    @EnvironmentObject var studio: SpeechStudio
+    @State private var clearedInitialSelection = false
     @AppStorage("tutorialSeen") private var tutorialSeen = false
     var body: some View {
         TabView {
@@ -21,6 +23,7 @@ struct RootView: View {
             NavigationStack { HelpView() }.tabItem { Label("Help", systemImage: "questionmark.circle") }
             NavigationStack { SettingsView() }.tabItem { Label("Settings", systemImage: "gearshape") }
         }
+        .onAppear { if !clearedInitialSelection { studio.selectedID = ""; clearedInitialSelection = true } }
         .sheet(isPresented: Binding(get: { !tutorialSeen }, set: { tutorialSeen = !$0 })) {
             VStack(spacing: 26) {
                 Image(systemName: "waveform.circle.fill").font(.system(size: 80)).foregroundStyle(.purple)
@@ -43,7 +46,7 @@ struct HomeView: View {
                 NavigationLink { SpeechView() } label: { HomeCard(title: "MAKE SPEECH", detail: "Type words. Choose a voice. Hear them speak.", icon: "text.bubble.fill") }.accessibilityIdentifier("make-speech")
                 NavigationLink { RecordingView() } label: { HomeCard(title: "CHANGE MY VOICE", detail: "Record. Choose a voice. Hear your changed voice.", icon: "mic.fill") }.accessibilityIdentifier("change-my-voice")
                 NavigationLink { VideoQueueView() } label: { HomeCard(title: "VIDEO LIST", detail: "Add videos and export your character requests.", icon: "list.bullet.rectangle") }
-                Text("\(studio.voices.filter { $0.libraryGroup == "Character styles" }.count) original character styles • \(studio.voices.filter { $0.libraryGroup == "Replicas" }.count) replica entries\n\(studio.voices.count) total speakers • Experimental\n\(studio.onDeviceSpeechChecks) speech checks completed on this iPhone.").font(.footnote).foregroundStyle(.secondary)
+                Text("Your character library\nYour approved Rick and Morty previews are saved separately. Reusable iPhone character voices are still being prepared. The optional speaker library is not your character collection.").font(.footnote).foregroundStyle(.secondary)
             }.padding(24)
         }.background(Color(red: 0.045, green: 0.025, blue: 0.09)).navigationTitle("VoiceMatrix")
     }
@@ -111,7 +114,7 @@ struct VoicesView: View {
     var onChoose: (() -> Void)? = nil
     @State private var search = ""
     @State private var filter = "All"
-    @State private var library = "Character styles"
+    @State private var library = "Replicas"
     var filtered: [VoiceProfile] {
         studio.voices.filter { voice in
             (library == "All voices" || voice.libraryGroup == library) &&
@@ -123,7 +126,7 @@ struct VoicesView: View {
         List {
             Section {
                 Picker("Voice library", selection: $library) {
-                    ForEach(["Character styles", "Replicas", "Other speakers", "All voices"], id: \.self) { Text($0).tag($0) }
+                    ForEach(["Character styles", "Replicas", "Other speakers", "All voices"], id: \.self) { Text($0 == "Replicas" ? "Your characters" : $0 == "Character styles" ? "Optional original styles" : $0 == "Other speakers" ? "Optional general speakers" : "All optional voices").tag($0) }
                 }.accessibilityIdentifier("voice-library")
                 Text("\(studio.voices.filter { $0.libraryGroup == "Replicas" }.count) replica entries • \(studio.voices.filter { $0.libraryGroup == "Character styles" }.count) original character styles")
                     .font(.caption).foregroundStyle(.secondary)
@@ -132,7 +135,7 @@ struct VoicesView: View {
                 }
                 Text("Replicas require a named target and authorization records. Original character styles and other speakers are separate. Character resemblance still requires listening comparisons.").font(.caption).foregroundStyle(.secondary)
             }
-            if filtered.isEmpty { Text(library == "Replicas" ? "No authorized character replicas are included yet. Choose Character styles to hear the original performances." : "No matching voices. Try another search or filter.").foregroundStyle(.secondary) }
+            if filtered.isEmpty { Text(library == "Replicas" ? "Your approved Rick and Morty previews are not installed as reusable voices yet. They have not been replaced by the optional speaker library." : "No matching voices. Try another search or filter.").foregroundStyle(.secondary) }
             ForEach(filtered) { voice in
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {

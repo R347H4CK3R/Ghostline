@@ -28,7 +28,7 @@ jobs:
             target=pathlib.Path('VoiceMatrix/Resources')/relative
             assert '..' not in target.parts
             target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(z.read(entry))
-          p=pathlib.Path('project.yml');p.write_text(p.read_text().replace("CURRENT_PROJECT_VERSION: '5'","CURRENT_PROJECT_VERSION: '6'"))
+          p=pathlib.Path('project.yml');p.write_text(p.read_text().replace("CURRENT_PROJECT_VERSION: '5'","CURRENT_PROJECT_VERSION: '7'"))
           PY
           brew install xcodegen
           xcodegen generate
@@ -50,7 +50,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create voicematrix-v0.3.0-queue-test-6 VoiceMatrix-Laptop-Test.ipa paired-inspection.json --prerelease --target "$GITHUB_SHA" --title "VoiceMatrix laptop pairing test — build 6" --notes "Unsigned native ARM64 test app with the existing offline engine resources and new HTTPS laptop queue pairing. Archive and model integrity checked; physical iPhone pairing, new character inference and automatic generation pipeline remain unverified. Character-preview WAVs are not included as models. Existing stable release and installation feeds are unchanged."
+          gh release create voicematrix-v0.3.0-queue-test-7 VoiceMatrix-Laptop-Test.ipa paired-inspection.json --prerelease --target "$GITHUB_SHA" --title "VoiceMatrix laptop pairing test — build 7" --notes "Unsigned native ARM64 test app with the existing offline engine resources and new HTTPS laptop queue pairing. Archive and model integrity checked; physical iPhone pairing, new character inference and automatic generation pipeline remain unverified. Character-preview WAVs are not included as models. Existing stable release and installation feeds are unchanged."
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

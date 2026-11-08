@@ -90,7 +90,7 @@ struct VideoQueueView: View {
             }
             if !message.isEmpty { Text(message).accessibilityAddTraits(.updatesFrequently) }
         }.navigationTitle("Video List")
-            .fileImporter(isPresented: $pairing, allowedContentTypes: [.json]) { result in
+            .fileImporter(isPresented: $pairing, allowedContentTypes: [.item]) { result in
                 do { try LaptopConnection.pair(from: result.get()); message = "Laptop connection saved. Send your list when ready." }
                 catch { message = error.localizedDescription }
             }
