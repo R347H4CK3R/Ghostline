@@ -35,6 +35,25 @@ jobs:
           printf '{"testOnlyUIAvailability":true}\n' > VoiceMatrix/Resources/F5TTS/voicematrix-engine.json
           printf '{"testOnlyUIAvailability":true}\n' > VoiceMatrix/Resources/OpenVoice/model-manifest.json
           cp -R tests/fixtures/DiagnosticVoices VoiceMatrix/Resources/F5TTS/UITestVoices
+          # XCTest waits for UI idleness after taps; a 2.5-second clip can finish
+          # before it can inspect Stop. Extend only this UI fixture, not audio gates.
+          python3 - <<'PY'
+          import hashlib,json,pathlib,wave
+          root=pathlib.Path('VoiceMatrix/Resources/F5TTS/UITestVoices/diagnostic-neutral')
+          audio=root/'reference.wav'
+          with wave.open(str(audio),'rb') as f:
+              params=f.getparams()
+              pcm=f.readframes(f.getnframes())*8
+          with wave.open(str(audio),'wb') as f:
+              f.setparams(params)
+              f.writeframes(pcm)
+          manifest=json.loads((root/'manifest.json').read_text())
+          manifest.update(referenceSHA256=hashlib.sha256(audio.read_bytes()).hexdigest(),
+                          referenceBytes=audio.stat().st_size,seconds=len(pcm)/48000,
+                          referenceText=' '.join([manifest['referenceText']]*8))
+          (root/'manifest.json').write_text(json.dumps(manifest))
+          assert 19 < manifest['seconds'] < 21
+          PY
           brew install xcodegen
           xcodegen generate
           xcrun simctl list devices available --json > ui-simulator.json

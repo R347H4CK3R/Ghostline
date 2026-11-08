@@ -4,6 +4,7 @@ import XCTest
 // the real store; the availability-only build cannot perform neural synthesis.
 @MainActor final class CharacterWorkflowUITests: XCTestCase {
     func testImportSelectListenAndKeepVoicesAfterRelaunch() {
+        continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = ["-tutorialSeen", "YES", "-ui-test-import"]
         app.launch()
