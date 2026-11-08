@@ -135,7 +135,7 @@ struct VoicesView: View {
                 }
                 Text("Replicas require a named target and authorization records. Original character styles and other speakers are separate. Character resemblance still requires listening comparisons.").font(.caption).foregroundStyle(.secondary)
             }
-            if filtered.isEmpty { Text(library == "Replicas" ? "Your approved Rick and Morty previews are not installed as reusable voices yet. They have not been replaced by the optional speaker library." : "No matching voices. Try another search or filter.").foregroundStyle(.secondary) }
+            if filtered.isEmpty { Text(library == "Replicas" ? "Your character voices are not ready to use on this iPhone yet. The Rick and Morty samples you approved are preserved as previews. Adding a video request does not install a reusable voice." : "No matching voices. Try another search or filter.").foregroundStyle(.secondary) }
             ForEach(filtered) { voice in
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
@@ -156,7 +156,7 @@ struct VoicesView: View {
                 }.buttonStyle(.borderless).padding(.vertical, 6)
             }
             if studio.busy { ProgressView("Creating preview…"); Button("Cancel Preview") { studio.cancel() } }
-            Text(studio.status).font(.footnote)
+            Text(filtered.isEmpty ? "No voice is selected. Add a video request from Home → Video List while your character voices are being prepared." : studio.status).font(.footnote)
         }.searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search voices or styles").navigationTitle("Voices")
     }
 }

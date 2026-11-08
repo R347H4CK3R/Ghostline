@@ -14,7 +14,6 @@ struct VideoQueueView: View {
     @State private var link = ""
     @State private var message = ""
     @State private var exported: URL?
-    @State private var pairing = false
     @State private var sending = false
 
     private func persist() {
@@ -75,7 +74,6 @@ struct VideoQueueView: View {
             Section("Step 2 · Export your list") {
                 Button("Prepare Updated List", action: exportList).disabled(videos.isEmpty)
                 if let exported { ShareLink(item: exported) { Label("Share List", systemImage: "square.and.arrow.up") } }
-                Button("Import Pairing File (optional)") { pairing = true }
                 Button(sending ? "Sending…" : "Send List to Laptop") {
                     sending = true
                     Task { @MainActor in
@@ -90,9 +88,17 @@ struct VideoQueueView: View {
             }
             if !message.isEmpty { Text(message).accessibilityAddTraits(.updatesFrequently) }
         }.navigationTitle("Video List")
-            .fileImporter(isPresented: $pairing, allowedContentTypes: [.item]) { result in
-                do { try LaptopConnection.pair(from: result.get()); message = "Laptop connection saved. Send your list when ready." }
-                catch { message = error.localizedDescription }
+            .task(id: saved) {
+                guard !saved.isEmpty, !sending else { return }
+                do {
+                    let pending = try JSONDecoder().decode([QueuedVideo].self, from: saved)
+                    guard !pending.isEmpty else { return }
+                    try await Task.sleep(nanoseconds: 700_000_000)
+                    sending = true
+                    defer { sending = false }
+                    message = try await LaptopConnection.send(JSONEncoder().encode(["videos": pending]))
+                } catch is CancellationError { }
+                catch { message = "Your list is saved. Automatic laptop connection failed: " + error.localizedDescription }
             }
             .onAppear {
                 guard !saved.isEmpty else { return }
