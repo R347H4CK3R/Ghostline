@@ -1,5 +1,11 @@
 # VoiceMatrix
 
+## Stock-profile removal update: 0.3.1 build 7
+
+This update removes all 537 bundled stock voice profile files and their OpenVoice profile companions from the app archive. The voice library is intentionally empty. Engine model files remain; no voice base assets are retained. Speech and voice conversion are unavailable without a usable voice. Native voice import is not implemented in this build. Saved recordings and personal Documents files are not modified. The older release and feed links below are historical and still include stock voices. Publication of this update is pending.
+
+## Historical release context
+
 ## Character-replica objective — source development
 
 The current IPA contains 12 original character performances and 525 other speakers, with **0 verified recognizable character replicas**. Its 537-profile count is a functional speech-library milestone, not completion of the 500-character-replica objective. Character resemblance, naturalness and perceptual distinctness still need reference-based listening tests.

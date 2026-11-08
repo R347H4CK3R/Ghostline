@@ -9,7 +9,7 @@ def inspect(path):
   prefix='Payload/VoiceMatrix.app/'
   info=plistlib.loads(z.read(prefix+'Info.plist'))
   assert info['CFBundleIdentifier']=='com.voicematrix.app'
-  assert info['CFBundleShortVersionString']=='0.3.0'
+  assert info['CFBundleShortVersionString'] in ['0.3.0', '0.3.1']
   assert tuple(map(int,info['MinimumOSVersion'].split('.'))) >= (26,0)
   binary=z.read(prefix+info['CFBundleExecutable'])
   assert binary[:4]==b'\xcf\xfa\xed\xfe' and struct.unpack_from('<I',binary,4)[0]==0x100000c,'Not arm64 Mach-O'
@@ -23,6 +23,20 @@ def inspect(path):
   voices=manifest['voices']
   assert len({v['id'] for v in voices})==len(voices)
   assert len({v['sha256'] for v in voices})==len(voices)
+  if info['CFBundleShortVersionString']=='0.3.1':
+   assert info['CFBundleVersion']=='7' and voices==[], 'Stock library must be empty'
+   assert not any(n.startswith((root+'voices/',prefix+'OpenVoice/Profiles/')) and not n.endswith('/') for n in z.namelist()), 'Stock profile file retained'
+   assert root+'voice-synthesis-results.json' not in z.namelist(), 'Stale voice QA retained'
+   assert root+'inference-fingerprint.json' not in z.namelist(), 'Stale profile fingerprint retained'
+   cv=json.loads(z.read(prefix+'OpenVoice/model-manifest.json'))
+   for entry in cv['files']:
+    assert '..' not in PurePosixPath(entry['path']).parts
+    data=z.read(prefix+'OpenVoice/'+entry['path'])
+    assert len(data)==entry['size'] and hashlib.sha256(data).hexdigest()==entry['sha256'],entry['path']
+   assert any('.mlmodelc/' in f['path'] for f in manifest['files']), 'Missing retained speech engine'
+   assert any('.mlmodelc/' in f['path'] for f in cv['files']), 'Missing retained converter engine'
+   print(json.dumps({'bundle':info['CFBundleIdentifier'],'version':'0.3.1','build':'7','profiles':0,'stockProfileFiles':0,'engineIntegrity':'passed','synthesisAvailable':False,'archive':'passed'},indent=2))
+   return
   qa=json.loads(z.read(root+'voice-synthesis-results.json'))
   validate_qa_report(qa,manifest)
   cvroot=prefix+'OpenVoice/'
