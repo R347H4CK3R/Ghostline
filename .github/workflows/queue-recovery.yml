@@ -1,0 +1,21 @@
+name: Laptop queue recovery checks
+on:
+  push:
+    paths: ['tools/video_queue.py', 'tools/queue_transport.py', 'tests/test_video_queue.py', 'tests/test_queue_recovery.py', 'tests/test_queue_transport.py', '.github/workflows/queue-recovery.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  queue:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Exercise real SQLite workers and authenticated HTTP transport
+        run: python -m unittest discover -s tests -p "test_*queue*.py" -v
