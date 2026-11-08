@@ -1,43 +1,52 @@
 {
-    "name":  "VoiceMatrix — LiveContainer Test Builds",
-    "identifier":  "com.voicematrix.test-source",
-    "apps":  [
-                 {
-                     "name":  "VoiceMatrix — Laptop Pairing Test",
-                     "bundleIdentifier":  "com.voicematrix.app",
-                     "developerName":  "VoiceMatrix",
-                     "localizedDescription":  "Experimental laptop queue pairing with the existing offline speech runtime. Automatic character generation, new character model inference and physical iPhone pairing are not yet verified.",
-                     "iconURL":  "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
-                     "versions":  [
-                                      {
-                                          "version":  "0.3.0",
-                                          "buildVersion":  "8",
-                                          "date":  "2026-11-08",
-                                          "downloadURL":  "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-queue-test-8/VoiceMatrix-Laptop-Test.ipa",
-                                          "localizedDescription":  "Automatic same-account Tailscale connection. No pairing JSON selection required. Character previews remain separate from reusable voices.",
-                                          "minOSVersion":  "26.0",
-                                          "size":  206008638
-                                      },
-                                      {
-                                          "version":  "0.3.0",
-                                          "buildVersion":  "6",
-                                          "date":  "2026-11-08",
-                                          "downloadURL":  "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-queue-test-6/VoiceMatrix-Laptop-Test.ipa",
-                                          "localizedDescription":  "Laptop HTTPS pairing and video-list submission test. Offline runtime resources included. Not a completed character model workflow.",
-                                          "minOSVersion":  "26.0",
-                                          "size":  206006781
-                                      },
-                                      {
-                                          "version":  "0.3.0",
-                                          "buildVersion":  "5",
-                                          "date":  "2026-11-07",
-                                          "downloadURL":  "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-studio-1/VoiceMatrix-v0.3.0-experimental.ipa",
-                                          "localizedDescription":  "537 bundled profiles. Real offline neural conversion and speech; automated simulator audio checks, no near-indistinguishable claim.",
-                                          "minOSVersion":  "26.0",
-                                          "size":  205958246
-                                      }
-                                  ]
-                 }
-             ],
-    "sourceURL":  "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/livecontainer-test.json"
+  "name": "VoiceMatrix \u2014 LiveContainer Test Builds",
+  "identifier": "com.voicematrix.test-source",
+  "apps": [
+    {
+      "name": "VoiceMatrix \u2014 Character Folder Test",
+      "bundleIdentifier": "com.voicematrix.app",
+      "developerName": "VoiceMatrix",
+      "localizedDescription": "Separate character-folder import, fully offline new-text speech and neural recording conversion. No characters or stock voices bundled. Native diagnostic audio checks passed; character likeness and physical iPhone tests remain pending.",
+      "iconURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+      "versions": [
+        {
+          "version": "0.4.0",
+          "buildVersion": "1",
+          "date": "2026-11-08",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.0-character-test-1/VoiceMatrix-0.4.0-character-test.ipa",
+          "localizedDescription": "Separate character-folder import, fully offline new-text speech and neural recording conversion. No characters or stock voices bundled. Native diagnostic audio checks passed; character likeness and physical iPhone tests remain pending.",
+          "minOSVersion": "26.0",
+          "size": 730977029
+        },
+        {
+          "version": "0.3.0",
+          "buildVersion": "8",
+          "date": "2026-11-08",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-queue-test-8/VoiceMatrix-Laptop-Test.ipa",
+          "localizedDescription": "Automatic same-account Tailscale connection. No pairing JSON selection required. Character previews remain separate from reusable voices.",
+          "minOSVersion": "26.0",
+          "size": 206008638
+        },
+        {
+          "version": "0.3.0",
+          "buildVersion": "6",
+          "date": "2026-11-08",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-queue-test-6/VoiceMatrix-Laptop-Test.ipa",
+          "localizedDescription": "Laptop HTTPS pairing and video-list submission test. Offline runtime resources included. Not a completed character model workflow.",
+          "minOSVersion": "26.0",
+          "size": 206006781
+        },
+        {
+          "version": "0.3.0",
+          "buildVersion": "5",
+          "date": "2026-11-07",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-studio-1/VoiceMatrix-v0.3.0-experimental.ipa",
+          "localizedDescription": "537 bundled profiles. Real offline neural conversion and speech; automated simulator audio checks, no near-indistinguishable claim.",
+          "minOSVersion": "26.0",
+          "size": 205958246
+        }
+      ]
+    }
+  ],
+  "sourceURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/livecontainer-test.json"
 }
