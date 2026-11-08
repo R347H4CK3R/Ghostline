@@ -43,16 +43,16 @@ jobs:
           audio=root/'reference.wav'
           with wave.open(str(audio),'rb') as f:
               params=f.getparams()
-              pcm=f.readframes(f.getnframes())*8
+              pcm=f.readframes(f.getnframes())*6
           with wave.open(str(audio),'wb') as f:
               f.setparams(params)
               f.writeframes(pcm)
           manifest=json.loads((root/'manifest.json').read_text())
           manifest.update(referenceSHA256=hashlib.sha256(audio.read_bytes()).hexdigest(),
                           referenceBytes=audio.stat().st_size,seconds=len(pcm)/48000,
-                          referenceText=' '.join([manifest['referenceText']]*8))
+                          referenceText=' '.join([manifest['referenceText']]*6))
           (root/'manifest.json').write_text(json.dumps(manifest))
-          assert 19 < manifest['seconds'] < 21
+          assert 14 < manifest['seconds'] < 15
           PY
           brew install xcodegen
           xcodegen generate
