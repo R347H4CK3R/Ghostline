@@ -107,7 +107,7 @@ actor OfflineVoiceConverter {
     }
     func extractEmbedding(from url: URL) throws -> [Float] {
         try Task.checkCancellation()
-        return try embed(ConversionAudio.spectrum(ConversionAudio.readMono(url)))
+        return try embed(ConversionAudio.spectrum(ConversionAudio.readMono(url, minimumSeconds: 0.5, isReference: true)))
     }
     func targetProfile(for voice: VoiceProfile, root: URL, manifest: VoiceManifest) throws -> ConversionProfile { try assets().profile(for: voice, phononRoot: root, manifest: manifest) }
     func sourceRevision() throws -> String { try assets().manifest.sourceRevision }

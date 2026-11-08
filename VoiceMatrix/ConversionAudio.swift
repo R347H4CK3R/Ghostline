@@ -51,16 +51,19 @@ enum ConversionAudio {
         }
         return LinearSpectrum(frames: count, values: result)
     }
-    static func readMono(_ url: URL, minimumSeconds: Double = 1) throws -> [Float] {
+    static func readMono(_ url: URL, minimumSeconds: Double = 1, isReference: Bool = false) throws -> [Float] {
         let file = try AVAudioFile(forReading: url, commonFormat: .pcmFormatFloat32, interleaved: false)
         guard file.processingFormat.sampleRate.isFinite,
               (8000...192000).contains(file.processingFormat.sampleRate),
               (1...8).contains(file.processingFormat.channelCount) else { throw ConversionError.invalidAudio }
         let seconds = Double(file.length) / file.processingFormat.sampleRate
-        guard seconds >= minimumSeconds, seconds <= 10.01 else { throw ConversionError.duration }
-        guard let input = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)),
+        guard seconds >= minimumSeconds, seconds <= (isReference ? 15.01 : 10.01) else { throw ConversionError.duration }
+        // Speaker conditioning does not require a transcript-aligned ending. Read at most10seconds
+        // while preserving the existing source-recording duration gate and model frame bounds.
+        let readFrames = isReference ? min(file.length, Int64(file.processingFormat.sampleRate * 10)) : file.length
+        guard let input = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(readFrames)),
               let monoFormat = AVAudioFormat(standardFormatWithSampleRate: file.processingFormat.sampleRate, channels: 1),
-              let mono = AVAudioPCMBuffer(pcmFormat: monoFormat, frameCapacity: AVAudioFrameCount(file.length)),
+              let mono = AVAudioPCMBuffer(pcmFormat: monoFormat, frameCapacity: AVAudioFrameCount(readFrames)),
               let target = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else { throw ConversionError.invalidAudio }
         try file.read(into: input)
         guard input.frameLength > 0, let channels = input.floatChannelData, let output = mono.floatChannelData?[0] else { throw ConversionError.invalidAudio }
