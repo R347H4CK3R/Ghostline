@@ -1,5 +1,5 @@
 """Private prepared-reference queue processor; no automatic identity/rights claims."""
-import argparse,array,hashlib,json,math,pathlib,subprocess,sys,tempfile,threading,time,wave
+import argparse,array,hashlib,json,math,pathlib,subprocess,sys,tempfile,threading,time,wave,gc
 from tools.video_queue import VideoQueue,video_id
 from tools.voice_pack import export_reference_pack,validate_pack
 from tools.pack_speech import speak
@@ -68,6 +68,13 @@ class AttemptModel:
    result=self.model.infer(**kwargs);self.check();return result
   finally:
    if hook:hook.remove()
+
+class LazyModel:
+ def __init__(self,factory):self.factory=factory;self.model=None
+ def __call__(self):
+  if self.model is None:self.model=self.factory()
+  return self.model
+ def release(self):self.model=None;gc.collect()
 
 def run_once(database,specifications,work,master,*,model_factory,verify,synthesize=speak,paused=lambda:False,retry_delay=30):
  if paused():return None
@@ -151,10 +158,7 @@ def main():
  for key in ['database','specifications','work','master','checkpoint','vocoder-directory','vocab','whisper-cli','whisper-model']:p.add_argument('--'+key,required=True)
  p.add_argument('--poll-seconds',type=float,default=30);p.add_argument('--once',action='store_true');a=p.parse_args()
  if not math.isfinite(a.poll_seconds) or not 5<=a.poll_seconds<=3600:p.error('Poll every 5–3600 seconds')
- model=[None]
- def factory():
-  if model[0] is None:model[0]=load_local_model(a.checkpoint,a.vocoder_directory,a.vocab)
-  return model[0]
+ factory=LazyModel(lambda:load_local_model(a.checkpoint,a.vocoder_directory,a.vocab))
  root=pathlib.Path(a.work);root.mkdir(parents=True,exist_ok=True)
  last_game=[0.0,False]
  def paused():
@@ -164,8 +168,14 @@ def main():
   return last_game[1]
  verifier=recognizer(a.whisper_cli,a.whisper_model,paused)
  while not (root/'stop').exists():
-  result=run_once(a.database,a.specifications,a.work,a.master,model_factory=factory,verify=verifier,paused=paused)
-  if result:print(json.dumps({key:result[key] for key in ['videoID','attempt','status']}),flush=True)
+  try:
+   result=run_once(a.database,a.specifications,a.work,a.master,model_factory=factory,verify=verifier,paused=paused)
+   if not result or result['status']=='paused':factory.release()
+   if result:print(json.dumps({key:result[key] for key in ['videoID','attempt','status']}),flush=True)
+  except Exception as error:
+   factory.release();atomic(root/'worker-state.json',dict(status='worker-error',reason=(type(error).__name__+': '+str(error))[:1000],updated=time.time()))
+   if a.once:raise SystemExit(2)
   if a.once:break
   time.sleep(a.poll_seconds)
+ factory.release()
 if __name__=='__main__':main()

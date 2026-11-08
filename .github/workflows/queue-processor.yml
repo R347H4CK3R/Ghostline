@@ -20,5 +20,10 @@ jobs:
       - name: Install Windows media test dependency
         if: runner.os == 'Windows'
         run: choco install ffmpeg -y --no-progress
+      - name: Install Linux media test dependency
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
       - name: Run source, real queue/files, transport and cancellation regressions
         run: python -m unittest discover -s tests -v

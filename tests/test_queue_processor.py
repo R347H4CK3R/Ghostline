@@ -1,8 +1,16 @@
-import json,pathlib,tempfile,unittest,wave,hashlib,time,sys
+import json,pathlib,tempfile,unittest,wave,hashlib,time,sys,weakref,gc
 from tools.video_queue import VideoQueue
 from tools import queue_processor
 
 class ProcessorTests(unittest.TestCase):
+ def test_idle_model_cache_reuses_then_releases_heavy_reference(self):
+  self.assertTrue(hasattr(queue_processor,'LazyModel'),'Releasable model cache is missing')
+  class Resource:pass
+  allocations=[]
+  def factory():allocations.append(True);return Resource()
+  cache=queue_processor.LazyModel(factory);model=cache();reference=weakref.ref(model)
+  self.assertIs(cache(),model);del model;cache.release();gc.collect()
+  self.assertIsNone(reference());cache();self.assertEqual(len(allocations),2)
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.root=pathlib.Path(self.tmp.name);self.specs=self.root/'specs';self.specs.mkdir()
   self.q=VideoQueue(str(self.root/'queue.db'));self.q.add(['https://youtu.be/EAT0nWoEzJ8'])
