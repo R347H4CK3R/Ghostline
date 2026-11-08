@@ -1,7 +1,7 @@
 name: Native character folder checks
 on:
   push:
-    paths: ['VoiceMatrix/StudioActivity.swift', 'tests/native/StudioActivityChecks.swift', 'VoiceMatrix/CharacterFolderStore.swift', 'VoiceMatrix/CharacterLibraryView.swift', 'tests/native/CharacterFolderChecks.swift', 'tests/test_character_folder.py', 'tools/voice_pack.py', '.github/workflows/native-character-folder.yml']
+    paths: ['VoiceMatrix/CharacterReviewStore.swift', 'tests/native/CharacterReviewChecks.swift', 'VoiceMatrix/StudioActivity.swift', 'tests/native/StudioActivityChecks.swift', 'VoiceMatrix/CharacterFolderStore.swift', 'VoiceMatrix/CharacterLibraryView.swift', 'tests/native/CharacterFolderChecks.swift', 'tests/test_character_folder.py', 'tools/voice_pack.py', '.github/workflows/native-character-folder.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,3 +33,8 @@ jobs:
         run: |
           xcrun swiftc -parse-as-library VoiceMatrix/StudioActivity.swift tests/native/StudioActivityChecks.swift -o studio-activity-checks
           ./studio-activity-checks
+
+      - name: Check explicit listening decisions and changed-reference invalidation
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/CharacterReviewStore.swift tests/native/CharacterReviewChecks.swift -o character-review-checks
+          ./character-review-checks
