@@ -21,6 +21,11 @@ import Foundation
             _ = try F5SpeechChunks.plan(text: "Hello", referenceText: String(repeating: "x", count: 2000), referenceSeconds: 10)
             fatalError("An implausible reference transcript must not allocate an unbounded token sequence")
         } catch is F5ChunkError { }
+        try F5SpeechChunks.validateTokenCount(2061)
+        do {
+            try F5SpeechChunks.validateTokenCount(2062)
+            fatalError("Tokenizer expansion must not bypass the frame budget")
+        } catch is F5ChunkError { }
         print("F5 word preservation and bounded per-chunk inference planning passed")
     }
 }
