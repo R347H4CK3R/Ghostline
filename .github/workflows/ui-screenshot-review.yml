@@ -22,7 +22,7 @@ jobs:
           python3 - <<'PY'
           import base64,io,json,pathlib
           from PIL import Image
-          paths=list(pathlib.Path('evidence').glob('workflow-screenshots/**/*.png'))+list(pathlib.Path('evidence').glob('ui-screenshots/**/*.png'))
+          paths=[p for folder in ('workflow-screenshots','ui-screenshots') for p in pathlib.Path('evidence',folder).rglob('*') if p.suffix.lower() in ('.png','.jpeg','.jpg')]
           print("Screenshot count:",len(paths))
           for path in paths[:2]:
               im=Image.open(path).convert('RGB')
