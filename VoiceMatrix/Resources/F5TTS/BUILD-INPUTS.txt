@@ -1,0 +1,1 @@
+Development placeholder only. A complete audio build must supply the pinned F5 shared weights, tokenizer, vocoder, configuration, notices, and voicematrix-engine.json. No character references belong in this directory. The source-only compiler does not produce a functional audio app.

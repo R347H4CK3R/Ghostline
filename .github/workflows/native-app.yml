@@ -16,12 +16,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Prepare source-only project resources
         run: |
-          mkdir -p VoiceMatrix/Resources/Phonon VoiceMatrix/Resources/OpenVoice
+          mkdir -p VoiceMatrix/Resources/Phonon VoiceMatrix/Resources/OpenVoice VoiceMatrix/Resources/F5TTS
           brew install xcodegen
           xcodegen generate
       - name: Compile full ARM64 app without IPA packaging
         run: |
-          xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Debug -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath native-build CODE_SIGNING_ALLOWED=NO build > native-compile.log 2>&1 || { tail -160 native-compile.log; exit 1; }
+          xcodebuild -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Debug -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath native-build CODE_SIGNING_ALLOWED=NO build > native-compile.log 2>&1 || { tail -160 native-compile.log; exit 1; }
       - uses: actions/upload-artifact@v4
         if: always()
         with:

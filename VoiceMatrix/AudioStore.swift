@@ -13,17 +13,16 @@ struct SavedAudio: Identifiable {
     @Published var error: String?
     @Published var rate: Float = 1
     private var player: AVAudioPlayer?
-    @Published private var microphoneOwner: UUID?
-    var microphoneInUse: Bool { microphoneOwner != nil }
+    @Published private var activity = StudioActivity()
+    var microphoneInUse: Bool { activity.microphoneInUse }
+    var processingInUse: Bool { activity.processingInUse }
     func claimMicrophone() -> UUID? {
-        guard microphoneOwner == nil else { return nil }
-        stop()
-        let token = UUID(); microphoneOwner = token; return token
+        guard let token = activity.claim(.microphone) else { return nil }
+        stop(); return token
     }
-    func releaseMicrophone(_ token: UUID) {
-        guard microphoneOwner == token else { return }
-        microphoneOwner = nil
-    }
+    func releaseMicrophone(_ token: UUID) { activity.release(token) }
+    func claimProcessing() -> UUID? { activity.claim(.processing) }
+    func releaseProcessing(_ token: UUID) { activity.release(token) }
     private var savedSources = UserDefaults.standard.dictionary(forKey: "savedSources") as? [String: String] ?? [:]
     func isSaved(_ url: URL) -> Bool {
         let name = savedSources[url.lastPathComponent] ?? url.lastPathComponent

@@ -1,0 +1,9 @@
+# Native F5 character speech — source integration
+
+The My Character Folder screen now routes selected imported references and newly entered text to the native F5 engine. It uses 32 flow steps and seed347, matching the CPU preview settings where supported. Native fp16 numerical behavior and perceptual quality still need evaluation. The standalone initial benchmark uses upstream defaults (16 steps); its latency is not a 32-step iPhone measurement.
+
+The native app shares one audio-work lease between recording, speech, conversion and this character test route. Other voice models are unloaded before F5 runs; F5 unloads after each request to bound memory while other engines remain available. The selected reference is checksum-validated again. No stock speaker fallback occurs. The generated WAV can use the existing Listen, Save and Share actions. Cancellation takes effect around the current F5 sampling call; mid-step interruption is not implemented upstream.
+
+The engine is loaded only from bundled F5TTS resources using fromBundle. The shared engine is separate from imported per-character folders. SHA-256 proofs and exact file names are checked before loading; the app never downloads missing engine files. Source-only compile builds contain a placeholder, so Create Test Speech is disabled there. Complete audio packaging must use the pinned bundle from aufklarer/F5TTS-v1-Base-MLX-fp16 revision685e88161a2841a5f102a6f8094613ba7131e350 and preserve its CC BY-NC4 model notice. No character reference assets or transcript bytes have been added to the public repository.
+
+This source integration has not yet proven physical-iPhone synthesis, per-character intelligibility, likeness, or recording conversion. The folder importer and isolated ARM64 F5 API compile passed; source integration and the separate real Metal/network-denied audio benchmark must pass their own gates before packaging a new test kit. Existing released IPAs and feeds are unchanged.

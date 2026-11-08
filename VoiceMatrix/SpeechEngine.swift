@@ -166,6 +166,7 @@ actor NeuralSpeech {
             }
         } catch { status = error.localizedDescription }
     }
+    func releaseModelsForCharacter() async { await neural.unload() }
     func favorite(_ id: String) {
         if favorites.contains(id) { favorites.remove(id) } else { favorites.insert(id) }
         UserDefaults.standard.set(Array(favorites), forKey: "favorites")
@@ -174,10 +175,12 @@ actor NeuralSpeech {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !busy, !recordingInProgress, !audio.microphoneInUse, let voice = selected, let pack else { return }
         guard !text.isEmpty, text.count <= 2000 else { status = "Enter between 1 and 2,000 characters."; return }
+        guard let lease = audio.claimProcessing() else { status = "Stop the other recording or speech task first."; return }
         audio.stop(); TemporaryAudio.discard(output); busy = true; status = "Preparing \(voice.name)…"; output = nil
         let token = UUID(); generation = token
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("Speech-\(UUID().uuidString).wav")
         task = Task {
+            defer { audio.releaseProcessing(lease) }
             let started = Date()
             do {
                 let duration = try await neural.generate(text: text, voice: voice, root: pack.0, manifest: pack.1, output: url, progress: { [weak self] phase in
@@ -203,11 +206,13 @@ actor NeuralSpeech {
     }
     func changeVoice(source: URL, audio: AudioStore) {
         guard !busy, !recordingInProgress, !audio.microphoneInUse, let voice = selected, let pack else { return }
+        guard let lease = audio.claimProcessing() else { status = "Stop the other recording or speech task first."; return }
         audio.stop(); TemporaryAudio.discard(changedOutput); changedOutput = nil
         busy = true; changingVoice = true; status = "Preparing \(voice.name)…"
         let token = UUID(); generation = token
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("Converted-\(UUID().uuidString).wav")
         task = Task {
+            defer { audio.releaseProcessing(lease) }
             let started = Date()
             do {
                 let duration = try await neural.convertRecording(source: source, voice: voice, root: pack.0, manifest: pack.1, output: url, progress: { [weak self] phase in
@@ -234,9 +239,11 @@ actor NeuralSpeech {
     func clearChangedVoice() { TemporaryAudio.discard(changedOutput); changedOutput = nil }
     func checkIncludedVoices(audio: AudioStore) {
         guard !busy, !recordingInProgress, !audio.microphoneInUse, let pack else { return }
+        guard let lease = audio.claimProcessing() else { status = "Stop the other recording or speech task first."; return }
         audio.stop(); busy = true; checkingVoices = true; checkProgress = 0
         let token = UUID(); generation = token
         task = Task {
+            defer { audio.releaseProcessing(lease) }
             var report = DeviceVoiceChecks.load(manifest: pack.1)
             var processed = 0
             for voice in voices {
