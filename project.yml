@@ -14,8 +14,8 @@ settings:
     SWIFT_VERSION: '5.0'
     TARGETED_DEVICE_FAMILY: '1,2'
     GENERATE_INFOPLIST_FILE: YES
-    MARKETING_VERSION: '0.3.0'
-    CURRENT_PROJECT_VERSION: '5'
+    MARKETING_VERSION: '0.4.0'
+    CURRENT_PROJECT_VERSION: '1'
     CODE_SIGNING_ALLOWED: NO
 targets:
   VoiceMatrix:
@@ -65,6 +65,31 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.voicematrix.uitests
+  CharacterRuntimeTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [CharacterRuntimeTests]
+    dependencies:
+      - target: VoiceMatrix
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.voicematrix.character-tests
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/VoiceMatrix.app/VoiceMatrix"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+  CharacterSpeechDiagnostic:
+    type: tool
+    platform: macOS
+    sources:
+      - path: probes/native-f5/Calibration.swift
+      - path: VoiceMatrix/F5ReferenceEngine.swift
+      - path: VoiceMatrix/F5SpeechChunks.swift
+    dependencies:
+      - package: SpeechSwift
+        product: F5TTS
+    settings:
+      base:
+        MACOSX_DEPLOYMENT_TARGET: '15.0'
+
 schemes:
   VoiceMatrix:
     build:
@@ -74,3 +99,15 @@ schemes:
         VoiceMatrixUITests: [test]
     test:
       targets: [VoiceMatrixTests, VoiceMatrixUITests]
+
+  CharacterRuntimeChecks:
+    build:
+      targets:
+        VoiceMatrix: all
+        CharacterRuntimeTests: [test]
+    test:
+      targets: [CharacterRuntimeTests]
+  CharacterSpeechDiagnostic:
+    build:
+      targets:
+        CharacterSpeechDiagnostic: all

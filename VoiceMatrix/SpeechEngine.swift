@@ -147,8 +147,7 @@ actor NeuralSpeech {
         AppLogger.minimumLevel = .fault
         AppLogger.mirrorsToConsole = false
         if let shared = Bundle.main.url(forResource: "F5TTS", withExtension: nil),
-           FileManager.default.fileExists(atPath: shared.appendingPathComponent("voicematrix-engine.json").path),
-           Bundle.main.url(forResource: "Phonon/manifest", withExtension: "json") == nil {
+           FileManager.default.fileExists(atPath: shared.appendingPathComponent("voicematrix-engine.json").path) {
             status = "Choose your separate character folder to start. Imported voices stay on this iPhone."
             return
         }

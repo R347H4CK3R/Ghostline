@@ -1,0 +1,30 @@
+{
+  "README.md": {
+    "size": 3909,
+    "sha256": "2a8d5b26518a62644eca3d51385ad99a1607b2b01dfef6d8683d93f1d3ae8ca7"
+  },
+  "config.json": {
+    "size": 1349,
+    "sha256": "f00090d8c3d7630537bca3c8b66244048258d276890824fa7eae43eb955d0752"
+  },
+  "model.safetensors": {
+    "size": 674238088,
+    "sha256": "56b9649afb6a1d7e011fb8f655157ae39fd41a95debb496668718e584401b2eb"
+  },
+  "pinyin_lexicon.tsv": {
+    "size": 814773,
+    "sha256": "960524dcd0e958ad774fd1c2aebacd28dd4fe293e8f1c0a1f95cc1535b1fd015"
+  },
+  "vocab.txt": {
+    "size": 13800,
+    "sha256": "2a05f992e00af9b0bd3800a8d23e78d520dbd705284ed2eedb5f4bd29398fa3c"
+  },
+  "vocos.safetensors": {
+    "size": 27178204,
+    "sha256": "d84bd1b98cc7bec8730213f52ce732b33ee3dac97ac8900bc2ea8d42278166d5"
+  },
+  "vocos_config.yaml": {
+    "size": 461,
+    "sha256": "da9033922f969a47f0c160010226919e59f27761fd5066f3828d46de6650b0fc"
+  }
+}

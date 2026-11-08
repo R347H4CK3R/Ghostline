@@ -19,7 +19,7 @@ final class CharacterOfflineConversionTests: XCTestCase {
         XCTAssertTrue(samples.allSatisfy { $0.isFinite && abs($0) < 1 })
         XCTAssertGreaterThan(samples.reduce(0.0) { $0 + Double($1) * Double($1) } / Double(samples.count), 1e-8)
         let hash: (URL) throws -> String = { SHA256.hash(data: try Data(contentsOf: $0)).map { String(format: "%02x", $0) }.joined() }
-        let report: [String: Any] = ["sourceAudioSHA256":try hash(source), "referenceAudioSHA256":try hash(reference), "outputSHA256":try hash(destination), "sourceSeconds":result.sourceSeconds, "outputSeconds":result.outputSeconds, "expectedText":"I found a strange device near the portal.", "decodedNonSilentWAV":true, "physicalDeviceVerified":false, "likenessVerified":false, "scope":"iOS simulator diagnostic reference conversion using actual CoreML models"]
+        let report: [String: Any] = ["sharedModelManifestSHA256":try hash(Bundle.main.url(forResource: "OpenVoice", withExtension: nil)!.appendingPathComponent("model-manifest.json")), "sourceAudioSHA256":try hash(source), "referenceAudioSHA256":try hash(reference), "outputSHA256":try hash(destination), "sourceSeconds":result.sourceSeconds, "outputSeconds":result.outputSeconds, "expectedText":"I found a strange device near the portal.", "decodedNonSilentWAV":true, "physicalDeviceVerified":false, "likenessVerified":false, "scope":"iOS simulator diagnostic reference conversion using actual CoreML models"]
         try JSONSerialization.data(withJSONObject: report, options: [.sortedKeys,.prettyPrinted]).write(to: root.appendingPathComponent("conversion-result.json"), options: .atomic)
     }
 }

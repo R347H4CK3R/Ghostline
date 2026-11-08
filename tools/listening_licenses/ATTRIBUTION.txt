@@ -1,0 +1,27 @@
+VoiceMatrix 0.3.2 build 10: experimental local character-listening candidate.
+
+F5-TTS v1 Base weights: SWivid/F5-TTS; MLX fp16 conversion by aufklarer,
+https://huggingface.co/aufklarer/F5TTS-v1-Base-MLX-fp16
+Pinned model revision: 685e88161a2841a5f102a6f8094613ba7131e350.
+Model card and file hashes are included with the bundle. F5 weights are
+CC BY-NC 4.0 (noncommercial/research). Conversion uses fp16 weights and Vocos
+24 kHz vocoder; upstream sources and frontend data attribution are in README.md.
+License: https://creativecommons.org/licenses/by-nc/4.0/
+
+Native runtime: speech-swift, Copyright 2025 Ivan Digital, Apache License 2.0.
+https://github.com/soniqo/speech-swift
+Pinned runtime revision: a57702e6f523fa36ac5532d2bdc5f35f701a052c.
+VoiceMatrix integrates its F5TTS module without modifying the dependency source.
+
+Existing Phonon/OpenVoice engines and their bundled notices are retained from
+verified no-stock build 9. All bundled stock conditioning profiles remain removed.
+No private character recordings or transcripts are included in this package.
+Model licensing does not grant rights to a character, performer or reference source.
+This test candidate does not certify physical-device performance or voice resemblance.
+
+Additional upstream MIT notices accompany the converted bundle:
+pypinyin (mozillazg/python-pinyin), LICENSE.txt Git blob aa0e0467bd6cbee8f6a0e1380da4f9e98e00f3d7.
+jieba (fxsjy/jieba), LICENSE Git blob 9d7e66b431461c785329a1b52199d4207daefacc.
+Vocos (gemelo-ai/vocos), LICENSE Git blob c37bdaf99c6921f5849425d546069e972f52d7fa.
+Native resolved dependency license/notice files are additionally collected from the
+actual build checkouts and recorded with their resolved revisions.

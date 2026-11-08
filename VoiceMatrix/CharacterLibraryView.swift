@@ -11,7 +11,7 @@ import CryptoKit
     @Published private(set) var outputCharacterID = ""
     @Published private(set) var outputReferenceHash = ""
     @Published private(set) var reviewSummaries: [String: CharacterListeningReview] = [:]
-    @Published var message = "Choose your Voices collection folder once. Imported references are copied privately to this iPhone."
+    @Published var message = "Choose your Voices collection folder once. Your voice samples are copied privately to this iPhone."
     private let store: CharacterFolderStore
     private let reviewStore: CharacterReviewStore
     private let engine = F5ReferenceEngine()
@@ -63,7 +63,7 @@ import CryptoKit
                 if let bookmark = try? url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil) {
                     UserDefaults.standard.set(bookmark, forKey: "characterFolderBookmark.v1")
                 }
-                message = "\(profiles.count) reusable references saved. " + (engineAvailable ? "Choose one to test speech." : "A build containing the shared F5 engine is needed to create speech.") + " Character resemblance has not been verified."
+                message = "\(profiles.count) voice samples saved. " + (engineAvailable ? "Choose one to try speech." : "A build containing the shared F5 engine is needed to create speech.") + " Character resemblance has not been verified."
             } catch {
                 message = error is CancellationError ? "Import stopped. Previously imported voices were kept." : "Import failed. Previously imported voices were kept. " + error.localizedDescription
             }
@@ -119,7 +119,7 @@ import CryptoKit
         guard conversionAvailable else { message = "This build does not contain the voice-changing engine. Your references are still saved."; return }
         guard let lease = audio.claimProcessing() else { message = "Stop recording or the other speech task first."; return }
         let copy = FileManager.default.temporaryDirectory.appendingPathComponent("Imported-Character-" + UUID().uuidString + ".wav")
-        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("Converted-Character-" + UUID().uuidString + ".wav")
+        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("Converted-" + voice.id + "-" + UUID().uuidString + ".wav")
         do { try FileManager.default.copyItem(at: source, to: copy) }
         catch { audio.releaseProcessing(lease); TemporaryAudio.discard(copy); message = "Your recording could not be prepared. Try recording again."; return }
         audio.stop(); busy = true; message = "Preparing your character…"
@@ -150,12 +150,12 @@ import CryptoKit
         guard !text.isEmpty, text.count <= 500 else { message = "Type between 1 and 500 characters for this experimental engine."; return }
         guard let model = Bundle.main.url(forResource: "F5TTS", withExtension: nil),
               FileManager.default.fileExists(atPath: model.appendingPathComponent("config.json").path) else {
-            message = "This build does not contain the F5 speech engine. Your imported references are safe; install a build containing the shared engine to test speech."; return
+            message = "This build does not contain the F5 speech engine. Your imported voice samples are safe; install a build containing the shared engine to test speech."; return
         }
         guard let lease = audio.claimProcessing() else { message = "Stop the other recording or speech task first."; return }
         busy = true; message = "Starting the local character speech engine…"
         let token = UUID(); operationID = token
-        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("Speech-Character-" + UUID().uuidString + ".wav")
+        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("Speech-" + voice.id + "-" + UUID().uuidString + ".wav")
         job = Task {
             defer { busy = false; audio.releaseProcessing(lease) }
             do {
@@ -210,7 +210,7 @@ struct CharacterLibraryView: View {
                 if library.busy { ProgressView("Working…"); Button("Stop after current step", role: .cancel) { library.cancel() } }
                 Text("This imports reusable reference profiles, rather than preview recordings or trained voice-conversion models. Their shared speech engine is separate. Existing saved recordings are kept.").font(.caption).foregroundStyle(.secondary)
             }
-            Section("\(library.profiles.count) imported references") {
+            Section("\(library.profiles.count) imported voice samples") {
                 Picker("Category", selection: $category) { ForEach(categories, id: \.self) { Text($0).tag($0) } }
                 if library.profiles.isEmpty { Text("Your collection appears here after import. Choose the folder containing collection.json; you do not need to select the JSON file.").foregroundStyle(.secondary) }
                 ForEach(filtered) { voice in
@@ -236,7 +236,7 @@ struct CharacterLibraryView: View {
                 TextEditor(text: $words).frame(minHeight: 110).accessibilityLabel("Words for your character")
                 Button { audio.stop(); library.speak(words, audio: audio, studio: studio) } label: { Label("Create Test Speech", systemImage: "play.fill") }
                     .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.engineAvailable)
-                if !library.engineAvailable { Text("The shared F5 engine is absent from this build. Your imported references remain saved; speech testing becomes available in a build containing that engine.").foregroundStyle(.secondary) }
+                if !library.engineAvailable { Text("The shared F5 engine is absent from this build. Your imported voice samples remain saved; speech testing becomes available in a build containing that engine.").foregroundStyle(.secondary) }
                 Text("Experimental F5 speech. Up to 500 characters per test. This creates new words using the selected reference; it does not convert a recording. Character-match listening and iPhone performance tests are still required.").font(.caption).foregroundStyle(.secondary)
                 if let output = library.output, library.outputKind == "speech", library.outputMatchesSelection { AudioActions(url: output) }
                 else { Text("Create speech with this character to listen or save.").foregroundStyle(.secondary) }
