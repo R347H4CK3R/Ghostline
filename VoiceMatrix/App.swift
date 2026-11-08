@@ -217,6 +217,9 @@ struct SettingsView: View {
                 Text("Tests every included voice without saving recordings. Keep the app open. These audio checks do not replace listening comparisons.").font(.caption)
                 Text(studio.status).font(.caption)
             }
+            Section("App updates") {
+                NavigationLink("Check for Updates") { AppUpdatesView() }.accessibilityIdentifier("app-updates")
+            }
             Section("Listening speed") {
                 Slider(value: Binding(get: { audio.rate }, set: { audio.rate = $0 }), in: 0.7...1.3)
                 Text("Applies the next time you tap Listen. Saved audio keeps its original speed.").font(.caption)
