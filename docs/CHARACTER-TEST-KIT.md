@@ -1,0 +1,13 @@
+# Character test kit
+
+The completed video batch contains 60 distinct generated previews, all passing final SHA-256, PCM decoding, non-silence, clipping and independent word checks. These checks measure intelligibility, not likeness. The two earlier Rick and Morty previews remain unchanged.
+
+The separate private collection contains 60 actual F5 reference-conditioning candidates with stable IDs and overlapping categories. The original 58 use their reference recordings. Rick and Morty use explicitly experimental second-generation conditioning from the accepted generated previews; new text passed desktop word checks, but these derived outputs have not been approved for likeness. They are not trained RVC networks or precomputed speaker embeddings. Character references are excluded from public source and the IPA.
+
+Import the extracted **Voices** folder containing `collection.json`. The app privately copies validated revisions and preserves imported voices if the external folder is unavailable. The selected reference controls both new-text speech and neural recording conversion. The app provides reference/output listening and Matches / Doesn't Match / Unsure decisions; a changed reference invalidates an earlier decision. Compatibility and audio usability remain separate checks.
+
+Shared speech engine: `F5TTS_v1_Base`, SpeechSwift revision `a57702e6f523fa36ac5532d2bdc5f35f701a052c`, model revision `685e88161a2841a5f102a6f8094613ba7131e350`. Shared speech conversion: pinned OpenVoice CoreML encoder/converter. Conversion accepts recordings up to 10 seconds; reference conditioning reads at most 10 seconds from validated references up to 15 seconds. Speech uses bounded complete-word chunks and checks actual tokenizer length before sampling. Cancellation is cooperative between synthesis calls; it cannot interrupt a currently executing model kernel.
+
+A controlled hosted Mac Metal follow-up generated 12 diagnostic clips across four settings; all passed word/audio checks, and the chosen 32-step/seed0 configuration additionally passed independent base.en recognition. This does not erase the earlier failed diagnostic, establish likeness, or substitute for physical iPhone testing. The current character-test workflow separately requires actual multi-chunk speech and iOS-simulator neural conversion before publication. Source fingerprints and one frozen dependency graph bind those tests to the packaged app.
+
+Current verification totals: 0 physical-device character checks, 0 controlled likeness approvals, 0 authorized recognizable likenesses, 0 trained RVC models. The laptop HTTPS queue transport works, but unattended video-to-native-profile generation and every requested queue/retry/discovery feature are not complete.
