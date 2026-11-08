@@ -1,0 +1,36 @@
+{
+  "sourceCommit": "2e6564b8063093e2960dfd313ebabf43058d5f75",
+  "workflowRun": 42508987231,
+  "localTests": 199,
+  "hostedTestsPerWindowsLinux": 199,
+  "laptopWindowsTests": 199,
+  "skips": 0,
+  "mobileBrowser": {
+    "passed": true,
+    "selectedSecondQueuedVideo": true,
+    "submittedActualReview": true,
+    "replacementRefused": true
+  },
+  "reviewFix": "Reproduced browser backslash normalization outside .ts.net, then rejected controls/backslashes and reconstructed from validated DNS hostname and numeric port.",
+  "harnessFix": "Stale local copy reintroduced a visible-option wait; corrected to DOM attachment plus actual second-video selection assertion before deployment.",
+  "deployed": {
+    "filesGitBlobVerified": 114,
+    "monitorLauncher": 2148,
+    "monitorActualChild": 5900,
+    "endpointLauncher": 5792,
+    "dashboardConfigured": true,
+    "HTTPSQueryStatus": 200,
+    "invalidSelectionStatus": 400,
+    "anonymousLocalStatus": 401,
+    "liveQueueJobs": 0,
+    "privateMasterProfiles": 60,
+    "privateMasterModified": false,
+    "workerPID": 9628,
+    "workerLockHeld": true,
+    "workerRestarted": false
+  },
+  "physicalPhoneVerified": false,
+  "newCharacterInference": false,
+  "likenessVerified": false,
+  "appOrFeedsChanged": false
+}
