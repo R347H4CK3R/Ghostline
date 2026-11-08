@@ -1,0 +1,32 @@
+name: Queue integration checks
+on:
+  push:
+    paths:
+      - 'tools/video_queue.py'
+      - 'tools/laptop_supervisor.py'
+      - 'tools/queue_transport.py'
+      - 'tests/test_video_queue.py'
+      - 'tests/test_laptop_supervisor.py'
+      - 'tests/test_queue_transport.py'
+      - '.github/workflows/queue-integration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  queue-tests:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify durable queue imports
+        run: python -m unittest discover -s tests -p 'test_video_queue.py' -v
+      - name: Verify laptop monitoring
+        run: python -m unittest discover -s tests -p 'test_laptop_supervisor.py' -v
+      - name: Verify real local HTTP transport
+        run: python -m unittest discover -s tests -p 'test_queue_transport.py' -v
