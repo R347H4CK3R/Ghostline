@@ -9,6 +9,16 @@ struct CharacterListeningReview: Codable, Identifiable {
     let categories: [String]
     let createdAt: Date
     let reviewer: String
+    func decision(forReferenceSHA256 hash: String) -> CharacterMatchDecision? {
+        referenceSHA256 == hash ? decision : nil
+    }
+}
+
+struct CharacterAudioIdentity {
+    let characterID, referenceSHA256: String
+    func matches(characterID: String, referenceSHA256: String) -> Bool {
+        self.characterID == characterID && self.referenceSHA256 == referenceSHA256
+    }
 }
 
 // Listening feedback is separate from native inference and intelligibility checks.

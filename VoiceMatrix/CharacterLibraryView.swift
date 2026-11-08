@@ -15,6 +15,8 @@ import CryptoKit
     private let reviewStore: CharacterReviewStore
     private let engine = F5ReferenceEngine()
     private var job: Task<Void, Never>?
+    private var catalogRefresh = UUID()
+    private var reviewRefresh = UUID()
     var engineAvailable: Bool {
         guard let root = Bundle.main.url(forResource: "F5TTS", withExtension: nil) else { return false }
         return FileManager.default.fileExists(atPath: root.appendingPathComponent("voicematrix-engine.json").path)
@@ -25,7 +27,13 @@ import CryptoKit
         reviewStore = CharacterReviewStore(root: support.appendingPathComponent("CharacterReviews", isDirectory: true))
     }
     func loadAndRefresh() async {
-        do { profiles = try await store.profiles(); await refreshReviewSummaries() }
+        guard !busy else { return }
+        let ticket = UUID(); catalogRefresh = ticket
+        do {
+            let saved = try await store.profiles()
+            guard catalogRefresh == ticket, !busy else { return }
+            profiles = saved; await refreshReviewSummaries()
+        }
         catch { message = error.localizedDescription; return }
         guard !busy, let data = UserDefaults.standard.data(forKey: "characterFolderBookmark.v1") else { return }
         do {
@@ -36,6 +44,7 @@ import CryptoKit
     }
     func importFolder(_ url: URL) {
         guard !busy else { return }
+        catalogRefresh = UUID()
         busy = true; message = "Checking and copying your voices…"
         job = Task {
             let access = url.startAccessingSecurityScopedResource()
@@ -54,24 +63,29 @@ import CryptoKit
         }
     }
     private func refreshReviewSummaries() async {
+        let ticket = UUID(); reviewRefresh = ticket
+        let snapshot = profiles
         var next: [String: CharacterListeningReview] = [:]
-        for voice in profiles {
+        for voice in snapshot {
             do { next[voice.id] = try await reviewStore.latest(id: voice.id, referenceHash: voice.referenceSHA256) }
             catch { message = "Listening history could not be read. Your voices are still saved." }
         }
-        reviewSummaries = next
+        guard reviewRefresh == ticket else { return }
+        reviewSummaries = next.filter { id, summary in profiles.contains(where: { $0.id == id && $0.referenceSHA256 == summary.referenceSHA256 }) }
     }
     func matchDescription(_ voice: CharacterReference) -> String {
-        switch reviewSummaries[voice.id]?.decision {
+        switch reviewSummaries[voice.id]?.decision(forReferenceSHA256: voice.referenceSHA256) {
         case .matches: return "You marked this reference as a character match. Engine and audio checks remain separate."
         case .different: return "Doesn’t match. Waiting for a better reference; this decision is kept in your history."
         case .unsure: return "Unsure. Compare the recordings again before approving this character."
         case nil: return "Character match: awaiting your listening comparison"
         }
     }
-    var canReview: Bool {
-        !busy && output != nil && selectedID == outputCharacterID && profiles.contains(where: { $0.id == selectedID && $0.referenceSHA256 == outputReferenceHash })
+    var outputMatchesSelection: Bool {
+        guard output != nil, let voice = profiles.first(where: { $0.id == selectedID }) else { return false }
+        return CharacterAudioIdentity(characterID: outputCharacterID, referenceSHA256: outputReferenceHash).matches(characterID: voice.id, referenceSHA256: voice.referenceSHA256)
     }
+    var canReview: Bool { !busy && outputMatchesSelection }
     func listenToReference(audio: AudioStore) {
         guard !busy, let voice = profiles.first(where: { $0.id == selectedID }) else { return }
         Task {
@@ -172,7 +186,8 @@ struct CharacterLibraryView: View {
                     .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.engineAvailable)
                 if !library.engineAvailable { Text("The shared F5 engine is absent from this build. Your imported references remain saved; speech testing becomes available in a build containing that engine.").foregroundStyle(.secondary) }
                 Text("Experimental F5 speech. Up to 500 characters per test. This creates new words using the selected reference; it does not convert a recording. Character-match listening and iPhone performance tests are still required.").font(.caption).foregroundStyle(.secondary)
-                if let output = library.output { AudioActions(url: output) }
+                if let output = library.output, library.outputMatchesSelection { AudioActions(url: output) }
+                else if library.output != nil { Text("Your previous speech belongs to another character or reference. Select that character again, or create new speech.").foregroundStyle(.secondary) }
             }
             Section("Does it sound like your character?") {
                 Text("Listen to the reference, then the new speech. Your answer records a listening judgment, separate from technical audio checks.").font(.callout)
