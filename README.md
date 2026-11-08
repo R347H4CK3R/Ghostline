@@ -54,6 +54,6 @@ These checks use one neutral diagnostic profile; they do not verify every privat
 
 ## Remaining development
 
-Automatic laptop video processing, complete queue/retry/discovery integration, private master-folder synchronization, reviewed replacement activation and full beginner-interface refinement remain unfinished. The RVC training companion has real preparation/training/index commands, but no new training or validated RVC export has been executed. F5 conditioning cannot be renamed into RVC weights. Expansion toward 500 usable character profiles remains a separate quality-gated goal.
+The laptop now has a bounded reviewed-recipe processor, verified with real neutral CPU speech, independent recognition and reusable-folder export; raw links still require reviewed segments. Fully automatic labeling, complete queue/retry/discovery integration, private master-folder synchronization, reviewed replacement activation and full beginner-interface refinement remain unfinished. The RVC training companion has real preparation/training/index commands, but no new training or validated RVC export has been executed. F5 conditioning cannot be renamed into RVC weights. Expansion toward 500 usable character profiles remains a separate quality-gated goal.
 
 [Build instructions](docs/BUILDING.md) · [Current engineering state](docs/DEVELOPMENT-STATE.md) · [Release](https://github.com/R347H4CK3R/Ghostline/releases/tag/voicematrix-v0.4.0-character-test-1)
