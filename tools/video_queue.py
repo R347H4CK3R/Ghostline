@@ -47,15 +47,33 @@ class VideoQueue:
    expired=self.db.execute("SELECT j.video_id,c.attempts FROM jobs j JOIN job_control c USING(video_id) WHERE j.status='processing' AND c.lease_until<=?",(now,)).fetchall()
    for identifier,attempt in expired:
     self._end(identifier,attempt,'Worker lease expired before the stage finished',now,0)
-   row=self.db.execute("SELECT j.video_id,j.url,c.attempts FROM jobs j JOIN job_control c USING(video_id) WHERE j.status IN ('waiting','retry') AND c.next_attempt<=? AND c.attempts<4 ORDER BY j.updated,j.video_id LIMIT 1",(now,)).fetchone()
+   row=self.db.execute("SELECT j.video_id,j.url,c.attempts,j.status FROM jobs j JOIN job_control c USING(video_id) WHERE j.status IN ('waiting','retry','paused') AND c.next_attempt<=? AND (c.attempts<4 OR j.status='paused') ORDER BY j.updated,j.video_id LIMIT 1",(now,)).fetchone()
    result=None
    if row:
-    identifier,url,attempt=row;attempt+=1;token=uuid.uuid4().hex
+    identifier,url,attempt,status=row;attempt+=0 if status=='paused' else 1;token=uuid.uuid4().hex
     self.db.execute("UPDATE jobs SET status='processing',progress=0,updated=? WHERE video_id=?",(now,identifier))
     self.db.execute('UPDATE job_control SET attempts=?,token=?,lease_until=?,next_attempt=0 WHERE video_id=?',(attempt,token,now+lease_seconds,identifier))
-    self.db.execute('INSERT INTO job_attempts VALUES (?,?,?,NULL,NULL,NULL)',(identifier,attempt,now))
+    self.db.execute('INSERT INTO job_attempts VALUES (?,?,?,NULL,NULL,NULL) ON CONFLICT(video_id,attempt) DO UPDATE SET ended=NULL,outcome=NULL,reason=NULL',(identifier,attempt,now))
     result=dict(id=identifier,url=url,attempt=attempt,token=token,leaseUntil=now+lease_seconds)
    self.db.commit();return result
+  except BaseException:self.db.rollback();raise
+ def pause(self,identifier,token,*,now=None):
+  self.db.execute('BEGIN IMMEDIATE')
+  try:
+   now=self._now(now);attempt=self._owner(identifier,token,now)
+   self.db.execute("UPDATE jobs SET status='paused',updated=? WHERE video_id=?",(now,identifier))
+   self.db.execute('UPDATE job_control SET token=NULL,lease_until=0,next_attempt=0 WHERE video_id=?',(identifier,))
+   self.db.execute("UPDATE job_attempts SET ended=?,outcome='paused' WHERE video_id=? AND attempt=?",(now,identifier,attempt));self.db.commit()
+  except BaseException:self.db.rollback();raise
+ def review_with(self,identifier,token,operation,*,now=None):
+  """Fence a trusted publisher against reclaim; this is review, not completion."""
+  self.db.execute('BEGIN IMMEDIATE')
+  try:
+   now=self._now(now);attempt=self._owner(identifier,token,now)
+   result=operation()
+   self.db.execute("UPDATE jobs SET status='needs-review',progress=1,updated=? WHERE video_id=?",(now,identifier))
+   self.db.execute('UPDATE job_control SET token=NULL,lease_until=0 WHERE video_id=?',(identifier,))
+   self.db.execute("UPDATE job_attempts SET ended=?,outcome='needs-review' WHERE video_id=? AND attempt=?",(now,identifier,attempt));self.db.commit();return result
   except BaseException:self.db.rollback();raise
  def _owner(self,identifier,token,now):
   row=self.db.execute("SELECT c.attempts FROM job_control c JOIN jobs j USING(video_id) WHERE c.video_id=? AND c.token=? AND c.lease_until>? AND j.status='processing'",(identifier,token,now)).fetchone()

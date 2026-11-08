@@ -1,0 +1,21 @@
+name: Prepared voice queue processor checks
+on:
+  push:
+    paths: ['tools/queue_processor.py', 'tools/video_queue.py', 'tools/master_voices.py', 'tools/pack_speech.py', 'tests/test_queue_processor.py', 'tests/test_queue_publication.py', '.github/workflows/queue-processor.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run source, real queue/files, transport and cancellation regressions
+        run: python -m unittest discover -s tests -v

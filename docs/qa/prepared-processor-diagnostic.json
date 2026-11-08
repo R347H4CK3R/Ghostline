@@ -1,0 +1,143 @@
+{
+  "scope": "Neutral synthetic prepared-reference queue diagnostic. No video fetched, no character assets or phone tested.",
+  "firstAttempt": {
+    "passed": false,
+    "wordErrorRate": 0.125,
+    "wavSHA256": "953d0588909878504cbda22801593d1f84dc91d93bfcb2ce4ab8e9504d74205e",
+    "recognizerSHA256": "17040f79960b8b68232c34425c457c49ab3f3ef63bbaea0e4a065c86f8d18667",
+    "recognizerModelSHA256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f"
+  },
+  "successfulAttempt": {
+    "videoID": "SYNTHETIC01",
+    "attempt": 2,
+    "profiles": [
+      {
+        "id": "diagnostic-neutral",
+        "referenceSHA256": "b47bd1c40c8951fcf5062ef816d9b561b6fed47972ff237d72b0a463608226e4",
+        "audio": {
+          "wavSHA256": "34c0f60bc28e8948946eaa0723dc21501dbc4c7e610f9dbf3a6a90de2a3ba554",
+          "seconds": 1.7173333333333334,
+          "rms": 0.10720722168136321,
+          "fullScaleSamples": 0
+        },
+        "wordcheck": {
+          "passed": true,
+          "wordErrorRate": 0.0,
+          "wavSHA256": "34c0f60bc28e8948946eaa0723dc21501dbc4c7e610f9dbf3a6a90de2a3ba554",
+          "recognizerSHA256": "17040f79960b8b68232c34425c457c49ab3f3ef63bbaea0e4a065c86f8d18667",
+          "recognizerModelSHA256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f"
+        },
+        "seed": 348
+      }
+    ],
+    "status": "needs-review",
+    "physicalDeviceVerified": false,
+    "likenessVerified": false,
+    "nativePerProfileVerified": false,
+    "publication": {
+      "added": [
+        "diagnostic-neutral"
+      ],
+      "unchanged": [],
+      "needsReview": [],
+      "nativeIOSVerified": false
+    },
+    "reason": "Desktop audio passed; character likeness and individual native/device checks remain pending"
+  },
+  "cancellation": {
+    "realTorchHookInterrupted": true,
+    "cancellationChecks": 16,
+    "resumedSameAttempt": true,
+    "reports": [
+      {
+        "videoID": "SYNTHETIC02",
+        "attempt": 1,
+        "profiles": [],
+        "status": "paused",
+        "physicalDeviceVerified": false,
+        "likenessVerified": false,
+        "nativePerProfileVerified": false,
+        "reason": "InterruptedError: Processing paused during synthesis"
+      },
+      {
+        "videoID": "SYNTHETIC02",
+        "attempt": 1,
+        "profiles": [
+          {
+            "id": "diagnostic-neutral",
+            "referenceSHA256": "b47bd1c40c8951fcf5062ef816d9b561b6fed47972ff237d72b0a463608226e4",
+            "audio": {
+              "wavSHA256": "953d0588909878504cbda22801593d1f84dc91d93bfcb2ce4ab8e9504d74205e",
+              "seconds": 1.7173333333333334,
+              "rms": 0.09977674759251115,
+              "fullScaleSamples": 0
+            },
+            "wordcheck": {
+              "passed": false,
+              "wordErrorRate": 0.125,
+              "wavSHA256": "953d0588909878504cbda22801593d1f84dc91d93bfcb2ce4ab8e9504d74205e",
+              "recognizerSHA256": "17040f79960b8b68232c34425c457c49ab3f3ef63bbaea0e4a065c86f8d18667",
+              "recognizerModelSHA256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f"
+            },
+            "seed": 347
+          }
+        ],
+        "status": "retry",
+        "physicalDeviceVerified": false,
+        "likenessVerified": false,
+        "nativePerProfileVerified": false,
+        "reason": "ValueError: Independent generated-word check failed (WER 0.125)"
+      },
+      {
+        "videoID": "SYNTHETIC02",
+        "attempt": 2,
+        "profiles": [
+          {
+            "id": "diagnostic-neutral",
+            "referenceSHA256": "b47bd1c40c8951fcf5062ef816d9b561b6fed47972ff237d72b0a463608226e4",
+            "audio": {
+              "wavSHA256": "34c0f60bc28e8948946eaa0723dc21501dbc4c7e610f9dbf3a6a90de2a3ba554",
+              "seconds": 1.7173333333333334,
+              "rms": 0.10720722168136321,
+              "fullScaleSamples": 0
+            },
+            "wordcheck": {
+              "passed": true,
+              "wordErrorRate": 0.0,
+              "wavSHA256": "34c0f60bc28e8948946eaa0723dc21501dbc4c7e610f9dbf3a6a90de2a3ba554",
+              "recognizerSHA256": "17040f79960b8b68232c34425c457c49ab3f3ef63bbaea0e4a065c86f8d18667",
+              "recognizerModelSHA256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f"
+            },
+            "seed": 348
+          }
+        ],
+        "status": "needs-review",
+        "physicalDeviceVerified": false,
+        "likenessVerified": false,
+        "nativePerProfileVerified": false,
+        "publication": {
+          "added": [],
+          "unchanged": [
+            "diagnostic-neutral"
+          ],
+          "needsReview": [],
+          "nativeIOSVerified": false
+        },
+        "reason": "Desktop audio passed; character likeness and individual native/device checks remain pending"
+      }
+    ]
+  },
+  "sourceFiles": {
+    "tools/queue_processor.py": "3c91dbd28cbda66b7d36797f57031003b6f0cdf7dea85e21d387383cdf2a0d08",
+    "tools/video_queue.py": "db7d2a50a141149f344a1c661164f67b9cb8693bf77682078042aedbce9c3eaa",
+    "tools/master_voices.py": "9544a97174736836ecaf6ef311b262f4c0e15a2bc0f6ca6da297d488c4765f88",
+    "tools/pack_speech.py": "bf9587eb29320c9114df260b680f0d6eda3f261bce3b5264c84cb7237868bafb",
+    "tools/local_f5.py": "aeb852d6b3b70c4c757b0133bfd92248c73309483f49daab2c6568d4119f808b"
+  },
+  "localSourceTests": 95,
+  "physicalDeviceVerified": false,
+  "likenessVerified": false,
+  "privateCharacterFolderModified": false,
+  "laptopHeavyInferenceStarted": false,
+  "automaticVideoAcquisitionConnected": false
+}
