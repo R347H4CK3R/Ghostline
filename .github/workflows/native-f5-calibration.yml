@@ -1,0 +1,80 @@
+name: Native F5 settings calibration
+on:
+  push:
+    paths: ['.github/workflows/native-f5-calibration.yml', 'probes/native-f5/Calibration.swift', 'probes/native-f5/calibration.yml', 'probes/native-f5/check_calibration.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-audio:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check actual Metal device before downloading weights
+        run: |
+          xcrun swift -e 'import Metal; guard let device = MTLCreateSystemDefaultDevice() else { fatalError("No Metal device on this hosted runner; native audio benchmarking requires another Apple executor.") }; print(device.name)'
+      - run: brew install xcodegen
+      - uses: actions/cache@v4
+        with:
+          path: native-f5-weights
+          key: f5-mlx-fp16-685e88161a2841a5f102a6f8094613ba7131e350
+      - name: Acquire and checksum pinned shared engine during development
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,pathlib,urllib.request
+          revision='685e88161a2841a5f102a6f8094613ba7131e350'
+          repo='aufklarer/F5TTS-v1-Base-MLX-fp16'
+          root=pathlib.Path('native-f5-weights');root.mkdir(exist_ok=True)
+          url='https://huggingface.co/api/models/'+repo+'/revision/'+revision+'?blobs=true'
+          info=json.load(urllib.request.urlopen(url))
+          assert info['sha']==revision
+          siblings={x['rfilename']:x for x in info['siblings']}
+          files=['README.md','config.json','model.safetensors','vocos.safetensors','vocos_config.yaml','vocab.txt','pinyin_lexicon.tsv']
+          checks=[]
+          for name in files:
+            meta=siblings[name];path=root/name
+            expected=meta.get('lfs',{}).get('sha256')
+            def digest():
+              with path.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
+            if not path.exists() or (expected and digest()!=expected):
+              with urllib.request.urlopen('https://huggingface.co/'+repo+'/resolve/'+revision+'/'+name) as response,path.open('wb') as f:
+                while data:=response.read(1048576):f.write(data)
+            actual=digest()
+            assert path.stat().st_size==meta['size']
+            if expected:assert actual==expected
+            checks.append(dict(path=name,size=path.stat().st_size,sha256=actual))
+          (root/'voicematrix-engine.json').write_text(json.dumps(dict(schemaVersion=1,engine='F5TTS_v1_Base',runtimeRevision='a57702e6f523fa36ac5532d2bdc5f35f701a052c',modelRepository=repo,modelRevision=revision,files=checks),indent=2))
+          PY
+      - name: Build native benchmark tool
+        working-directory: probes/native-f5
+        run: |
+          xcodegen generate --spec calibration.yml
+          xcodebuild -skipPackagePluginValidation -project NativeF5Calibration.xcodeproj -scheme NativeF5Calibration -configuration Release -derivedDataPath benchmark-build CODE_SIGNING_ALLOWED=NO build > native-f5-audio-build.log 2>&1 || { tail -120 native-f5-audio-build.log; exit 1; }
+      - name: Generate, decode and measure with network access denied
+        run: |
+          say -r 150 -o reference.aiff "This is a clear reference recording. Today we are checking an offline speech engine."
+          sandbox-exec -p '(version 1)(allow default)(deny network*)' probes/native-f5/benchmark-build/Build/Products/Release/NativeF5Calibration native-f5-weights reference.aiff native-f5-calibration native-f5-calibration.json
+      - uses: actions/checkout@v4
+        with:
+          repository: ggml-org/whisper.cpp
+          ref: 727d3e7666485e12450746b523bfb4e7f057cc5e
+          path: whisper-runtime
+      - name: Build pinned independent recognizer
+        run: |
+          command -v ffmpeg >/dev/null || brew install ffmpeg
+          cmake -S whisper-runtime -B whisper-runtime/build -DGGML_METAL=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_SERVER=OFF -DCMAKE_BUILD_TYPE=Release
+          cmake --build whisper-runtime/build --target whisper-cli -j 3
+          curl -fL --retry 3 -o tiny.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin
+          echo '921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f  tiny.en.bin' | shasum -a 256 -c -
+      - name: Require three actual intelligible WAVs per passing configuration
+        run: python3 probes/native-f5/check_calibration.py native-f5-calibration native-f5-calibration.json whisper-runtime/build/bin/whisper-cli tiny.en.bin
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Native-F5-calibration-evidence
+          path: |
+            native-f5-calibration.json
+            native-f5-calibration/
+            probes/native-f5/native-f5-audio-build.log
+          if-no-files-found: warn

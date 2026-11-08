@@ -7,6 +7,9 @@ import CryptoKit
 actor F5ReferenceEngine {
     private var engine: F5TTSModel?
     private var loadedURL: URL?
+    private let steps: Int
+    private let seed: UInt64
+    init(steps: Int = 32, seed: UInt64 = 347) { self.steps = steps; self.seed = seed }
     private struct Proof: Decodable {
         struct File: Decodable { let path, sha256: String; let size: Int }
         let schemaVersion: Int
@@ -60,7 +63,7 @@ actor F5ReferenceEngine {
             throw NSError(domain: "VoiceMatrix.F5", code: 1, userInfo: [NSLocalizedDescriptionKey: "Load a local engine and character reference first."])
         }
         try Task.checkCancellation()
-        let options = try F5TTSSynthesisOptions(steps: 32, seed: 347)
+        let options = try F5TTSSynthesisOptions(steps: steps, seed: seed)
         let samples = try await engine.generate(text: text, referenceAudio: referenceAudio, referenceText: referenceText, options: options)
         try Task.checkCancellation()
         guard samples.count >= 2400, samples.allSatisfy({ $0.isFinite }),
