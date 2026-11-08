@@ -18,18 +18,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run download 42517190096 --repo R347H4CK3R/Ghostline --name Current-character-UI-evidence --dir evidence
+          gh run download 42518210582 --repo R347H4CK3R/Ghostline --name Current-character-UI-evidence --dir evidence
           python3 - <<'PY'
           import base64,io,json,pathlib,subprocess
           import imageio_ffmpeg
           from PIL import Image
           paths=[p for folder in ('workflow-screenshots','ui-screenshots') for p in pathlib.Path('evidence',folder).rglob('*') if p.suffix.lower() in ('.png','.jpeg','.jpg')]
-          for video in pathlib.Path('evidence/workflow-screenshots').glob('*.mp4'):
+          for video in []:
               frame=pathlib.Path('evidence/failed-picker.png')
               subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(),'-v','error','-y','-sseof','-1','-i',str(video),'-frames:v','1',str(frame)],check=True)
               paths.insert(0,frame)
+          paths=[pathlib.Path('evidence/ui-screenshots')/name for name in ('5B089BF1-A144-4F13-B738-E8605417C8B6.png','5DDEA984-291E-4BCA-8C06-F0530B7FE361.png','17641C1A-7410-45E1-92E1-BCE220B92122.png')]
           print("Screenshot count:",len(paths))
-          for path in paths[:1]:
+          for path in paths[:3]:
               im=Image.open(path).convert('RGB')
               im.thumbnail((390,900))
               data=io.BytesIO();im.save(data,format='JPEG',quality=55)
