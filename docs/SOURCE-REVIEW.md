@@ -1,0 +1,24 @@
+# Initial source review form
+
+This source-only feature adds an authenticated companion page at /review. It replaces manual JSON authoring for an initial reviewed recipe, not automatic diarization or label discovery. The released 0.4.1 app and feeds remain unchanged. Deployment and browser checks must be verified before presenting the page as available on the laptop.
+
+The page lists waiting, awaiting-preparation and paused queue entries. Reviewers open the source video using their own access, enter clean 0.5–15 second segment times, stable profile IDs/names/categories, an explicit source-use basis and reviewer record, and select a reviewed source-label basis. Approval records local processing only; it does not establish public likeness authorization or character resemblance. Missing reference words can be transcribed by the existing local worker and remain automatic-needs-review.
+
+The existing loopback/Tailscale authorization runs before GET or POST /review. The page contains a random process-lifetime request nonce, required as a custom header on JSON submission; no CORS is enabled. Content security policy allows only the page's nonce-bearing scripts/styles and same-origin fetches. User names are inserted as text rather than HTML. Requests are capped at 512000 bytes and use the same validator as the actual video preparer.
+
+Submission saves only a new recipes/<canonical-video-ID>.json for an existing eligible job, under a cooperating process lock and SQLite BEGIN IMMEDIATE transaction. The file is flushed then atomically renamed. Existing recipes and already prepared specifications are rejected, preserving earlier work. No terminal job is silently requeued and no job is marked completed. Arbitrary local editors are outside this lock; this is not a hostile-filesystem or universal power-loss guarantee. The reviewed-recipe worker consumes a newly arrived recipe on its next eligible poll, subject to game/pause/resource checks. Active or failed/needs-review jobs require a separate explicit recovery/replacement workflow.
+
+Tests exercise actual authenticated HTTP, anti-forgery rejection, invalid labels/use records/URL types, initial save, existing-recipe preservation, terminal/prepared-job refusal, and HTTP-save → real FFmpeg synthetic AV preparation → immutable reference/specification. Network acquisition is replaced by a local synthetic fixture; there is no new live-video, neural character, physical-phone or likeness result. Independent review reproduced misleading success for terminal jobs and a null-URL request disconnect; both received failing regressions and fixes. Browser automation is a separate hosted gate: local headless Chromium could not launch because this executor denies its required Unix socket.
+
+# Implementation plan and verification
+
+Goal: let an explicitly reviewed initial source reach the existing processor without hand-written JSON. Architecture: keep source review in a small companion form/module, share existing recipe validation, preserve queue and master-folder authority. Tech stack: Python standard-library HTTP/SQLite/files, self-contained HTML/JS, FFmpeg synthetic fixture checks, hosted Playwright browser check. No app binary, engine/model, retry budget or quality gate changes.
+
+- [x] Add real HTTP tests and observe missing-page failures before implementation.
+- [x] Share validate_recipe with video_prepare; implement authenticated form/initial save and anti-forgery header.
+- [x] Test terminal/already prepared jobs and malformed URL requests; reproduce and fix both review findings.
+- [x] Independently review security, correctness and existing-reference preservation.
+- [ ] Require full Windows/Linux tests and actual mobile-width browser submission/replacement rejection.
+- [ ] Only then stage all coupled modules plus HTML on the laptop, retain backups, restart endpoint only, and verify live auth/UI routes without submitting private work or restarting a healthy speech worker.
+
+Review focus: stale/terminal job state, prior prepared specifications, concurrent first submissions, malformed nested input and untrusted labels. The current tests pin state/refusal/input behavior; no candidate promotion or automatic identity claim is introduced. UI and app integration should later expose this page from the queue dashboard/native video list, with automated segment/label proposals kept visibly uncertain until reviewed.

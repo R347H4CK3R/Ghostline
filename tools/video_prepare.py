@@ -7,11 +7,9 @@ from tools.master_voices import _publish_lock
 
 class ReviewRequired(ValueError):pass
 
-def prepare(recipe_path,spec_directory,*,cancelled=lambda:False,transcribe=None,downloader_factory=None,commit=None):
- recipe_path=pathlib.Path(recipe_path)
- if recipe_path.is_symlink() or not recipe_path.is_file() or recipe_path.stat().st_size>512000:raise ValueError('Invalid video preparation recipe')
- raw=recipe_path.read_bytes();recipe=json.loads(raw)
+def validate_recipe(recipe,*,transcribe_available=False):
  if not isinstance(recipe,dict) or recipe.get('schemaVersion')!=1:raise ValueError('Invalid video preparation recipe')
+ if not isinstance(recipe.get('videoURL'),str):raise ValueError('Video URL must be text')
  identifier=video_id(recipe.get('videoURL',''));review=recipe.get('referenceUseReview',{})
  if not isinstance(review,dict) or review.get('decision')!='approved-local-processing' or any(not isinstance(review.get(k),str) or not review[k].strip() for k in ['reviewer','record']):raise ReviewRequired('Reference-use review and provenance record are required before downloading')
  segments=recipe.get('segments')
@@ -23,11 +21,19 @@ def prepare(recipe_path,spec_directory,*,cancelled=lambda:False,transcribe=None,
   if any(isinstance(row.get(k),bool) for k in ['start','end']):raise ValueError('Reference times must be numbers')
   m={k:row.get(k) for k in ['id','name','categories','source','permission']};text=row.get('referenceText','')
   if not isinstance(text,str):raise ValueError('Reference words must be text')
-  if not text.strip() and transcribe is None:raise ReviewRequired('Reference words or a local transcription engine are required')
+  if not text.strip() and not transcribe_available:raise ReviewRequired('Reference words or a local transcription engine are required')
   m['referenceText']=text.strip() or 'Pending local transcription';_metadata(m)
   if len(m['categories'])>50 or len(json.dumps(m).encode())>48000:raise ValueError('Reference metadata is too large')
   metadata[m['id']]=m
  validate_request(recipe['videoURL'],segments)
+ return identifier,metadata
+
+def prepare(recipe_path,spec_directory,*,cancelled=lambda:False,transcribe=None,downloader_factory=None,commit=None):
+ recipe_path=pathlib.Path(recipe_path)
+ if recipe_path.is_symlink() or not recipe_path.is_file() or recipe_path.stat().st_size>512000:raise ValueError('Invalid video preparation recipe')
+ raw=recipe_path.read_bytes();recipe=json.loads(raw)
+ identifier,metadata=validate_recipe(recipe,transcribe_available=transcribe is not None)
+ segments=recipe['segments'];review=recipe['referenceUseReview']
  root=pathlib.Path(spec_directory)
  if root.is_symlink():raise ValueError('Choose a real specifications folder')
  root=root.resolve();root.mkdir(parents=True,exist_ok=True)

@@ -1,5 +1,7 @@
 """Authenticated queue API; loopback only until an encrypted device transport is paired."""
-import hmac,json,pathlib,threading
+import hmac,json,pathlib,threading,secrets
+from tools.source_review import save_initial_review,page
+from tools.master_voices import PublishBusy
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from tools.video_queue import VideoQueue,video_id
 from tools.private_voices import PrivateVoices,TransferError
@@ -7,6 +9,7 @@ from tools.private_voices import PrivateVoices,TransferError
 def create_server(root,token,port=0,trusted_login=None,master=None):
  if len(token)<32:raise ValueError('Use a strong pairing token')
  root=pathlib.Path(root);root.mkdir(parents=True,exist_ok=True);lock=threading.Lock()
+ csrf=secrets.token_urlsafe(32)
  voices=PrivateVoices(master) if master is not None else None
  class Handler(BaseHTTPRequestHandler):
   def log_message(self,*args):pass # Do not log tokens or submitted names/links.
@@ -20,6 +23,8 @@ def create_server(root,token,port=0,trusted_login=None,master=None):
    return bool(trusted_login and login and hmac.compare_digest(login,trusted_login))
   def do_GET(self):
    if not self.authorized():return self.respond(401,dict(error='Pairing required'))
+   if self.path=='/review':
+    body=page(csrf);self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.send_header('Content-Security-Policy',"default-src 'none'; script-src 'nonce-"+csrf+"'; style-src 'nonce-"+csrf+"'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");self.end_headers();self.wfile.write(body);return
    if self.path=='/voices' or self.path.startswith('/voices/'):
     if voices is None:return self.respond(404,dict(error='Private master is not configured'))
     try:
@@ -38,6 +43,14 @@ def create_server(root,token,port=0,trusted_login=None,master=None):
    finally:q.close()
   def do_POST(self):
    if not self.authorized():return self.respond(401,dict(error='Pairing required'))
+   if self.path=='/review':
+    if not hmac.compare_digest(self.headers.get('X-VoiceMatrix-Review',''),csrf):return self.respond(403,dict(error='Reload the source review page before submitting'))
+    try:
+     length=int(self.headers.get('Content-Length','0'))
+     if not 0<length<=512000 or self.headers.get('Content-Type','')!='application/json':raise ValueError('Invalid review request')
+     result=save_initial_review(root,json.loads(self.rfile.read(length)));return self.respond(200,result)
+    except (FileExistsError,PublishBusy):return self.respond(409,dict(error='An existing review or busy writer was preserved; replacements need a separate reviewed update'))
+    except (ValueError,TypeError,KeyError,OverflowError):return self.respond(400,dict(error='Review rejected: check queued video, source-use record, labels and 0.5–15 second segments'))
    if self.path!='/queue':return self.respond(404,dict(error='Unknown action'))
    try:
     length=int(self.headers.get('Content-Length','0'))

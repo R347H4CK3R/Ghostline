@@ -1,7 +1,7 @@
 name: Prepared voice queue processor checks
 on:
   push:
-    paths: ['tools/private_voices.py', 'tests/test_private_voice_transfer.py', 'tools/queue_transport.py', 'tools/laptop_supervisor.py', 'tests/test_queue_dashboard.py', 'tools/companion_runtime.py', 'tests/test_companion_runtime.py', 'tools/video_prepare.py', 'tools/video_reference.py', 'tools/video_download.py', 'tools/process_control.py', 'tools/voice_pack.py', 'tests/test_video_preparation.py', 'tools/queue_processor.py', 'tools/video_queue.py', 'tools/master_voices.py', 'tools/pack_speech.py', 'tests/test_queue_processor.py', 'tests/test_queue_publication.py', '.github/workflows/queue-processor.yml']
+    paths: ['tools/source_review.py', 'tools/source_review.html', 'tests/test_source_review.py', 'tests/source_review_browser.cjs', 'tests/source_review_browser_server.py', 'tools/private_voices.py', 'tests/test_private_voice_transfer.py', 'tools/queue_transport.py', 'tools/laptop_supervisor.py', 'tests/test_queue_dashboard.py', 'tools/companion_runtime.py', 'tests/test_companion_runtime.py', 'tools/video_prepare.py', 'tools/video_reference.py', 'tools/video_download.py', 'tools/process_control.py', 'tools/voice_pack.py', 'tests/test_video_preparation.py', 'tools/queue_processor.py', 'tools/video_queue.py', 'tools/master_voices.py', 'tools/pack_speech.py', 'tests/test_queue_processor.py', 'tests/test_queue_publication.py', '.github/workflows/queue-processor.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -28,3 +28,29 @@ jobs:
       - name: Run source, real queue/files, transport and cancellation regressions
         run: python -m unittest discover -s tests -v
 
+
+  browser-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser test client
+        run: |
+          npm install --no-audit --no-fund --prefix browser-runtime playwright@1.62.1
+          browser-runtime/node_modules/.bin/playwright install --with-deps chromium
+      - name: Check actual mobile-width review form and server submission
+        env:
+          NODE_PATH: ${{ github.workspace }}/browser-runtime/node_modules
+        run: node tests/source_review_browser.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Source-review-mobile
+          path: source-review-mobile.png
+          if-no-files-found: error
+        if: always()
