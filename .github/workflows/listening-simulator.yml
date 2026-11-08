@@ -47,6 +47,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           xcodebuild test -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath simulator-build -resultBundlePath listening-audio.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixTests/F5SimulatorTests > simulator-audio.log 2>&1 || { tail -160 simulator-audio.log; exit 1; }
+      - name: Export readable test attachments and crash diagnostics
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -d listening-ui.xcresult ]; then xcrun xcresulttool export attachments --path listening-ui.xcresult --output-path ui-attachments; fi
+          if [ -d listening-audio.xcresult ]; then
+            xcrun xcresulttool export attachments --path listening-audio.xcresult --output-path audio-attachments
+            xcrun xcresulttool export diagnostics --path listening-audio.xcresult --output-path audio-diagnostics
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -58,4 +66,7 @@ jobs:
             listening-ui.xcresult
             listening-audio.xcresult
             VoiceMatrixTests/simulator-reference.wav
+            ui-attachments
+            audio-attachments
+            audio-diagnostics
           retention-days: 14

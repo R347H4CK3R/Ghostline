@@ -10,10 +10,17 @@ final class F5SimulatorTests: XCTestCase {
         let model = try XCTUnwrap(Bundle.main.url(forResource:"F5TTS",withExtension:nil))
         let output = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
         defer { try? FileManager.default.removeItem(at:output) }
+        #if targetEnvironment(simulator)
+        // Diagnostic hypothesis: simulator Metal does not supply an architecture name.
+        // Use MLX's conservative unknown architecture only in this test process.
+        setenv("MLX_METAL_GPU_ARCH", "unknown", 1)
+        #endif
+        print("F5 simulator: local asset validation and model loading starting")
         let engine = F5ReferenceEngine()
         let start = Date()
         try await engine.load(localBundle:model)
         let loaded = Date()
+        print("F5 simulator: model loaded; synthesis starting")
         try await engine.speak(text:"Please bring three blue notebooks.",referenceAudio:reference,referenceText:"The morning air is clear and the streets are quiet today.",destination:output)
         let generated = Date()
         let file = try AVAudioFile(forReading:output)
@@ -27,7 +34,7 @@ final class F5SimulatorTests: XCTestCase {
         XCTAssertGreaterThan(energy / Double(buffer.frameLength),1e-8)
         let audio = XCTAttachment(contentsOfFile:output);audio.name="simulator-f5-output.wav";audio.lifetime = .keepAlways;add(audio)
         let input = XCTAttachment(contentsOfFile:reference);input.name="simulator-reference.wav";input.lifetime = .keepAlways;add(input)
-        let report:[String:Any] = ["platform":"iOS Simulator","referenceSHA256":SHA256.hash(data:try Data(contentsOf:reference)).map { String(format:"%02x",$0) }.joined(),"outputSHA256":SHA256.hash(data:try Data(contentsOf:output)).map { String(format:"%02x",$0) }.joined(),"loadSeconds":loaded.timeIntervalSince(start),"generateSeconds":generated.timeIntervalSince(loaded),"audioSeconds":Double(file.length)/24000,"physicalIPhoneVerified":false,"characterLikenessVerified":false]
+        let report:[String:Any] = ["platform":"iOS Simulator","testOnlyArchitectureOverride":"unknown","referenceSHA256":SHA256.hash(data:try Data(contentsOf:reference)).map { String(format:"%02x",$0) }.joined(),"outputSHA256":SHA256.hash(data:try Data(contentsOf:output)).map { String(format:"%02x",$0) }.joined(),"loadSeconds":loaded.timeIntervalSince(start),"generateSeconds":generated.timeIntervalSince(loaded),"audioSeconds":Double(file.length)/24000,"physicalIPhoneVerified":false,"characterLikenessVerified":false]
         let evidence = XCTAttachment(data:try JSONSerialization.data(withJSONObject:report,options:.prettyPrinted),uniformTypeIdentifier:"public.json"); evidence.name="simulator-f5-report.json";evidence.lifetime = .keepAlways;add(evidence)
         await engine.unload()
     }

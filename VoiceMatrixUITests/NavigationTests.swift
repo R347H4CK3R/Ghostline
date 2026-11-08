@@ -32,6 +32,7 @@ import XCTest
         XCTAssertTrue(make.waitForExistence(timeout: 20)); make.tap()
         XCTAssertTrue(app.buttons["import-character-folder"].waitForExistence(timeout: 10))
         let speak = app.buttons["Create Test Speech"]
+        for _ in 0..<4 { if speak.exists { break }; app.swipeUp() }
         XCTAssertTrue(speak.waitForExistence(timeout: 10)); XCTAssertFalse(speak.isEnabled)
         XCTAssertFalse(app.buttons["save-recording"].exists)
         XCTAssertTrue(app.navigationBars["My Character Folder"].exists)
