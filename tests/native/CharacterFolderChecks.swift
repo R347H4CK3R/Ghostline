@@ -27,6 +27,15 @@ import Foundation
         try JSONSerialization.data(withJSONObject: metadata).write(to: manifest)
         let revised = try await store.importCollection(at: updated)
         precondition(revised.count == 1 && revised[0].name == "Updated Original")
+        // Valid new conditioning must not replace the active voice on refresh.
+        let changedText = work.appendingPathComponent("changed-text")
+        try fm.copyItem(at: updated, to: changedText)
+        let changedManifest = changedText.appendingPathComponent("original-test/manifest.json")
+        var changedMetadata = try JSONSerialization.jsonObject(with: Data(contentsOf: changedManifest)) as! [String: Any]
+        changedMetadata["referenceText"] = "Different conditioning words."
+        try JSONSerialization.data(withJSONObject: changedMetadata).write(to: changedManifest)
+        let retained = try await store.importCollection(at: changedText)
+        precondition(retained == revised, "Unreviewed conditioning replaced the active reference")
         // A later corrupt refresh must not replace a usable private revision.
         try Data("broken".utf8).write(to: updated.appendingPathComponent("original-test/reference.wav"))
         try await expectFailure { _ = try await store.importCollection(at: updated) }
