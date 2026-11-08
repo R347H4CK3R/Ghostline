@@ -26,10 +26,10 @@ jobs:
           paths=[p for folder in ('workflow-screenshots','ui-screenshots') for p in pathlib.Path('evidence',folder).rglob('*') if p.suffix.lower() in ('.png','.jpeg','.jpg')]
           for video in pathlib.Path('evidence/workflow-screenshots').glob('*.mp4'):
               frame=pathlib.Path('evidence/failed-picker.png')
-              subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(),'-v','error','-y','-sseof','-4','-i',str(video),'-frames:v','1',str(frame)],check=True)
+              subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(),'-v','error','-y','-sseof','-1','-i',str(video),'-frames:v','1',str(frame)],check=True)
               paths.insert(0,frame)
           print("Screenshot count:",len(paths))
-          for path in paths[:2]:
+          for path in paths[:1]:
               im=Image.open(path).convert('RGB')
               im.thumbnail((390,900))
               data=io.BytesIO();im.save(data,format='JPEG',quality=55)
