@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "files": [
+    {
+      "role": "source",
+      "file": "conversion-source.wav",
+      "sha256": "8741b5ebb943f4c39006b6c7a7dd5ca92f344edb402744ad7132ee1f94ff45b4",
+      "bytes": 108032,
+      "text": "I found a strange device near the portal.",
+      "wordErrorRate": 0,
+      "originRun": 42449016261,
+      "originSourceCommit": "eb5ca516da3c6c8da743559c24206b4bb3ab117e",
+      "sourceKind": "Generated neutral synthetic diagnostic speech; no character/reference recordings"
+    },
+    {
+      "role": "reference",
+      "file": "conversion-reference.wav",
+      "sha256": "0840a3b08d2d438804e760afa54bc1c9cdf1c8b33bffdc1ab458be4ab3740cd2",
+      "bytes": 123392,
+      "text": "Please close the window and bring the notebook.",
+      "wordErrorRate": 0,
+      "originRun": 42449016261,
+      "originSourceCommit": "eb5ca516da3c6c8da743559c24206b4bb3ab117e",
+      "sourceKind": "Generated neutral synthetic diagnostic speech; no character/reference recordings"
+    }
+  ]
+}

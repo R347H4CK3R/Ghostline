@@ -19,7 +19,7 @@ struct RootView: View {
     var body: some View {
         TabView {
             NavigationStack { HomeView() }.tabItem { Label("Home", systemImage: "house.fill") }
-            NavigationStack { VoicesView() }.tabItem { Label("Voices", systemImage: "waveform") }
+            NavigationStack { CharacterLibraryView() }.tabItem { Label("Voices", systemImage: "waveform") }
             NavigationStack { SavedView() }.tabItem { Label("Saved", systemImage: "folder.fill") }
             NavigationStack { HelpView() }.tabItem { Label("Help", systemImage: "questionmark.circle") }
             NavigationStack { SettingsView() }.tabItem { Label("Settings", systemImage: "gearshape") }
@@ -29,8 +29,8 @@ struct RootView: View {
             VStack(spacing: 26) {
                 Image(systemName: "waveform.circle.fill").font(.system(size: 80)).foregroundStyle(.purple)
                 Text("Welcome to VoiceMatrix").font(.largeTitle.bold())
-                Text("1. Choose a voice\n2. Type a message\n3. Tap Speak\n4. Listen or Save").font(.title2).lineSpacing(12)
-                Text("Your words and recordings stay on your iPhone. Included profiles are experimental; sound quality still needs listening tests.").foregroundStyle(.secondary)
+                Text("1. Choose your Voices folder\n2. Choose a character\n3. Type or record your words\n4. Listen, Save or Share").font(.title2).lineSpacing(12)
+                Text("Speech and voice changing run on your iPhone. Your separate references are experimental; compare each character before approving its sound.").foregroundStyle(.secondary)
                 Button("LET’S START") { tutorialSeen = true }.buttonStyle(.borderedProminent).controlSize(.large)
             }.padding(28).presentationDetents([.large])
         }
@@ -44,11 +44,11 @@ struct HomeView: View {
                 Image(systemName: "waveform.circle.fill").font(.system(size: 62)).foregroundStyle(.purple, .blue)
                 Text("Your voice.\nA new dimension.").font(.largeTitle.bold())
                 Text("A private voice studio. No account needed.").foregroundStyle(.secondary)
-                NavigationLink { SpeechView() } label: { HomeCard(title: "MAKE SPEECH", detail: "Type words. Choose a voice. Hear them speak.", icon: "text.bubble.fill") }.accessibilityIdentifier("make-speech")
-                NavigationLink { RecordingView() } label: { HomeCard(title: "CHANGE MY VOICE", detail: "Record. Choose a voice. Hear your changed voice.", icon: "mic.fill") }.accessibilityIdentifier("change-my-voice")
+                NavigationLink { CharacterLibraryView() } label: { HomeCard(title: "MAKE SPEECH", detail: "Type words. Choose a voice. Hear them speak.", icon: "text.bubble.fill") }.accessibilityIdentifier("make-speech")
+                NavigationLink { CharacterLibraryView(mode: .conversion) } label: { HomeCard(title: "CHANGE MY VOICE", detail: "Record. Choose a voice. Hear your changed voice.", icon: "mic.fill") }.accessibilityIdentifier("change-my-voice")
                 NavigationLink { VideoQueueView() } label: { HomeCard(title: "VIDEO LIST", detail: "Add videos and export your character requests.", icon: "list.bullet.rectangle") }
                 NavigationLink { CharacterLibraryView() } label: { HomeCard(title: "MY CHARACTER FOLDER", detail: "Import and refresh your separate character collection.", icon: "folder.badge.plus") }
-                Text("Your character library\nYour approved Rick and Morty previews are saved separately. Reusable iPhone character voices are still being prepared. The optional speaker library is not your character collection.").font(.footnote).foregroundStyle(.secondary)
+                Text("Your character library\nChoose your separate Voices folder once. Added and updated references are copied privately to this iPhone. Keep using imported voices while offline. Character match is checked by your listening decisions.").font(.footnote).foregroundStyle(.secondary)
             }.padding(24)
         }.background(Color(red: 0.045, green: 0.025, blue: 0.09)).navigationTitle("VoiceMatrix")
     }

@@ -7,19 +7,26 @@ import CryptoKit
     @Published var busy = false
     @Published var selectedID = ""
     @Published var output: URL?
+    @Published private(set) var outputKind = "speech"
     @Published private(set) var outputCharacterID = ""
     @Published private(set) var outputReferenceHash = ""
     @Published private(set) var reviewSummaries: [String: CharacterListeningReview] = [:]
-    @Published var message = "Choose your Voices collection folder once. Imported references are copied privately to this iPhone."
+    @Published var message = "Choose your Voices collection folder once. Your voice samples are copied privately to this iPhone."
     private let store: CharacterFolderStore
     private let reviewStore: CharacterReviewStore
     private let engine = F5ReferenceEngine()
+    private let voiceChanger = CharacterVoiceConversion()
+    private var operationID = UUID()
     private var job: Task<Void, Never>?
     private var catalogRefresh = UUID()
     private var reviewRefresh = UUID()
     var engineAvailable: Bool {
         guard let root = Bundle.main.url(forResource: "F5TTS", withExtension: nil) else { return false }
         return FileManager.default.fileExists(atPath: root.appendingPathComponent("voicematrix-engine.json").path)
+    }
+    var conversionAvailable: Bool {
+        guard let root = Bundle.main.url(forResource: "OpenVoice", withExtension: nil) else { return false }
+        return FileManager.default.fileExists(atPath: root.appendingPathComponent("model-manifest.json").path)
     }
     init() {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -56,7 +63,7 @@ import CryptoKit
                 if let bookmark = try? url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil) {
                     UserDefaults.standard.set(bookmark, forKey: "characterFolderBookmark.v1")
                 }
-                message = "\(profiles.count) reusable references saved. " + (engineAvailable ? "Choose one to test speech." : "A build containing the shared F5 engine is needed to create speech.") + " Character resemblance has not been verified."
+                message = "\(profiles.count) voice samples saved. " + (engineAvailable ? "Choose one to try speech." : "A build containing the shared F5 engine is needed to create speech.") + " Character resemblance has not been verified."
             } catch {
                 message = error is CancellationError ? "Import stopped. Previously imported voices were kept." : "Import failed. Previously imported voices were kept. " + error.localizedDescription
             }
@@ -107,6 +114,35 @@ import CryptoKit
             } catch { message = "Your listening decision could not be saved. " + error.localizedDescription }
         }
     }
+    func convertRecording(_ source: URL, audio: AudioStore, studio: SpeechStudio) {
+        guard !busy, let voice = profiles.first(where: { $0.id == selectedID }) else { return }
+        guard conversionAvailable else { message = "This build does not contain the voice-changing engine. Your references are still saved."; return }
+        guard let lease = audio.claimProcessing() else { message = "Stop recording or the other speech task first."; return }
+        let copy = FileManager.default.temporaryDirectory.appendingPathComponent("Imported-Character-" + UUID().uuidString + ".wav")
+        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("Converted-" + voice.id + "-" + UUID().uuidString + ".wav")
+        do { try FileManager.default.copyItem(at: source, to: copy) }
+        catch { audio.releaseProcessing(lease); TemporaryAudio.discard(copy); message = "Your recording could not be prepared. Try recording again."; return }
+        audio.stop(); busy = true; message = "Preparing your character…"
+        let token = UUID(); operationID = token
+        job = Task {
+            defer { busy = false; audio.releaseProcessing(lease); TemporaryAudio.discard(copy) }
+            do {
+                await studio.releaseModelsForCharacter()
+                await engine.unload()
+                let reference = try await store.referenceURL(id: voice.id)
+                _ = try await voiceChanger.run(reference: reference, source: copy, destination: destination) { stage in
+                    Task { @MainActor in if self.busy && self.operationID == token { self.message = stage } }
+                }
+                try Task.checkCancellation()
+                TemporaryAudio.discard(output); output = destination; outputKind = "conversion"
+                outputCharacterID = voice.id; outputReferenceHash = voice.referenceSHA256
+                message = "Your changed recording is ready to listen, save or share. Please compare the character resemblance."
+            } catch {
+                TemporaryAudio.discard(destination)
+                message = error is CancellationError || Task.isCancelled ? "Stopped. Your saved voices were kept." : "Your voice could not be changed. " + error.localizedDescription
+            }
+        }
+    }
     func cancel() { job?.cancel() }
     func speak(_ words: String, audio: AudioStore, studio: SpeechStudio) {
         let text = words.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -114,11 +150,12 @@ import CryptoKit
         guard !text.isEmpty, text.count <= 500 else { message = "Type between 1 and 500 characters for this experimental engine."; return }
         guard let model = Bundle.main.url(forResource: "F5TTS", withExtension: nil),
               FileManager.default.fileExists(atPath: model.appendingPathComponent("config.json").path) else {
-            message = "This build does not contain the F5 speech engine. Your imported references are safe; install a build containing the shared engine to test speech."; return
+            message = "This build does not contain the F5 speech engine. Your imported voice samples are safe; install a build containing the shared engine to test speech."; return
         }
         guard let lease = audio.claimProcessing() else { message = "Stop the other recording or speech task first."; return }
         busy = true; message = "Starting the local character speech engine…"
-        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("Speech-Character-" + UUID().uuidString + ".wav")
+        let token = UUID(); operationID = token
+        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("Speech-" + voice.id + "-" + UUID().uuidString + ".wav")
         job = Task {
             defer { busy = false; audio.releaseProcessing(lease) }
             do {
@@ -126,9 +163,11 @@ import CryptoKit
                 let reference = try await store.referenceURL(id: voice.id)
                 try await engine.load(localBundle: model)
                 message = "Creating speech as " + voice.name + "…"
-                try await engine.speak(text: text, referenceAudio: reference, referenceText: voice.referenceText, destination: destination)
+                try await engine.speak(text: text, referenceAudio: reference, referenceText: voice.referenceText, destination: destination) { part, total in
+                    Task { @MainActor in if self.busy && self.operationID == token { self.message = "Creating part \(part) of \(total)…" } }
+                }
                 try Task.checkCancellation()
-                TemporaryAudio.discard(output); output = destination
+                TemporaryAudio.discard(output); output = destination; outputKind = "speech"
                 outputCharacterID = voice.id; outputReferenceHash = voice.referenceSHA256
                 message = "Ready to listen, save or share. Please judge the character resemblance by listening; it has not been verified."
             } catch {
@@ -140,7 +179,13 @@ import CryptoKit
     }
 }
 
+enum CharacterStudioMode: String, CaseIterable { case speech, conversion }
+
 struct CharacterLibraryView: View {
+    @State private var mode: CharacterStudioMode
+    @StateObject private var recorder = Recorder()
+    @State private var importingAudio = false
+    init(mode: CharacterStudioMode = .speech) { _mode = State(initialValue: mode) }
     @EnvironmentObject private var library: CharacterLibrary
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var audio: AudioStore
@@ -165,7 +210,7 @@ struct CharacterLibraryView: View {
                 if library.busy { ProgressView("Working…"); Button("Stop after current step", role: .cancel) { library.cancel() } }
                 Text("This imports reusable reference profiles, rather than preview recordings or trained voice-conversion models. Their shared speech engine is separate. Existing saved recordings are kept.").font(.caption).foregroundStyle(.secondary)
             }
-            Section("\(library.profiles.count) imported references") {
+            Section("\(library.profiles.count) imported voice samples") {
                 Picker("Category", selection: $category) { ForEach(categories, id: \.self) { Text($0).tag($0) } }
                 if library.profiles.isEmpty { Text("Your collection appears here after import. Choose the folder containing collection.json; you do not need to select the JSON file.").foregroundStyle(.secondary) }
                 ForEach(filtered) { voice in
@@ -179,22 +224,51 @@ struct CharacterLibraryView: View {
                     } label: { Label(voice.name, systemImage: "person.wave.2") }
                 }
             }
-            Section("Test character speech") {
+            Section {
+                Picker("What would you like to do?", selection: $mode) {
+                    Text("Make Speech").tag(CharacterStudioMode.speech)
+                    Text("Change My Voice").tag(CharacterStudioMode.conversion)
+                }.pickerStyle(.segmented).disabled(library.busy || recorder.recording)
+            }
+            if mode == .speech {
+            Section("Make character speech") {
                 Text(library.profiles.first(where: { $0.id == library.selectedID })?.name ?? "Choose an imported character above")
                 TextEditor(text: $words).frame(minHeight: 110).accessibilityLabel("Words for your character")
                 Button { audio.stop(); library.speak(words, audio: audio, studio: studio) } label: { Label("Create Test Speech", systemImage: "play.fill") }
                     .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.engineAvailable)
-                if !library.engineAvailable { Text("The shared F5 engine is absent from this build. Your imported references remain saved; speech testing becomes available in a build containing that engine.").foregroundStyle(.secondary) }
+                if !library.engineAvailable { Text("The shared F5 engine is absent from this build. Your imported voice samples remain saved; speech testing becomes available in a build containing that engine.").foregroundStyle(.secondary) }
                 Text("Experimental F5 speech. Up to 500 characters per test. This creates new words using the selected reference; it does not convert a recording. Character-match listening and iPhone performance tests are still required.").font(.caption).foregroundStyle(.secondary)
-                if let output = library.output, library.outputMatchesSelection { AudioActions(url: output) }
-                else if library.output != nil { Text("Your previous speech belongs to another character or reference. Select that character again, or create new speech.").foregroundStyle(.secondary) }
+                if let output = library.output, library.outputKind == "speech", library.outputMatchesSelection { AudioActions(url: output) }
+                else { Text("Create speech with this character to listen or save.").foregroundStyle(.secondary) }
+            }
+            } else {
+                Section("1 · Record your words") {
+                    Button {
+                        if recorder.recording { recorder.stop() } else { Task { await recorder.start(audio: audio) } }
+                    } label: { Label(recorder.recording ? "STOP RECORDING" : "RECORD MY VOICE", systemImage: recorder.recording ? "stop.fill" : "mic.fill").frame(minHeight: 52) }
+                        .buttonStyle(.borderedProminent).disabled(library.busy || recorder.requestingPermission || (audio.processingInUse && !recorder.recording))
+                    Button("Import Audio") { importingAudio = true }.disabled(library.busy || recorder.recording || recorder.requestingPermission)
+                    Text(recorder.status)
+                    Text("Use up to 10 seconds of clear speech. Your words and timing are processed locally.").font(.caption).foregroundStyle(.secondary)
+                }
+                Section("2 · Choose a character above, then Convert") {
+                    Text(library.profiles.first(where: { $0.id == library.selectedID })?.name ?? "Choose a character above")
+                    Button {
+                        if let source = recorder.output { library.convertRecording(source, audio: audio, studio: studio) }
+                    } label: { Label("CONVERT", systemImage: "waveform").frame(minHeight: 52) }.buttonStyle(.borderedProminent)
+                        .disabled(library.busy || recorder.recording || recorder.requestingPermission || recorder.output == nil || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.conversionAvailable)
+                    if !library.conversionAvailable { Text("This build needs the shared voice-changing engine before conversion can run.").foregroundStyle(.secondary) }
+                    if let source = recorder.output, !recorder.recording { Button("Listen to my original recording") { audio.play(source) }.disabled(library.busy) }
+                    Text("Experimental neural voice changing. Character resemblance and iPhone performance require testing; this is not real-time calling.").font(.caption).foregroundStyle(.secondary)
+                    if let output = library.output, library.outputKind == "conversion", library.outputMatchesSelection { AudioActions(url: output) }
+                }
             }
             Section("Does it sound like your character?") {
                 Text("Listen to the reference, then the new speech. Your answer records a listening judgment, separate from technical audio checks.").font(.callout)
                 Button { library.listenToReference(audio: audio) } label: { Label("1 · Listen to reference", systemImage: "person.wave.2") }
                     .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse)
                 if let output = library.output, library.canReview {
-                    Button { audio.play(output) } label: { Label("2 · Listen to generated speech", systemImage: "waveform") }
+                    Button { audio.play(output) } label: { Label("2 · Listen to result", systemImage: "waveform") }
                     Button("Matches") { library.review(.matches) }.accessibilityIdentifier("character-match-yes")
                     Button("Doesn’t Match") { library.review(.different) }.accessibilityIdentifier("character-match-no")
                     Button("Unsure") { library.review(.unsure) }.accessibilityIdentifier("character-match-unsure")
@@ -202,12 +276,17 @@ struct CharacterLibraryView: View {
                 if let voice = library.profiles.first(where: { $0.id == library.selectedID }) { Text(library.matchDescription(voice)).font(.caption) }
             }
         }
-        .navigationTitle("My Character Folder")
+        .navigationTitle(mode == .speech ? "Make Speech" : "Change My Voice")
         .searchable(text: $search, prompt: "Find a character or category")
         .fileImporter(isPresented: $choosing, allowedContentTypes: [.folder]) { result in
             switch result { case .success(let url): library.importFolder(url)
             case .failure(let error): library.message = "The folder could not be opened. " + error.localizedDescription }
         }
+        .fileImporter(isPresented: $importingAudio, allowedContentTypes: [.wav, .mpeg4Audio, .audio]) { result in
+            switch result { case .success(let url): recorder.importAudio(url)
+            case .failure: recorder.status = "That recording could not be opened. Try a WAV or M4A file." }
+        }
+        .onDisappear { recorder.discard(); audio.stop() }
         .task { await library.loadAndRefresh() }
         .onChange(of: scenePhase) { _, value in if value == .active { Task { await library.loadAndRefresh() } } }
     }

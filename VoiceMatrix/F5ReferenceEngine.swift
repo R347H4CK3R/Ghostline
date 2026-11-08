@@ -7,6 +7,9 @@ import CryptoKit
 actor F5ReferenceEngine {
     private var engine: F5TTSModel?
     private var loadedURL: URL?
+    private let steps: Int
+    private let seed: UInt64
+    init(steps: Int = 32, seed: UInt64 = 0) { self.steps = steps; self.seed = seed }
     private struct Proof: Decodable {
         struct File: Decodable { let path, sha256: String; let size: Int }
         let schemaVersion: Int
@@ -54,14 +57,31 @@ actor F5ReferenceEngine {
         engine = try await F5TTSModel.fromBundle(localBundle)
         loadedURL = localBundle
     }
-    func speak(text: String, referenceAudio: URL, referenceText: String, destination: URL) async throws {
+    func speak(text: String, referenceAudio: URL, referenceText: String, destination: URL, progress: @escaping @Sendable (Int, Int) -> Void = { _, _ in }) async throws {
         guard let engine, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               !referenceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw NSError(domain: "VoiceMatrix.F5", code: 1, userInfo: [NSLocalizedDescriptionKey: "Load a local engine and character reference first."])
         }
         try Task.checkCancellation()
-        let options = try F5TTSSynthesisOptions(steps: 32, seed: 347)
-        let samples = try await engine.generate(text: text, referenceAudio: referenceAudio, referenceText: referenceText, options: options)
+        let options = try F5TTSSynthesisOptions(steps: steps, seed: seed)
+        let input = try AVAudioFile(forReading: referenceAudio)
+        let seconds = Double(input.length) / input.fileFormat.sampleRate
+        let chunks = try F5SpeechChunks.plan(text: text, referenceText: referenceText, referenceSeconds: seconds)
+        var samples: [Float] = []
+        for (index, chunk) in chunks.enumerated() {
+            try Task.checkCancellation()
+            let tokens = try engine.tokenizer.encode(F5SpeechChunks.normalizedReference(referenceText) + chunk)
+            try F5SpeechChunks.validateTokenCount(tokens.count)
+            progress(index + 1, chunks.count)
+            let clip = try await engine.generate(text: chunk, referenceAudio: referenceAudio, referenceText: referenceText, options: options)
+            try Task.checkCancellation()
+            guard clip.count >= 2400, clip.allSatisfy({ $0.isFinite }),
+                  clip.reduce(0.0, { $0 + Double($1) * Double($1) }) / Double(clip.count) > 1e-8 else {
+                throw NSError(domain: "VoiceMatrix.F5", code: 2, userInfo: [NSLocalizedDescriptionKey: "One part of the message did not produce usable speech. Try another reference."])
+            }
+            if index > 0 { samples.append(contentsOf: repeatElement(Float(0), count: 2880)) }
+            samples.append(contentsOf: clip)
+        }
         try Task.checkCancellation()
         guard samples.count >= 2400, samples.allSatisfy({ $0.isFinite }),
               samples.reduce(0.0, { $0 + Double($1) * Double($1) }) / Double(samples.count) > 1e-8,
@@ -78,4 +98,3 @@ actor F5ReferenceEngine {
     }
     func unload() { engine?.unload(); engine = nil; loadedURL = nil }
 }
-

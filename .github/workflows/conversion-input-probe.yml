@@ -1,0 +1,25 @@
+name: Conversion input duration diagnosis
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+    - name: Validate pinned real speech before model loading
+      run: |-
+        python3 tools/check_conversion_inputs.py
+        xcrun swiftc -parse-as-library VoiceMatrix/ConversionAudio.swift probes/native-conversion/Inputs.swift -o conversion-input-check
+        ./conversion-input-check tests/fixtures/conversion-source.wav tests/fixtures/conversion-reference.wav
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: Conversion-diagnostic-inputs
+        path: tests/fixtures/conversion-inputs.json
+        if-no-files-found: error
+'on':
+  push:
+    paths:
+    - .github/workflows/conversion-input-probe.yml
+  workflow_dispatch: null

@@ -1,7 +1,7 @@
 name: Native character folder checks
 on:
   push:
-    paths: ['VoiceMatrix/CharacterReviewStore.swift', 'tests/native/CharacterReviewChecks.swift', 'VoiceMatrix/StudioActivity.swift', 'tests/native/StudioActivityChecks.swift', 'VoiceMatrix/CharacterFolderStore.swift', 'VoiceMatrix/CharacterLibraryView.swift', 'tests/native/CharacterFolderChecks.swift', 'tests/test_character_folder.py', 'tools/voice_pack.py', '.github/workflows/native-character-folder.yml']
+    paths: ['VoiceMatrix/CharacterReviewStore.swift', 'tests/native/CharacterReviewChecks.swift', 'VoiceMatrix/ConversionAudio.swift', 'VoiceMatrix/OfflineVoiceConverter.swift', 'tests/native/CharacterReferenceAudioChecks.swift', 'VoiceMatrix/F5SpeechChunks.swift', 'tests/native/F5SpeechChunkChecks.swift', 'VoiceMatrix/StudioActivity.swift', 'tests/native/StudioActivityChecks.swift', 'VoiceMatrix/CharacterFolderStore.swift', 'VoiceMatrix/CharacterLibraryView.swift', 'tests/native/CharacterFolderChecks.swift', 'tests/test_character_folder.py', 'tools/voice_pack.py', '.github/workflows/native-character-folder.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -38,3 +38,14 @@ jobs:
         run: |
           xcrun swiftc -parse-as-library VoiceMatrix/CharacterReviewStore.swift tests/native/CharacterReviewChecks.swift -o character-review-checks
           ./character-review-checks
+
+      - name: Check long conditioning reference boundaries without weakening source limits
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/ConversionAudio.swift tests/native/CharacterReferenceAudioChecks.swift -o character-reference-audio-checks
+          ./character-reference-audio-checks
+
+      - name: Check bounded speech chunks and preservation of every word
+        if: always()
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/F5SpeechChunks.swift tests/native/F5SpeechChunkChecks.swift -o f5-speech-chunk-checks
+          ./f5-speech-chunk-checks
