@@ -210,13 +210,14 @@ enum CharacterStudioMode: String, CaseIterable { case speech, conversion }
 struct CharacterLibraryView: View {
     @State private var mode: CharacterStudioMode
     @StateObject private var recorder = Recorder()
-    @State private var importingAudio = false
+    private enum ImportKind { case folder, audio }
+    @State private var importKind: ImportKind = .folder
+    @State private var showingImporter = false
     init(mode: CharacterStudioMode = .speech) { _mode = State(initialValue: mode) }
     @EnvironmentObject private var library: CharacterLibrary
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var audio: AudioStore
     @EnvironmentObject private var studio: SpeechStudio
-    @State private var choosing = false
     @State private var search = ""
     @State private var category = "All"
     @State private var words = "Hello! Welcome to the character voice studio."
@@ -232,7 +233,7 @@ struct CharacterLibraryView: View {
             Section {
                 Button { library.syncVoices() } label: { Label("Sync voices from laptop", systemImage: "arrow.triangle.2.circlepath") }.disabled(library.busy || library.syncing || !LaptopConnection.paired)
                 if library.syncing { ProgressView("Syncing laptop voices…"); Button("Stop sync", role: .cancel) { library.cancelSync() } }
-                Button { choosing = true } label: { Label("Choose Voices Folder", systemImage: "folder.badge.plus") }
+                Button { importKind = .folder; showingImporter = true } label: { Label("Choose Voices Folder", systemImage: "folder.badge.plus") }
                     .disabled(library.busy).accessibilityIdentifier("import-character-folder")
                 Text(library.message).font(.callout).accessibilityAddTraits(.updatesFrequently)
                 if library.busy { ProgressView("Working…"); Button("Stop after current step", role: .cancel) { library.cancel() } }
@@ -275,7 +276,7 @@ struct CharacterLibraryView: View {
                         if recorder.recording { recorder.stop() } else { Task { await recorder.start(audio: audio) } }
                     } label: { Label(recorder.recording ? "STOP RECORDING" : "RECORD MY VOICE", systemImage: recorder.recording ? "stop.fill" : "mic.fill").frame(minHeight: 52) }
                         .buttonStyle(.borderedProminent).disabled(library.busy || recorder.requestingPermission || (audio.processingInUse && !recorder.recording))
-                    Button("Import Audio") { importingAudio = true }.disabled(library.busy || recorder.recording || recorder.requestingPermission)
+                    Button("Import Audio") { importKind = .audio; showingImporter = true }.disabled(library.busy || recorder.recording || recorder.requestingPermission)
                     Text(recorder.status)
                     Text("Use up to 10 seconds of clear speech. Your words and timing are processed locally.").font(.caption).foregroundStyle(.secondary)
                 }
@@ -306,13 +307,15 @@ struct CharacterLibraryView: View {
         }
         .navigationTitle(mode == .speech ? "Make Speech" : "Change My Voice")
         .searchable(text: $search, prompt: "Find a character or category")
-        .fileImporter(isPresented: $choosing, allowedContentTypes: [.folder]) { result in
-            switch result { case .success(let url): library.importFolder(url)
-            case .failure(let error): library.message = "The folder could not be opened. " + error.localizedDescription }
-        }
-        .fileImporter(isPresented: $importingAudio, allowedContentTypes: [.wav, .mpeg4Audio, .audio]) { result in
-            switch result { case .success(let url): recorder.importAudio(url)
-            case .failure: recorder.status = "That recording could not be opened. Try a WAV or M4A file." }
+        // One presenter avoids the audio importer masking the folder importer.
+        .fileImporter(isPresented: $showingImporter,
+                      allowedContentTypes: importKind == .folder ? [.folder] : [.wav, .mpeg4Audio, .audio]) { result in
+            switch (importKind, result) {
+            case (.folder, .success(let url)): library.importFolder(url)
+            case (.folder, .failure(let error)): library.message = "The folder could not be opened. " + error.localizedDescription
+            case (.audio, .success(let url)): recorder.importAudio(url)
+            case (.audio, .failure): recorder.status = "That recording could not be opened. Try a WAV or M4A file."
+            }
         }
         .onDisappear { recorder.discard(); audio.stop() }
         .task { await library.loadAndRefresh() }
