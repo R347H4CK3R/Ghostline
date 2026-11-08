@@ -1,0 +1,41 @@
+{
+  "runtimeSourceCommit": "13acd1ac1e96a808adcc813abf50f0e3789a0928",
+  "ciRepairCommit": "2bfe9709db9f0e7649cc47363b2a089a77366e3b",
+  "fullLocalTests": 163,
+  "windowsLinuxWorkflow": 42475267999,
+  "macNativeWorkflow": 42475522145,
+  "previousMacDependencyFailure": 42475267986,
+  "platforms": {
+    "windows": {
+      "tests": 163,
+      "skipped": 0,
+      "passed": true
+    },
+    "linux": {
+      "tests": 163,
+      "skipped": 0,
+      "passed": true
+    },
+    "macos": {
+      "tests": 163,
+      "skipped": 0,
+      "passed": true,
+      "nativeFolderAndReviewChecks": true
+    }
+  },
+  "scope": "Real synthetic AV decode/extraction, actual bounded downloader child and queue/pack/native-folder orchestration. Network and expensive ASR/neural calls are substituted in these new acquisition tests.",
+  "liveYouTubeFetchVerified": false,
+  "newNeuralInferenceVerified": false,
+  "physicalDeviceVerified": false,
+  "likenessVerified": false,
+  "newCharacterProfiles": 0,
+  "privateCharacterCollectionModified": false,
+  "laptopProcessorDeployed": false,
+  "laptopHeavyWorkStarted": false,
+  "appReleaseChanged": false,
+  "downloaderRequirement": {
+    "tag": "2026.10.26",
+    "url": "https://github.com/yt-dlp/yt-dlp/releases/tag/2026.10.26",
+    "published": "2026-10-26T22:25:26Z"
+  }
+}

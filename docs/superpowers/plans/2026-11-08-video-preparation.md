@@ -11,6 +11,6 @@ Design: reviewed private recipes supply the source-use record, segment bounds an
 - [x] Independent review reproduced stale preparation holding a lock while replacements spent retries. Reproduce both cancellation and busy-lock failures, then propagate lost ownership and pause transient contention without spending retries.
 - [x] Fence specification publication with the queue token; preserve provisional transcript status in packs/reports.
 - [x] Share cancellable process-tree cleanup between acquisition and recognition.
-- [ ] Verify final local/hosted full suites and integrate without changing release/private voices.
+- [x] Full163tests passed locally and on hosted Windows/Linux (42475267999) and macOS (42475522145), no skips. macOS FFmpeg dependency/Python setup repaired after observed failure42475267986; native Swift folder/review checks also passed. Integrated source without changing release/private voices.
 
 Review focus: no download before source/label review; no stale specification overwrite; no retry-budget loss while awaiting inputs or locks; overall download limits rather than socket-only limits; original temporary source cleanup; no invented identity/authorization/likeness or new neural checks. Windows/Linux FFmpeg fixtures and child-process tests are required. Live YouTube fetching is not claimed from a network substitute.
