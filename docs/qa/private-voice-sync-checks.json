@@ -20,6 +20,10 @@
     "nativeIPhoneSDK": {
       "run": 42497259584,
       "conclusion": "success"
+    },
+    "fullNativeARM64Source": {
+      "run": 42497259607,
+      "conclusion": "success"
     }
   },
   "actualCompanionTransfer": {
