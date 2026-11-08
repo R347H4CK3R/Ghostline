@@ -1,0 +1,34 @@
+{
+  "sourceCommit": "79b35f929a8c77dd0fac54da86549ec92de98cc7",
+  "diagnosticRuntimeSourceCommit": "1a3444820bb89b0e5f27aa138ab0a599e0b825c8",
+  "hostedWorkflow": 42467349309,
+  "windows": {
+    "tests": 150,
+    "passed": true,
+    "skipped": 0
+  },
+  "linux": {
+    "tests": 150,
+    "passed": true,
+    "skipped": 0
+  },
+  "materializedLocalTests": 100,
+  "realNeuralDiagnostic": {
+    "engine": "F5TTS_v1_Base",
+    "f5Package": "1.1.22",
+    "torch": "2.15.0+cpu",
+    "torchaudio": "2.11.1+cpu",
+    "firstAttemptWER": 0.125,
+    "secondAttemptWER": 0,
+    "selectedWAVSHA256": "34c0f60bc28e8948946eaa0723dc21501dbc4c7e610f9dbf3a6a90de2a3ba554",
+    "referenceSHA256": "b47bd1c40c8951fcf5062ef816d9b561b6fed47972ff237d72b0a463608226e4",
+    "realTorchCancellationAndSameAttemptResume": true
+  },
+  "scope": "Prepared neutral references through actual CPU F5, pinned independent whisper, reusable pack and native-format publisher. Final CLI cache-release and Windows runner portability changes covered by source tests.",
+  "newCharacterProfiles": 0,
+  "physicalDeviceVerified": false,
+  "likenessVerified": false,
+  "laptopProcessorInstalled": false,
+  "automaticVideoAcquisitionConnected": false,
+  "appReleaseChanged": false
+}
