@@ -40,6 +40,10 @@ jobs:
           if not candidates:raise SystemExit('No iOS 26 iPhone simulator available')
           with open(os.environ['GITHUB_ENV'],'a') as f:f.write('SIMULATOR_ID='+candidates[0]['udid']+'\n')
           PY
+      - name: Resolve pinned dependencies and apply simulator-only heap diagnostic
+        run: |
+          xcodebuild -resolvePackageDependencies -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -derivedDataPath simulator-build
+          python3 tools/simulator_mlx_patch.py simulator-build/SourcePackages/checkouts --evidence simulator-mlx-patch.json
       - name: Run import review no-stock navigation and audio handling tests
         run: |
           xcodebuild test -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath simulator-build -resultBundlePath listening-ui.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixTests/CharacterImportReviewTests -only-testing:VoiceMatrixTests/AudioOwnershipTests -only-testing:VoiceMatrixTests/AudioTests/testStockFreeCatalogRetainsValidEngineAssets -only-testing:VoiceMatrixUITests/NavigationTests > simulator-ui.log 2>&1 || { tail -160 simulator-ui.log; exit 1; }
@@ -63,6 +67,7 @@ jobs:
             simulator-ui.log
             simulator-audio.log
             simulator-devices.json
+            simulator-mlx-patch.json
             listening-ui.xcresult
             listening-audio.xcresult
             VoiceMatrixTests/simulator-reference.wav
