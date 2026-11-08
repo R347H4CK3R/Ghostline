@@ -1,0 +1,32 @@
+name: Stop superseded UI checks
+on:
+  push:
+    branches: [maintenance/stop-superseded-ui-checks]
+    paths: [.github/workflows/stop-superseded-ui-checks.yml]
+permissions:
+  actions: write
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel only the superseded runs from this UI task
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json,subprocess
+          repo="R347H4CK3R/Ghostline"
+          expected={
+            42515379297:("84ccf9af0a79d562dc936f4d3bb0fd8529d4a3ce","feature/voicematrix-studio-refresh"),
+            42515876308:("440cbfbe59dbc2eedb3cd5520c30c2f75817dabe","feature/voicematrix-studio-refresh"),
+            42517030181:("7a4bb8bf4d3b8c1b12bc648e088e1d2799f1cac5","feature/voicematrix-studio-refresh"),
+            42516353265:("42512bff6971e80eaa4015e512e69ae08b1a1aea","release/voicematrix-0.4.4")}
+          for run_id,(sha,branch) in expected.items():
+              path=f"repos/{repo}/actions/runs/{run_id}"
+              run=json.loads(subprocess.check_output(["gh","api",path]))
+              assert (run["head_sha"],run["head_branch"]) == (sha,branch)
+              if run["status"] == "completed":
+                  print(run_id,run["conclusion"]);continue
+              subprocess.run(["gh","api","--method","POST",path+"/cancel"],check=True)
+              print(run_id,"cancellation requested")
+          PY
