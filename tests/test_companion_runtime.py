@@ -38,7 +38,7 @@ class CompanionRuntimeTests(unittest.TestCase):
     proc.kill();proc.communicate(timeout=10)
    self.assertEqual(self.contender(database).returncode,0)
  def test_lower_priority_uses_a_valid_native_process_handle(self):
-  code="from tools.companion_runtime import lower_priority\nimport os,ctypes\nlower_priority()\nif os.name=='nt':\n from ctypes import wintypes\n k=ctypes.WinDLL('kernel32');k.GetCurrentProcess.restype=wintypes.HANDLE\n k.GetPriorityClass.argtypes=[wintypes.HANDLE];k.GetPriorityClass.restype=wintypes.DWORD\n assert k.GetPriorityClass(k.GetCurrentProcess())==0x4000\nelse: assert os.getpriority(os.PRIO_PROCESS,0)>=10\nprint('lowered')"
+  code="from tools.companion_runtime import lower_priority\nimport os,ctypes\nbefore = os.getpriority(os.PRIO_PROCESS,0) if os.name != 'nt' else 0\nlower_priority()\nif os.name=='nt':\n from ctypes import wintypes\n k=ctypes.WinDLL('kernel32');k.GetCurrentProcess.restype=wintypes.HANDLE\n k.GetPriorityClass.argtypes=[wintypes.HANDLE];k.GetPriorityClass.restype=wintypes.DWORD\n assert k.GetPriorityClass(k.GetCurrentProcess())==0x4000\nelse: assert os.getpriority(os.PRIO_PROCESS,0)>=10, (before,os.getpriority(os.PRIO_PROCESS,0))\nprint('lowered')"
   result=subprocess.run([sys.executable,'-c',code],capture_output=True,text=True,timeout=10)
   self.assertEqual(result.returncode,0,result.stderr)
   self.assertEqual(result.stdout.strip(),'lowered')

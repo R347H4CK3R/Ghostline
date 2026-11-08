@@ -17,8 +17,6 @@ jobs:
         env:
           HOMEBREW_NO_AUTO_UPDATE: '1'
         run: brew install ffmpeg
-      - name: Run collection export and source regression tests
-        run: python3 -m unittest discover -s tests -v
       - name: Prepare synthetic reference collection
         run: |
           python3 - <<'PY'
@@ -56,3 +54,6 @@ jobs:
         run: |
           xcrun swiftc -parse-as-library VoiceMatrix/F5SpeechChunks.swift tests/native/F5SpeechChunkChecks.swift -o f5-speech-chunk-checks
           ./f5-speech-chunk-checks
+
+      - name: Run collection export and source regression tests
+        run: python3 -m unittest discover -s tests -v
