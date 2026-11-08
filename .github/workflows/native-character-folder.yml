@@ -1,7 +1,7 @@
 name: Native character folder checks
 on:
   push:
-    paths: ['VoiceMatrix/CharacterReviewStore.swift', 'tests/native/CharacterReviewChecks.swift', 'VoiceMatrix/ConversionAudio.swift', 'VoiceMatrix/OfflineVoiceConverter.swift', 'tests/native/CharacterReferenceAudioChecks.swift', 'VoiceMatrix/F5SpeechChunks.swift', 'tests/native/F5SpeechChunkChecks.swift', 'VoiceMatrix/StudioActivity.swift', 'tests/native/StudioActivityChecks.swift', 'VoiceMatrix/CharacterFolderStore.swift', 'VoiceMatrix/CharacterLibraryView.swift', 'tests/native/CharacterFolderChecks.swift', 'tests/test_character_folder.py', 'tools/voice_pack.py', '.github/workflows/native-character-folder.yml']
+    paths: ['VoiceMatrix/VoiceFolderSync.swift', 'tests/native/VoiceFolderSyncChecks.swift', 'VoiceMatrix/CharacterReviewStore.swift', 'tests/native/CharacterReviewChecks.swift', 'VoiceMatrix/ConversionAudio.swift', 'VoiceMatrix/OfflineVoiceConverter.swift', 'tests/native/CharacterReferenceAudioChecks.swift', 'VoiceMatrix/F5SpeechChunks.swift', 'tests/native/F5SpeechChunkChecks.swift', 'VoiceMatrix/StudioActivity.swift', 'tests/native/StudioActivityChecks.swift', 'VoiceMatrix/CharacterFolderStore.swift', 'VoiceMatrix/CharacterLibraryView.swift', 'tests/native/CharacterFolderChecks.swift', 'tests/test_character_folder.py', 'tools/voice_pack.py', '.github/workflows/native-character-folder.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -58,3 +58,8 @@ jobs:
       - name: Run collection export and source regression tests
         if: always()
         run: python3 -m unittest discover -s tests -v
+
+      - name: Check bounded private transfer and native folder staging
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/CharacterFolderStore.swift VoiceMatrix/VoiceFolderSync.swift tests/native/VoiceFolderSyncChecks.swift -o private-transfer-checks
+          ./private-transfer-checks folder-check-fixture/Voices
