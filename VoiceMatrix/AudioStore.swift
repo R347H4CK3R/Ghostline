@@ -13,6 +13,14 @@ struct SavedAudio: Identifiable {
     @Published var error: String?
     @Published var rate: Float = 1
     private var player: AVAudioPlayer?
+    var elapsedSeconds: TimeInterval { player?.currentTime ?? 0 }
+    var durationSeconds: TimeInterval { player?.duration ?? 0 }
+    var outputVolumePercent: Int { Int((AVAudioSession.sharedInstance().outputVolume * 100).rounded()) }
+    var outputRoute: String {
+        let outputs = AVAudioSession.sharedInstance().currentRoute.outputs
+        // Show route types, never personal Bluetooth device names.
+        return outputs.isEmpty ? "No audio output" : outputs.map { $0.portType.rawValue }.joined(separator: ", ")
+    }
     @Published private var activity = StudioActivity()
     var microphoneInUse: Bool { activity.microphoneInUse }
     var processingInUse: Bool { activity.processingInUse }
