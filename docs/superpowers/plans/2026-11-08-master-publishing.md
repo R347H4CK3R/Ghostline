@@ -16,6 +16,6 @@ Task 1:
 Task 2:
 - [x] Exercise actual `publish-folder` CLI with synthetic initial/addition/replacement fixtures.
 - [x] Add Windows/Linux checks and actual production Swift importer integration.
-- [ ] Verify hosted checks and integrate without changing app release or private voices.
+- [x] Run42462056096 passed Windows/Linux publication and actual native Swift import; source checks42462056033 passed. Integration preserves the app release and private voices.
 
 Review focus: lost active voice on retry, same reference renamed, crash orphan overwrite, canonical-lock bypass, symlink escape and false verification claims. Candidate acceptance/promotion, automated video processor and queue-completion ledger remain separate work.

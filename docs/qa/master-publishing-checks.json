@@ -1,0 +1,15 @@
+{
+  "sourceCommit": "28b292e1b275bd1df052661b07fdf157e5b69827",
+  "localSourceTests": 83,
+  "publicationWorkflow": 42462056096,
+  "sourceWorkflow": 42462056033,
+  "windowsPublishing": "passed",
+  "linuxPublishing": "passed",
+  "nativeSwiftImport": "passed",
+  "nativeSpeechInferenceTested": false,
+  "physicalDeviceVerified": false,
+  "likenessVerified": false,
+  "privateMasterFolderModified": false,
+  "appReleaseChanged": false,
+  "scope": "Synthetic pack creation through actual CLI, incremental native collection publication, quarantined replacement and production Swift folder import. No new character generation or queue processor deployment."
+}
