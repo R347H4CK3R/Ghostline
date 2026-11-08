@@ -42,6 +42,7 @@ struct HomeView: View {
                 Text("A private voice studio. No account needed.").foregroundStyle(.secondary)
                 NavigationLink { SpeechView() } label: { HomeCard(title: "MAKE SPEECH", detail: "Type words. Choose a voice. Hear them speak.", icon: "text.bubble.fill") }.accessibilityIdentifier("make-speech")
                 NavigationLink { RecordingView() } label: { HomeCard(title: "CHANGE MY VOICE", detail: "Record. Choose a voice. Hear your changed voice.", icon: "mic.fill") }.accessibilityIdentifier("change-my-voice")
+                NavigationLink { VideoQueueView() } label: { HomeCard(title: "VIDEO LIST", detail: "Add videos and export your character requests.", icon: "list.bullet.rectangle") }
                 Text("\(studio.voices.filter { $0.libraryGroup == "Character styles" }.count) original character styles • \(studio.voices.filter { $0.libraryGroup == "Replicas" }.count) replica entries\n\(studio.voices.count) total speakers • Experimental\n\(studio.onDeviceSpeechChecks) speech checks completed on this iPhone.").font(.footnote).foregroundStyle(.secondary)
             }.padding(24)
         }.background(Color(red: 0.045, green: 0.025, blue: 0.09)).navigationTitle("VoiceMatrix")
