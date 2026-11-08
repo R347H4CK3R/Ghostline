@@ -1,0 +1,30 @@
+name: Native app compile checks
+on:
+  push:
+    paths:
+      - 'VoiceMatrix/**'
+      - 'project.yml'
+      - '.github/workflows/native-app.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile:
+    runs-on: macos-26
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare source-only project resources
+        run: |
+          mkdir -p VoiceMatrix/Resources/Phonon VoiceMatrix/Resources/OpenVoice
+          brew install xcodegen
+          xcodegen generate
+      - name: Compile full ARM64 app without IPA packaging
+        run: |
+          xcodebuild -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Debug -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath native-build CODE_SIGNING_ALLOWED=NO build > native-compile.log 2>&1 || { tail -160 native-compile.log; exit 1; }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Native-app-compile-log
+          path: native-compile.log
+          retention-days: 7
