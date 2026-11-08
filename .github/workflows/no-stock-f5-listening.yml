@@ -69,6 +69,40 @@ jobs:
             listening-dependency-notices.json
           if-no-files-found: error
           retention-days: 14
+      - name: Split large IPA for size-limited download clients
+        run: |
+          python3 - <<'PYCODE'
+          from pathlib import Path
+          source=Path('VoiceMatrix-0.3.2-listening-candidate.ipa')
+          with source.open('rb') as stream:
+              index=0
+              while block:=stream.read(350*1024*1024):
+                  Path(f'listening-ipa.part{index:02d}').write_bytes(block)
+                  index+=1
+          PYCODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Listening-IPA-part00
+          path: listening-ipa.part00
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Listening-IPA-part01
+          path: listening-ipa.part01
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Listening-IPA-part02
+          path: listening-ipa.part02
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Listening-IPA-verification-evidence
+          path: |
+            listening-assets.json
+            listening-inspection.json
+            listening-dependency-notices.json
+            VoiceMatrix-0.3.2-listening-candidate.ipa.sha256
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
