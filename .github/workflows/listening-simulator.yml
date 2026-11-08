@@ -1,0 +1,61 @@
+name: No-stock listening simulator verification
+on:
+  push:
+    branches: [test/no-stock-listening-simulator]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulator:
+    runs-on: macos-26
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
+        with:
+          path: listening-cache
+          key: listening-assets-685e88161a2841a5f102a6f8094613ba7131e350-build9-716d2f41
+      - name: Stage identical zero-stock runtime assets and synthetic test reference
+        run: |
+          python3 tools/listening_package.py prepare --cache listening-cache --resources simulator-resources
+          python3 - <<'PY'
+          import pathlib,shutil
+          for name in ('Phonon','OpenVoice','F5TTS'):
+              target=pathlib.Path('VoiceMatrix/Resources')/name
+              if target.exists():shutil.rmtree(target)
+              shutil.copytree(pathlib.Path('simulator-resources')/name,target)
+          PY
+          say -v Samantha -o simulator-reference.aiff 'The morning air is clear and the streets are quiet today.'
+          afconvert simulator-reference.aiff VoiceMatrixTests/simulator-reference.wav -f WAVE -d LEI16@24000 -c 1
+          brew install xcodegen
+          xcodegen generate
+          xcrun simctl list devices available --json > simulator-devices.json
+          python3 - <<'PY'
+          import json,os
+          data=json.load(open('simulator-devices.json'))
+          candidates=[d for runtime,ds in data['devices'].items() if 'iOS-26' in runtime for d in ds if d['name'].startswith('iPhone') and d['isAvailable']]
+          if not candidates:raise SystemExit('No iOS 26 iPhone simulator available')
+          with open(os.environ['GITHUB_ENV'],'a') as f:f.write('SIMULATOR_ID='+candidates[0]['udid']+'\n')
+          PY
+      - name: Run import review no-stock navigation and audio handling tests
+        run: |
+          xcodebuild test -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath simulator-build -resultBundlePath listening-ui.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixTests/CharacterImportReviewTests -only-testing:VoiceMatrixTests/AudioOwnershipTests -only-testing:VoiceMatrixTests/AudioTests/testStockFreeCatalogRetainsValidEngineAssets -only-testing:VoiceMatrixUITests/NavigationTests > simulator-ui.log 2>&1 || { tail -160 simulator-ui.log; exit 1; }
+      - name: Exercise actual offline F5 audio separately from UI coverage
+        if: success()
+        run: |
+          xcodebuild test -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath simulator-build -resultBundlePath listening-audio.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixTests/F5SimulatorTests > simulator-audio.log 2>&1 || { tail -160 simulator-audio.log; exit 1; }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Listening-simulator-evidence
+          path: |
+            simulator-ui.log
+            simulator-audio.log
+            simulator-devices.json
+            listening-ui.xcresult
+            listening-audio.xcresult
+            VoiceMatrixTests/simulator-reference.wav
+          retention-days: 14
