@@ -1,0 +1,40 @@
+{
+  "source": "5378abd506d574c163ac07e1ffa4d0a13849ad58",
+  "hostedRun": 42491467557,
+  "fullTests": {
+    "local": 176,
+    "windowsLaptop": 176,
+    "hostedWindows": 176,
+    "hostedLinux": 176,
+    "skipped": 0
+  },
+  "reviewReproductionsFixed": [
+    "hash-prefixed labels repeatedly appended",
+    "mirror exceeded its own count bound",
+    "pending file errors hid authoritative DB progress"
+  ],
+  "deployment": {
+    "completeSnapshotFilesVerified": 103,
+    "monitorReplaced": true,
+    "endpointRestarted": false,
+    "speechWorkerRestarted": false,
+    "freshStatusVerified": true,
+    "dashboardStageProgressAttemptsReasonVerified": true,
+    "liveHTTPSStatus": 200,
+    "liveQueueJobs": 0,
+    "liveDisplayedJobs": 0,
+    "pendingFileBytes": 0,
+    "clearedLinks": false,
+    "privateMasterProfiles": 60,
+    "distinctReferences": 60,
+    "privateMasterModified": false,
+    "pipelineConnected": false
+  },
+  "limits": [
+    "Live user queue was empty; nonempty HTTP/file/stage checks used isolated production queues in regression tests.",
+    "No new neural inference, character models, phone or likeness checks.",
+    "No completion ledger or link cleanup implemented; needs-review and failed links remain.",
+    "Arbitrary external text editors cannot share an atomic transaction with SQLite; DB is authoritative.",
+    "No new IPA or feed updates."
+  ]
+}
