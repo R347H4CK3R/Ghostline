@@ -1,8 +1,9 @@
 name: Conversion input duration diagnosis
-on:
+true:
   push:
-    paths: ['.github/workflows/conversion-input-probe.yml']
-  workflow_dispatch:
+    paths:
+    - .github/workflows/conversion-input-probe.yml
+  workflow_dispatch: null
 permissions:
   contents: read
 jobs:
@@ -10,21 +11,15 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - name: Reproduce exact source and reference generation with input measurements
-        run: |
-          command -v ffmpeg >/dev/null || brew install ffmpeg
-          say -r 150 -o source.aiff "I found a strange device near the portal."
-          say -r 145 -o reference.aiff "This is another clear reference recording. We are testing local voice conversion."
-          ffmpeg -v error -i source.aiff -ac 1 -ar 24000 diagnostic-source.wav
-          ffmpeg -v error -i reference.aiff -ac 1 -ar 24000 diagnostic-reference.wav
-          xcrun swiftc -parse-as-library VoiceMatrix/ConversionAudio.swift probes/native-conversion/Inputs.swift -o conversion-input-check
-          ./conversion-input-check diagnostic-source.wav diagnostic-reference.wav
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: Conversion-diagnostic-inputs
-          path: |
-            diagnostic-source.wav
-            diagnostic-reference.wav
-          if-no-files-found: error
+    - uses: actions/checkout@v4
+    - name: Validate pinned real speech before model loading
+      run: |-
+        python3 tools/check_conversion_inputs.py
+        xcrun swiftc -parse-as-library VoiceMatrix/ConversionAudio.swift probes/native-conversion/Inputs.swift -o conversion-input-check
+        ./conversion-input-check tests/fixtures/conversion-source.wav tests/fixtures/conversion-reference.wav
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: Conversion-diagnostic-inputs
+        path: tests/fixtures/conversion-inputs.json
+        if-no-files-found: error

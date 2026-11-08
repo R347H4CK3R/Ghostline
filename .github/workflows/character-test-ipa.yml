@@ -140,11 +140,13 @@ jobs:
     - name: Build exact app speech adapter diagnostic
       run: xcodebuild -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -skipPackagePluginValidation
         -project VoiceMatrix.xcodeproj -scheme CharacterSpeechDiagnostic -configuration Release -derivedDataPath native-build
-        CODE_SIGNING_ALLOWED=NO build > speech-build.log 2>&1 || { tail -160 speech-build.log; exit 1; }
+        CODE_SIGNING_ALLOWED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build > speech-build.log 2>&1 || { tail -160 speech-build.log;
+        exit 1; }
     - name: Generate 12 calibration clips plus an actual chunked message offline
       run: |-
-        say -r 150 -o reference.aiff "This is a clear reference recording. Today we are checking an offline speech engine."
-        sandbox-exec -p '(version 1)(allow default)(deny network*)' native-build/Build/Products/Release/CharacterSpeechDiagnostic VoiceMatrix/Resources/F5TTS reference.aiff speech-evidence speech-evidence.json
+        python3 tools/check_conversion_inputs.py
+        cp tests/fixtures/conversion-reference.wav reference.wav
+        sandbox-exec -p '(version 1)(allow default)(deny network*)' native-build/Build/Products/Release/CharacterSpeechDiagnostic VoiceMatrix/Resources/F5TTS reference.wav speech-evidence speech-evidence.json
     - uses: actions/checkout@v4
       with:
         repository: ggml-org/whisper.cpp
@@ -213,11 +215,9 @@ jobs:
         python3 -m tools.character_evidence source VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved source-proof.json
     - name: Create synthetic diagnostic recordings and owned simulator
       run: |
-        command -v ffmpeg >/dev/null || brew install ffmpeg
-        say -r 150 -o source.aiff "I found a strange device near the portal."
-        say -r 145 -o reference.aiff "This is another clear reference recording. We are testing local voice conversion."
-        ffmpeg -v error -i source.aiff -ac 1 -ar 24000 CharacterRuntimeTests/diagnostic-source.wav
-        ffmpeg -v error -i reference.aiff -ac 1 -ar 24000 CharacterRuntimeTests/diagnostic-reference.wav
+        python3 tools/check_conversion_inputs.py
+        cp tests/fixtures/conversion-source.wav CharacterRuntimeTests/diagnostic-source.wav
+        cp tests/fixtures/conversion-reference.wav CharacterRuntimeTests/diagnostic-reference.wav
         python3 - <<'PYCODE'
         import json,subprocess,os
         r=json.loads(subprocess.check_output(['xcrun','simctl','list','runtimes','-j']))['runtimes']
@@ -233,7 +233,7 @@ jobs:
         xcrun simctl bootstatus "$CHARACTER_SIM" -b
     - name: Run actual neural conversion and WAV export in iOS simulator
       run: |-
-        xcodebuild test -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme CharacterRuntimeChecks -configuration Release -destination "id=$CHARACTER_SIM" -parallel-testing-enabled NO -derivedDataPath native-build ENABLE_TESTABILITY=YES CODE_SIGNING_ALLOWED=NO > conversion-build.log 2>&1 || { tail -180 conversion-build.log; exit 1; }
+        xcodebuild test -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme CharacterRuntimeChecks -configuration Release -destination "id=$CHARACTER_SIM" -parallel-testing-enabled NO -derivedDataPath native-build ENABLE_TESTABILITY=YES CODE_SIGNING_ALLOWED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES > conversion-build.log 2>&1 || { tail -180 conversion-build.log; exit 1; }
         container=$(xcrun simctl get_app_container "$CHARACTER_SIM" com.voicematrix.app data)
         cp -R "$container/Documents/CharacterConversionQA" conversion-evidence
     - uses: actions/checkout@v4
