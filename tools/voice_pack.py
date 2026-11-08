@@ -31,6 +31,9 @@ def export_reference_pack(audio,metadata,destination):
  if source.stat().st_size>MAX_AUDIO_BYTES:raise ValueError('Reference too large')
  data=source.read_bytes();seconds=_audio(data)
  m={key:metadata[key] for key in ('id','name','source','permission','referenceText')}
+ if 'referenceTranscriptStatus' in metadata:
+  if metadata['referenceTranscriptStatus'] not in ('provided','provided-unverified','automatic-needs-review'):raise ValueError('Invalid reference transcript status')
+  m['referenceTranscriptStatus']=metadata['referenceTranscriptStatus']
  m.update(schemaVersion=1,kind='f5-reference',engine='F5TTS_v1_Base',trainedModel=False,
   categories=list(dict.fromkeys(metadata['categories'])),referenceFile='reference.wav',
   referenceSHA256=hashlib.sha256(data).hexdigest(),referenceBytes=len(data),seconds=seconds,
@@ -90,3 +93,4 @@ def export_collection_folder(packs,destination):
   return destination
  finally:
   if stage.exists():shutil.rmtree(stage)
+

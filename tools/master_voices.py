@@ -2,6 +2,8 @@
 import hashlib,json,pathlib,contextlib,io,os,re,shutil,tempfile,zipfile
 from tools.voice_pack import validate_pack
 
+class PublishBusy(ValueError):pass
+
 def scan(directory):
  root=pathlib.Path(directory).resolve()
  if not root.is_dir():raise ValueError('Choose an existing Voices folder')
@@ -35,7 +37,7 @@ def _publish_lock(path):
    else:
     import fcntl
     fcntl.flock(lock.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
-  except OSError as e:raise ValueError('Another voice publisher is active') from e
+  except OSError as e:raise PublishBusy('Another voice publisher is active') from e
   try:yield
   finally:
    lock.seek(0)
@@ -144,3 +146,4 @@ def publish(packs,directory):
     _sync_directory(root)
    finally:pathlib.Path(name).unlink(missing_ok=True)
   return result
+

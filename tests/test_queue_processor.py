@@ -35,7 +35,7 @@ class ProcessorTests(unittest.TestCase):
   self.assertEqual(self.q.export()['videos'][0]['status'],'needs-review')
   self.assertEqual(len(self.q.export()['videos']),1)
  def test_missing_spec_keeps_job_for_review_without_allocating_model(self):
-  self.path.unlink();r=self.run_job();self.assertEqual(r['status'],'needs-review')
+  self.path.unlink();r=self.run_job();self.assertEqual(r['status'],'awaiting-preparation')
   self.assertIn('prepared',r['reason'].lower());self.assertFalse((self.root/'Voices').exists())
  def test_changed_reference_hash_fails_without_publishing(self):
   self.spec['profiles'][0]['referenceSHA256']='0'*64;self.path.write_text(json.dumps(self.spec))
@@ -79,3 +79,4 @@ class ProcessorTests(unittest.TestCase):
   self.assertLess(time.monotonic()-start,5)
 
 if __name__=='__main__':unittest.main()
+

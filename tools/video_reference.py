@@ -1,7 +1,8 @@
 """Development helper: accessible public video -> labeled reference slices.
 No cookies, authentication bypass, model training claim, or model-file renaming.
 """
-import hashlib,json,pathlib,re,shutil,subprocess,tempfile
+import hashlib,json,pathlib,re,shutil,subprocess,tempfile,math
+from tools.process_control import checked_process
 from urllib.parse import urlparse
 from contextlib import contextmanager
 def validate_request(url,segments):
@@ -20,28 +21,62 @@ def ffmpeg_path():
  if path:return path
  import imageio_ffmpeg
  return imageio_ffmpeg.get_ffmpeg_exe()
-@contextmanager
-def acquire(url,segments,downloader_factory=None):
- validate_request(url,segments);ff=ffmpeg_path()
+def download_video(url,root,ff,downloader_factory=None,*,cancelled=lambda:False,max_duration=1800,max_bytes=268435456):
+ """Download implementation used by a separately bounded production child."""
+ def metadata_filter(info,*,incomplete=False):
+  if cancelled():raise InterruptedError('Video preparation paused')
+  duration=info.get('duration')
+  if duration is None and incomplete:return None
+  if isinstance(duration,bool) or not isinstance(duration,(int,float)) or not math.isfinite(duration) or not 0<duration<=max_duration:return 'Video duration is unknown or exceeds the configured limit'
+ def progress_hook(info):
+  if cancelled():raise InterruptedError('Video preparation paused')
+  if info.get('downloaded_bytes',0)>max_bytes:raise ValueError('Downloaded video exceeds the byte limit')
  if downloader_factory is None:
-  from yt_dlp import YoutubeDL
+  try:from yt_dlp import YoutubeDL
+  except ImportError as e:raise ValueError('Install the local yt-dlp download dependency') from e
   downloader_factory=YoutubeDL
+ options=dict(format='best[ext=mp4][height<=480]',outtmpl=str(root/'source.%(ext)s'),noplaylist=True,socket_timeout=25,retries=0,fragment_retries=0,extractor_retries=0,file_access_retries=0,ffmpeg_location=ff,max_filesize=max_bytes,match_filter=metadata_filter,progress_hooks=[progress_hook],quiet=True,no_warnings=True)
+ node=shutil.which('node')
+ if node:options['js_runtimes']={'node':{'path':node}}
+ try:
+  with downloader_factory(options) as downloader:metadata=downloader.extract_info(url,download=True)
+ except Exception:
+  if cancelled():raise InterruptedError('Video preparation paused')
+  raise
+ if not isinstance(metadata,dict) or metadata_filter(metadata):raise ValueError('Video duration is missing or exceeds the limit')
+ return {k:metadata[k] for k in ['id','title','duration']}
+
+@contextmanager
+def acquire(url,segments,downloader_factory=None,*,cancelled=lambda:False,max_duration=1800,max_bytes=268435456,max_download_seconds=300):
+ validate_request(url,segments);ff=ffmpeg_path()
+ if isinstance(max_duration,bool) or not isinstance(max_duration,(int,float)) or not math.isfinite(max_duration) or not 1<=max_duration<=3600:raise ValueError('Video duration limit must be 1–3600 seconds')
+ if isinstance(max_bytes,bool) or not isinstance(max_bytes,int) or not 1024<=max_bytes<=1073741824:raise ValueError('Video byte limit must be 1 KiB–1 GiB')
+ if isinstance(max_download_seconds,bool) or not isinstance(max_download_seconds,(int,float)) or not math.isfinite(max_download_seconds) or not .1<=max_download_seconds<=900:raise ValueError('Download deadline must be 0.1–900 seconds')
  with tempfile.TemporaryDirectory(prefix='voicematrix-reference-') as temporary:
   root=pathlib.Path(temporary)
-  options=dict(format='best[ext=mp4][height<=480]',outtmpl=str(root/'source.%(ext)s'),noplaylist=True,socket_timeout=25,retries=1,fragment_retries=1,ffmpeg_location=ff)
-  node=shutil.which('node')
-  if node:options['js_runtimes']={'node':{'path':node}}
-  with downloader_factory(options) as downloader:metadata=downloader.extract_info(url,download=True)
+  if downloader_factory is None:
+   import importlib.util,sys
+   if importlib.util.find_spec('yt_dlp') is None:raise ValueError('Install the local yt-dlp download dependency')
+   command=[sys.executable,str(pathlib.Path(__file__).with_name('video_download.py')),url,str(root),ff,str(max_duration),str(max_bytes)]
+   try:checked_process(command,timeout=max_download_seconds,cancelled=cancelled)
+   except subprocess.CalledProcessError as e:raise ValueError('Video download failed: '+e.stderr.decode(errors='replace')[-800:]) from e
+   record=root/'download-metadata.json'
+   if not record.is_file() or record.stat().st_size>65536:raise ValueError('Invalid video metadata')
+   metadata=json.loads(record.read_text(encoding='utf8'))
+  else:
+   # In-process factory injection is a test seam; the real downloader is a child.
+   metadata=download_video(url,root,ff,downloader_factory,cancelled=cancelled,max_duration=max_duration,max_bytes=max_bytes)
   movie=root/'source.mp4'
-  # Decode both streams: an HTML error page or audio-only file must never pass.
-  subprocess.run([ff,'-v','error','-i',str(movie),'-t','0.2','-map','0:v:0','-map','0:a:0','-f','null','-'],check=True,timeout=60,capture_output=True)
+  if not movie.is_file() or movie.is_symlink() or movie.stat().st_size>max_bytes:raise ValueError('Video is missing or exceeds the byte limit')
+  checked_process([ff,'-v','error','-i',str(movie),'-t','0.2','-map','0:v:0','-map','0:a:0','-f','null','-'],timeout=60,cancelled=cancelled)
   rows=[]
   for s in segments:
    if s['end']>metadata['duration']:raise ValueError('Reference extends beyond video')
    output=root/(s['id']+'.wav')
-   subprocess.run([ff,'-v','error','-ss',str(s['start']),'-i',str(movie),'-t',str(s['end']-s['start']),'-vn','-ac','1','-ar','24000','-c:a','pcm_s16le',str(output)],check=True,timeout=60,capture_output=True)
+   checked_process([ff,'-v','error','-ss',str(s['start']),'-i',str(movie),'-t',str(s['end']-s['start']),'-vn','-ac','1','-ar','24000','-c:a','pcm_s16le',str(output)],timeout=60,cancelled=cancelled)
    rows.append(dict(s,audioPath=str(output),sha256=hashlib.sha256(output.read_bytes()).hexdigest()))
-  yield dict(sourceURL=url,title=metadata['title'],videoID=metadata['id'],segments=rows,characterIdentification='Caller must inspect on-screen labels and isolated speech before assigning identities.',authorizedLikeness=False)
+  with movie.open('rb') as f:source_hash=hashlib.file_digest(f,'sha256').hexdigest()
+  yield dict(sourceURL=url,title=metadata['title'],videoID=metadata['id'],sourceSHA256=source_hash,segments=rows,characterIdentification='Reviewed source labels, not biometric identification.',authorizedLikeness=False)
  # TemporaryDirectory removes source and extracted references even on failure.
 def synthesize(references,texts,output_directory,model=None):
  import numpy as np
@@ -62,3 +97,4 @@ def synthesize(references,texts,output_directory,model=None):
   report['outputs'].append(dict(id=identifier,character=segment.get('character',identifier),categories=segment.get('categories',[]),referenceSHA256=segment['sha256'],file=path.name,audioSHA256=hashlib.sha256(path.read_bytes()).hexdigest(),seconds=len(wav)/sr,rms=rms,text=texts[identifier]))
  (output/'generation-report.json').write_text(json.dumps(report,indent=2)+'\n')
  return report
+

@@ -1,7 +1,7 @@
 name: Prepared voice queue processor checks
 on:
   push:
-    paths: ['tools/queue_processor.py', 'tools/video_queue.py', 'tools/master_voices.py', 'tools/pack_speech.py', 'tests/test_queue_processor.py', 'tests/test_queue_publication.py', '.github/workflows/queue-processor.yml']
+    paths: ['tools/video_prepare.py', 'tools/video_reference.py', 'tools/video_download.py', 'tools/process_control.py', 'tools/voice_pack.py', 'tests/test_video_preparation.py', 'tools/queue_processor.py', 'tools/video_queue.py', 'tools/master_voices.py', 'tools/pack_speech.py', 'tests/test_queue_processor.py', 'tests/test_queue_publication.py', '.github/workflows/queue-processor.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -27,3 +27,4 @@ jobs:
           sudo apt-get install -y ffmpeg
       - name: Run source, real queue/files, transport and cancellation regressions
         run: python -m unittest discover -s tests -v
+
