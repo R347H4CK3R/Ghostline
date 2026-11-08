@@ -8,6 +8,20 @@ enum VoiceFolderSync {
         let revision: String
         let files: [File]
     }
+    static func bounded<T: Sendable>(seconds: Double = 120, onTimeout: @escaping @Sendable () -> Void, operation: @escaping @Sendable () async throws -> T) async throws -> T {
+        let started = ContinuousClock.now
+        return try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask { try await operation() }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                onTimeout()
+                throw invalid()
+            }
+            defer { group.cancelAll() }
+            guard let result = try await group.next(), started.duration(to: .now) < .seconds(seconds) else { throw invalid() }
+            return result
+        }
+    }
     static func digest(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
     private static func invalid() -> NSError { NSError(domain: "VoiceMatrix.Sync", code: 1, userInfo: [NSLocalizedDescriptionKey: "The laptop voice snapshot changed or failed validation. Your saved voices were kept."]) }
     static func download(to folder: URL, previousRevision: String?, fetch: (String, Int) async throws -> Data) async throws -> String? {

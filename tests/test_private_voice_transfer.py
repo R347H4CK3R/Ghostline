@@ -1,4 +1,4 @@
-import hashlib,json,pathlib,tempfile,threading,unittest,urllib.request,urllib.error,wave
+import hashlib,json,pathlib,tempfile,threading,unittest,urllib.request,urllib.error,wave,shutil,os,subprocess
 from tools.queue_transport import create_server
 from tools.voice_pack import export_reference_pack,export_collection_folder
 
@@ -47,5 +47,14 @@ class PrivateTransferTests(unittest.TestCase):
    with self.assertRaises(urllib.error.HTTPError) as e:urllib.request.urlopen(req)
    self.assertEqual(e.exception.code,404)
   finally:other.shutdown();other.server_close();thread.join()
+
+ def test_replaced_master_ancestor_cannot_serve_another_folder(self):
+  from tools.private_voices import PrivateVoices,TransferError
+  selected=self.root/'selected';outside=self.root/'outside';selected.mkdir();outside.mkdir()
+  shutil.copytree(self.root/'Voices',selected/'Voices');shutil.copytree(self.root/'Voices',outside/'Voices')
+  source=PrivateVoices(selected/'Voices');source.catalog();selected.rename(self.root/'selected-old')
+  if os.name=='nt':subprocess.run(['cmd','/c','mklink','/J',str(selected),str(outside)],check=True,capture_output=True)
+  else:selected.symlink_to(outside,target_is_directory=True)
+  with self.assertRaises(TransferError):source.catalog()
 
 if __name__=='__main__':unittest.main()

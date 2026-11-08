@@ -70,7 +70,8 @@ enum LaptopConnection {
         let session = URLSession(configuration: configuration, delegate: RejectRedirects(), delegateQueue: nil)
         defer { session.invalidateAndCancel() }
         let started = Date()
-        return try await VoiceFolderSync.download(to: folder, previousRevision: previousRevision) { path, limit in
+        return try await VoiceFolderSync.bounded(onTimeout: { session.invalidateAndCancel() }) {
+          try await VoiceFolderSync.download(to: folder, previousRevision: previousRevision) { path, limit in
             try Task.checkCancellation()
             guard Date().timeIntervalSince(started) < 120 else { throw failure("Voice sync timed out. Your saved voices were kept.") }
             var request = URLRequest(url: root.appendingPathComponent(path))
@@ -88,6 +89,7 @@ enum LaptopConnection {
                 bytes.append(byte)
             }
             return bytes
+          }
         }
     }
     private static func failure(_ message: String) -> NSError { NSError(domain: "VoiceMatrix.Connection", code: 1, userInfo: [NSLocalizedDescriptionKey: message]) }
