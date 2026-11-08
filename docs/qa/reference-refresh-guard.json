@@ -1,0 +1,27 @@
+{
+  "source": "62d8eae2f501d82f871b760f051658db629932d2",
+  "regressionRun": 42484053330,
+  "regression": "Unreviewed conditioning replaced the active reference",
+  "nativeAndMacRun": 42484397027,
+  "windowsLinuxRun": 42484397009,
+  "testsPerPlatform": 168,
+  "skips": 0,
+  "checks": [
+    "changed conditioning transcript rejected",
+    "valid changed WAV/hash rejected",
+    "cached active bytes retained",
+    "mixed batch rollback",
+    "metadata-only update remains supported",
+    "prior private-index format retained"
+  ],
+  "review": "No blocking guard defects; whole-collection rejection is an explicit interim tradeoff",
+  "arm64SourceBuild": {
+    "run": 42484171651,
+    "status": "running-at-record-time",
+    "source": "7f1e5f830b930dea6c50c171925d3835458ae257"
+  },
+  "newIPA": false,
+  "physicalCharacterVerification": 0,
+  "likenessVerification": 0,
+  "privateMasterModified": false
+}
