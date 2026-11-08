@@ -2,7 +2,7 @@ import Foundation
 
 @main struct F5SpeechChunkChecks {
     static func main() throws {
-        let reference = "This is a clear voice reference."
+        let reference = "This is a clear voice reference recording."
         let short = "I found a strange device near the portal."
         let one = try F5SpeechChunks.plan(text: short, referenceText: reference, referenceSeconds: 10)
         precondition(one == [short])
