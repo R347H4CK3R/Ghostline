@@ -1,0 +1,41 @@
+name: Publish verified no-stock listening source
+on:
+  push:
+    branches: [build/no-stock-f5-listening]
+    paths: [.github/workflows/publish-listening-source.yml]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: voicematrix-v0.3.2-no-stock-f5-10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify exact successful candidate run
+        run: |
+          gh run watch 42446570750 --repo "$GITHUB_REPOSITORY" --exit-status
+          gh run view 42446570750 --json headSha,conclusion > candidate-run.json
+          python3 - <<'PY'
+          import json
+          v=json.load(open('candidate-run.json'))
+          assert v['headSha']=='737871b4986cf877573f9503b32e57bdd5857647' and v['conclusion']=='success'
+          PY
+          gh run download 42446570750 --name VoiceMatrix-no-stock-F5-listening-candidate --dir candidate
+      - name: Independently inspect IPA and generate source
+        run: |
+          python3 -m unittest discover -s tests -q
+          cd candidate
+          sha256sum --check VoiceMatrix-0.3.2-listening-candidate.ipa.sha256
+          python3 ../tools/listening_package.py inspect VoiceMatrix-0.3.2-listening-candidate.ipa --dependency-proof listening-dependency-notices.json > release-inspection.json
+          python3 ../tools/listening_source.py VoiceMatrix-0.3.2-listening-candidate.ipa livecontainer-listening.json
+      - name: Publish new experimental release without replacing existing assets
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then echo 'Release already exists; refusing overwrite'; exit 1; fi
+          gh release create "$TAG" candidate/VoiceMatrix-0.3.2-listening-candidate.ipa candidate/VoiceMatrix-0.3.2-listening-candidate.ipa.sha256 candidate/livecontainer-listening.json candidate/release-inspection.json candidate/listening-dependency-notices.json --target 737871b4986cf877573f9503b32e57bdd5857647 --prerelease --latest=false --title 'VoiceMatrix 0.3.2 build 10 — No-stock F5 listening candidate' --notes 'Experimental unsigned iOS 26+ no-stock F5 character listening build. Import your own reference recordings. Includes pinned offline model and license notices. Noncommercial use only under F5 CC-BY-NC 4.0. Build and archive integrity checks passed; physical iPhone synthesis, memory, speed and character likeness remain unverified. Add the release asset livecontainer-listening.json as a LiveContainer source. No private recordings are included.'
