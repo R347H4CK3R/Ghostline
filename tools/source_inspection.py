@@ -64,7 +64,10 @@ def activity_spans(path,cancelled):
 
 def inspect_source(request_path,root,*,cancelled=lambda:False,downloader_factory=None,commit=None,expected_video=None):
  request_path=pathlib.Path(request_path).absolute();root=pathlib.Path(root).resolve()
- if request_path.is_symlink() or request_path.stat().st_size>16384:raise ValueError('Invalid inspection request file')
+ if any(p.is_symlink() or getattr(p,'is_junction',lambda:False)() for p in [request_path,*request_path.parents]) or request_path.stat().st_size>16384:raise ValueError('Invalid inspection request file')
+ # Expand legitimate Windows short names before exact opened-handle comparison.
+ request_path=request_path.resolve(strict=True)
+ if root not in request_path.parents:raise ValueError('Inspection request is outside queue root')
  reader=PrivateVoices(root)
  raw=reader.read(request_path,16384);request=json.loads(raw);identifier=validate_request(request);request_hash=checksum(raw);started=time.monotonic()
  if expected_video is not None and identifier!=expected_video:raise ValueError('Inspection request does not match queued video')

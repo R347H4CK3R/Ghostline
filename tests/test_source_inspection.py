@@ -80,3 +80,14 @@ class InspectionTests(unittest.TestCase):
    with self.assertRaises(urllib.error.HTTPError) as e:urllib.request.urlopen(request)
    self.assertEqual(e.exception.code,409)
   finally:server.shutdown();server.server_close()
+
+ def test_linked_inspection_request_parent_is_rejected_before_download(self):
+  import os
+  real=self.root/'real-inspections';real.mkdir();request=real/'SYNTHETIC03.json';request.write_text(json.dumps(self.request));alias=self.root/'linked-inspections'
+  if os.name=='nt':subprocess.run(['cmd','/c','mklink','/J',str(alias),str(real)],check=True,capture_output=True)
+  else:alias.symlink_to(real,target_is_directory=True)
+  try:
+   with self.assertRaises(ValueError):self.inspector()(alias/request.name,self.root,downloader_factory=lambda _:self.fail('Linked request downloaded'))
+  finally:
+   if os.name=='nt':alias.rmdir()
+   else:alias.unlink()
