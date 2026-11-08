@@ -6,6 +6,7 @@ from tools.pack_speech import speak
 from tools.master_voices import publish,PublishBusy
 from tools.process_control import checked_process
 from tools.video_prepare import prepare,ReviewRequired
+from tools.companion_runtime import worker_lock,WorkerBusy,cpu_environment,configure_torch,lower_priority
 
 TEXT='I found a strange device near the portal.'
 WHISPER_SHA='921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f'
@@ -156,14 +157,25 @@ def run_once(database,specifications,work,master,*,model_factory,verify,synthesi
   q.close()
 
 def main():
- from tools.local_f5 import load_local_model
- from tools.laptop_supervisor import gaming
  p=argparse.ArgumentParser(description='Process prepared references or reviewed video recipes; character labels still require review')
  for key in ['database','specifications','work','master','checkpoint','vocoder-directory','vocab','whisper-cli','whisper-model']:p.add_argument('--'+key,required=True)
  p.add_argument('--recipes',help='Private reviewed video recipes; defaults to a recipes folder beside specifications')
+ p.add_argument('--threads',type=int,default=2,choices=range(1,5),help='CPU synthesis threads (default 2; maximum 4)')
  p.add_argument('--poll-seconds',type=float,default=30);p.add_argument('--once',action='store_true');a=p.parse_args()
  if not math.isfinite(a.poll_seconds) or not 5<=a.poll_seconds<=3600:p.error('Poll every 5–3600 seconds')
- factory=LazyModel(lambda:load_local_model(a.checkpoint,a.vocoder_directory,a.vocab))
+ try:
+  with worker_lock(a.database):
+   cpu_environment(a.threads);lower_priority();process(a)
+ except WorkerBusy as error:
+  print(str(error),file=sys.stderr);raise SystemExit(3)
+
+def process(a):
+ from tools.local_f5 import load_local_model
+ from tools.laptop_supervisor import gaming
+ def load():
+  configure_torch(a.threads)
+  return load_local_model(a.checkpoint,a.vocoder_directory,a.vocab)
+ factory=LazyModel(load)
  root=pathlib.Path(a.work);root.mkdir(parents=True,exist_ok=True)
  last_game=[0.0,False]
  def paused():
