@@ -76,7 +76,7 @@ def acquire(url,segments,downloader_factory=None,*,cancelled=lambda:False,max_du
    checked_process([ff,'-v','error','-ss',str(s['start']),'-i',str(movie),'-t',str(s['end']-s['start']),'-vn','-ac','1','-ar','24000','-c:a','pcm_s16le',str(output)],timeout=60,cancelled=cancelled)
    rows.append(dict(s,audioPath=str(output),sha256=hashlib.sha256(output.read_bytes()).hexdigest()))
   with movie.open('rb') as f:source_hash=hashlib.file_digest(f,'sha256').hexdigest()
-  yield dict(sourceURL=url,title=metadata['title'],videoID=metadata['id'],sourceSHA256=source_hash,segments=rows,characterIdentification='Reviewed source labels, not biometric identification.',authorizedLikeness=False)
+  yield dict(privateMoviePath=str(movie),sourceURL=url,title=metadata['title'],videoID=metadata['id'],sourceSHA256=source_hash,segments=rows,characterIdentification='Reviewed source labels, not biometric identification.',authorizedLikeness=False)
  # TemporaryDirectory removes source and extracted references even on failure.
 def synthesize(references,texts,output_directory,model=None):
  import numpy as np

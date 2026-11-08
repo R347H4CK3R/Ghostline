@@ -1,5 +1,5 @@
 """Prepare reviewed video references for the queue processor."""
-import hashlib,json,os,pathlib,shutil,tempfile
+import hashlib,json,os,pathlib,re,shutil,tempfile
 from tools.video_reference import acquire,validate_request
 from tools.video_queue import video_id
 from tools.voice_pack import _metadata,_audio
@@ -10,6 +10,8 @@ class ReviewRequired(ValueError):pass
 def validate_recipe(recipe,*,transcribe_available=False):
  if not isinstance(recipe,dict) or recipe.get('schemaVersion')!=1:raise ValueError('Invalid video preparation recipe')
  if not isinstance(recipe.get('videoURL'),str):raise ValueError('Video URL must be text')
+ binding=['inspectionRevision','inspectedSourceSHA256']
+ if any(k in recipe for k in binding) and any(not isinstance(recipe.get(k),str) or not re.fullmatch(r'[a-f0-9]{64}',recipe[k]) for k in binding):raise ValueError('Invalid inspected source binding')
  identifier=video_id(recipe.get('videoURL',''));review=recipe.get('referenceUseReview',{})
  if not isinstance(review,dict) or review.get('decision')!='approved-local-processing' or any(not isinstance(review.get(k),str) or not review[k].strip() for k in ['reviewer','record']):raise ReviewRequired('Reference-use review and provenance record are required before downloading')
  segments=recipe.get('segments')
@@ -41,6 +43,7 @@ def prepare(recipe_path,spec_directory,*,cancelled=lambda:False,transcribe=None,
   if cancelled():raise InterruptedError('Video preparation paused')
   with acquire(recipe['videoURL'],segments,downloader_factory,cancelled=cancelled,max_duration=recipe.get('maxVideoSeconds',1800),max_bytes=recipe.get('maxDownloadBytes',268435456),max_download_seconds=recipe.get('maxDownloadSeconds',300)) as source:
    if source['videoID']!=identifier:raise ValueError('Downloaded video does not match the queued video ID')
+   if 'inspectedSourceSHA256' in recipe and source['sourceSHA256']!=recipe['inspectedSourceSHA256']:raise ReviewRequired('Source bytes changed after inspection; new source review is required')
    rows=[];files={};owners=set()
    for segment in source['segments']:
     if cancelled():raise InterruptedError('Video preparation paused')

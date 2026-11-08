@@ -31,6 +31,15 @@ class SourceReviewTests(unittest.TestCase):
   self.assertEqual(self.request('/review?video=SYNTHETIC03')[0],200)
   self.assertEqual(self.request('/review?video=../bad')[0],400)
   self.assertEqual(self.request('/review?video=SYNTHETIC03&video=SYNTHETIC04')[0],400)
+ def test_inspection_requires_auth_nonce_use_record_and_existing_initial_job(self):
+  body=dict(schemaVersion=1,videoURL=self.recipe['videoURL'],decision='approved-local-inspection',reviewer='Fixture creator',record='Original synthetic AV fixture')
+  self.assertEqual(self.request('/inspection',body)[0],403)
+  self.assertEqual(self.request('/inspection',body,auth=False,csrf=self.token())[0],401)
+  self.assertEqual(self.request('/inspection',body,csrf=self.token())[0],200)
+  self.assertEqual(json.loads((self.root/'inspections/SYNTHETIC03.json').read_text()),body)
+  self.assertEqual(self.request('/inspection?video=SYNTHETIC03')[0],200)
+  self.assertEqual(self.request('/inspection/SYNTHETIC03/../../secret')[0],404)
+  self.assertFalse((self.root/'recipes/SYNTHETIC03.json').exists())
  def test_initial_review_saved_in_actual_processor_recipe_format(self):
   self.assertEqual(self.request('/review',self.recipe,csrf=self.token())[0],200)
   saved=json.loads((self.root/'recipes/SYNTHETIC03.json').read_text());self.assertEqual(saved,self.recipe)
@@ -69,3 +78,15 @@ class SourceReviewTests(unittest.TestCase):
   output=prepare(self.root/'recipes/SYNTHETIC03.json',self.root/'specifications',downloader_factory=Downloader)
   result=json.loads(output.read_text());self.assertEqual(result['profiles'][0]['metadata']['name'],'Original fixture')
   self.assertFalse(result['provenance']['likenessVerified']);self.assertTrue((self.root/'specifications'/result['profiles'][0]['referenceFile']).is_file())
+
+ def test_inspection_stop_and_initial_state_gate_preserve_saved_work(self):
+  token=self.token();body=dict(schemaVersion=1,videoURL=self.recipe['videoURL'],decision='approved-local-inspection',reviewer='Fixture creator',record='Original fixture')
+  self.assertEqual(self.request('/inspection',body,csrf=token)[0],200)
+  self.assertEqual(self.request('/inspection/stop',dict(videoID='SYNTHETIC03'),csrf=token)[0],200)
+  self.assertTrue((self.root/'inspections/SYNTHETIC03.cancel').is_file())
+  self.assertEqual(json.loads(self.request('/inspection?video=SYNTHETIC03')[1])['status'],'stop-requested')
+  self.assertEqual(self.request('/inspection',body,csrf=token)[0],200)
+  self.assertFalse((self.root/'inspections/SYNTHETIC03.cancel').exists())
+  self.assertEqual(self.request('/review',self.recipe,csrf=token)[0],200)
+  self.assertEqual(self.request('/inspection',body,csrf=token)[0],409)
+  self.assertEqual(self.request('/inspection?video=SYNTHETIC03&video=SYNTHETIC04')[0],400)

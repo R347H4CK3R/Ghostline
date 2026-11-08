@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "status": "source-validation-in-progress-not-deployed",
+  "scope": "Private audio activity suggestions and explicit source-bound review",
+  "automaticDiarization": false,
+  "automaticVisualLabels": false,
+  "likenessVerified": false,
+  "newCharacters": 0,
+  "physicalDeviceChecks": 0,
+  "tests": {
+    "local": {
+      "count": 209,
+      "passed": true,
+      "skipped": 0
+    },
+    "hosted": "not-yet-run",
+    "windowsLaptop": "not-yet-run",
+    "browser": "Local Chromium launch blocked by sandbox sockets; hosted check pending"
+  },
+  "limits": {
+    "maxSourceSeconds": 1800,
+    "maxSourceBytes": 268435456,
+    "maxProposals": 32,
+    "maxProposalSeconds": 12,
+    "inspectionDeadlineSeconds": 600
+  },
+  "deployment": "Not changed; existing endpoint and worker preserved"
+}

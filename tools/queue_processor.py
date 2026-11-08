@@ -1,5 +1,6 @@
 """Private prepared-reference queue processor; no automatic identity/rights claims."""
 import argparse,array,hashlib,json,math,pathlib,subprocess,sys,tempfile,threading,time,wave,gc
+from tools.source_inspection import inspect_source
 from tools.video_queue import VideoQueue,video_id
 from tools.voice_pack import export_reference_pack,validate_pack
 from tools.pack_speech import speak
@@ -66,7 +67,7 @@ class LazyModel:
   return self.model
  def release(self):self.model=None;gc.collect()
 
-def run_once(database,specifications,work,master,*,model_factory,verify,synthesize=speak,paused=lambda:False,retry_delay=30,recipe_directory=None,prepare_job=prepare):
+def run_once(database,specifications,work,master,*,model_factory,verify,synthesize=speak,paused=lambda:False,retry_delay=30,recipe_directory=None,prepare_job=prepare,inspection_job=inspect_source):
  if paused():return None
  q=VideoQueue(str(database));job=None;stop=threading.Event();lost=threading.Event();percent=[0.0];thread=None;report=None
  def cancelled():return lost.is_set() or paused()
@@ -101,7 +102,12 @@ def run_once(database,specifications,work,master,*,model_factory,verify,synthesi
     if not isinstance(recipe_data,dict) or video_id(recipe_data.get('videoURL',''))!=job['id']:raise ValueError('Preparation recipe does not match the queued video')
     prepare_job(recipe,specroot,cancelled=cancelled,transcribe=getattr(verify,'transcribe',None),commit=lambda operation:q.owned_call(job['id'],job['token'],operation))
   if not path.is_file():
-   report.update(status='awaiting-preparation',reason='Prepared labeled references or a reviewed video recipe are missing; link remains queued')
+   inspection_root=pathlib.Path(database).resolve().parent
+   request=inspection_root/'inspections'/(job['id']+'.json')
+   if request.is_file():
+    proposal=inspection_job(request,inspection_root,expected_video=job['id'],cancelled=cancelled,commit=lambda operation:q.owned_call(job['id'],job['token'],operation))
+    report['inspectionRevision']=proposal['revision']
+   report.update(status='awaiting-preparation',reason='Private audio activity previews are ready for source and label review; link remains queued' if 'inspectionRevision' in report else 'Prepared labeled references or a reviewed video recipe are missing; link remains queued')
    atomic(out/'result.json',report);q.pause(job['id'],job['token'],status='awaiting-preparation');return report
   if path.is_symlink() or path.stat().st_size>2000000:raise ValueError('Invalid prepared job specification')
   spec=json.loads(path.read_text(encoding='utf8'))

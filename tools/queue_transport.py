@@ -1,7 +1,8 @@
 """Authenticated queue API; loopback only until an encrypted device transport is paired."""
 import hmac,json,pathlib,threading,secrets,re
 from urllib.parse import urlsplit,parse_qs
-from tools.source_review import save_initial_review,page
+from tools.source_review import save_initial_review,page,save_inspection,stop_inspection
+from tools.source_inspection import read_index,preview
 from tools.master_voices import PublishBusy
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from tools.video_queue import VideoQueue,video_id
@@ -28,7 +29,25 @@ def create_server(root,token,port=0,trusted_login=None,master=None):
    if address.path=='/review':
     selection=parse_qs(address.query,keep_blank_values=True)
     if selection and (set(selection)!={'video'} or len(selection['video'])!=1 or not re.fullmatch(r'[A-Za-z0-9_-]{11}',selection['video'][0])):return self.respond(400,dict(error='Invalid source selection'))
-    body=page(csrf);self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.send_header('Content-Security-Policy',"default-src 'none'; script-src 'nonce-"+csrf+"'; style-src 'nonce-"+csrf+"'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");self.end_headers();self.wfile.write(body);return
+    body=page(csrf);self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.send_header('Content-Security-Policy',"default-src 'none'; script-src 'nonce-"+csrf+"'; style-src 'nonce-"+csrf+"'; connect-src 'self'; media-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");self.end_headers();self.wfile.write(body);return
+   if address.path=='/inspection':
+    selection=parse_qs(address.query,keep_blank_values=True)
+    if set(selection)!={'video'} or len(selection['video'])!=1 or not re.fullmatch(r'[A-Za-z0-9_-]{11}',selection['video'][0]):return self.respond(400,dict(error='Invalid inspection selection'))
+    identifier=selection['video'][0]
+    try:return self.respond(200,read_index(root,identifier))
+    except FileNotFoundError:
+     state='stop-requested' if (root/'inspections'/(identifier+'.cancel')).exists() else 'inspection-requested' if (root/'inspections'/(identifier+'.json')).is_file() else 'not-requested'
+     q=VideoQueue(str(root/'queue.db'))
+     try:job=next((v for v in q.export()['videos'] if v['id']==identifier),None)
+     finally:q.close()
+     return self.respond(200,dict(status=state,videoID=identifier,queueStatus=job['status'] if job else 'missing',reason=job['reason'] if job else 'Video is not queued'))
+    except (OSError,ValueError,KeyError,TypeError):return self.respond(409,dict(error='Private proposal unavailable; preserve existing review and check laptop diagnostics'))
+   if address.path.startswith('/inspection/'):
+    match=re.fullmatch(r'/inspection/([A-Za-z0-9_-]{11})/([a-f0-9]{64})/(clip-[0-9]+\.wav)',self.path)
+    if match is None:return self.respond(404,dict(error='Unknown private preview'))
+    try:data=preview(root,*match.groups())
+    except (OSError,ValueError,KeyError,TypeError):return self.respond(409,dict(error='Private preview unavailable or changed'))
+    self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','audio/wav');self.send_header('Content-Length',str(len(data)));self.send_header('X-Content-Type-Options','nosniff');self.end_headers();self.wfile.write(data);return
    if self.path=='/voices' or self.path.startswith('/voices/'):
     if voices is None:return self.respond(404,dict(error='Private master is not configured'))
     try:
@@ -47,12 +66,13 @@ def create_server(root,token,port=0,trusted_login=None,master=None):
    finally:q.close()
   def do_POST(self):
    if not self.authorized():return self.respond(401,dict(error='Pairing required'))
-   if self.path=='/review':
+   if self.path in ['/review','/inspection','/inspection/stop']:
     if not hmac.compare_digest(self.headers.get('X-VoiceMatrix-Review',''),csrf):return self.respond(403,dict(error='Reload the source review page before submitting'))
     try:
      length=int(self.headers.get('Content-Length','0'))
      if not 0<length<=512000 or self.headers.get('Content-Type','')!='application/json':raise ValueError('Invalid review request')
-     result=save_initial_review(root,json.loads(self.rfile.read(length)));return self.respond(200,result)
+     action={'/review':save_initial_review,'/inspection':save_inspection,'/inspection/stop':stop_inspection}[self.path]
+     result=action(root,json.loads(self.rfile.read(length)));return self.respond(200,result)
     except (FileExistsError,PublishBusy):return self.respond(409,dict(error='An existing review or busy writer was preserved; replacements need a separate reviewed update'))
     except (ValueError,TypeError,KeyError,OverflowError):return self.respond(400,dict(error='Review rejected: check queued video, source-use record, labels and 0.5–15 second segments'))
    if self.path!='/queue':return self.respond(404,dict(error='Unknown action'))
