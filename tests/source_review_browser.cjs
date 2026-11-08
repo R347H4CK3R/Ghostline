@@ -11,7 +11,7 @@ const assert=require('node:assert/strict');
   browser=await chromium.launch({headless:true});
   const page=await browser.newPage({viewport:{width:390,height:844},extraHTTPHeaders:{Authorization:'Bearer '+'s'.repeat(48)}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('http://127.0.0.1:'+port+'/review');await page.locator('#video option').waitFor();
+  await page.goto('http://127.0.0.1:'+port+'/review');await page.locator('#video option').waitFor({state:'attached'});
   await page.locator('#reviewer').fill('Fixture creator');await page.locator('#record').fill('Original synthetic fixture');
   for(const [key,value] of Object.entries({id:'original-fixture',name:'Original fixture',start:'0',end:'0.7',referenceText:'A reference sentence.'}))await page.locator('[data-key='+key+']').fill(value);
   await page.locator('[data-key=labelStatus]').selectOption('original-speaker-reviewed');await page.locator('#approved').check();
