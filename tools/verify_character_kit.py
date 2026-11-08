@@ -20,7 +20,7 @@ def verify(ipa_root,speech_root,conversion_root,expected):
  ipa_root,speech_root,conversion_root=map(pathlib.Path,(ipa_root,speech_root,conversion_root))
  proofs=[checked_source(json.loads((p/'source-proof.json').read_text()),expected) for p in (ipa_root,speech_root,conversion_root)]
  assert proofs[0]==proofs[1]==proofs[2],'Native tests and packaged app differ'
- ipa=ipa_root/'VoiceMatrix-0.4.0-character-test.ipa'
+ ipa=ipa_root/'VoiceMatrix-0.4.1-character-test.ipa'
  dependency=json.loads((ipa_root/'dependency-notices.json').read_text())['proof']
  inspection=inspect_ipa(ipa,dependency_proof=dependency)
  with zipfile.ZipFile(ipa) as z:
