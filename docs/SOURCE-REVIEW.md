@@ -1,6 +1,6 @@
 # Initial source review form
 
-This source-only feature adds an authenticated companion page at /review. It replaces manual JSON authoring for an initial reviewed recipe, not automatic diarization or label discovery. The released 0.4.1 app and feeds remain unchanged. Deployment and browser checks must be verified before presenting the page as available on the laptop.
+This deployed companion feature adds an authenticated companion page at /review. It replaces manual JSON authoring for an initial reviewed recipe, not automatic diarization or label discovery. The released 0.4.1 app and feeds remain unchanged. Hosted browser and actual same-owner laptop HTTPS checks passed before deployment. Open the existing companion HTTPS address with /review while connected through the same-account Tailscale route. There is no app binary change.
 
 The page lists waiting, awaiting-preparation and paused queue entries. Reviewers open the source video using their own access, enter clean 0.5–15 second segment times, stable profile IDs/names/categories, an explicit source-use basis and reviewer record, and select a reviewed source-label basis. Approval records local processing only; it does not establish public likeness authorization or character resemblance. Missing reference words can be transcribed by the existing local worker and remain automatic-needs-review.
 
@@ -18,7 +18,7 @@ Goal: let an explicitly reviewed initial source reach the existing processor wit
 - [x] Share validate_recipe with video_prepare; implement authenticated form/initial save and anti-forgery header.
 - [x] Test terminal/already prepared jobs and malformed URL requests; reproduce and fix both review findings.
 - [x] Independently review security, correctness and existing-reference preservation.
-- [ ] Require full Windows/Linux tests and actual mobile-width browser submission/replacement rejection.
-- [ ] Only then stage all coupled modules plus HTML on the laptop, retain backups, restart endpoint only, and verify live auth/UI routes without submitting private work or restarting a healthy speech worker.
+- [x] Full196tests passed locally, on the actual Windows laptop and hosted Windows/Linux run42504850031; actual390px-wide browser submission/replacement rejection passed with no JavaScript errors or horizontal overflow.
+- [x] All114tools/tests files including HTML were Git-blob verified at source166beacff52a5d22c8667eacec5e3e4b009e4ae2. Backups retained; endpoint only restarted. Same-owner HTTPS review200, anonymous local401, missing nonce403 and existing121-file voice catalog verified. Live queue stayed0; no private review was submitted. Healthy worker9628 and master60profiles/index unchanged.
 
 Review focus: stale/terminal job state, prior prepared specifications, concurrent first submissions, malformed nested input and untrusted labels. The current tests pin state/refusal/input behavior; no candidate promotion or automatic identity claim is introduced. UI and app integration should later expose this page from the queue dashboard/native video list, with automated segment/label proposals kept visibly uncertain until reviewed.

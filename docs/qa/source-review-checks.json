@@ -1,0 +1,39 @@
+{
+  "sourceCommit": "166beacff52a5d22c8667eacec5e3e4b009e4ae2",
+  "run": 42504850031,
+  "hostedWindowsLinuxTestsPerPlatform": 196,
+  "skips": 0,
+  "localTests": 196,
+  "laptopWindowsTests": 196,
+  "browser": {
+    "actualHostedChromium": true,
+    "viewportWidth": 390,
+    "submittedInitialReview": true,
+    "existingRecipeRefused": true,
+    "javascriptErrors": 0,
+    "horizontalOverflow": false
+  },
+  "reviewRegressions": [
+    "Terminal/prepared jobs could falsely succeed but never be consumed: reproduced and refused",
+    "Null video URL disconnected HTTP request: reproduced and now HTTP400"
+  ],
+  "browserHarnessRepair": "Initial test incorrectly waited for native option visibility; changed to DOM attachment, then performed real select, submission and refusal.",
+  "deployment": {
+    "filesGitBlobVerified": 114,
+    "endpointRestartedOnly": true,
+    "sameOwnerHTTPS": 200,
+    "anonymousLocal": 401,
+    "missingNonce": 403,
+    "voiceCatalogFiles": 121,
+    "queueJobs": 0,
+    "masterProfiles": 60,
+    "masterModified": false,
+    "workerPID": 9628,
+    "workerLockHeld": true
+  },
+  "newLiveVideoDownload": false,
+  "newNeuralCharacterInference": false,
+  "physicalPhoneVerified": false,
+  "likenessVerified": false,
+  "appOrFeedsChanged": false
+}
