@@ -93,6 +93,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
     private var activeModelSHA256: String?
     private var activeConfigSHA256: String?
     private var generatedAudioSHA256: String?
+    private var generatedPCMHash: String?
     private var lastDiagnosticStage = "No generation attempted"
     private var lastDiagnosticError: String?
     private var lastGenerationMilliseconds: Int?
@@ -124,6 +125,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         playbackCompleted = false
         userAttestedListening = false
         generatedAudioSHA256 = nil
+        generatedPCMHash = nil
         activeModelSHA256 = nil
         activeConfigSHA256 = nil
         status = "Selected \(id). UNVERIFIED until iPhone offline audio is generated and reviewed."
@@ -141,6 +143,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         outputURL = nil
         evidenceURL = nil
         generatedAudioSHA256 = nil
+        generatedPCMHash = nil
         playbackStarted = false
         playbackCompleted = false
         userAttestedListening = false
@@ -285,6 +288,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         outputURL = nil
         evidenceURL = nil
         generatedAudioSHA256 = nil
+        generatedPCMHash = nil
         playbackStarted = false
         playbackCompleted = false
         userAttestedListening = false
@@ -309,6 +313,10 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
             let wav = URL(fileURLWithPath: filePath)
             lastDiagnosticStage = "Finalizing and decoding generated WAV"
             try finalizeWAV(wav)
+            // Decodability/duration alone also accept silent or invalid float
+            // samples. Reuse the same finite, nonzero PCM gate as the RVC lab.
+            // This is technical integrity, not proof of audible speech.
+            let facts = try GhostlineWAVInspector.inspect(Data(contentsOf: wav, options: .mappedIfSafe))
             let audio = try AVAudioPlayer(contentsOf: wav)
             guard audio.duration > 0.2, audio.prepareToPlay() else {
                 throw NSError(domain: "GhostlinePiper", code: 9,
@@ -321,6 +329,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
             audioPlayer = audio
             outputURL = wav
             generatedAudioSHA256 = hash
+            generatedPCMHash = facts.pcmSHA256
             playbackStarted = audio.play()
             lastDiagnosticStage = playbackStarted ? "Local WAV playback started" : "WAV generated but playback failed to start"
             status = playbackStarted
@@ -438,7 +447,8 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
         guard let pack = chosen, let wav = outputURL,
               let modelHash = activeModelSHA256,
               let configHash = activeConfigSHA256,
-              let audioHash = generatedAudioSHA256 else { return }
+              let audioHash = generatedAudioSHA256,
+              let pcmHash = generatedPCMHash else { return }
         guard (try? sha256File(wav)) == audioHash else {
             evidenceURL = nil
             status = "Saved WAV changed after generation; refusing a stale receipt."
@@ -450,6 +460,7 @@ final class GhostlineIncludedPiperStudio: NSObject, ObservableObject, AVAudioPla
             "source_model_card": pack.model_card_url,
             "model_sha256": modelHash, "config_sha256": configHash,
             "generated_wav_sha256": audioHash,
+            "pcm_audio_payload_sha256": pcmHash,
             "generated_wav_bytes": (try? wav.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0,
             "device_class": UIDevice.current.model,
             "ios_version": UIDevice.current.systemVersion,
@@ -561,3 +572,4 @@ struct GhostlineIncludedPiperView: View {
         .navigationTitle("Included Piper Voices")
     }
 }
+

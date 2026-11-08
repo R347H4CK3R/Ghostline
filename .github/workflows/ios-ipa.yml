@@ -2,7 +2,7 @@ name: GHOSTLINE iOS IPA
 on:
   workflow_dispatch:
   push:
-    branches: [main, experiment/ghostline-american-studio-rebuild-20261106, experiment/ghostline-five-animation-horror-sources-20261106, experiment/ghostline-combined-sources-20261106]
+    branches: [main, experiment/ghostline-american-studio-rebuild-20261106, experiment/ghostline-five-animation-horror-sources-20261106, experiment/ghostline-combined-sources-20261106, experiment/ghostline-piper-pcm-validation-20261108]
 concurrency:
   group: ghostline-ios-${{ github.ref }}
   cancel-in-progress: true
@@ -276,6 +276,8 @@ jobs:
           assert '"authorized_identity_match_confirmed": false' in source
           print("Rights, provenance, and unverified included pack guard passed")
           PY
+      - name: Guard included Piper finite nonzero PCM validation
+        run: python3 scripts/test_included_piper_pcm_integrity.py
       - name: Guard included Piper replay and native listening receipts
         run: python3 scripts/test_included_piper_playback_evidence.py
       - name: Audit variable-speaker CC0 manifest and provenance
@@ -304,3 +306,4 @@ jobs:
         with:
           name: GHOSTLINE-build-logs
           path: xcodebuild.log
+
