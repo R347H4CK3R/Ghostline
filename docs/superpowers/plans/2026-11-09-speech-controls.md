@@ -12,3 +12,7 @@ Plan:
 3. Wire controls, reset and practical-limit guidance into speech screen; preserve playback/reference lifecycle.
 4. Add suggestion draft form and privacy/encoding tests; configure verified recurring review.
 5. Run ARM64 build, simulator/native checks and independent review. Integrate only passing work; publish a new IPA only after full release gates and downloaded-asset audit.
+
+## Outcome
+
+Implementation and verification are complete for the 0.4.5 candidate. All five native candidate gates passed in run 42556041000; all 16 simulator checks passed in run 42559606073. Independent review found no remaining blocker. See docs/qa/0.4.5-speech-controls-candidate.md for exact source, checksum, artifact and limitations. Daily owner-suggestion review is configured and enabled, with no scheduled execution result yet verified. Public PR creation was rejected by automatic approval review; public integration/release remains pending. The 0.4.4 feeds and private user data are unchanged.
