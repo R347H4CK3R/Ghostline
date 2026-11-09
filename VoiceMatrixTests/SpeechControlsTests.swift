@@ -63,6 +63,15 @@ struct SpeechRenderingChecks {
         }
         do { try await job.value; fatalError("Cancellation ignored") } catch is CancellationError {}
         precondition(!FileManager.default.fileExists(atPath: cancelled.path))
+        let interrupted = root.appendingPathComponent("interrupted.wav")
+        let active = Task { try await SpeechRendering.render(source: source, destination: interrupted, controls: SpeechControls(speed: 0.5)) }
+        for _ in 0..<10000 {
+            if FileManager.default.fileExists(atPath: interrupted.path) { break }
+            await Task.yield()
+        }
+        active.cancel()
+        do { try await active.value; fatalError("In-progress cancellation ignored") } catch is CancellationError {}
+        precondition(!FileManager.default.fileExists(atPath: interrupted.path))
         let preserved = try Data(contentsOf: source)
         precondition(preserved == original)
         print("Offline speed, pitch, volume, default bytes, cancellation and reference preservation passed")

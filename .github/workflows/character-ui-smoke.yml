@@ -2,6 +2,8 @@ name: Current no-stock character UI smoke
 on:
   push:
     paths:
+      - 'VoiceMatrix/F5ReferenceEngine.swift'
+      - 'VoiceMatrix/F5SpeechChunks.swift'
       - 'VoiceMatrix/SpeechRendering.swift'
       - 'VoiceMatrix/SuggestionDraft.swift'
       - 'VoiceMatrix/SuggestionsView.swift'
@@ -19,6 +21,9 @@ on:
       - 'project.yml'
       - '.github/workflows/character-ui-smoke.yml'
   workflow_dispatch:
+concurrency:
+  group: character-ui-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
