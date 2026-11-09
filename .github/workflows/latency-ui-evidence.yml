@@ -1,0 +1,38 @@
+name: Inspect latency UI evidence
+on:
+  push:
+    branches: [performance/voicematrix-speech-latency]
+    paths: ['.github/workflows/latency-ui-evidence.yml']
+permissions:
+  actions: read
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Current-character-UI-evidence
+          run-id: 42636544296
+          github-token: ${{ github.token }}
+          path: evidence
+      - name: Extract failure hierarchy and recorded UI frames
+        run: |
+          python3 - <<'PY'
+          import pathlib,subprocess,base64
+          root=pathlib.Path('evidence')
+          for p in (root/'workflow-screenshots').glob('*.txt'):
+              print('TEXTFILE',p.name)
+              print(p.read_text(errors='replace')[:24000])
+          log=root/'character-workflow.log'
+          lines=log.read_text(errors='replace').splitlines()
+          for i,line in enumerate(lines):
+              if 'Tap "1 · Listen to reference"' in line:
+                  print('REFERENCE_TAP_CONTEXT')
+                  print(chr(10).join(lines[max(0,i-15):i+30]))
+          for video in (root/'workflow-screenshots').glob('*.mp4'):
+              for second in (110,115,120):
+                  target=pathlib.Path(f'frame-{second}.png')
+                  subprocess.run(['ffmpeg','-v','error','-y','-ss',str(second),'-i',str(video),'-frames:v','1','-vf','scale=402:-1',str(target)],check=True)
+                  if target.exists(): print('FRAME',second,base64.b64encode(target.read_bytes()).decode())
+          PY
