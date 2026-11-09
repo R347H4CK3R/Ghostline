@@ -9,7 +9,7 @@ actor F5ReferenceEngine {
     private var loadedURL: URL?
     private let steps: Int
     private let seed: UInt64
-    init(steps: Int = 32, seed: UInt64 = 0) { self.steps = steps; self.seed = seed }
+    init(steps: Int = 32, seed: UInt64 = 0, idleRetention: Duration = .seconds(60)) { self.steps = steps; self.seed = seed }
     private struct Proof: Decodable {
         struct File: Decodable { let path, sha256: String; let size: Int }
         let schemaVersion: Int
@@ -104,5 +104,7 @@ actor F5ReferenceEngine {
         try Task.checkCancellation()
         completed = true
     }
+    func finishRequest(keepWarm: Bool) { unload() }
+    func requestRelease() { unload() }
     func unload() { engine?.unload(); engine = nil; loadedURL = nil }
 }

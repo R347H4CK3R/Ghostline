@@ -1,0 +1,20 @@
+name: Speech warm lifecycle checks
+on:
+  push:
+    branches: [performance/voicematrix-speech-latency]
+    paths: ['VoiceMatrix/F5ReferenceEngine.swift', 'tests/native/SpeechWarmChecks.swift', 'tests/native/F5LifecycleStub.swift', '.github/workflows/speech-warm-checks.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lifecycle:
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check actual adapter lifecycle against a lightweight runtime boundary
+        run: |
+          mkdir -p lifecycle-build
+          xcrun swiftc -emit-library -emit-module -module-name F5TTS tests/native/F5LifecycleStub.swift -emit-module-path lifecycle-build/F5TTS.swiftmodule -o lifecycle-build/libF5TTS.dylib
+          xcrun swiftc -parse-as-library -I lifecycle-build -L lifecycle-build -lF5TTS VoiceMatrix/F5ReferenceEngine.swift VoiceMatrix/F5SpeechChunks.swift tests/native/SpeechWarmChecks.swift -o lifecycle-build/checks
+          DYLD_LIBRARY_PATH="$PWD/lifecycle-build" lifecycle-build/checks
