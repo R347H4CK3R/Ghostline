@@ -42,11 +42,23 @@ import Darwin
                 var usage = rusage(); getrusage(RUSAGE_SELF, &usage)
                 let row: [String: Any] = ["case":index, "mode":mode, "loadSeconds":loaded-start, "synthesisSeconds":finished-loaded, "totalSeconds":finished-start, "audioSeconds":Double(wav.length)/wav.fileFormat.sampleRate, "rms":rms, "maxPCMDifferenceFromReload":maxDifference, "peakRSSBytes":usage.ru_maxrss, "file":destination.lastPathComponent, "sha256":SHA256.hash(data: try Data(contentsOf: destination)).map { String(format: "%02x", $0) }.joined()]
                 cases.append(row)
+                guard maxDifference == 0 else { throw NSError(domain: "SpeechLatencyAudioChanged", code: 1) }
                 let report: [String: Any] = ["device":gpu.name, "steps":32, "seed":0, "networkDenied":true, "physicalIPhoneVerified":false, "cases":cases]
                 try JSONSerialization.data(withJSONObject: report, options: [.sortedKeys,.prettyPrinted]).write(to: URL(fileURLWithPath: args[4]), options: .atomic)
                 print(String(data: try JSONSerialization.data(withJSONObject: row, options: [.sortedKeys]), encoding: .utf8)!)
             }
         }
+        await engine.finishRequest(keepWarm: true)
+        try await engine.load(localBundle: bundle)
+        let switched = output.appendingPathComponent("cross-text.wav")
+        try await engine.speak(text: texts[0], referenceAudio: reference, referenceText: profile.referenceText, destination: switched)
+        let switchedHash = SHA256.hash(data: try Data(contentsOf: switched)).map { String(format: "%02x", $0) }.joined()
+        guard switchedHash == cases[0]["sha256"] as? String else { throw NSError(domain: "SpeechLatencyCrossTextChanged", code: 1) }
+        let reportURL = URL(fileURLWithPath: args[4])
+        var report = try JSONSerialization.jsonObject(with: Data(contentsOf: reportURL)) as! [String: Any]
+        report["crossTextOutputIdentical"] = true
+        report["loadTimingScope"] = "Adapter validation and bundle setup; lazy neural-weight initialization is included in synthesisSeconds. Compare totalSeconds."
+        try JSONSerialization.data(withJSONObject: report, options: [.sortedKeys,.prettyPrinted]).write(to: reportURL, options: .atomic)
         await engine.unload()
     }
 }
