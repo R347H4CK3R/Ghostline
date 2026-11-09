@@ -9,7 +9,7 @@ Goal: Reduce measured text-to-speech latency without changing the 32-step/seed-0
 - [x] ARM64 compilation, 219 source regressions and all five native candidate gates passed. Candidate IPA 731114673 bytes, SHA-256 27cc1a45d92529bf1acd5f3c1383f8e278fb990cd6114baa3df3b1bef0c17aef.
 - [x] Corrected simulator run42642950816 passed both test groups, including reference playback before/after relaunch and long text/suggestions. Evidence artifact13687238682. Run42636544296 passed 15 checks including suggestions, then its replay tap hit a reference button partly behind the tab bar, confirmed in recording/hierarchy. Test now fully reveals controls and reserves status space; no product change.
 - [x] Independent read-only review completed. Important validation findings addressed: enforce zero PCM difference and exercise suspended load/generation plus failure/cancellation. No confirmed production correctness blocker.
-- [ ] Obtain successor integration/publication approval. Automatic approval review rejected the proposed public0.4.6 release/feed-writing workflow. It was not created or retried; only a read-only candidate build workflow was added. Public release/feeds remain0.4.5.
+- [x] PR #48 merged and exact verified candidate published as 0.4.6 by run42723285863 after approval. All three feeds read back with matching IPA size/hash; public redownload and inspection passed. Release automation and feed audit integration tracked in PR #49.
 
 Ruling: Use a remote isolated branch and GitHub Actions because no local executor is available; no local or physical-device testing is claimed.
 Ruling: Keep 32 steps/seed0 and the pinned model; no inference-quality tradeoff is introduced.
