@@ -2,7 +2,7 @@ name: Speech chunk regression
 on:
   push:
     branches: ['feature/voicematrix-speech-controls']
-    paths: ['VoiceMatrix/F5SpeechChunks.swift', 'tests/native/F5SpeechChunkChecks.swift', 'VoiceMatrix/SpeechRendering.swift', 'tests/native/SpeechRenderingChecks.swift', '.github/workflows/speech-controls-checks.yml']
+    paths: ['VoiceMatrix/F5SpeechChunks.swift', 'tests/native/F5SpeechChunkChecks.swift', 'VoiceMatrix/SuggestionDraft.swift', 'tests/native/SuggestionDraftChecks.swift', 'VoiceMatrix/SpeechRendering.swift', 'tests/native/SpeechRenderingChecks.swift', '.github/workflows/speech-controls-checks.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,3 +19,7 @@ jobs:
         run: |
           xcrun swiftc -parse-as-library VoiceMatrix/SpeechRendering.swift tests/native/SpeechRenderingChecks.swift -o effects-checks
           ./effects-checks
+      - name: Verify suggestion draft privacy and encoding
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/SuggestionDraft.swift tests/native/SuggestionDraftChecks.swift -o suggestion-checks
+          ./suggestion-checks

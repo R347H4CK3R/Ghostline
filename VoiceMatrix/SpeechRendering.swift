@@ -57,7 +57,7 @@ enum SpeechRendering {
         engine.mainMixerNode.outputVolume = Float(controls.volume)
         try engine.enableManualRenderingMode(.offline, format: format, maximumFrameCount: 4096)
         defer { player.stop(); engine.stop(); engine.disableManualRenderingMode() }
-        player.scheduleFile(input, at: nil)
+        player.scheduleFile(input, at: nil, completionHandler: nil)
         try engine.start()
         player.play()
         output = try AVAudioFile(forWriting: destination, settings: [
