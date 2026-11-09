@@ -41,5 +41,27 @@ class FeedTests(unittest.TestCase):
             target[field] = old
         with self.assertRaises(AssertionError): validate(report,release,run,jobs[:-1],asset)
 
+    def test_promoted_candidate_requires_both_successful_pipelines(self):
+        report = dict(inspection=dict(version="0.4.6",build="1",archive="passed",bundleIdentifier="com.voicematrix.app",stockProfiles=0),
+                      bundledCharacterProfiles=0,nativeDiagnosticSpeechPassed=True,nativeSimulatorConversionPassed=True,
+                      playbackAndUpdaterSimulatorTestsPassed=True,sourceCommit="candidate",publicationSource="publication",
+                      candidateRun=123,ipaSHA256="a"*64,ipaBytes=12)
+        release = dict(draft=False,prerelease=False,tag_name="voicematrix-v0.4.6")
+        run = dict(status="completed",conclusion="success",head_sha="publication")
+        jobs = [dict(name="publish",conclusion="success")]
+        prior = dict(id=123,status="completed",conclusion="success",head_sha="candidate")
+        gates = [dict(name=n,conclusion="success") for n in ("resolve","ipa","speech","conversion","verify")]
+        asset = dict(name="VoiceMatrix-0.4.6.ipa",size=12,digest="sha256:"+"a"*64,
+                     browser_download_url=f"https://github.com/{REPO}/releases/download/voicematrix-v0.4.6/VoiceMatrix-0.4.6.ipa")
+        validate(report,release,run,jobs,asset,(prior,gates))
+        with self.assertRaises(AssertionError): validate(report,release,run,jobs,asset)
+        with self.assertRaises(AssertionError): validate(report,release,run,jobs,asset,(prior,gates[:-1]))
+        with self.assertRaises(AssertionError): validate(report,release,run,[],asset,(prior,gates))
+        for target, field, bad in ((prior,"id",456),(prior,"head_sha","wrong"),(prior,"conclusion","failure"),
+                                    (run,"head_sha","candidate"),(run,"conclusion","failure"),(asset,"digest","sha256:bad")):
+            old=target[field];target[field]=bad
+            with self.assertRaises(AssertionError): validate(report,release,run,jobs,asset,(prior,gates))
+            target[field]=old
+
 if __name__ == "__main__":
     unittest.main()

@@ -6,7 +6,7 @@ on:
     - cron: '17 * * * *'
   workflow_dispatch:
   push:
-    branches: [main, maintenance/verified-release-feeds]
+    branches: [main, maintenance/verified-release-feeds, release/voicematrix-0.4.6]
     paths:
       - tools/sync_verified_release_feeds.py
       - tools/test_release_feed_sync.py
@@ -47,4 +47,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-# Reconcile the published 0.4.5 asset after integrating its release evidence.
+# Verify both direct releases and exact candidate promotions before reconciling sources.
