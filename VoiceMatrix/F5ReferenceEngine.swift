@@ -57,7 +57,7 @@ actor F5ReferenceEngine {
         engine = try await F5TTSModel.fromBundle(localBundle)
         loadedURL = localBundle
     }
-    func speak(text: String, referenceAudio: URL, referenceText: String, destination: URL, progress: @escaping @Sendable (Int, Int) -> Void = { _, _ in }) async throws {
+    func speak(text: String, referenceAudio: URL, referenceText: String, destination: URL, pauseSeconds: Double = 0.12, progress: @escaping @Sendable (Int, Int) -> Void = { _, _ in }) async throws {
         guard let engine, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               !referenceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw NSError(domain: "VoiceMatrix.F5", code: 1, userInfo: [NSLocalizedDescriptionKey: "Load a local engine and character reference first."])
@@ -95,6 +95,44 @@ actor F5ReferenceEngine {
         for (index, value) in samples.enumerated() { channel[index] = value * gain }
         let writer = try AVAudioFile(forWriting: destination, settings: [AVFormatIDKey: Int(kAudioFormatLinearPCM), AVSampleRateKey: 24000.0, AVNumberOfChannelsKey: 1, AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false])
         try writer.write(from: buffer)
+    }
+    func unload() { engine?.unload(); engine = nil; loadedURL = nil }
+}        guard pauseSeconds.isFinite, (0...1).contains(pauseSeconds),
+              let format = AVAudioFormat(standardFormatWithSampleRate: 24000, channels: 1) else {
+            throw NSError(domain: "VoiceMatrix.F5", code: 2)
+        }
+        var completed = false
+        var writer: AVAudioFile? = try AVAudioFile(forWriting: destination, settings: [AVFormatIDKey: Int(kAudioFormatLinearPCM), AVSampleRateKey: 24000.0, AVNumberOfChannelsKey: 1, AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false])
+        defer { writer = nil; if !completed { try? FileManager.default.removeItem(at: destination) } }
+        var writtenFrames = 0
+        func append(_ samples: [Float]) throws {
+            try Task.checkCancellation()
+            guard writtenFrames + samples.count <= Int(F5SpeechChunks.maximumJobSeconds * 24000),
+                  let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count)),
+                  let channel = buffer.floatChannelData?[0] else { throw F5ChunkError.jobTooLong }
+            buffer.frameLength = AVAudioFrameCount(samples.count)
+            let peak = samples.reduce(Float(0)) { max($0, abs($1)) }
+            let gain = min(Float(1), 0.98 / max(peak, 0.000001))
+            for (index, value) in samples.enumerated() { channel[index] = value * gain }
+            try writer?.write(from: buffer)
+            writtenFrames += samples.count
+        }
+        for (index, chunk) in chunks.enumerated() {
+            try Task.checkCancellation()
+            let tokens = try engine.tokenizer.encode(F5SpeechChunks.normalizedReference(referenceText) + chunk)
+            try F5SpeechChunks.validateTokenCount(tokens.count)
+            progress(index + 1, chunks.count)
+            let clip = try await engine.generate(text: chunk, referenceAudio: referenceAudio, referenceText: referenceText, options: options)
+            try Task.checkCancellation()
+            guard clip.count >= 2400, clip.allSatisfy({ $0.isFinite }),
+                  clip.reduce(0.0, { $0 + Double($1) * Double($1) }) / Double(clip.count) > 1e-8 else {
+                throw NSError(domain: "VoiceMatrix.F5", code: 2, userInfo: [NSLocalizedDescriptionKey: "One part of the message did not produce usable speech. Try another reference."])
+            }
+            if index > 0, pauseSeconds > 0 { try append([Float](repeating: 0, count: Int(pauseSeconds * 24000))) }
+            try append(clip)
+        }
+        try Task.checkCancellation()
+        completed = true
     }
     func unload() { engine?.unload(); engine = nil; loadedURL = nil }
 }

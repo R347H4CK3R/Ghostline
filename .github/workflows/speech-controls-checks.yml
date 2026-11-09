@@ -2,7 +2,7 @@ name: Speech chunk regression
 on:
   push:
     branches: ['feature/voicematrix-speech-controls']
-    paths: ['VoiceMatrix/F5SpeechChunks.swift', 'tests/native/F5SpeechChunkChecks.swift', '.github/workflows/speech-controls-checks.yml']
+    paths: ['VoiceMatrix/F5SpeechChunks.swift', 'tests/native/F5SpeechChunkChecks.swift', 'VoiceMatrix/SpeechRendering.swift', 'tests/native/SpeechRenderingChecks.swift', '.github/workflows/speech-controls-checks.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,3 +15,7 @@ jobs:
         run: |
           xcrun swiftc -parse-as-library VoiceMatrix/F5SpeechChunks.swift tests/native/F5SpeechChunkChecks.swift -o speech-checks
           ./speech-checks
+      - name: Verify actual offline audio controls
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/SpeechRendering.swift tests/native/SpeechRenderingChecks.swift -o effects-checks
+          ./effects-checks
