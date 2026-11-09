@@ -304,7 +304,7 @@ jobs:
         root=pathlib.Path('release-evidence')
         report=verify(root/'ipa',root/'speech',root/'conversion',os.environ['GITHUB_SHA'],'0.4.5')
         report.update(status='candidate-verified-not-published',workflowRun=int(os.environ['GITHUB_RUN_ID']))
-        (root/'candidate-verification.json').write_text(json.dumps(report,indent=2)+'\\n')
+        (root/'candidate-verification.json').write_text(json.dumps(report,indent=2)+chr(10))
         print(json.dumps(report,indent=2))
         PY
     - uses: actions/upload-artifact@v4

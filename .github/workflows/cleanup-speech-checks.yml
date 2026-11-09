@@ -1,4 +1,4 @@
-name: Retire superseded speech checks
+name: Retire superseded candidate check
 on:
   push:
     branches: ['feature/voicematrix-speech-controls']
@@ -10,18 +10,16 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
-      - name: Cancel only older checks for this feature branch
+      - name: Cancel the superseded candidate only
         env:
           GH_TOKEN: ${{ github.token }}
-          CURRENT_SHA: ${{ github.sha }}
         run: |
           python3 - <<'PY'
-          import json,os,subprocess
-          repo='R347H4CK3R/Ghostline'
-          endpoint=f'repos/{repo}/actions/runs?branch=feature/voicematrix-speech-controls&per_page=100'
-          runs=json.loads(subprocess.check_output(['gh','api',endpoint]))['workflow_runs']
-          for run in runs:
-              if run['head_sha']!=os.environ['CURRENT_SHA'] and run['status'] in ('queued','in_progress') and run['name'] in ('Native app compile checks','Current no-stock character UI smoke'):
-                  subprocess.run(['gh','api','--method','POST',f'repos/{repo}/actions/runs/{run["id"]}/cancel'],check=True)
-                  print('Cancelled superseded feature check',run['id'])
+          import json,subprocess
+          endpoint='repos/R347H4CK3R/Ghostline/actions/runs/42555960979'
+          run=json.loads(subprocess.check_output(['gh','api',endpoint]))
+          assert run['head_sha']=='000c1330774cb4fd5c7fd2e44de7fc37520c4618'
+          assert run['name']=='VoiceMatrix 0.4.5 candidate gates'
+          if run['status'] in ('queued','in_progress'):
+              subprocess.run(['gh','api','--method','POST',endpoint+'/cancel'],check=True)
           PY
