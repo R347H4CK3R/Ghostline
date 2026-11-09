@@ -38,7 +38,12 @@ import XCTest
         app.swipeUp()
         reveal(send, in: app); XCTAssertFalse(send.isEnabled)
         let acknowledge = app.switches["I understand that submitted text is public"]
-        reveal(acknowledge, in: app); acknowledge.tap()
+        reveal(acknowledge, in: app)
+        // The accessibility switch frame includes its long label; tap the thumb.
+        acknowledge.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        expectation(for: NSPredicate(format: "value == '1'"), evaluatedWith: acknowledge)
+        expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: send)
+        waitForExpectations(timeout: 10)
         XCTAssertTrue(send.isEnabled)
         // Do not open or submit an external issue from automated tests.
         app.terminate(); app.launch(); app.tabBars.buttons["Settings"].tap()
