@@ -9,7 +9,14 @@ actor F5ReferenceEngine {
     private var loadedURL: URL?
     private let steps: Int
     private let seed: UInt64
-    init(steps: Int = 32, seed: UInt64 = 0, idleRetention: Duration = .seconds(60)) { self.steps = steps; self.seed = seed }
+    private let idleRetention: Duration
+    private var idleRelease: Task<Void, Never>?
+    private var requestGeneration = UUID()
+    private var inUse = false
+    private var releaseRequested = false
+    init(steps: Int = 32, seed: UInt64 = 0, idleRetention: Duration = .seconds(60)) {
+        self.steps = steps; self.seed = seed; self.idleRetention = idleRetention
+    }
     private struct Proof: Decodable {
         struct File: Decodable { let path, sha256: String; let size: Int }
         let schemaVersion: Int
@@ -51,6 +58,8 @@ actor F5ReferenceEngine {
     }
     func load(localBundle: URL) async throws {
         try Task.checkCancellation()
+        idleRelease?.cancel(); idleRelease = nil
+        requestGeneration = UUID(); inUse = true; releaseRequested = false
         if loadedURL == localBundle, engine != nil { return }
         engine = nil; loadedURL = nil
         try validateBundle(localBundle)
@@ -104,7 +113,30 @@ actor F5ReferenceEngine {
         try Task.checkCancellation()
         completed = true
     }
-    func finishRequest(keepWarm: Bool) { unload() }
-    func requestRelease() { unload() }
-    func unload() { engine?.unload(); engine = nil; loadedURL = nil }
+    // A successful plain-WAV request may keep only the shared model briefly.
+    // References are reopened and validated for every request; no trust is persisted.
+    func finishRequest(keepWarm: Bool) {
+        inUse = false
+        guard keepWarm, !Task.isCancelled, !releaseRequested, engine != nil else { unload(); return }
+        idleRelease?.cancel()
+        let token = requestGeneration, delay = idleRetention
+        idleRelease = Task { [weak self] in
+            do { try await Task.sleep(for: delay) } catch { return }
+            await self?.expire(token)
+        }
+    }
+    func requestRelease() {
+        releaseRequested = true
+        // Never invalidate the runtime in the middle of an awaited generation.
+        if !inUse { unload() }
+    }
+    private func expire(_ token: UUID) {
+        guard token == requestGeneration, !inUse else { return }
+        unload()
+    }
+    func unload() {
+        idleRelease?.cancel(); idleRelease = nil
+        requestGeneration = UUID(); inUse = false; releaseRequested = false
+        engine?.unload(); engine = nil; loadedURL = nil
+    }
 }

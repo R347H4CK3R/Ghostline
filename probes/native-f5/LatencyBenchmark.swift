@@ -21,6 +21,7 @@ import Darwin
             await engine.unload()
             var baseline: [Float] = []
             for mode in ["reload", "reuse"] {
+                if mode == "reuse" { await engine.finishRequest(keepWarm: true) }
                 let start = ProcessInfo.processInfo.systemUptime
                 try await engine.load(localBundle: bundle)
                 let loaded = ProcessInfo.processInfo.systemUptime

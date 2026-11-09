@@ -23,6 +23,16 @@ import CryptoKit
     private var syncJob: Task<Void, Never>?
     private var catalogRefresh = UUID()
     private var reviewRefresh = UUID()
+    private var applicationActive = true
+    private var retainCurrentSpeech = true
+    func releaseWarmSpeech() {
+        retainCurrentSpeech = false
+        Task { await engine.requestRelease() }
+    }
+    func setApplicationActive(_ active: Bool) {
+        applicationActive = active
+        if !active { releaseWarmSpeech() }
+    }
     var engineAvailable: Bool {
         guard let root = Bundle.main.url(forResource: "F5TTS", withExtension: nil) else { return false }
         return FileManager.default.fileExists(atPath: root.appendingPathComponent("voicematrix-engine.json").path)
@@ -180,6 +190,7 @@ import CryptoKit
             message = "This build does not contain the F5 speech engine. Your imported voice samples are safe; install a build containing the shared engine to test speech."; return
         }
         guard let lease = audio.claimProcessing() else { message = "Stop the other recording or speech task first."; return }
+        retainCurrentSpeech = true
         busy = true; message = "Starting the local character speech engine…"
         let token = UUID(); operationID = token
         let destination = FileManager.default.temporaryDirectory.appendingPathComponent("Speech-" + voice.id + "-" + UUID().uuidString + ".wav")
@@ -195,7 +206,7 @@ import CryptoKit
                     Task { @MainActor in if self.busy && self.operationID == token { self.message = "Creating part \(part) of \(total)…" } }
                 }
                 try Task.checkCancellation()
-                await engine.unload()
+                if controls.needsRendering { await engine.unload() }
                 message = "Applying speed, pitch and volume…"
                 try await SpeechRendering.render(source: raw, destination: destination, controls: controls)
                 try Task.checkCancellation()
@@ -203,11 +214,12 @@ import CryptoKit
                 outputSettings = controls.summary
                 outputCharacterID = voice.id; outputReferenceHash = voice.referenceSHA256
                 message = "Ready to listen, save or share. Please judge the character resemblance by listening; it has not been verified."
+                await engine.finishRequest(keepWarm: retainCurrentSpeech && applicationActive && !controls.needsRendering)
             } catch {
                 try? FileManager.default.removeItem(at: destination)
                 message = error is CancellationError || Task.isCancelled ? "Stopped. Your saved voices were kept." : "Speech could not be created. " + error.localizedDescription
+                await engine.finishRequest(keepWarm: false)
             }
-            await engine.unload()
         }
     }
 }
