@@ -26,6 +26,10 @@ import Foundation
             try F5SpeechChunks.validateTokenCount(2062)
             fatalError("Tokenizer expansion must not bypass the frame budget")
         } catch is F5ChunkError { }
+        let longText = Array(repeating: "Please bring the notebook and close the window.", count: 150).joined(separator: " ")
+        precondition(longText.utf8.count > 5000)
+        let longChunks = try F5SpeechChunks.plan(text: longText, referenceText: reference, referenceSeconds: 10)
+        precondition(longChunks.joined(separator: " ").split(whereSeparator: \.isWhitespace) == longText.split(whereSeparator: \.isWhitespace))
         print("F5 word preservation and bounded per-chunk inference planning passed")
     }
 }

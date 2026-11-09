@@ -1,0 +1,17 @@
+name: Speech chunk regression
+on:
+  push:
+    branches: ['feature/voicematrix-speech-controls']
+    paths: ['VoiceMatrix/F5SpeechChunks.swift', 'tests/native/F5SpeechChunkChecks.swift', '.github/workflows/speech-controls-checks.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chunks:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify complete words for long speech
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/F5SpeechChunks.swift tests/native/F5SpeechChunkChecks.swift -o speech-checks
+          ./speech-checks
