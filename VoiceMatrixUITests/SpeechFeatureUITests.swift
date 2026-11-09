@@ -34,6 +34,7 @@ import XCTest
         for _ in 0..<4 { if title.isHittable { break }; app.swipeDown() }
         title.tap(); title.typeText("Synthetic UI suggestion")
         let details = app.textViews["Suggestion details"]; details.tap(); details.typeText("Synthetic test draft, never submitted.")
+        app.buttons["Done"].tap()
         app.swipeUp()
         reveal(send, in: app); XCTAssertFalse(send.isEnabled)
         let acknowledge = app.switches["I understand that submitted text is public"]

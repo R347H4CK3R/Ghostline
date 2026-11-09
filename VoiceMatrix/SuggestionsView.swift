@@ -6,6 +6,7 @@ struct SuggestionsView: View {
     @AppStorage("suggestionDraft.body.v1") private var details = ""
     @State private var acknowledged = false
     @State private var status = ""
+    @FocusState private var editing: Bool
     var body: some View {
         Form {
             Section("Public suggestions") {
@@ -16,8 +17,8 @@ struct SuggestionsView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("Your request") {
-                TextField("Short title", text: $title).accessibilityIdentifier("suggestion-title")
-                TextEditor(text: $details).frame(minHeight: 160).accessibilityLabel("Suggestion details")
+                TextField("Short title", text: $title).focused($editing).accessibilityIdentifier("suggestion-title")
+                TextEditor(text: $details).focused($editing).frame(minHeight: 160).accessibilityLabel("Suggestion details")
                 Text("Describe the improvement and how you would use it. Keep the request under 2,500 UTF-8 bytes.")
                     .font(.caption).foregroundStyle(.secondary)
                 Toggle("I understand that submitted text is public", isOn: $acknowledged)
@@ -37,5 +38,6 @@ struct SuggestionsView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
         }.navigationTitle("Suggestions")
+        .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Done") { editing = false } } }
     }
 }

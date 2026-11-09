@@ -69,6 +69,7 @@ struct SpeechRenderingChecks {
             if FileManager.default.fileExists(atPath: interrupted.path) { break }
             await Task.yield()
         }
+        precondition(FileManager.default.fileExists(atPath: interrupted.path), "Cancellation test must observe an output file first")
         active.cancel()
         do { try await active.value; fatalError("In-progress cancellation ignored") } catch is CancellationError {}
         precondition(!FileManager.default.fileExists(atPath: interrupted.path))
