@@ -33,7 +33,7 @@ def updated(feed, entry):
     app["versions"] = [same[0] if same else entry] + [v for v in versions if v not in same]
     return result
 
-def validate(report, release, run, jobs, asset):
+def validate(report, release, run, jobs, asset, candidate=None):
     i = report["inspection"]
     assert not release["draft"] and not release["prerelease"]
     key(i["version"], i["build"])
@@ -41,8 +41,18 @@ def validate(report, release, run, jobs, asset):
     assert i["stockProfiles"] == 0 and report["bundledCharacterProfiles"] == 0
     assert all(report.get(k) is True for k in ("nativeDiagnosticSpeechPassed", "nativeSimulatorConversionPassed", "playbackAndUpdaterSimulatorTestsPassed"))
     assert run["status"] == "completed" and run["conclusion"] == "success"
-    assert run["head_sha"] == report["sourceCommit"]
-    assert {j["name"] for j in jobs if j["conclusion"] == "success"} >= {"resolve", "ipa", "speech", "conversion", "publish"}
+    if "candidateRun" in report:
+        assert run["head_sha"] == report["publicationSource"]
+        assert {j["name"] for j in jobs if j["conclusion"] == "success"} >= {"publish"}
+        assert candidate is not None, "Missing candidate run evidence"
+        prior, prior_jobs = candidate
+        assert prior["id"] == report["candidateRun"]
+        assert prior["status"] == "completed" and prior["conclusion"] == "success"
+        assert prior["head_sha"] == report["sourceCommit"]
+        assert {j["name"] for j in prior_jobs if j["conclusion"] == "success"} >= {"resolve", "ipa", "speech", "conversion", "verify"}
+    else:
+        assert run["head_sha"] == report["sourceCommit"]
+        assert {j["name"] for j in jobs if j["conclusion"] == "success"} >= {"resolve", "ipa", "speech", "conversion", "publish"}
     assert re.fullmatch(r"[a-f0-9]{64}", report["ipaSHA256"])
     assert asset["size"] == report["ipaBytes"] and 0 < asset["size"] < 2_000_000_000
     assert asset["digest"] == "sha256:" + report["ipaSHA256"]
@@ -76,8 +86,12 @@ def main():
         asset = assets[0]
         run = api(f'actions/runs/{int(report["workflowRun"])}')
         jobs = api(f'actions/runs/{int(report["workflowRun"])}/jobs?per_page=100')["jobs"]
-        validate(report, release, run, jobs, asset)
-        assert api(f'commits/{release["tag_name"]}')["sha"] == report["sourceCommit"]
+        candidate = None
+        if "candidateRun" in report:
+            candidate_id = int(report["candidateRun"])
+            candidate = (api(f"actions/runs/{candidate_id}"), api(f"actions/runs/{candidate_id}/jobs?per_page=100")["jobs"])
+        validate(report, release, run, jobs, asset, candidate)
+        assert api(f'commits/{release["tag_name"]}')["sha"] == report.get("publicationSource", report["sourceCommit"])
         ipa = root/asset["name"]
         with ipa.open("rb") as stream:
             assert hashlib.file_digest(stream, "sha256").hexdigest() == report["ipaSHA256"]
