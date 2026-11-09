@@ -1,0 +1,56 @@
+name: Publish verified VoiceMatrix 0.4.6
+'on':
+  push:
+    branches: ['release/voicematrix-0.4.6']
+    paths: ['.github/workflows/voicematrix-046-release.yml']
+  workflow_dispatch: null
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: voicematrix-046-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      actions: read
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Check publisher syntax and source regressions
+      run: |
+        python3 -m py_compile tools/publish_voicematrix_046.py
+        python3 -m unittest discover -s tests -v
+    - uses: actions/download-artifact@v4
+      with:
+        github-token: ${{ github.token }}
+        run-id: 42632930303
+        name: Character-test-IPA
+        path: release-evidence/ipa
+    - uses: actions/download-artifact@v4
+      with:
+        github-token: ${{ github.token }}
+        run-id: 42632930303
+        name: Character-speech-evidence
+        path: release-evidence/speech
+    - uses: actions/download-artifact@v4
+      with:
+        github-token: ${{ github.token }}
+        run-id: 42632930303
+        name: Character-conversion-evidence
+        path: release-evidence/conversion
+    - name: Verify candidate, publish, redownload and update sources
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: python3 -m tools.publish_voicematrix_046
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: VoiceMatrix-0.4.6-publication-report
+        path: release-evidence/publication-report.json
+        if-no-files-found: warn
