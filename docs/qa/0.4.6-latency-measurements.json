@@ -1,0 +1,337 @@
+{
+  "base": "58db584fa616cda3169217b0327f3314738afd70",
+  "testedAppSource": "1430adbe6b45d2cb4d6c63722beff91b517221a8",
+  "candidateSource": "787737897ee3ddb419291caff32d8aec157a9931",
+  "settings": {
+    "steps": 32,
+    "seed": 0,
+    "model": "F5TTS_v1_Base",
+    "idleRetentionSeconds": 60
+  },
+  "runs": [
+    {
+      "id": 42628485372,
+      "kind": "existing-adapter paired investigation",
+      "cases": [
+        {
+          "audioSeconds": 1.4186666666666667,
+          "case": 0,
+          "file": "reload-0.wav",
+          "loadSeconds": 1.4677357916666551,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reload",
+          "peakRSSBytes": 1407418368,
+          "rms": 0.0905468933930319,
+          "sha256": "660742e0cdb3d883abaee89461f344abfebe8e4445d4d0e60640641c552abd68",
+          "synthesisSeconds": 21.858144708333384,
+          "totalSeconds": 23.32588050000004
+        },
+        {
+          "audioSeconds": 1.4186666666666667,
+          "case": 0,
+          "file": "reuse-0.wav",
+          "loadSeconds": 0.00017295833333719202,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reuse",
+          "peakRSSBytes": 1407418368,
+          "rms": 0.0905468933930319,
+          "sha256": "660742e0cdb3d883abaee89461f344abfebe8e4445d4d0e60640641c552abd68",
+          "synthesisSeconds": 12.373972499999923,
+          "totalSeconds": 12.37414545833326
+        },
+        {
+          "audioSeconds": 2.0693333333333332,
+          "case": 1,
+          "file": "reload-1.wav",
+          "loadSeconds": 1.852543125000011,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reload",
+          "peakRSSBytes": 1536425984,
+          "rms": 0.10356271856587908,
+          "sha256": "fa0112bb0fe73a7791f6310b7ee5c4bbfd856951c93c5fbb72516177648ab5b7",
+          "synthesisSeconds": 14.374368083333252,
+          "totalSeconds": 16.226911208333263
+        },
+        {
+          "audioSeconds": 2.0693333333333332,
+          "case": 1,
+          "file": "reuse-1.wav",
+          "loadSeconds": 0.0004545833332940674,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reuse",
+          "peakRSSBytes": 1537458176,
+          "rms": 0.10356271856587908,
+          "sha256": "fa0112bb0fe73a7791f6310b7ee5c4bbfd856951c93c5fbb72516177648ab5b7",
+          "synthesisSeconds": 14.315005333333374,
+          "totalSeconds": 14.315459916666669
+        },
+        {
+          "audioSeconds": 2.3786666666666667,
+          "case": 2,
+          "file": "reload-2.wav",
+          "loadSeconds": 1.7849259166666798,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reload",
+          "peakRSSBytes": 1537458176,
+          "rms": 0.11448891064803565,
+          "sha256": "b1ddf72d28ed0ba1de0b20f3d5b2f07a9fcdb4c86514c5b795f9acb7406df5d6",
+          "synthesisSeconds": 16.195066708333343,
+          "totalSeconds": 17.979992625000023
+        },
+        {
+          "audioSeconds": 2.3786666666666667,
+          "case": 2,
+          "file": "reuse-2.wav",
+          "loadSeconds": 0.00009779166668977268,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reuse",
+          "peakRSSBytes": 1537458176,
+          "rms": 0.11448891064803565,
+          "sha256": "b1ddf72d28ed0ba1de0b20f3d5b2f07a9fcdb4c86514c5b795f9acb7406df5d6",
+          "synthesisSeconds": 16.562077708333277,
+          "totalSeconds": 16.562175499999967
+        }
+      ]
+    },
+    {
+      "id": 42631433065,
+      "kind": "bounded cache integration",
+      "cases": [
+        {
+          "audioSeconds": 1.4186666666666667,
+          "case": 0,
+          "file": "reload-0.wav",
+          "loadSeconds": 2.189113541666643,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reload",
+          "peakRSSBytes": 1132494848,
+          "rms": 0.0905468933930319,
+          "sha256": "660742e0cdb3d883abaee89461f344abfebe8e4445d4d0e60640641c552abd68",
+          "synthesisSeconds": 25.290619416666686,
+          "totalSeconds": 27.47973295833333
+        },
+        {
+          "audioSeconds": 1.4186666666666667,
+          "case": 0,
+          "file": "reuse-0.wav",
+          "loadSeconds": 0.0001920833333315386,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reuse",
+          "peakRSSBytes": 1132494848,
+          "rms": 0.0905468933930319,
+          "sha256": "660742e0cdb3d883abaee89461f344abfebe8e4445d4d0e60640641c552abd68",
+          "synthesisSeconds": 12.398608416666661,
+          "totalSeconds": 12.398800499999993
+        },
+        {
+          "audioSeconds": 2.0693333333333332,
+          "case": 1,
+          "file": "reload-1.wav",
+          "loadSeconds": 1.95689645833329,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reload",
+          "peakRSSBytes": 1475657728,
+          "rms": 0.10356271856587908,
+          "sha256": "fa0112bb0fe73a7791f6310b7ee5c4bbfd856951c93c5fbb72516177648ab5b7",
+          "synthesisSeconds": 13.88040525000008,
+          "totalSeconds": 15.83730170833337
+        },
+        {
+          "audioSeconds": 2.0693333333333332,
+          "case": 1,
+          "file": "reuse-1.wav",
+          "loadSeconds": 0.00003049999997983832,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reuse",
+          "peakRSSBytes": 1477705728,
+          "rms": 0.10356271856587908,
+          "sha256": "fa0112bb0fe73a7791f6310b7ee5c4bbfd856951c93c5fbb72516177648ab5b7",
+          "synthesisSeconds": 13.820586749999961,
+          "totalSeconds": 13.820617249999941
+        },
+        {
+          "audioSeconds": 2.3786666666666667,
+          "case": 2,
+          "file": "reload-2.wav",
+          "loadSeconds": 3.374920333333307,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reload",
+          "peakRSSBytes": 1477705728,
+          "rms": 0.11448891064803565,
+          "sha256": "b1ddf72d28ed0ba1de0b20f3d5b2f07a9fcdb4c86514c5b795f9acb7406df5d6",
+          "synthesisSeconds": 14.805063416666712,
+          "totalSeconds": 18.17998375000002
+        },
+        {
+          "audioSeconds": 2.3786666666666667,
+          "case": 2,
+          "file": "reuse-2.wav",
+          "loadSeconds": 0.00004754166673137661,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reuse",
+          "peakRSSBytes": 1477705728,
+          "rms": 0.11448891064803565,
+          "sha256": "b1ddf72d28ed0ba1de0b20f3d5b2f07a9fcdb4c86514c5b795f9acb7406df5d6",
+          "synthesisSeconds": 16.704205458333263,
+          "totalSeconds": 16.704252999999994
+        }
+      ]
+    },
+    {
+      "id": 42632525550,
+      "kind": "strict equivalence and cross-text",
+      "cases": [
+        {
+          "audioSeconds": 1.4186666666666667,
+          "case": 0,
+          "file": "reload-0.wav",
+          "loadSeconds": 1.9847769166666467,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reload",
+          "peakRSSBytes": 1331986432,
+          "rms": 0.0905468933930319,
+          "sha256": "660742e0cdb3d883abaee89461f344abfebe8e4445d4d0e60640641c552abd68",
+          "synthesisSeconds": 26.280079666666666,
+          "totalSeconds": 28.264856583333312
+        },
+        {
+          "audioSeconds": 1.4186666666666667,
+          "case": 0,
+          "file": "reuse-0.wav",
+          "loadSeconds": 0.00006150000001525768,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reuse",
+          "peakRSSBytes": 1331986432,
+          "rms": 0.0905468933930319,
+          "sha256": "660742e0cdb3d883abaee89461f344abfebe8e4445d4d0e60640641c552abd68",
+          "synthesisSeconds": 13.30989958333339,
+          "totalSeconds": 13.309961083333405
+        },
+        {
+          "audioSeconds": 2.0693333333333332,
+          "case": 1,
+          "file": "reload-1.wav",
+          "loadSeconds": 2.596668083333384,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reload",
+          "peakRSSBytes": 1468841984,
+          "rms": 0.10356271856587908,
+          "sha256": "fa0112bb0fe73a7791f6310b7ee5c4bbfd856951c93c5fbb72516177648ab5b7",
+          "synthesisSeconds": 15.715168749999975,
+          "totalSeconds": 18.31183683333336
+        },
+        {
+          "audioSeconds": 2.0693333333333332,
+          "case": 1,
+          "file": "reuse-1.wav",
+          "loadSeconds": 0.00006179166666697711,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reuse",
+          "peakRSSBytes": 1469857792,
+          "rms": 0.10356271856587908,
+          "sha256": "fa0112bb0fe73a7791f6310b7ee5c4bbfd856951c93c5fbb72516177648ab5b7",
+          "synthesisSeconds": 16.888795749999986,
+          "totalSeconds": 16.888857541666653
+        },
+        {
+          "audioSeconds": 2.3786666666666667,
+          "case": 2,
+          "file": "reload-2.wav",
+          "loadSeconds": 2.7484358333333603,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reload",
+          "peakRSSBytes": 1469857792,
+          "rms": 0.11448891064803565,
+          "sha256": "b1ddf72d28ed0ba1de0b20f3d5b2f07a9fcdb4c86514c5b795f9acb7406df5d6",
+          "synthesisSeconds": 24.17544491666672,
+          "totalSeconds": 26.92388075000008
+        },
+        {
+          "audioSeconds": 2.3786666666666667,
+          "case": 2,
+          "file": "reuse-2.wav",
+          "loadSeconds": 0.00004416666661199997,
+          "maxPCMDifferenceFromReload": 0,
+          "mode": "reuse",
+          "peakRSSBytes": 1469857792,
+          "rms": 0.11448891064803565,
+          "sha256": "b1ddf72d28ed0ba1de0b20f3d5b2f07a9fcdb4c86514c5b795f9acb7406df5d6",
+          "synthesisSeconds": 14.683335541666679,
+          "totalSeconds": 14.683379708333291
+        }
+      ],
+      "crossTextOutputIdentical": true
+    }
+  ],
+  "repeatPairSummary": {
+    "steady": [
+      {
+        "run": "initial",
+        "case": 1,
+        "reload": 16.226911208333263,
+        "reuse": 14.315459916666669,
+        "saved": 1.9114512916665944,
+        "percent": 11.779514086975329
+      },
+      {
+        "run": "initial",
+        "case": 2,
+        "reload": 17.979992625000023,
+        "reuse": 16.562175499999967,
+        "saved": 1.417817125000056,
+        "percent": 7.885526732801173
+      },
+      {
+        "run": "cache",
+        "case": 1,
+        "reload": 15.83730170833337,
+        "reuse": 13.820617249999941,
+        "saved": 2.0166844583334296,
+        "percent": 12.733762957059014
+      },
+      {
+        "run": "cache",
+        "case": 2,
+        "reload": 18.17998375000002,
+        "reuse": 16.704252999999994,
+        "saved": 1.4757307500000252,
+        "percent": 8.117338113682438
+      },
+      {
+        "run": "strict",
+        "case": 1,
+        "reload": 18.31183683333336,
+        "reuse": 16.888857541666653,
+        "saved": 1.4229792916667066,
+        "percent": 7.770816792537339
+      },
+      {
+        "run": "strict",
+        "case": 2,
+        "reload": 26.92388075000008,
+        "reuse": 14.683379708333291,
+        "saved": 12.24050104166679,
+        "percent": 45.463360781178444
+      }
+    ],
+    "medianSaved": 1.6935910208333098,
+    "medianPercent": 9.948426100328884
+  },
+  "limitations": [
+    "Hosted Mac Metal, not physical iPhone",
+    "Three short neutral texts; small ordered paired sample, no randomized trial",
+    "First pair in each process excluded from repeat-request summary because first-use initialization is confounded",
+    "One repeat-pair outlier retained in raw data and median calculation; hosted runner variance prevents attributing its entire delta to caching",
+    "Load field excludes lazy weight/runtime setup included in synthesis; compare total latency",
+    "No likeness or long-job endurance claim",
+    "Caching adds idle memory retention; pressure/background release is deferred while synthesis is active"
+  ],
+  "physicalIPhoneVerified": false,
+  "candidate": {
+    "run": 42632930303,
+    "status": "candidate-verified-not-published",
+    "ipaBytes": 731114673,
+    "ipaSHA256": "27cc1a45d92529bf1acd5f3c1383f8e278fb990cd6114baa3df3b1bef0c17aef",
+    "artifact": 13683776406
+  }
+}

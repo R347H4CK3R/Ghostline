@@ -33,7 +33,24 @@ import XCTest
         let title = app.textFields["suggestion-title"]
         for _ in 0..<4 { if title.isHittable { break }; app.swipeDown() }
         title.tap(); title.typeText("Synthetic UI suggestion")
-        let details = app.textViews["Suggestion details"]; details.tap(); details.typeText("Synthetic test draft, never submitted.")
+        XCTAssertEqual(title.value as? String, "Synthetic UI suggestion")
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForNonExistence(timeout: 10))
+        let details = app.textViews["Suggestion details"]
+        reveal(details, in: app)
+        for _ in 0..<6 {
+            let top = app.navigationBars.firstMatch.frame.maxY
+            let bottom = app.tabBars.firstMatch.frame.minY
+            if details.frame.minY > top && details.frame.maxY < bottom { break }
+            if details.frame.minY <= top { app.swipeDown() } else { app.swipeUp() }
+        }
+        XCTAssertTrue(details.isHittable)
+        XCTAssertGreaterThan(details.frame.minY, app.navigationBars.firstMatch.frame.maxY)
+        XCTAssertLessThan(details.frame.maxY, app.tabBars.firstMatch.frame.minY)
+        details.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10))
+        details.typeText("Synthetic test draft, never submitted.")
+        XCTAssertEqual(details.value as? String, "Synthetic test draft, never submitted.")
         app.buttons["Done"].tap()
         app.swipeUp()
         reveal(send, in: app); XCTAssertFalse(send.isEnabled)

@@ -81,10 +81,17 @@ import XCTest
     }
 
     private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
-        for _ in 0..<8 {
-            if element.exists && element.isHittable { return }
-            app.swipeUp()
+        // Leave room for status/Stop rows, and never tap a row behind the tab bar.
+        for _ in 0..<10 {
+            let top = app.navigationBars.firstMatch.frame.maxY + 16
+            let bottom = app.tabBars.firstMatch.frame.minY - 160
+            if element.exists && element.isHittable &&
+                element.frame.minY > top && element.frame.maxY < bottom { return }
+            if element.exists && element.frame.minY <= top { app.swipeDown() }
+            else { app.swipeUp() }
         }
         XCTAssertTrue(element.exists && element.isHittable)
+        XCTAssertGreaterThan(element.frame.minY, app.navigationBars.firstMatch.frame.maxY + 16)
+        XCTAssertLessThan(element.frame.maxY, app.tabBars.firstMatch.frame.minY - 160)
     }
 }

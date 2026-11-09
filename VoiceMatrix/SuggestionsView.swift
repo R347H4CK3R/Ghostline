@@ -34,6 +34,8 @@ struct SuggestionsView: View {
             }
             Section("Follow up") {
                 Link("View submitted VoiceMatrix suggestions", destination: SuggestionDraft.listURL)
+                Text("The project assistant is configured to check suggestions from the repository owner’s GitHub account daily and start building feasible improvements. Checks stay quiet when there is no new work; completed work or blockers are reported in the project chat.")
+                    .font(.caption).foregroundStyle(.secondary)
                 Text("Review and completion are separate steps. Requests may need clarification, testing or device access; submission does not guarantee implementation.")
                     .font(.caption).foregroundStyle(.secondary)
             }

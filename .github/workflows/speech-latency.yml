@@ -1,0 +1,44 @@
+name: Speech latency comparison
+on:
+  push:
+    branches: [performance/voicematrix-speech-latency]
+    paths: ['.github/workflows/speech-latency.yml', 'probes/native-f5/LatencyBenchmark.swift', 'probes/native-f5/latency.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
+        with:
+          path: character-cache
+          key: character-assets-685e8816-716d2f41
+      - name: Prepare pinned engine and neutral synthetic reference
+        run: |
+          python3 tools/character_package.py prepare --cache character-cache --resources character-resources > assets.json
+          python3 tools/create_diagnostic_collection.py
+          brew install xcodegen
+      - name: Compile production adapter latency probe
+        working-directory: probes/native-f5
+        run: |
+          xcodegen generate --spec latency.yml
+          xcodebuild -skipPackagePluginValidation -project SpeechLatencyBenchmark.xcodeproj -scheme SpeechLatencyBenchmark -configuration Release -derivedDataPath latency-build CODE_SIGNING_ALLOWED=NO build > latency-build.log 2>&1 || { tail -120 latency-build.log; exit 1; }
+      - name: Compare reload and reuse offline with identical 32-step settings
+        run: |
+          sandbox-exec -p '(version 1)(allow default)(deny network*)' probes/native-f5/latency-build/Build/Products/Release/SpeechLatencyBenchmark character-resources/F5TTS tests/fixtures/DiagnosticVoices latency-evidence latency-evidence.json
+          cat latency-evidence.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Speech-latency-evidence
+          path: |
+            latency-evidence.json
+            latency-evidence/*.wav
+            probes/native-f5/latency-build.log
+          if-no-files-found: warn

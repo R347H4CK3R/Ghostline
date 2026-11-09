@@ -3,12 +3,15 @@ import AVFoundation
 
 @main struct VoiceMatrixApp: App {
     init() { TemporaryAudio.cleanPreviousSession() }
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var studio = SpeechStudio()
     @StateObject private var audio = AudioStore()
     @StateObject private var characters = CharacterLibrary()
     var body: some Scene {
         WindowGroup { RootView().environmentObject(studio).environmentObject(audio).environmentObject(characters).preferredColorScheme(.dark).tint(StudioPalette.accent)
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in studio.memoryWarning() }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in studio.memoryWarning(); characters.releaseWarmSpeech() }
+            .onChange(of: scenePhase, initial: true) { _, phase in characters.setApplicationActive(phase == .active) }
+            .onChange(of: studio.busy) { _, busy in if busy { characters.releaseWarmSpeech() } }
         }
     }
 }

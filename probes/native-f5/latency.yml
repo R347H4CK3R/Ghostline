@@ -1,0 +1,23 @@
+name: SpeechLatencyBenchmark
+packages:
+  SpeechSwift:
+    url: https://github.com/soniqo/speech-swift.git
+    revision: a57702e6f523fa36ac5532d2bdc5f35f701a052c
+settings:
+  base:
+    MACOSX_DEPLOYMENT_TARGET: '15.0'
+    SWIFT_VERSION: '5.0'
+    CODE_SIGNING_ALLOWED: NO
+targets:
+  SpeechLatencyBenchmark:
+    type: tool
+    platform: macOS
+    sources: [../../VoiceMatrix/F5ReferenceEngine.swift, ../../VoiceMatrix/F5SpeechChunks.swift, ../../VoiceMatrix/CharacterFolderStore.swift, LatencyBenchmark.swift]
+    dependencies:
+      - package: SpeechSwift
+        product: F5TTS
+schemes:
+  SpeechLatencyBenchmark:
+    build:
+      targets:
+        SpeechLatencyBenchmark: all
