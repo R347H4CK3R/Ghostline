@@ -1,3 +1,19 @@
+## Published speech controls — 2026-11-09
+
+VoiceMatrix **0.4.5 build 1** is published: https://github.com/R347H4CK3R/Ghostline/releases/tag/voicematrix-v0.4.5 . PR #45 is merged. This supersedes the app/release status in the historical entries below.
+
+- Fixed speech character caps are removed; complete-word chunks stream within a protective 30-minute raw-audio budget. Speed, pitch, volume and pause controls apply to saved/shared speech.
+- Public suggestion drafts require explicit acknowledgement and separate GitHub submission. No credentials or automatic private attachments. Daily owner-suggestion review is enabled; an attempted run is recorded, but its result is unavailable.
+- All five [release jobs passed](https://github.com/R347H4CK3R/Ghostline/actions/runs/42621717205). Source: 4c42e6ad9780169e8a7afdf4a5ed8efe4c8d64b9.
+- Published IPA: 731110554 bytes, SHA-256 377d7b9d1c09dcbd023e5f2ea3199f2d2bc96a0684180c4a9a0a66b08e0ab7b0. Publisher downloaded and inspected the asset again. All three installation feeds were independently read back with matching URL, version, size and checksum; history is preserved.
+- [Sixteen simulator checks passed](https://github.com/R347H4CK3R/Ghostline/actions/runs/42559606073), with exact matching shipped app sources. Actual offline speed/pitch/volume, long-text planning, cancellation cleanup and suggestion URL checks passed separately.
+- Integrated main also passed [219 source tests and native import checks](https://github.com/R347H4CK3R/Ghostline/actions/runs/42621612777) and [ARM64 compilation](https://github.com/R347H4CK3R/Ghostline/actions/runs/42621612770).
+- Preserve the existing data container when replacing the app in Strata. No stock/private character profiles are bundled. Physical iPhone update handoff, controls, long-job endurance and character likeness remain unverified.
+
+[Detailed evidence](qa/0.4.5-speech-controls-candidate.md).
+
+## Historical app and companion state
+
 VoiceMatrix 0.4.3 build 1 is publicly released at https://github.com/R347H4CK3R/Ghostline/releases/tag/voicematrix-v0.4.3. All five release jobs passed in run42512465176; the published IPA was downloaded again and audited (731052434 bytes, SHA-256 7c01b000cfe07c73b29a9800ed5f17eebc001cdf6b6741c39767df547c03ab4a). All three existing feeds now lead with0.4.3 and preserve historical entries. Playback diagnostics, character-selection guidance and in-app update download/Strata handoff are merged. Simulator playback progress/replay and updater tests passed in42510504698; physical iPhone sound, host update handoff and character likeness remain unverified. Existing imported data is preserved by replacing the existing app while keeping its container. No private voices or stock profiles are bundled. Feed reconciliation now checks verified published assets on release and hourly; it cannot promote incomplete test artifacts. This supersedes historical0.4.1 publication references below.
 
 ## Published interface refresh — 2026-11-08
