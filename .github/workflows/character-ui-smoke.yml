@@ -2,6 +2,13 @@ name: Current no-stock character UI smoke
 on:
   push:
     paths:
+      - 'VoiceMatrix/F5ReferenceEngine.swift'
+      - 'VoiceMatrix/F5SpeechChunks.swift'
+      - 'VoiceMatrix/SpeechRendering.swift'
+      - 'VoiceMatrix/SuggestionDraft.swift'
+      - 'VoiceMatrix/SuggestionsView.swift'
+      - 'VoiceMatrixTests/SpeechControlsTests.swift'
+      - 'VoiceMatrixUITests/SpeechFeatureUITests.swift'
       - 'VoiceMatrix/App.swift'
       - 'VoiceMatrix/AudioStore.swift'
       - 'VoiceMatrix/AppUpdates.swift'
@@ -14,6 +21,9 @@ on:
       - 'project.yml'
       - '.github/workflows/character-ui-smoke.yml'
   workflow_dispatch:
+concurrency:
+  group: character-ui-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -66,12 +76,12 @@ jobs:
           PY
       - name: Build UI tests before starting the simulator
         run: |
-          xcodebuild build-for-testing -only-testing:VoiceMatrixUITests/CharacterWorkflowUITests -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests -only-testing:VoiceMatrixTests/PlaybackTests -only-testing:VoiceMatrixTests/AppUpdateTests > character-ui-build.log 2>&1 || { tail -160 character-ui-build.log; exit 1; }
+          xcodebuild build-for-testing -only-testing:VoiceMatrixUITests/CharacterWorkflowUITests -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests -only-testing:VoiceMatrixTests/PlaybackTests -only-testing:VoiceMatrixTests/AppUpdateTests -only-testing:VoiceMatrixTests/SpeechControlsTests -only-testing:VoiceMatrixUITests/SpeechFeatureUITests > character-ui-build.log 2>&1 || { tail -160 character-ui-build.log; exit 1; }
       - name: Wait for the simulator launch services to finish booting
         run: xcrun simctl bootstatus "$SIMULATOR_ID" -b
       - name: Exercise native playback and current SwiftUI empty-library flows
         run: |
-          xcodebuild test-without-building -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build -resultBundlePath character-ui.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests -only-testing:VoiceMatrixTests/PlaybackTests -only-testing:VoiceMatrixTests/AppUpdateTests > character-ui.log 2>&1 || { tail -160 character-ui.log; exit 1; }
+          xcodebuild test-without-building -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build -resultBundlePath character-ui.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests -only-testing:VoiceMatrixTests/PlaybackTests -only-testing:VoiceMatrixTests/AppUpdateTests -only-testing:VoiceMatrixTests/SpeechControlsTests -only-testing:VoiceMatrixUITests/SpeechFeatureUITests > character-ui.log 2>&1 || { tail -160 character-ui.log; exit 1; }
       - name: Import a synthetic voice, select, play reference and relaunch
         run: |
           xcodebuild test-without-building -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build -resultBundlePath character-workflow.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterWorkflowUITests > character-workflow.log 2>&1 || { tail -160 character-workflow.log; exit 1; }

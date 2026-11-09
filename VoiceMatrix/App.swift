@@ -260,6 +260,7 @@ struct SettingsView: View {
                 Slider(value: Binding(get: { audio.rate }, set: { audio.rate = $0 }), in: 0.7...1.3)
                 Text("Applies the next time you tap Listen. Saved audio keeps its original speed.").font(.caption)
             }
+            Section("Suggestions") { NavigationLink("Send a suggestion") { SuggestionsView() } }
             Section("Error report") {
                 Button("Prepare Private Error Report") { report = studio.diagnosticFile() }
                 if let report { ShareLink(item: report) { Label("Share Error Report", systemImage: "square.and.arrow.up") } }

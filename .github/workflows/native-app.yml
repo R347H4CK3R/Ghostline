@@ -1,4 +1,7 @@
 name: Native app compile checks
+concurrency:
+  group: native-app-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

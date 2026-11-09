@@ -9,6 +9,7 @@ import CryptoKit
     @Published var selectedID = ""
     @Published var output: URL?
     @Published private(set) var outputKind = "speech"
+    @Published private(set) var outputSettings = ""
     @Published private(set) var outputCharacterID = ""
     @Published private(set) var outputReferenceHash = ""
     @Published private(set) var reviewSummaries: [String: CharacterListeningReview] = [:]
@@ -170,10 +171,10 @@ import CryptoKit
         }
     }
     func cancel() { job?.cancel() }
-    func speak(_ words: String, audio: AudioStore, studio: SpeechStudio) {
+    func speak(_ words: String, audio: AudioStore, studio: SpeechStudio, controls: SpeechControls = SpeechControls()) {
         let text = words.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !busy, let voice = profiles.first(where: { $0.id == selectedID }) else { return }
-        guard !text.isEmpty, text.count <= 500 else { message = "Type between 1 and 500 characters for this experimental engine."; return }
+        guard !text.isEmpty, controls.isValid else { message = "Type your words and choose valid speech controls."; return }
         guard let model = Bundle.main.url(forResource: "F5TTS", withExtension: nil),
               FileManager.default.fileExists(atPath: model.appendingPathComponent("config.json").path) else {
             message = "This build does not contain the F5 speech engine. Your imported voice samples are safe; install a build containing the shared engine to test speech."; return
@@ -182,18 +183,24 @@ import CryptoKit
         busy = true; message = "Starting the local character speech engine…"
         let token = UUID(); operationID = token
         let destination = FileManager.default.temporaryDirectory.appendingPathComponent("Speech-" + voice.id + "-" + UUID().uuidString + ".wav")
+        let raw = destination.deletingPathExtension().appendingPathExtension("raw.wav")
         job = Task {
-            defer { busy = false; audio.releaseProcessing(lease) }
+            defer { busy = false; audio.releaseProcessing(lease); try? FileManager.default.removeItem(at: raw) }
             do {
                 await studio.releaseModelsForCharacter()
                 let reference = try await store.referenceURL(id: voice.id)
                 try await engine.load(localBundle: model)
                 message = "Creating speech as " + voice.name + "…"
-                try await engine.speak(text: text, referenceAudio: reference, referenceText: voice.referenceText, destination: destination) { part, total in
+                try await engine.speak(text: text, referenceAudio: reference, referenceText: voice.referenceText, destination: raw, pauseSeconds: controls.pause) { part, total in
                     Task { @MainActor in if self.busy && self.operationID == token { self.message = "Creating part \(part) of \(total)…" } }
                 }
                 try Task.checkCancellation()
+                await engine.unload()
+                message = "Applying speed, pitch and volume…"
+                try await SpeechRendering.render(source: raw, destination: destination, controls: controls)
+                try Task.checkCancellation()
                 TemporaryAudio.discard(output); output = destination; outputKind = "speech"
+                outputSettings = controls.summary
                 outputCharacterID = voice.id; outputReferenceHash = voice.referenceSHA256
                 message = "Ready to listen, save or share. Please judge the character resemblance by listening; it has not been verified."
             } catch {
@@ -220,6 +227,7 @@ struct CharacterLibraryView: View {
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var audio: AudioStore
     @EnvironmentObject private var studio: SpeechStudio
+    @State private var controls = SpeechControls()
     @State private var words = "Hello! Welcome to the character voice studio."
     var body: some View {
         List {
@@ -266,15 +274,34 @@ struct CharacterLibraryView: View {
             Section("Make character speech") {
                 Text(library.profiles.first(where: { $0.id == library.selectedID })?.name ?? "Choose an imported character above")
                 TextEditor(text: $words).focused($editingWords).frame(minHeight: 140).accessibilityLabel("Words for your character")
-                Text("\(words.count) / 500 characters").font(.caption.monospacedDigit()).foregroundStyle(words.count > 500 ? .orange : .secondary)
-                Button { editingWords = false; audio.stop(); library.speak(words, audio: audio, studio: studio) } label: { Label("Create speech", systemImage: "waveform").font(.headline).frame(maxWidth: .infinity, minHeight: 48) }
+                Text("\(words.count) characters · split into complete-word parts").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                Text("No fixed character cap. Jobs are limited to about 30 minutes before speed changes; longer text must be split. Keep the app open. Long jobs use battery and storage.")
+                    .font(.caption).foregroundStyle(.secondary)
+                DisclosureGroup("Speech controls") {
+                    Text(String(format: "Speed · %.2fx", controls.speed))
+                    Slider(value: $controls.speed, in: 0.5...2, step: 0.05).accessibilityLabel("Speech speed")
+                    Text(String(format: "Pitch · %+.0f semitones", controls.pitch))
+                    Slider(value: $controls.pitch, in: -12...12, step: 1).accessibilityLabel("Speech pitch")
+                    Text(String(format: "Volume · %.0f%%", controls.volume * 100))
+                    Slider(value: $controls.volume, in: 0.25...1, step: 0.05).accessibilityLabel("Speech volume")
+                    Text(String(format: "Pause between generated parts · %.2f seconds", controls.pause))
+                    Slider(value: $controls.pause, in: 0...1, step: 0.05).accessibilityLabel("Speech part pause")
+                    Button("Reset speech controls") { controls = SpeechControls() }.accessibilityIdentifier("reset-speech-controls")
+                    Text("Applied when you create speech, including saved/shared audio. Pitch shifts may change resemblance. Reference recordings are unchanged.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }.disabled(library.busy)
+
+                Button { editingWords = false; audio.stop(); library.speak(words, audio: audio, studio: studio, controls: controls) } label: { Label("Create speech", systemImage: "waveform").font(.headline).frame(maxWidth: .infinity, minHeight: 48) }
                     .buttonStyle(.borderedProminent).accessibilityIdentifier("create-character-speech")
-                    .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.engineAvailable || words.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || words.count > 500)
+                    .disabled(library.busy || library.selectedID.isEmpty || audio.microphoneInUse || audio.processingInUse || !library.engineAvailable || words.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 if library.busy { ProgressView(library.message); Button("Stop after current step", role: .cancel) { library.cancel() } }
                 Text(library.message).font(.caption).foregroundStyle(.secondary).accessibilityAddTraits(.updatesFrequently)
                 if !library.engineAvailable { Text("The shared F5 engine is absent from this build. Your imported voice samples remain saved; speech testing becomes available in a build containing that engine.").foregroundStyle(.secondary) }
                 Text("Creates new words using your selected voice.").font(.caption).foregroundStyle(.secondary)
-                if let output = library.output, library.outputKind == "speech", library.outputMatchesSelection { AudioActions(url: output) }
+                if let output = library.output, library.outputKind == "speech", library.outputMatchesSelection {
+                    Text("Created with " + library.outputSettings).font(.caption).foregroundStyle(.secondary)
+                    AudioActions(url: output)
+                }
                 else { Text("Create speech with this character to listen or save.").foregroundStyle(.secondary) }
             }
             } else {
@@ -301,6 +328,7 @@ struct CharacterLibraryView: View {
                     if let output = library.output, library.outputKind == "conversion", library.outputMatchesSelection { AudioActions(url: output) }
                 }
             }
+            Section { NavigationLink("Send a suggestion") { SuggestionsView() } }
             Section("Playback & comparison") {
                 Text("Compare the original voice with your new audio.").font(.subheadline).foregroundStyle(.secondary)
                 if let selected = library.profiles.first(where: { $0.id == library.selectedID }) {

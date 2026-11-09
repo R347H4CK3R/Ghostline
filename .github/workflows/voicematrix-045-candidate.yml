@@ -1,0 +1,315 @@
+name: VoiceMatrix 0.4.5 candidate gates
+'on':
+  push:
+    branches: ['feature/voicematrix-speech-controls']
+    paths: ['.github/workflows/voicematrix-045-candidate.yml']
+  workflow_dispatch: null
+permissions:
+  contents: read
+jobs:
+  resolve:
+    runs-on: macos-26
+    timeout-minutes: 25
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Run source and packaging regressions
+      run: |-
+        command -v ffmpeg >/dev/null || brew install ffmpeg
+        python3 -m unittest discover -s tests -v
+    - name: Freeze exact shared package graph
+      run: |-
+        brew install xcodegen
+        mkdir -p VoiceMatrix/Resources/{Phonon,OpenVoice,F5TTS}
+        python3 tools/create_diagnostic_collection.py
+        xcodegen generate
+        xcodebuild -resolvePackageDependencies -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -derivedDataPath native-build > resolve.log 2>&1 || { tail -100 resolve.log; exit 1; }
+        cp VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved Package.resolved
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Character-frozen-dependencies
+        path: Package.resolved
+        if-no-files-found: error
+        retention-days: 14
+  ipa:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - uses: actions/download-artifact@v4
+      with:
+        name: Character-frozen-dependencies
+        path: frozen
+    - uses: actions/cache@v4
+      with:
+        path: character-cache
+        key: character-assets-685e8816-716d2f41
+    - name: Stage pinned shared engines with zero bundled profiles
+      run: |-
+        python3 tools/character_package.py prepare --cache character-cache --resources character-resources  > assets.json
+        python3 - <<'PYCODE'
+        from pathlib import Path
+        import shutil
+        for name in ('Phonon','OpenVoice','F5TTS'):
+            target=Path('VoiceMatrix/Resources')/name
+            if target.is_symlink():raise SystemExit('Unexpected resource symlink')
+            if target.exists():shutil.rmtree(target)
+            shutil.copytree(Path('character-resources')/name,target)
+        PYCODE
+    - name: Resolve frozen graph
+      run: |-
+        brew install xcodegen
+        mkdir -p VoiceMatrix/Resources/{Phonon,OpenVoice,F5TTS}
+        python3 tools/create_diagnostic_collection.py
+        xcodegen generate
+        mkdir -p VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+        cp frozen/Package.resolved VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+        xcodebuild -resolvePackageDependencies -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -derivedDataPath native-build > resolve.log 2>&1 || { tail -100 resolve.log; exit 1; }
+        python3 -m tools.character_evidence source VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved source-proof.json
+    - name: Collect dependency licenses and compile unsigned ARM64 app
+      run: |-
+        python3 tools/character_package.py notices --checkouts native-build/SourcePackages/checkouts --resolved VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved --resources VoiceMatrix/Resources > dependency-notices.json
+        xcodebuild -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath native-build CODE_SIGNING_ALLOWED=NO build > character-build.log 2>&1 || { tail -160 character-build.log; exit 1; }
+        mkdir Payload
+        cp -R native-build/Build/Products/Release-iphoneos/VoiceMatrix.app Payload/
+        cp source-proof.json Payload/VoiceMatrix.app/VoiceMatrix-Source-Proof.json
+        python3 tools/package_ipa.py Payload VoiceMatrix-0.4.5-character-test.ipa
+        python3 tools/character_package.py inspect VoiceMatrix-0.4.5-character-test.ipa --expected-version 0.4.5 --dependency-proof dependency-notices.json > character-inspection.json
+        shasum -a 256 VoiceMatrix-0.4.5-character-test.ipa > character-ipa.sha256
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Character-test-IPA
+        path: |-
+          VoiceMatrix-0.4.5-character-test.ipa
+          character-inspection.json
+          character-ipa.sha256
+          source-proof.json
+          dependency-notices.json
+          assets.json
+        if-no-files-found: error
+        retention-days: 14
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Character-test-build-log
+        path: character-build.log
+        if-no-files-found: error
+        retention-days: 14
+      if: always()
+    needs: resolve
+  speech:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - uses: actions/download-artifact@v4
+      with:
+        name: Character-frozen-dependencies
+        path: frozen
+    - uses: actions/cache@v4
+      with:
+        path: character-cache
+        key: character-assets-685e8816-716d2f41
+    - name: Require a real Metal executor
+      run: xcrun swift -e 'import Metal; guard let gpu = MTLCreateSystemDefaultDevice() else { fatalError("No Metal device")
+        }; print(gpu.name)'
+    - name: Stage pinned F5 and converter runtime
+      run: |-
+        python3 tools/character_package.py prepare --cache character-cache --resources character-resources  > assets.json
+        python3 - <<'PYCODE'
+        from pathlib import Path
+        import shutil
+        for name in ('Phonon','OpenVoice','F5TTS'):
+            target=Path('VoiceMatrix/Resources')/name
+            if target.is_symlink():raise SystemExit('Unexpected resource symlink')
+            if target.exists():shutil.rmtree(target)
+            shutil.copytree(Path('character-resources')/name,target)
+        PYCODE
+    - name: Resolve frozen graph
+      run: |-
+        brew install xcodegen
+        mkdir -p VoiceMatrix/Resources/{Phonon,OpenVoice,F5TTS}
+        python3 tools/create_diagnostic_collection.py
+        xcodegen generate
+        mkdir -p VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+        cp frozen/Package.resolved VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+        xcodebuild -resolvePackageDependencies -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -derivedDataPath native-build > resolve.log 2>&1 || { tail -100 resolve.log; exit 1; }
+        python3 -m tools.character_evidence source VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved source-proof.json
+    - name: Build exact app speech adapter diagnostic
+      run: xcodebuild -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -skipPackagePluginValidation
+        -project VoiceMatrix.xcodeproj -scheme CharacterSpeechDiagnostic -configuration Release -derivedDataPath native-build
+        CODE_SIGNING_ALLOWED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build > speech-build.log 2>&1 || { tail -160 speech-build.log;
+        exit 1; }
+    - name: Generate 12 calibration clips plus an actual chunked message offline
+      run: |-
+        python3 tools/check_conversion_inputs.py
+        python3 tools/create_diagnostic_collection.py
+        sandbox-exec -p '(version 1)(allow default)(deny network*)' native-build/Build/Products/Release/CharacterSpeechDiagnostic VoiceMatrix/Resources/F5TTS tests/fixtures/DiagnosticVoices speech-evidence speech-evidence.json
+    - uses: actions/checkout@v4
+      with:
+        repository: ggml-org/whisper.cpp
+        ref: 727d3e7666485e12450746b523bfb4e7f057cc5e
+        path: whisper-runtime
+    - name: Build pinned independent word recognizer
+      run: |-
+        command -v ffmpeg >/dev/null || brew install ffmpeg
+        cmake -S whisper-runtime -B whisper-runtime/build -DGGML_METAL=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_SERVER=OFF -DCMAKE_BUILD_TYPE=Release
+        cmake --build whisper-runtime/build --target whisper-cli -j 3
+        curl -fL --retry 3 -o tiny.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin
+        curl -fL --retry 3 -o base.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
+        echo '921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f  tiny.en.bin' | shasum -a 256 -c -
+        echo 'a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002  base.en.bin' | shasum -a 256 -c -
+    - name: Require production settings and every word of the multi-chunk message
+      run: python3 probes/native-f5/check_calibration.py speech-evidence speech-evidence.json whisper-runtime/build/bin/whisper-cli
+        tiny.en.bin
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Character-speech-evidence
+        path: |-
+          speech-evidence/
+          speech-evidence.json
+          source-proof.json
+          speech-build.log
+        if-no-files-found: error
+        retention-days: 14
+      if: always()
+    needs: resolve
+  conversion:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Start owned simulator while dependencies resolve
+      run: |-
+        python3 - <<'PYCODE'
+        import json,subprocess,os
+        r=json.loads(subprocess.check_output(['xcrun','simctl','list','runtimes','-j']))['runtimes']
+        available=[x for x in r if x.get('isAvailable') and 'iOS' in x['name']]
+        stable=[x for x in available if str(x.get('version','')).startswith('26.')]
+        runtime=sorted(stable or available,key=lambda x:tuple(int(p) for p in x['version'].split('.')))[-1]['identifier']
+        sim=subprocess.check_output(['xcrun','simctl','create','VoiceMatrix-Character-QA','com.apple.CoreSimulator.SimDeviceType.iPhone-16-Plus',runtime],text=True).strip()
+        with open(os.environ['GITHUB_ENV'],'a') as f:f.write('CHARACTER_SIM='+sim+'\n')
+        subprocess.run(['xcrun','simctl','boot',sim],check=True)
+        PYCODE
+    - uses: actions/download-artifact@v4
+      with:
+        name: Character-frozen-dependencies
+        path: frozen
+    - uses: actions/cache@v4
+      with:
+        path: character-cache
+        key: character-assets-685e8816-716d2f41
+    - name: Stage only pinned CoreML assets for simulator conversion
+      run: |-
+        python3 tools/character_package.py prepare --cache character-cache --resources character-resources --skip-f5 > assets.json
+        python3 - <<'PYCODE'
+        from pathlib import Path
+        import shutil
+        for name in ('Phonon','OpenVoice','F5TTS'):
+            target=Path('VoiceMatrix/Resources')/name
+            if target.is_symlink():raise SystemExit('Unexpected resource symlink')
+            if target.exists():shutil.rmtree(target)
+            shutil.copytree(Path('character-resources')/name,target)
+        PYCODE
+    - name: Resolve frozen graph
+      run: |-
+        python3 tools/check_conversion_inputs.py
+        brew install xcodegen
+        mkdir -p VoiceMatrix/Resources/{Phonon,OpenVoice,F5TTS}
+        python3 tools/create_diagnostic_collection.py
+        xcodegen generate
+        mkdir -p VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+        cp frozen/Package.resolved VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+        xcodebuild -resolvePackageDependencies -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -derivedDataPath native-build > resolve.log 2>&1 || { tail -100 resolve.log; exit 1; }
+        python3 -m tools.character_evidence source VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved source-proof.json
+    - name: Require simulator readiness with a bounded deadline
+      run: |-
+        python3 - <<'PYCODE'
+        import os,subprocess
+        subprocess.run(['xcrun','simctl','bootstatus',os.environ['CHARACTER_SIM'],'-b'],check=True,timeout=360)
+        PYCODE
+    - name: Run actual neural conversion and WAV export in iOS simulator
+      run: |-
+        xcodebuild test -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme CharacterRuntimeChecks -configuration Release -destination "id=$CHARACTER_SIM" -parallel-testing-enabled NO -derivedDataPath native-build ENABLE_TESTABILITY=YES CODE_SIGNING_ALLOWED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -test-timeouts-enabled YES -default-test-execution-time-allowance 120 -maximum-test-execution-time-allowance 120 > conversion-build.log 2>&1 || { tail -180 conversion-build.log; exit 1; }
+        container=$(xcrun simctl get_app_container "$CHARACTER_SIM" com.voicematrix.character-runtime-host data)
+        cp -R "$container/Documents/CharacterConversionQA" conversion-evidence
+    - uses: actions/checkout@v4
+      with:
+        repository: ggml-org/whisper.cpp
+        ref: 727d3e7666485e12450746b523bfb4e7f057cc5e
+        path: whisper-runtime
+    - name: Build pinned independent word recognizer
+      run: |-
+        command -v ffmpeg >/dev/null || brew install ffmpeg
+        cmake -S whisper-runtime -B whisper-runtime/build -DGGML_METAL=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_SERVER=OFF -DCMAKE_BUILD_TYPE=Release
+        cmake --build whisper-runtime/build --target whisper-cli -j 3
+        curl -fL --retry 3 -o tiny.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin
+        curl -fL --retry 3 -o base.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
+        echo '921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f  tiny.en.bin' | shasum -a 256 -c -
+        echo 'a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002  base.en.bin' | shasum -a 256 -c -
+    - name: Independently require preserved words, timing and decodable non-silent WAV
+      run: python3 -m tools.character_evidence conversion conversion-evidence whisper-runtime/build/bin/whisper-cli tiny.en.bin
+        base.en.bin
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Character-conversion-evidence
+        path: |-
+          conversion-evidence/
+          source-proof.json
+          conversion-build.log
+        if-no-files-found: error
+        retention-days: 14
+      if: always()
+    - name: Remove only this job simulator
+      if: always()
+      run: if [ -n "${CHARACTER_SIM:-}" ]; then xcrun simctl shutdown "$CHARACTER_SIM" || true; xcrun simctl delete "$CHARACTER_SIM";
+        fi
+    needs: resolve
+
+  verify:
+    needs: [resolve, ipa, speech, conversion]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - uses: actions/download-artifact@v4
+      with:
+        name: Character-test-IPA
+        path: release-evidence/ipa
+    - uses: actions/download-artifact@v4
+      with:
+        name: Character-speech-evidence
+        path: release-evidence/speech
+    - uses: actions/download-artifact@v4
+      with:
+        name: Character-conversion-evidence
+        path: release-evidence/conversion
+    - name: Verify same-source native candidate evidence without publication
+      run: |
+        python3 - <<'PY'
+        import json,os,pathlib
+        from tools.verify_character_kit import verify
+        root=pathlib.Path('release-evidence')
+        report=verify(root/'ipa',root/'speech',root/'conversion',os.environ['GITHUB_SHA'],'0.4.5')
+        report.update(status='candidate-verified-not-published',workflowRun=int(os.environ['GITHUB_RUN_ID']))
+        (root/'candidate-verification.json').write_text(json.dumps(report,indent=2)+chr(10))
+        print(json.dumps(report,indent=2))
+        PY
+    - uses: actions/upload-artifact@v4
+      with:
+        name: VoiceMatrix-0.4.5-candidate-verification
+        path: release-evidence/candidate-verification.json
+        if-no-files-found: error
+        retention-days: 14

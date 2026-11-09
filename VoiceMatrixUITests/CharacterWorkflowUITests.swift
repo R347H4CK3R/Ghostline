@@ -35,6 +35,20 @@ import XCTest
         let speak = app.buttons["create-character-speech"]
         reveal(speak, in: app)
         XCTAssertTrue(speak.isEnabled)
+        let editor = app.textViews["Words for your character"]
+        for _ in 0..<6 {
+            if editor.exists && editor.isHittable &&
+                editor.frame.minY > app.navigationBars.firstMatch.frame.maxY + 16 &&
+                editor.frame.maxY < app.frame.maxY - 100 { break }
+            app.swipeDown()
+        }
+        XCTAssertGreaterThan(editor.frame.minY, app.navigationBars.firstMatch.frame.maxY + 16)
+        editor.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10))
+        editor.typeText(String(repeating: "More words. ", count: 50))
+        app.buttons["Done"].tap()
+        XCTAssertGreaterThan((editor.value as? String ?? "").count, 500)
+        reveal(speak, in: app); XCTAssertTrue(speak.isEnabled, "Long speech must not be disabled by the former character cap")
         let reference = app.buttons["1 · Listen to reference"]
         reveal(reference, in: app)
         reference.tap()
