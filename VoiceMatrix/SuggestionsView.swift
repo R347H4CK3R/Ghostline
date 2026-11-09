@@ -12,7 +12,7 @@ struct SuggestionsView: View {
                 Text("GitHub suggestions are PUBLIC. Anyone can read the text you submit.")
                     .font(.headline).foregroundStyle(.orange).accessibilityIdentifier("suggestion-public-warning")
                 Text("Do not include speech text, recordings, private voices, logs, device identifiers or personal information. VoiceMatrix includes only the title and request you type here; nothing is attached automatically.")
-                Text("Your draft stays on this iPhone until you choose to open GitHub. GitHub requires sign-in and a separate Submit action. Opening the draft does not send it.")
+                Text("Your draft stays on this iPhone until you open GitHub. Opening sends the draft text to GitHub in the browser URL. It becomes a public issue only after you sign in and submit there.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("Your request") {
@@ -24,7 +24,7 @@ struct SuggestionsView: View {
                 Button("Review draft on GitHub") {
                     guard let url = SuggestionDraft.url(title: title, details: details) else { return }
                     openURL(url) { accepted in
-                        status = accepted ? "GitHub opened. Review and submit there. This app cannot confirm submission." : "GitHub could not open. Your draft is still saved here."
+                        status = accepted ? "The draft was sent to GitHub to review. Submit there to publish it. This app cannot confirm submission." : "GitHub could not open. Your draft is still saved here."
                     }
                 }.disabled(!acknowledged || SuggestionDraft.url(title: title, details: details) == nil)
                     .accessibilityIdentifier("open-suggestion-draft")
