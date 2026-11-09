@@ -30,9 +30,14 @@ func expect(_ value: Bool, _ message: String) throws { if !value { throw CheckFa
         try await engine.load(localBundle: root)
         try expect(F5TTSModel.loads == 2, "Idle expiry must release the engine")
         await engine.finishRequest(keepWarm: true)
+        let timerStart = ProcessInfo.processInfo.systemUptime
+        print("stale start", timerStart, "loads", F5TTSModel.loads, "unloads", F5TTSModel.unloads)
         try await Task.sleep(for: .milliseconds(20))
+        print("before begin", ProcessInfo.processInfo.systemUptime-timerStart, "loads", F5TTSModel.loads, "unloads", F5TTSModel.unloads)
         try await engine.load(localBundle: root)
+        print("after begin", ProcessInfo.processInfo.systemUptime-timerStart, "loads", F5TTSModel.loads, "unloads", F5TTSModel.unloads)
         try await Task.sleep(for: .milliseconds(100))
+        print("after deadline", ProcessInfo.processInfo.systemUptime-timerStart, "loads", F5TTSModel.loads, "unloads", F5TTSModel.unloads)
         try await engine.load(localBundle: root)
         try expect(F5TTSModel.loads == 2, "A stale idle timer must not release a newer active request")
         let before = F5TTSModel.unloads
