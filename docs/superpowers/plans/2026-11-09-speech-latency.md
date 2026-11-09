@@ -7,7 +7,7 @@ Goal: Reduce measured text-to-speech latency without changing the 32-step/seed-0
 - [x] Observe RED for reuse against unload-every-request behavior, then GREEN for the actual adapter's lifecycle through a lightweight neural boundary: idle expiry, stale timers, pressure during suspended load/generation, background release, cancellation/error cleanup and corruption rejection.
 - [x] Repeat real-model benchmarking with hard PCM equality and changed-text checks. Median repeat-pair saving: 1.69 seconds / 9.9% across six pairs; first-use pairs excluded, large hosted-runner outlier retained.
 - [x] ARM64 compilation, 219 source regressions and all five native candidate gates passed. Candidate IPA 731114673 bytes, SHA-256 27cc1a45d92529bf1acd5f3c1383f8e278fb990cd6114baa3df3b1bef0c17aef.
-- [ ] Finish corrected simulator run42636544296. Earlier suggestion-editor test lacked keyboard focus; the test now dismisses the title keyboard and validates editor visibility/focus.
+- [ ] Finish corrected simulator run42642950816. Run42636544296 passed 15 checks including suggestions, then its replay tap hit a reference button partly behind the tab bar, confirmed in recording/hierarchy. Test now fully reveals controls and reserves status space; no product change.
 - [x] Independent read-only review completed. Important validation findings addressed: enforce zero PCM difference and exercise suspended load/generation plus failure/cancellation. No confirmed production correctness blocker.
 - [ ] Obtain successor integration/publication approval. Automatic approval review rejected the proposed public0.4.6 release/feed-writing workflow. It was not created or retried; only a read-only candidate build workflow was added. Public release/feeds remain0.4.5.
 
