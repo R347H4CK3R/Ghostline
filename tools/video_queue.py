@@ -1,6 +1,7 @@
 """Persistent laptop queue: canonical video IDs and transactional duplicate protection."""
 import json,re,sqlite3,time,math,uuid
 from urllib.parse import urlparse,parse_qs
+from tools.workflow_activity import initialize,append
 
 def video_id(url):
  p=urlparse(url.strip())
@@ -17,6 +18,7 @@ class VideoQueue:
  def __init__(self,path):
   self.db=sqlite3.connect(path,timeout=30)
   with self.db:
+   initialize(self.db)
    self.db.execute('CREATE TABLE IF NOT EXISTS jobs (video_id TEXT PRIMARY KEY, url TEXT NOT NULL, status TEXT NOT NULL, progress REAL NOT NULL, updated REAL NOT NULL)')
    self.db.execute('CREATE TABLE IF NOT EXISTS job_control (video_id TEXT PRIMARY KEY, attempts INTEGER NOT NULL, token TEXT, lease_until REAL NOT NULL, next_attempt REAL NOT NULL, reason TEXT NOT NULL)')
    self.db.execute('CREATE TABLE IF NOT EXISTS job_attempts (video_id TEXT NOT NULL, attempt INTEGER NOT NULL, started REAL NOT NULL, ended REAL, outcome TEXT, reason TEXT, PRIMARY KEY(video_id,attempt))')
@@ -24,13 +26,17 @@ class VideoQueue:
    self.db.execute("UPDATE jobs SET status='waiting' WHERE status='processing' AND video_id NOT IN (SELECT video_id FROM job_control)")
    self.db.execute("INSERT OR IGNORE INTO job_control SELECT video_id,0,NULL,0,0,'' FROM jobs")
  def close(self):self.db.close()
- def add(self,urls):
+ def add(self,urls,*,record_duplicates=True):
   # Validate the entire list before changing the queue.
   ids=[video_id(url) for url in urls];added=[];duplicates=[]
   with self.db:
    for identifier in ids:
     row=self.db.execute('INSERT OR IGNORE INTO jobs VALUES (?, ?, ?, ?, ?)',(identifier,'https://www.youtube.com/watch?v='+identifier,'waiting',0,time.time()))
     self.db.execute("INSERT OR IGNORE INTO job_control VALUES (?,0,NULL,0,0,'')",(identifier,))
+    if row.rowcount:append(self.db,identifier,'received')
+    elif record_duplicates:
+     attempt=self.db.execute('SELECT attempts FROM job_control WHERE video_id=?',(identifier,)).fetchone()[0]
+     append(self.db,identifier,'already_queued',attempt=attempt)
     (added if row.rowcount else duplicates).append(identifier)
   return dict(added=added,duplicates=duplicates)
  @staticmethod
@@ -46,6 +52,7 @@ class VideoQueue:
    now=self._now(now)
    expired=self.db.execute("SELECT j.video_id,c.attempts FROM jobs j JOIN job_control c USING(video_id) WHERE j.status='processing' AND c.lease_until<=?",(now,)).fetchall()
    for identifier,attempt in expired:
+    append(self.db,identifier,'lease_expired',attempt=attempt,now=now)
     self._end(identifier,attempt,'Worker lease expired before the stage finished',now,0)
    row=self.db.execute("SELECT j.video_id,j.url,c.attempts,j.status FROM jobs j JOIN job_control c USING(video_id) WHERE j.status IN ('waiting','retry','paused','awaiting-preparation') AND c.next_attempt<=? AND (c.attempts<4 OR j.status IN ('paused','awaiting-preparation')) ORDER BY j.updated,j.video_id LIMIT 1",(now,)).fetchone()
    result=None
@@ -54,6 +61,7 @@ class VideoQueue:
     self.db.execute("UPDATE jobs SET status='processing',progress=0,updated=? WHERE video_id=?",(now,identifier))
     self.db.execute('UPDATE job_control SET attempts=?,token=?,lease_until=?,next_attempt=0 WHERE video_id=?',(attempt,token,now+lease_seconds,identifier))
     self.db.execute('INSERT INTO job_attempts VALUES (?,?,?,NULL,NULL,NULL) ON CONFLICT(video_id,attempt) DO UPDATE SET ended=NULL,outcome=NULL,reason=NULL',(identifier,attempt,now))
+    if status!='awaiting-preparation':append(self.db,identifier,'resumed' if status=='paused' else 'claimed',attempt=attempt,now=now)
     result=dict(id=identifier,url=url,attempt=attempt,token=token,leaseUntil=now+lease_seconds)
    self.db.commit();return result
   except BaseException:self.db.rollback();raise
@@ -64,17 +72,27 @@ class VideoQueue:
    now=self._now(now);attempt=self._owner(identifier,token,now)
    self.db.execute('UPDATE jobs SET status=?,updated=? WHERE video_id=?',(status,now,identifier))
    self.db.execute('UPDATE job_control SET token=NULL,lease_until=0,next_attempt=0 WHERE video_id=?',(identifier,))
-   self.db.execute("UPDATE job_attempts SET ended=?,outcome='paused' WHERE video_id=? AND attempt=?",(now,identifier,attempt));self.db.commit()
+   self.db.execute("UPDATE job_attempts SET ended=?,outcome='paused' WHERE video_id=? AND attempt=?",(now,identifier,attempt))
+   append(self.db,identifier,'awaiting_preparation' if status=='awaiting-preparation' else 'paused',attempt=attempt,now=now);self.db.commit()
   except BaseException:self.db.rollback();raise
  def review_with(self,identifier,token,operation,*,now=None):
   """Fence a trusted publisher against reclaim; this is review, not completion."""
+  live_clock=now is None
   self.db.execute('BEGIN IMMEDIATE')
   try:
    now=self._now(now);attempt=self._owner(identifier,token,now)
    result=operation()
+   if live_clock:now=self._now(None)
    self.db.execute("UPDATE jobs SET status='needs-review',progress=1,updated=? WHERE video_id=?",(now,identifier))
    self.db.execute('UPDATE job_control SET token=NULL,lease_until=0 WHERE video_id=?',(identifier,))
-   self.db.execute("UPDATE job_attempts SET ended=?,outcome='needs-review' WHERE video_id=? AND attempt=?",(now,identifier,attempt));self.db.commit();return result
+   self.db.execute("UPDATE job_attempts SET ended=?,outcome='needs-review' WHERE video_id=? AND attempt=?",(now,identifier,attempt))
+   append(self.db,identifier,'needs_review',attempt=attempt,now=now);self.db.commit();return result
+  except BaseException:self.db.rollback();raise
+ def stage(self,identifier,token,stage,*,completed=0,total=0,now=None):
+  self.db.execute('BEGIN IMMEDIATE')
+  try:
+   now=self._now(now);attempt=self._owner(identifier,token,now)
+   append(self.db,identifier,stage,attempt=attempt,completed=completed,total=total,now=now);self.db.commit()
   except BaseException:self.db.rollback();raise
  def owned_call(self,identifier,token,operation):
   """Commit a prepared-spec pointer only while this worker still owns the job."""
@@ -91,6 +109,7 @@ class VideoQueue:
   self.db.execute('UPDATE jobs SET status=?,updated=? WHERE video_id=?',(status,now,identifier))
   self.db.execute('UPDATE job_control SET token=NULL,lease_until=0,next_attempt=?,reason=? WHERE video_id=?',(now+retry_delay,reason,identifier))
   self.db.execute("UPDATE job_attempts SET ended=?,outcome='failed',reason=? WHERE video_id=? AND attempt=?",(now,reason,identifier,attempt))
+  append(self.db,identifier,status,attempt=attempt,now=now)
  def fail(self,identifier,token,reason,*,now=None,retry_delay=30):
   if now is not None:self._now(now)
   self._number(retry_delay,0,86400)
@@ -115,6 +134,7 @@ class VideoQueue:
    else:
     self.db.execute('UPDATE job_control SET token=NULL,lease_until=0 WHERE video_id=?',(identifier,))
     self.db.execute("UPDATE job_attempts SET ended=?,outcome='needs-review' WHERE video_id=? AND attempt=?",(now,identifier,attempt))
+    append(self.db,identifier,'needs_review',attempt=attempt,now=now)
    self.db.commit()
   except BaseException:self.db.rollback();raise
  def export(self):

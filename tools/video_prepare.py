@@ -30,7 +30,7 @@ def validate_recipe(recipe,*,transcribe_available=False):
  validate_request(recipe['videoURL'],segments)
  return identifier,metadata
 
-def prepare(recipe_path,spec_directory,*,cancelled=lambda:False,transcribe=None,downloader_factory=None,commit=None):
+def prepare(recipe_path,spec_directory,*,cancelled=lambda:False,transcribe=None,downloader_factory=None,commit=None,activity=lambda *args:None):
  recipe_path=pathlib.Path(recipe_path)
  if recipe_path.is_symlink() or not recipe_path.is_file() or recipe_path.stat().st_size>512000:raise ValueError('Invalid video preparation recipe')
  raw=recipe_path.read_bytes();recipe=json.loads(raw)
@@ -41,7 +41,7 @@ def prepare(recipe_path,spec_directory,*,cancelled=lambda:False,transcribe=None,
  root=root.resolve();root.mkdir(parents=True,exist_ok=True)
  with _publish_lock(root/('.'+identifier+'.prepare.lock')):
   if cancelled():raise InterruptedError('Video preparation paused')
-  with acquire(recipe['videoURL'],segments,downloader_factory,cancelled=cancelled,max_duration=recipe.get('maxVideoSeconds',1800),max_bytes=recipe.get('maxDownloadBytes',268435456),max_download_seconds=recipe.get('maxDownloadSeconds',300)) as source:
+  with acquire(recipe['videoURL'],segments,downloader_factory,cancelled=cancelled,activity=activity,max_duration=recipe.get('maxVideoSeconds',1800),max_bytes=recipe.get('maxDownloadBytes',268435456),max_download_seconds=recipe.get('maxDownloadSeconds',300)) as source:
    if source['videoID']!=identifier:raise ValueError('Downloaded video does not match the queued video ID')
    if 'inspectedSourceSHA256' in recipe and source['sourceSHA256']!=recipe['inspectedSourceSHA256']:raise ReviewRequired('Source bytes changed after inspection; new source review is required')
    rows=[];files={};owners=set()
@@ -50,6 +50,7 @@ def prepare(recipe_path,spec_directory,*,cancelled=lambda:False,transcribe=None,
     data=pathlib.Path(segment['audioPath']).read_bytes();_audio(data);checksum=hashlib.sha256(data).hexdigest()
     if checksum!=segment['sha256'] or checksum in owners:raise ValueError('Prepared reference changed or repeats another segment')
     owners.add(checksum);m=dict(metadata[segment['id']]);provided=segment.get('referenceText','').strip()
+    if not provided:activity('transcribing',len(rows),len(source['segments']))
     text=provided or transcribe(pathlib.Path(segment['audioPath']))
     if not isinstance(text,str) or not text.strip() or len(text)>3000:raise ReviewRequired('Reference transcription needs review')
     m['referenceText']=text.strip();m['source']+='; '+recipe['videoURL']+'; segment '+str(segment['start'])+'–'+str(segment['end'])+' seconds; video SHA-256 '+source['sourceSHA256']

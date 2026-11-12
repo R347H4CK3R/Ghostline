@@ -27,6 +27,18 @@ class ProcessorTests(unittest.TestCase):
   # Only neural inference is substituted. Packs, queue, files and publisher are real.
   with wave.open(str(out),'wb') as w:w.setparams((1,2,24000,0,'NONE','not compressed'));w.writeframes(b'\x00\x08'*24000)
   return dict(file=str(out))
+ def test_workflow_tracks_actual_stages_without_claiming_completion(self):
+  from tools.workflow_activity import snapshot
+  self.run_job()
+  stages=[e['stage'] for e in snapshot(self.root/'queue.db')['videos'][0]['events']]
+  self.assertEqual(stages,['received','claimed','references_checking','model_loading','synthesizing','audio_checking','words_checking','publishing','needs_review'])
+ def test_failed_synthesis_has_no_later_checks_or_publication_event(self):
+  from tools.workflow_activity import snapshot
+  def fail(*args):raise RuntimeError('private voice path and transcript')
+  self.synth=fail;self.run_job()
+  snapshot=snapshot(self.root/'queue.db');events=snapshot['videos'][0]['events']
+  self.assertEqual([e['stage'] for e in events][-2:],['synthesizing','retry'])
+  self.assertNotIn('private voice',json.dumps(snapshot))
  def test_real_pack_and_native_folder_publish_but_job_waits_for_review(self):
   r=self.run_job();self.assertEqual(r['status'],'needs-review')
   self.assertEqual(r['profiles'][0]['id'],'synthetic-original')

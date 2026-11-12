@@ -19,6 +19,8 @@ class ListeningTests(unittest.TestCase):
  def test_all_three_explicit_decisions_are_durable_without_activation(self):
   row=self.row();master=self.root/'Voices';before={str(p):p.read_bytes() for p in master.rglob('*') if p.is_file()}
   for decision in ['Matches','DoesntMatch','Unsure']:self.api().decide(self.body(row,decision))
+  from tools.workflow_activity import snapshot
+  self.assertEqual(sum(e['stage']=='listening_recorded' for e in snapshot(self.root/'queue.db')['videos'][0]['events']),3)
   history=self.api().catalog()['candidates'][0]['reviews'];self.assertEqual([r['decision'] for r in history],['Matches','DoesntMatch','Unsure'])
   self.assertEqual(self.q.export()['videos'][0]['status'],'needs-review');self.assertEqual(before,{str(p):p.read_bytes() for p in master.rglob('*') if p.is_file()})
  def test_stale_audio_or_unchecked_decision_never_records_review(self):

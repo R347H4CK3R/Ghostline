@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from tools.source_inspection import validate_request,read_index
 from tools.video_prepare import validate_recipe
 from tools.video_queue import VideoQueue
+from tools.workflow_activity import append
 from tools.master_voices import _publish_lock
 
 def save_initial_review(root,recipe):
@@ -31,6 +32,7 @@ def save_initial_review(root,recipe):
     with os.fdopen(fd,'wb') as f:f.write(data);f.flush();os.fsync(f.fileno())
     os.replace(name,output)
    finally:pathlib.Path(name).unlink(missing_ok=True)
+   append(q.db,identifier,'review_saved',attempt=job['attempts'])
    q.db.commit()
   finally:q.close()
  return dict(status='awaiting-preparation',videoID=identifier,likenessVerified=False,completed=False)
@@ -49,7 +51,7 @@ def initial_job(root,identifier):
    job=next((v for v in q.export()['videos'] if v['id']==identifier),None)
    if job is None or job['status'] not in ['waiting','awaiting-preparation','paused']:raise ValueError('Only initial waiting jobs may request inspection')
    if any((root/folder/(identifier+'.json')).exists() for folder in ['recipes','specifications']):raise FileExistsError('Saved preparation was preserved')
-   yield root
+   yield root,q,job
    q.db.commit()
   finally:q.close()
 
@@ -57,7 +59,7 @@ def save_inspection(root,request):
  identifier=validate_request(request)
  data=(json.dumps(request,ensure_ascii=False,indent=2)+'\n').encode()
  if len(data)>16384:raise ValueError('Inspection request too large')
- with initial_job(root,identifier) as root:
+ with initial_job(root,identifier) as (root,q,job):
   folder=root/'inspections'
   if folder.is_symlink():raise ValueError('Linked inspection folder unsupported')
   folder.mkdir(exist_ok=True);output=folder/(identifier+'.json')
@@ -71,6 +73,7 @@ def save_inspection(root,request):
     os.replace(name,output)
    finally:pathlib.Path(name).unlink(missing_ok=True)
   output.with_suffix('.cancel').unlink(missing_ok=True)
+  append(q.db,identifier,'inspection_requested',attempt=job['attempts'])
  return dict(status='inspection-requested',videoID=identifier,likenessVerified=False)
 
 def stop_inspection(root,body):
@@ -84,4 +87,10 @@ def stop_inspection(root,body):
   marker=path.with_suffix('.cancel')
   if marker.is_symlink():raise ValueError('Linked stop marker unsupported')
   with marker.open('wb') as f:f.write(b'stop\n');f.flush();os.fsync(f.fileno())
+  q=VideoQueue(str(root/'queue.db'))
+  try:
+   with q.db:
+    job=q.db.execute('SELECT attempts FROM job_control WHERE video_id=?',(body['videoID'],)).fetchone()
+    if job:append(q.db,body['videoID'],'inspection_stop_requested',attempt=job[0])
+  finally:q.close()
  return dict(status='stop-requested',videoID=body['videoID'])

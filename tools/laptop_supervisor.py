@@ -39,7 +39,7 @@ def queue_snapshot(root):
   incoming[identifier]=(name,url.strip())
  q=VideoQueue(str(root/'queue.db'))
  try:
-  q.add([row[1] for row in incoming.values()])
+  q.add([row[1] for row in incoming.values()],record_duplicates=False)
   with q.db:
    q.db.execute('CREATE TABLE IF NOT EXISTS names (video_id TEXT PRIMARY KEY,name TEXT NOT NULL)')
    for identifier,(name,url) in incoming.items():
@@ -89,7 +89,9 @@ def tick(root):
  if (root/'pause').exists():state['status']='paused'
  if gaming():state.update(gamingDetected=True,status='paused-for-game' if state['pendingLines'] else state['status'])
  review=review_url(root)
- if review:state['sourceReviewURL']=review
+ if review:
+  state['sourceReviewURL']=review
+  state['workflowLogURL']=review.rsplit('/',1)[0]+'/workflow-log'
  atomic(root/'status.json',state)
  rows=[]
  for row in state['videos']:
@@ -101,6 +103,7 @@ def tick(root):
    else:action='Review connection is not configured'
   rows.append('<tr>'+''.join('<td>'+html.escape(str(c))+'</td>' for c in cells)+'<td>'+action+'</td></tr>')
  page='<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="15"><title>VoiceMatrix</title><style>body{background:#10091d;color:#eee;font:20px system-ui;padding:32px}h1{color:#bc91ff}td,th{text-align:left;padding:12px;border-bottom:1px solid #65437c}table{width:100%}</style><h1>VoiceMatrix Studio</h1><p>'+html.escape(state['status'].replace('-',' '))+'</p><p>'+html.escape(state.get('reason','Prepared references and reviewed recipes process automatically. Raw links still need source review.'))+'</p><p>Queued videos: '+str(state['pendingLines'])+'</p><table><tr><th>Voice / video</th><th>Stage</th><th>Progress</th><th>Attempt</th><th>Reason</th><th>Source review</th></tr>'+''.join(rows)+'</table><p>Listening review is separate from audio checks. No links are cleared by this monitor.</p>'
+ if review:page+='<p><a href="'+html.escape(state['workflowLogURL'],quote=True)+'" target="_blank" rel="noopener noreferrer">Open live video workflow log</a></p>'
  (root/'Progress.html').write_text(page,encoding='utf8')
  return state
 

@@ -2,6 +2,7 @@
 import hashlib,io,json,math,pathlib,re,sqlite3,time,uuid,zipfile,zlib
 from tools.private_voices import PrivateVoices
 from tools.voice_pack import validate_pack
+from tools.workflow_activity import initialize,append
 import wave
 
 def digest(data):return hashlib.sha256(data).hexdigest()
@@ -10,6 +11,7 @@ class ListeningReview:
  def connection(self):
   db=sqlite3.connect(self.database,timeout=15)
   db.execute('CREATE TABLE IF NOT EXISTS listening_reviews (id TEXT PRIMARY KEY, created REAL NOT NULL, snapshot TEXT NOT NULL, record TEXT NOT NULL)')
+  initialize(db)
   return db
  def snapshot(self,video,attempt,index):
   try:return self._snapshot(video,attempt,index)
@@ -70,7 +72,9 @@ class ListeningReview:
    row,_,_=self.snapshot(body['videoID'],body['attempt'],body['profileIndex'])
    if row['snapshot']!=body['snapshot']:raise ValueError('Listening snapshot changed; reload and listen again')
    record=dict(row,decision=body['decision'],reviewer=body['reviewer'].strip(),note=body['note'],reviewID=uuid.uuid4().hex,created=time.time(),scope='Subjective listening only; technical, native and authorization gates remain separate')
-   db.execute('INSERT INTO listening_reviews VALUES (?,?,?,?)',(record['reviewID'],record['created'],row['snapshot'],json.dumps(record)));db.commit();return record
+   db.execute('INSERT INTO listening_reviews VALUES (?,?,?,?)',(record['reviewID'],record['created'],row['snapshot'],json.dumps(record)))
+   append(db,body['videoID'],'listening_recorded',attempt=body['attempt'])
+   db.commit();return record
   finally:db.close()
 
 def page(csrf):return pathlib.Path(__file__).with_name('listening_review.html').read_text(encoding='utf8').replace('__CSRF__',csrf).encode()
