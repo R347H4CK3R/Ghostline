@@ -119,7 +119,7 @@ class AutomaticPreparationTests(unittest.TestCase):
  def test_competing_final_spec_cannot_be_overwritten_at_atomic_publish(self):
   import os
   original_replace,original_link=os.replace,os.link
-  output=self.specs/'EAT0nWoEzJ8.json'
+  output=(self.specs/'EAT0nWoEzJ8.json').resolve()
   def compete(operation):
    def wrapped(source,destination,*args,**kwargs):
     if pathlib.Path(destination)==output:output.write_bytes(b'operator-owned-spec')

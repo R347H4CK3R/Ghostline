@@ -10,7 +10,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 class VideoWorkflowReceiptSummaryTests(unittest.TestCase):
     def test_video_receipts_precede_the_voice_catalog(self):
-        source = (ROOT / 'VoiceMatrix/VideoWorkflowView.swift').read_text()
+        source = (ROOT / 'VoiceMatrix/VideoWorkflowView.swift').read_text(encoding='utf-8')
         catalog = source.index('if let catalog = snapshot.catalog')
         self.assertLess(source.index('Section("Laptop connection")'), source.index('if snapshot.videos.isEmpty'))
         self.assertLess(source.index('if snapshot.videos.isEmpty'), catalog)
@@ -19,14 +19,14 @@ class VideoWorkflowReceiptSummaryTests(unittest.TestCase):
         self.assertEqual(source.count('WorkflowVoiceCatalogView(catalog: catalog)'), 1)
 
     def test_receipt_and_next_action_are_visible_without_expanding_events(self):
-        source = (ROOT / 'VoiceMatrix/VideoWorkflowView.swift').read_text()
+        source = (ROOT / 'VoiceMatrix/VideoWorkflowView.swift').read_text(encoding='utf-8')
         self.assertIn('video.receiptEvent', source)
         self.assertIn('Received on laptop', source)
         self.assertIn('Laptop receipt not confirmed', source)
         self.assertIn('Video is on the laptop', source)
         self.assertIn('Receipt time unavailable', source)
         self.assertIn('Text(video.status.title)', source)
-        model = (ROOT / 'VoiceMatrix/VideoWorkflow.swift').read_text()
+        model = (ROOT / 'VoiceMatrix/VideoWorkflow.swift').read_text(encoding='utf-8')
         self.assertIn('case .awaitingPreparation: return "Waiting for voice preparation"', model)
         self.assertNotIn('Waiting for reviewed speech segments', model)
         self.assertIn('case .awaitingPreparation: return "Waiting before voice preparation."', model)
@@ -35,7 +35,7 @@ class VideoWorkflowReceiptSummaryTests(unittest.TestCase):
         self.assertNotIn('Processing is active in the queue.', source)
 
     def test_connection_host_and_failures_are_safe_and_separate_from_progress(self):
-        source = (ROOT / 'VoiceMatrix/VideoWorkflowView.swift').read_text()
+        source = (ROOT / 'VoiceMatrix/VideoWorkflowView.swift').read_text(encoding='utf-8')
         self.assertIn('VideoWorkflowConnectionDisplay.host', source)
         self.assertIn('UserDefaults.standard.string(forKey: "laptopURL") ?? LaptopConnection.bundledURL', source)
         self.assertIn('VideoWorkflowConnectionIssue(error: error)', source)
@@ -43,7 +43,7 @@ class VideoWorkflowReceiptSummaryTests(unittest.TestCase):
         self.assertNotIn('error.localizedDescription', source)
 
     def test_existing_poll_and_read_only_behavior_remain(self):
-        source = (ROOT / 'VoiceMatrix/VideoWorkflowView.swift').read_text()
+        source = (ROOT / 'VoiceMatrix/VideoWorkflowView.swift').read_text(encoding='utf-8')
         self.assertIn('VideoWorkflowFreshness.refreshNanoseconds', source)
         self.assertIn('requestGate.fetch', source)
         self.assertIn('visible && scenePhase == .active', source)
@@ -52,7 +52,7 @@ class VideoWorkflowReceiptSummaryTests(unittest.TestCase):
         self.assertNotIn('LaptopConnection.requestCandidates(', source)
 
     def test_offline_ui_regression_uses_current_labels(self):
-        source = (ROOT / 'VoiceMatrixUITests/CharacterEmptyStateUITests.swift').read_text()
+        source = (ROOT / 'VoiceMatrixUITests/CharacterEmptyStateUITests.swift').read_text(encoding='utf-8')
         self.assertIn('app.staticTexts["Could not reach laptop workflow"]', source)
         self.assertIn('app.staticTexts["Connected · laptop snapshot received"]', source)
         self.assertNotIn('app.staticTexts["Live workflow unavailable"]', source)

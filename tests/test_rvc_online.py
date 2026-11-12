@@ -176,6 +176,9 @@ class ServiceTests(unittest.TestCase):
         seen=[]
         def convert(f,r,c):seen.append(f);return audio()
         self.service.converter=convert;b=self.body();self.service.submit(b);self.service.start();self.wait(b['requestID'],'succeeded')
+        # The receipt is committed before TemporaryDirectory exits. Join the
+        # worker before asserting cleanup; Windows may still be removing files.
+        self.service.close()
         self.assertEqual(seen[0],seen[0].resolve());self.assertFalse(seen[0].exists())
 
     def test_wav_bounds(self):
