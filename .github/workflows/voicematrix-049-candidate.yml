@@ -1,3 +1,4 @@
+# Pinned ASR manifest checkout uses LF on every runner; runtime hash remains strict.
 name: VoiceMatrix 0.4.9 candidate gates
 'on':
   push:
