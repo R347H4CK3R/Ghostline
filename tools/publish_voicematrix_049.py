@@ -11,9 +11,9 @@ TAG = "voicematrix-v0.4.9"
 IPA = "VoiceMatrix-0.4.9.ipa"
 # Bound to the fresh 0.4.9 candidate evidence. Every gate is rechecked before
 # any publication; no previous release evidence can satisfy these bindings.
-CANDIDATE = ''
-EXPECTED_IPA_SHA256 = ''
-EXPECTED_IPA_BYTES = 0
+CANDIDATE = '82081bf88fdd9d7a478d68f99e6df457f126e34b'
+EXPECTED_IPA_SHA256 = 'd4fd0bbfda9ad453d8df33a32c02499308b79cda890932733337c3c86e4db7d4'
+EXPECTED_IPA_BYTES = 731336684
 REQUIRED_GATES = (
     ".github/workflows/voicematrix-049-candidate.yml",
     ".github/workflows/character-ui-smoke.yml",
@@ -24,7 +24,7 @@ REQUIRED_GATES = (
     ".github/workflows/queue-processor.yml",
     ".github/workflows/queue-recovery.yml",
 )
-GATES = {name: 0 for name in REQUIRED_GATES}
+GATES = {'.github/workflows/voicematrix-049-candidate.yml': 43172470489, '.github/workflows/native-character-folder.yml': 43172470581, '.github/workflows/queue-processor.yml': 43172470509, '.github/workflows/video-workflow.yml': 43172470546, '.github/workflows/queue-recovery.yml': 43172470599, '.github/workflows/character-ui-smoke.yml': 43172470569, '.github/workflows/native-app.yml': 43172470697, '.github/workflows/native-queue.yml': 43172470564}
 
 ROOT = pathlib.Path("release-evidence")
 NOTES = """VoiceMatrix 0.4.9
@@ -141,7 +141,7 @@ def main():
            str(ROOT / "ipa/dependency-notices.json"),
            str(ROOT / "speech/speech-evidence.json"),
            str(ROOT / "conversion/conversion-evidence/conversion-result.json"),
-           "--repo", REPO, "--target", source, "--title", "VoiceMatrix 0.4.9 — verbose live workflow",
+           "--repo", REPO, "--target", source, "--title", "VoiceMatrix 0.4.9: verbose live workflow",
            "--notes-file", str(notes))
     published = ROOT / "published"
     published.mkdir(exist_ok=True)
