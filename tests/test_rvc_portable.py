@@ -29,7 +29,7 @@ class PortableAdmissionTests(unittest.TestCase):
         self.api = rvc_portable
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = pathlib.Path(self.temp.name)
+        self.root = pathlib.Path(self.temp.name).resolve()
         self.upstream = self.root / 'upstream'; self.upstream.mkdir()
         self.model = self.root / 'model.pth'; self.model.write_bytes(b'not a neural model')
         self.index = self.root / 'model.index'; self.index.write_bytes(b'not a neural index')
@@ -215,7 +215,7 @@ class PortableMetricTests(unittest.TestCase):
     def test_waveform_reopen_is_bound_to_the_manifest_hash(self):
         from tools import rvc_portable
         with tempfile.TemporaryDirectory() as directory:
-            path = pathlib.Path(directory) / 'original.f32'
+            path = pathlib.Path(directory).resolve() / 'original.f32'
             path.write_bytes(b'\x00\x00\x80\x3f')
             original_hash = digest(path)
             path.write_bytes(b'\x00\x00\x00\x00')

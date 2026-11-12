@@ -29,7 +29,7 @@ def npy(path,shape,kind='<f4',value=.1):
 
 class EffectiveAudioTests(unittest.TestCase):
  def setUp(self):
-  self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=pathlib.Path(self.tmp.name)
+  self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=pathlib.Path(self.tmp.name).resolve()
  def pair(self,name,seconds=3.7,value=.1):
   for folder,rate in [('0_gt_wavs',40000),('1_16k_wavs',16000)]:float_wav(self.root/folder/name,rate,seconds,value)
  def test_overlap_adjusted_active_floor_blocks_short_data(self):
@@ -107,7 +107,7 @@ class EffectiveAudioTests(unittest.TestCase):
 
 class ArrayTests(unittest.TestCase):
  def setUp(self):
-  self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=pathlib.Path(self.tmp.name)
+  self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=pathlib.Path(self.tmp.name).resolve()
  def paths(self):return [self.root/'feature.npy',self.root/'f0.npy',self.root/'f0nsf.npy']
  def valid(self):
   feature,f0,nsf=self.paths();npy(feature,(10,768));npy(f0,(20,),'<i8',100);npy(nsf,(20,),'<f8',150)

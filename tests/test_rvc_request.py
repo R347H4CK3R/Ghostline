@@ -12,7 +12,7 @@ from tools.video_queue import VideoQueue
 class RVCRequestTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.base = pathlib.Path(self.tmp.name)
+        self.base = pathlib.Path(self.tmp.name).resolve()
         self.root = self.base / 'private-rvc'
         self.body = dict(schemaVersion=1, format='rvc-v2-pth-index',
                          requestID='b3e5fa2b-2b08-44ba-946a-299860f2e765',

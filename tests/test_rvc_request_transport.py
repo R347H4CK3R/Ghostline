@@ -23,7 +23,7 @@ class RVCTransportTests(unittest.TestCase):
     @contextlib.contextmanager
     def server(self, configured=True, **kwargs):
         with tempfile.TemporaryDirectory() as directory:
-            self.base = pathlib.Path(directory)
+            self.base = pathlib.Path(directory).resolve()
             self.f5 = self.base / 'f5'
             self.rvc = self.base / 'rvc'
             server = create_server(self.f5, 'a'*40, rvc_root=self.rvc if configured else None, **kwargs)
@@ -151,7 +151,7 @@ class RVCTransportTests(unittest.TestCase):
         for shape in ('same','inside','contains'):
             for existing in (False, True):
                 with self.subTest(shape=shape, existing=existing), tempfile.TemporaryDirectory() as d:
-                    base = pathlib.Path(d)
+                    base = pathlib.Path(d).resolve()
                     f5 = base/'f5'
                     rvc = f5 if shape=='same' else f5/'rvc' if shape=='inside' else base
                     if existing:

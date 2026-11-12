@@ -15,7 +15,7 @@ class RVCExportTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = pathlib.Path(self.temp.name)
+        self.root = pathlib.Path(self.temp.name).resolve()
         self.model = self.root / 'original.pth'
         self.index = self.root / 'added_original.index'
         self.model.write_bytes(b'opaque tested model fixture')

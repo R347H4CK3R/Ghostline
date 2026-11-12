@@ -52,7 +52,7 @@ class DatasetTests(unittest.TestCase):
             self.skipTest('Local ffmpeg is required for real fixture extraction')
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.root = pathlib.Path(self.tmp.name)
+        self.root = pathlib.Path(self.tmp.name).resolve()
         self.output = self.root / 'datasets'
         self.source = self.root / 'original.wav'
         write_source(self.source)
@@ -69,7 +69,7 @@ class DatasetTests(unittest.TestCase):
         self.assertLessEqual(kwargs['max_duration'], 1800)
         self.assertLessEqual(kwargs['max_bytes'], 268435456)
         with tempfile.TemporaryDirectory(dir=self.root, prefix='acquired-') as temporary:
-            movie = pathlib.Path(temporary) / 'source.mp4'
+            movie = pathlib.Path(temporary).resolve() / 'source.mp4'
             shutil.copyfile(self.source, movie)
             self.acquisitions.append(movie)
             yield dict(privateMoviePath=str(movie), sourceURL=url, title='Fixture source',

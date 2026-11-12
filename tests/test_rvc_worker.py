@@ -52,7 +52,7 @@ class WorkerTests(unittest.TestCase):
 
     def arguments(self, root, once=True):
         worker = self.worker()
-        root = pathlib.Path(root)
+        root = pathlib.Path(root).resolve()
         (root/'engine').mkdir()
         (root/'guard').mkdir()
         submit(root/'rvc', request_body())
@@ -96,8 +96,8 @@ class WorkerTests(unittest.TestCase):
                 return dict(analyze=lambda *a,**kw:None, verify_words=lambda *a:None)
             def once(root, **kwargs):
                 calls.append(root)
-                self.assertEqual(root, pathlib.Path(d)/'rvc')
-                self.assertEqual(kwargs['engine_root'], pathlib.Path(d)/'engine')
+                self.assertEqual(root, pathlib.Path(d).resolve()/'rvc')
+                self.assertEqual(kwargs['engine_root'], pathlib.Path(d).resolve()/'engine')
                 self.assertEqual(kwargs['epochs'], 2)
                 self.assertEqual(kwargs['validation_text'], 'Held-out original speech')
                 self.assertEqual(kwargs['validation_source'], 'Held-out original speech')
@@ -111,7 +111,7 @@ class WorkerTests(unittest.TestCase):
                 self.assertEqual(worker.run(args, platform=platform, runtime_factory=runtime, once_runner=once, stop=stop, emit=output.append), 0)
             self.assertEqual(len(calls),1)
             self.assertNotIn('never print this', str(output))
-            self.assertFalse((pathlib.Path(d)/'guard'/'queue.db').exists())
+            self.assertFalse((pathlib.Path(d).resolve()/'guard'/'queue.db').exists())
 
     def test_game_pause_stop_resource_and_uncheckable_guards_never_load_runtime(self):
         worker = self.worker()
@@ -120,16 +120,16 @@ class WorkerTests(unittest.TestCase):
             with self.subTest(case=case), tempfile.TemporaryDirectory() as d:
                 args=self.arguments(d); platform=Platform()
                 if case=='game':platform.game=True
-                if case in ('pause','stop'):(pathlib.Path(d)/'guard'/case).touch()
+                if case in ('pause','stop'):(pathlib.Path(d).resolve()/'guard'/case).touch()
                 if case=='ram':platform.ram=1024**3
                 if case=='disk':platform.disk=1024**3
                 if case.endswith('-error'):platform.fail=case[:-6]
-                if case=='missing-guard':(pathlib.Path(d)/'guard').rmdir()
+                if case=='missing-guard':(pathlib.Path(d).resolve()/'guard').rmdir()
                 def forbidden(*a, **kw):self.fail('Blocked guard allowed a runtime/claim')
                 output=[]
                 self.assertIn(worker.run(args, platform=platform, runtime_factory=forbidden, once_runner=forbidden, emit=output.append), (0,2,4))
                 self.assertNotIn('private machine details', str(output))
-                with __import__('sqlite3').connect(pathlib.Path(d)/'rvc'/'rvc-queue.db') as db:
+                with __import__('sqlite3').connect(pathlib.Path(d).resolve()/'rvc'/'rvc-queue.db') as db:
                     self.assertEqual(db.execute('SELECT status FROM jobs').fetchone()[0],'waiting')
 
     def test_live_pause_game_resource_loss_and_signal_cancel_reach_runtime_callback(self):
@@ -142,7 +142,7 @@ class WorkerTests(unittest.TestCase):
                     return dict(analyze=lambda *a,**kw:None,verify_words=lambda *a:None)
                 def once(root, **kwargs):
                     self.assertFalse(kwargs['paused']())
-                    if change in ('pause','stop'):(pathlib.Path(d)/'guard'/change).touch()
+                    if change in ('pause','stop'):(pathlib.Path(d).resolve()/'guard'/change).touch()
                     if change=='game':platform.game=True
                     if change=='ram':platform.ram=0
                     if change=='disk':platform.disk=0
@@ -161,11 +161,11 @@ class WorkerTests(unittest.TestCase):
             def once(root,**kwargs):
                 count.append(1)
                 with self.assertRaises(WorkerBusy):
-                    with worker_lock(pathlib.Path(d)/'rvc'/'rvc-queue.db'):pass
+                    with worker_lock(pathlib.Path(d).resolve()/'rvc'/'rvc-queue.db'):pass
                 stop.set()
             self.assertEqual(worker.run(args,platform=Platform(),runtime_factory=lambda *a:dict(analyze=None,verify_words=None),once_runner=once,stop=stop,emit=lambda _:None),0)
             self.assertEqual(count,[1])
-            with worker_lock(pathlib.Path(d)/'rvc'/'rvc-queue.db'):pass
+            with worker_lock(pathlib.Path(d).resolve()/'rvc'/'rvc-queue.db'):pass
 
     def test_main_routes_to_real_processor_entrypoint_and_restores_signal_handlers(self):
         import signal
@@ -186,7 +186,7 @@ class WorkerTests(unittest.TestCase):
                 return dict(status='paused')
             with patch.object(worker,'Platform',return_value=Platform()), patch.object(worker,'load_runtime',return_value=dict(analyze=None,verify_words=None)), patch('tools.rvc_queue_processor.run_once',process), contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(worker.main(flags),0)
-            self.assertEqual(calls,[pathlib.Path(d)/'rvc'])
+            self.assertEqual(calls,[pathlib.Path(d).resolve()/'rvc'])
             self.assertIs(signal.getsignal(signal.SIGTERM),original)
 
     def test_unsupported_default_platform_does_not_claim_gaming_is_clear(self):

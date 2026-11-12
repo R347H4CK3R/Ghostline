@@ -37,13 +37,13 @@ class CPULaunchTests(unittest.TestCase):
     module.run.assert_not_called()
  def test_mismatched_source_never_executes(self):
   with tempfile.TemporaryDirectory() as d:
-   root=pathlib.Path(d);(root/'train').mkdir();(root/'train/train.py').write_text('raise AssertionError("must not execute")')
+   root=pathlib.Path(d).resolve();(root/'train').mkdir();(root/'train/train.py').write_text('raise AssertionError("must not execute")')
    with self.assertRaisesRegex(ValueError,'source hash'):cpu.load_training_module(root,['-e','voice','-g',''])
  def test_source_registered_and_arguments_preserved_without_running_main(self):
   # A tiny exact-byte fixture replaces only the expensive upstream module body.
   raw=b'import sys\nseen=list(sys.argv)\nif __name__ == "__main__": raise AssertionError("main entered")\n'
   with tempfile.TemporaryDirectory() as d:
-   root=pathlib.Path(d);(root/'train').mkdir();source=root/'train/train.py';source.write_bytes(raw)
+   root=pathlib.Path(d).resolve();(root/'train').mkdir();source=root/'train/train.py';source.write_bytes(raw)
    original_path=list(sys.path);original_argv=list(sys.argv)
    saved={key:sys.modules.get(key) for key in ('train','train.train')}
    try:

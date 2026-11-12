@@ -33,7 +33,7 @@ class StageTests(unittest.TestCase):
    with self.subTest(timeout=timeout), self.assertRaises(ValueError):self.run_stage('pass',timeout=timeout)
  def test_descendant_cannot_outlive_cancel(self):
   with tempfile.TemporaryDirectory() as d:
-   marker=pathlib.Path(d)/'escaped'
+   marker=pathlib.Path(d).resolve()/'escaped'
    descendant="import time,pathlib; time.sleep(1.5); pathlib.Path(%r).write_text('alive')" % str(marker)
    if os.name!='nt':descendant="import signal; signal.signal(signal.SIGTERM,signal.SIG_IGN); "+descendant
    code="import subprocess,sys,time; subprocess.Popen([sys.executable,'-c',%r]); time.sleep(60)" % descendant
@@ -46,7 +46,7 @@ class StageTests(unittest.TestCase):
  @unittest.skipUnless(os.name=='nt','Windows Job Object needs native Windows')
  def test_windows_descendant_cannot_outlive_successful_leader(self):
   with tempfile.TemporaryDirectory() as d:
-   marker=pathlib.Path(d)/'escaped'
+   marker=pathlib.Path(d).resolve()/'escaped'
    descendant="import time,pathlib; time.sleep(1.5); pathlib.Path(%r).write_text('alive')" % str(marker)
    self.run_stage("import subprocess,sys; subprocess.Popen([sys.executable,'-c',%r])" % descendant)
    time.sleep(1.6);self.assertFalse(marker.exists())
@@ -65,7 +65,7 @@ class StageTests(unittest.TestCase):
  @unittest.skipUnless(os.name=='nt','Windows Job Object needs native Windows')
  def test_windows_descendant_dies_when_runner_owner_is_killed(self):
   with tempfile.TemporaryDirectory() as d:
-   ready=pathlib.Path(d)/'ready';marker=pathlib.Path(d)/'escaped'
+   ready=pathlib.Path(d).resolve()/'ready';marker=pathlib.Path(d).resolve()/'escaped'
    descendant="import time,pathlib;pathlib.Path(%r).write_text('ready');time.sleep(2);pathlib.Path(%r).write_text('alive')" % (str(ready),str(marker))
    worker="import os,sys;from tools.rvc_training import run_stage;run_stage([sys.executable,'-c',%r],cwd=%r,env=os.environ.copy(),log=open(os.devnull,'wb'),timeout=30)" % (descendant,d)
    with subprocess.Popen([sys.executable,'-c',worker],cwd=pathlib.Path(rvc.__file__).resolve().parent.parent) as owner:
@@ -113,7 +113,7 @@ class DatasetSnapshotTests(unittest.TestCase):
  def test_audit_hash_matches_audio_actually_inspected(self):
   import wave
   with tempfile.TemporaryDirectory() as d:
-   path=pathlib.Path(d)/'voice.wav'
+   path=pathlib.Path(d).resolve()/'voice.wav'
    with wave.open(str(path),'wb') as writer:
     writer.setparams((1,2,16000,0,'NONE','none'));writer.writeframes(b'\x00\x10'*16000)
    original=path.read_bytes();real_open=wave.open
@@ -125,13 +125,13 @@ class DatasetSnapshotTests(unittest.TestCase):
    self.assertEqual(report['files'][0]['sha256'],hashlib.sha256(original).hexdigest())
  def test_mutated_audio_rejected(self):
   with tempfile.TemporaryDirectory() as d:
-   source=pathlib.Path(d)/'source';source.mkdir();(source/'voice.wav').write_bytes(b'changed')
+   source=pathlib.Path(d).resolve()/'source';source.mkdir();(source/'voice.wav').write_bytes(b'changed')
    with self.assertRaisesRegex(ValueError,'changed'):
-    rvc.snapshot_dataset(source,pathlib.Path(d)/'snapshot',{'files':[{'file':'voice.wav','sha256':hashlib.sha256(b'original').hexdigest()}]})
+    rvc.snapshot_dataset(source,pathlib.Path(d).resolve()/'snapshot',{'files':[{'file':'voice.wav','sha256':hashlib.sha256(b'original').hexdigest()}]})
  def test_only_audited_bytes_reach_preprocess(self):
   with tempfile.TemporaryDirectory() as d:
-   source=pathlib.Path(d)/'source';source.mkdir();(source/'voice.wav').write_bytes(b'audited');(source/'other.mp3').write_bytes(b'not audited')
-   target=pathlib.Path(d)/'snapshot'
+   source=pathlib.Path(d).resolve()/'source';source.mkdir();(source/'voice.wav').write_bytes(b'audited');(source/'other.mp3').write_bytes(b'not audited')
+   target=pathlib.Path(d).resolve()/'snapshot'
    rvc.snapshot_dataset(source,target,{'files':[{'file':'voice.wav','sha256':hashlib.sha256(b'audited').hexdigest()}]})
    (source/'voice.wav').write_bytes(b'changed')
    self.assertEqual(list(target.iterdir()),[target/'voice.wav']);self.assertEqual((target/'voice.wav').read_bytes(),b'audited')
@@ -140,7 +140,7 @@ class DatasetSnapshotTests(unittest.TestCase):
 class TrainingSafetyTests(unittest.TestCase):
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
-  self.root=pathlib.Path(self.tmp.name);self.exp=self.root/'logs'/'voice'
+  self.root=pathlib.Path(self.tmp.name).resolve();self.exp=self.root/'logs'/'voice'
   for name in ['configs/v1/40k.json','assets/pretrained_v2/f0G40k.pth','assets/pretrained_v2/f0D40k.pth','assets/hubert_base/config.json','assets/hubert_base/preprocessor_config.json','assets/hubert_base/weights.bin']:
    p=self.root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(b'fixture')
   self.model=self.root/'assets/weights/voice.pth';self.model.parent.mkdir(parents=True)

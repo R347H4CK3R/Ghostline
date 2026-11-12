@@ -27,10 +27,11 @@ cleared. A first snapshot may show that catalog checking is still underway.
 
 ## Minimal companion deployment
 
-Deploy these four files from the same tested source together, then restart the
+Deploy these five files from the same tested source together, then restart the
 existing companion with its current root, pairing and master arguments:
 
 - `tools/queue_transport.py` (only the CatalogActivity integration is required)
+- `tools/private_voices.py` (validated per-voice catalog metadata addition)
 - `tools/catalog_activity.py` (new)
 - `tools/workflow_activity.py`
 - `tools/workflow_log.html`

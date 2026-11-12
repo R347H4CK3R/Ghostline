@@ -40,7 +40,7 @@ class RVCCLITests(unittest.TestCase):
   self.assertEqual(verify.call_args.kwargs['timeout'],600)
  def test_export_reads_metadata_and_does_not_publish(self):
   with tempfile.TemporaryDirectory() as d:
-   metadata=pathlib.Path(d)/'meta.json';value={'name':'Example'};metadata.write_text(json.dumps(value))
+   metadata=pathlib.Path(d).resolve()/'meta.json';value={'name':'Example'};metadata.write_text(json.dumps(value))
    with mock.patch('tools.rvc_export.export_folder',return_value=pathlib.Path('private/voice')) as export, mock.patch('tools.master_voices.publish') as publish:
     self.assertEqual(self.invoke(['export-rvc','--report','conversion.json','--metadata',str(metadata),'--output','private']),{'folder':'private/voice'})
    export.assert_called_once_with('conversion.json',value,'private');publish.assert_not_called()
@@ -73,7 +73,7 @@ main(sys.argv[1:])
   self.assertIn('checksum failed',stderr.getvalue())
  def test_invalid_export_metadata_stops_before_export(self):
   with tempfile.TemporaryDirectory() as d:
-   metadata=pathlib.Path(d)/'meta.json';metadata.write_text('{invalid')
+   metadata=pathlib.Path(d).resolve()/'meta.json';metadata.write_text('{invalid')
    with mock.patch('tools.rvc_export.export_folder') as export,contextlib.redirect_stderr(io.StringIO()):
     with self.assertRaises(SystemExit) as raised:voice_studio.main(['export-rvc','--report','conversion.json','--metadata',str(metadata),'--output','private'])
    self.assertEqual(raised.exception.code,2);export.assert_not_called()

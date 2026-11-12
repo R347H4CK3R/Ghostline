@@ -25,7 +25,7 @@ def sha(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 class RVCValidationTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
-        self.root = pathlib.Path(self.temp.name)
+        self.root = pathlib.Path(self.temp.name).resolve()
         self.source = self.root / 'input.wav'; wav(self.source)
         self.model = self.root / 'assets' / 'weights' / 'original.pth'
         self.model.parent.mkdir(parents=True); self.model.write_bytes(b'neural boundary fixture')

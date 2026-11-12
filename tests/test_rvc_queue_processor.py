@@ -62,7 +62,7 @@ class RVCQueueTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.base = pathlib.Path(self.tmp.name)
+        self.base = pathlib.Path(self.tmp.name).resolve()
         self.root = self.base / 'rvc'
         self.engine = self.base / 'engine'
         self.engine.mkdir()
@@ -92,7 +92,7 @@ class RVCQueueTests(unittest.TestCase):
         self.assertEqual(url, 'https://www.youtube.com/watch?v=EAT0nWoEzJ8')
         self.acquired += 1
         with tempfile.TemporaryDirectory(dir=self.base) as directory:
-            movie = pathlib.Path(directory) / 'download.mp4'
+            movie = pathlib.Path(directory).resolve() / 'download.mp4'
             wav(movie, seconds=150, seed=349)
             yield dict(privateMoviePath=str(movie), sourceSHA256=digest(movie),
                        videoID='EAT0nWoEzJ8')
