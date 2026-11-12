@@ -11,6 +11,8 @@ import CryptoKit
         var updated: Date
         var stage: String
         var message: String
+        var originalAcquisitionURL: URL?
+        var acquisitionURL: URL?
         var sourceFile: String?
         var sourceSHA256: String?
         var analysisFile: String?
@@ -27,7 +29,7 @@ import CryptoKit
     @Published private(set) var current: Job?
     @Published private(set) var history: [Job] = []
     @Published private(set) var busy = false
-    @Published private(set) var notice = "Import an authorized local video or recording. This path does not use a laptop or server."
+    @Published private(set) var notice = "Import an authorized local video or recording. Processing runs on this iPhone. URL acquisition contacts only the source website."
     private let root: URL
     private let transcriber = OnDeviceTranscription()
     private let engine = F5ReferenceEngine(idleRetention: .zero)
@@ -54,6 +56,7 @@ import CryptoKit
                   let job = try? JSONDecoder().decode(Job.self, from: data), job.id.uuidString.lowercased() == url.lastPathComponent else { return nil }
             func safe(_ value: String?) -> Bool { value == nil || (value!.range(of: "^[a-zA-Z0-9_-]+(?:\\.[a-zA-Z0-9_-]+)*$", options: .regularExpression) != nil) }
             guard safe(job.sourceFile), safe(job.analysisFile), safe(job.referenceFile), safe(job.previewFile) else { return nil }
+            if let input = job.acquisitionURL, (try? LocalMediaURLPolicy.input(input.absoluteString)) == nil { return nil }
             return job
         }.sorted { $0.created > $1.created }
     }
@@ -77,28 +80,32 @@ import CryptoKit
         try? update("Stopping for temperature", "iPhone temperature is high. Let it cool before resuming; retained files are kept.")
     }
     func cancel() { guard busy else { return }; operation?.cancel(); try? update("Stopping", "Stopping at a safe boundary. Source and completed outputs are retained.") }
+    func startURL(_ text: String, authorized: Bool, library: CharacterLibrary, audio: AudioStore, speech: SpeechStudio) {
+        do {
+            _ = try LocalMediaURLPolicy.input(text)
+            guard let original = URL(string: text.trimmingCharacters(in: .whitespacesAndNewlines)) else { throw LocalMediaURLPolicy.Failure.url }
+            start(original, authorized: authorized, library: library, audio: audio, speech: speech)
+        }
+        catch { notice = LocalMediaURLPolicy.Failure.url.errorDescription! }
+    }
     func start(_ source: URL, authorized: Bool, library: CharacterLibrary, audio: AudioStore, speech: SpeechStudio) {
         guard authorized, !busy, active else { return }
         guard !audio.processingInUse, !audio.microphoneInUse else { notice = "Stop the other recording or speech job first."; return }
         do {
             try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
             let free = try root.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]).volumeAvailableCapacityForImportantUsage ?? 0
-            var retained: Int64 = 0
-            let entries = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey])
-            while let url = entries?.nextObject() as? URL {
-                let value = try url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
-                if value.isRegularFile == true { retained += Int64(value.fileSize ?? 0) }
-            }
+            let retained = try LocalMediaAcquisition.retainedBytes(root: root)
             guard free >= 800_000_000, retained < 2_000_000_000 else { throw LocalError.storage }
             let now = Date()
-            current = Job(id: UUID(), created: now, updated: now, stage: "Received", message: "Local media selected; preparing a retained copy.")
+            current = Job(id: UUID(), created: now, updated: now, stage: "Received", message: "Source selected; preparing retained acquisition.")
+            if !source.isFileURL { current?.acquisitionURL = try LocalMediaURLPolicy.input(source.absoluteString); current?.originalAcquisitionURL = source }
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
-            try update("Received", "App received the selected local media. Nothing is uploaded.")
-            run(source: source, library: library, audio: audio, speech: speech)
+            try update("Received", source.isFileURL ? "App received the selected local media. Nothing is uploaded." : "App received the URL. Downloading directly from its website; no laptop or conversion service. The private URL is not shown in this log.")
+            run(source: source.isFileURL ? source : nil, library: library, audio: audio, speech: speech)
         } catch { notice = "Could not start a local job. Check free storage; existing voices were kept." }
     }
     func resume(library: CharacterLibrary, audio: AudioStore, speech: SpeechStudio) {
-        guard !busy, active, let job = current, !job.completed, job.sourceFile != nil else { return }
+        guard !busy, active, let job = current, !job.completed, job.sourceFile != nil || job.acquisitionURL != nil else { return }
         run(source: nil, library: library, audio: audio, speech: speech)
     }
     private enum LocalError: LocalizedError {
@@ -129,6 +136,18 @@ import CryptoKit
             do {
                 try check()
                 libraryOwner = try await library.beginLocalGeneration()
+                if current?.sourceFile == nil, let input = current?.acquisitionURL {
+                    try update("Acquiring source", "Preparing a bounded direct website download. Partial files and completed tracks remain retained.")
+                    let result = try await LocalMediaAcquisition.acquire(input: input, folder: jobFolder) { [weak self] message in
+                        Task { @MainActor in
+                            guard let self, self.runToken == run, self.busy, self.current?.stage == "Acquiring source" else { return }
+                            try? self.update("Acquiring source", message, log: !message.hasPrefix("Received ") && !message.hasPrefix("Merging tracks:"))
+                        }
+                    }
+                    try check()
+                    current?.sourceFile = result.file; current?.sourceSHA256 = result.sha256
+                    try update("Source retained", "Downloaded source and any original separate tracks are retained. Processing now stays entirely on this iPhone.")
+                }
                 if let source {
                     let access = source.startAccessingSecurityScopedResource()
                     defer { if access { source.stopAccessingSecurityScopedResource() } }
@@ -174,7 +193,7 @@ import CryptoKit
                 }
                 let actualHash = try await withTaskCancellationHandler { try await digestTask.value } onCancel: { digestTask.cancel() }
                 guard expectedHash == actualHash else { throw LocalError.source }
-                try update("Checking local transcription", "Checking English on-device recognition. Server recognition is disabled.")
+                try update("Checking local transcription", "Checking the bundled Parakeet speech recognizer. No OS speech assets or server recognition are used.")
                 try await transcriber.authorize()
                 await speech.releaseModelsForCharacter()
                 await engine.finishRequest(keepWarm: false)
@@ -257,6 +276,9 @@ import CryptoKit
                             try? self.update("Transcribing reference", "On-device recognition is producing results.", log: false)
                         } }
                         catch OnDeviceTranscription.Failure.noSpeech { continue }
+                        guard let transcriptionEvidence = transcriber.lastEvidence,
+                              transcriptionEvidence.inputSHA256 == Self.hash(clip.wave) else { throw LocalError.candidate }
+                        try JSONEncoder().encode(transcriptionEvidence).write(to: jobFolder.appendingPathComponent("transcription-evidence-" + attempt + ".json"), options: .atomic)
                         try Data(transcript.utf8).write(to: jobFolder.appendingPathComponent("transcript-" + attempt + ".txt"), options: .atomic)
                         try check(); previews += 1
                         try update("Generating preview", "Loading the bundled F5 engine and generating preview \(previews) of at most 3 for speaker \(speaker.speaker). No laptop or server is used.")
@@ -271,6 +293,8 @@ import CryptoKit
                         let recognized: String
                         do { recognized = try await transcriber.transcribe(preview) }
                         catch OnDeviceTranscription.Failure.noSpeech { if previews >= 3 { break }; continue }
+                        guard let previewEvidence = transcriber.lastEvidence else { throw LocalError.preview }
+                        try JSONEncoder().encode(previewEvidence).write(to: jobFolder.appendingPathComponent("preview-asr-evidence-" + attempt + ".json"), options: .atomic)
                         guard LocalStudioEvidence.wordErrorRate(expected: previewText, actual: recognized) <= 0.1 else {
                             try update("Preview rejected", "Spoken words did not pass. This preview is retained but will not be imported.")
                             if previews >= 3 { break }; continue
@@ -317,7 +341,7 @@ import CryptoKit
             } catch {
                 await engine.finishRequest(keepWarm: false)
                 let canceled = error is CancellationError || Task.isCancelled
-                let pauseMessage = current?.sourceFile == nil ? "Source copy interrupted. Partial data was kept; choose the source again to start a new job." : "Paused. Retained source and completed outputs are safe. Resume while this app is open."
+                let pauseMessage = current?.acquisitionURL != nil ? "Acquisition or processing paused. Completed tracks and partial attempts are kept. Resume reuses verified completed files; incomplete downloads restart without unsafe byte appending." : current?.sourceFile == nil ? "Source copy interrupted. Partial data was kept; choose the source again to start a new job." : "Paused. Retained source and completed outputs are safe. Resume while this app is open."
                 let message = canceled ? pauseMessage : (error as? LocalizedError)?.errorDescription ?? "Local processing could not finish. Retained files and existing voices were kept."
                 do { try update(canceled ? "Paused" : "Needs attention", message) }
                 catch { notice = "Could not save the latest status. Existing files were kept; check iPhone storage." }

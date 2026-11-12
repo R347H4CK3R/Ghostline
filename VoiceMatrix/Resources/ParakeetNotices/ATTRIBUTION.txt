@@ -1,0 +1,18 @@
+Parakeet TDT 0.6B v3, NVIDIA Corporation. Model source:
+https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3/tree/541d1f99c6b0c3cd0b11a95167540bb8edefd82b
+NVIDIA's governing-terms prose applies Creative Commons Attribution 4.0 International:
+https://creativecommons.org/licenses/by/4.0/legalcode.en
+The complete CC-BY-4.0 text accompanies this notice. No warranty or endorsement is implied. This license does not grant trademark, privacy or publicity rights.
+
+CoreML conversion by FluidInference:
+https://huggingface.co/FluidInference/parakeet-tdt-0.6b-v3-coreml/tree/7dd20fe6b1797d35f5e3307e8b1732d9a178edfe
+VoiceMatrix selects Encoder_v2.mlmodelc (FluidAudio selector int8V2), Preprocessor, Decoder, JointDecisionv3 and vocabulary. The pinned SDK describes this as an int8 per-channel re-quantization addressing right-context token corruption in the original 6-bit Encoder. VoiceMatrix does not modify the selected model files.
+
+Licensing/provenance caveat: the conversion repository declares CC-BY-4.0 in its metadata but says Apache 2.0 in a final paragraph linking the SDK. This is an unresolved upstream inconsistency. FluidAudio SDK code is separately Apache-2.0; that code license does not replace NVIDIA model terms. The converted artifacts are pinned by digest but their historical conversion is not bound to an exact original NVIDIA checkpoint/commit. Distribution must not be described as fully provenance- or license-cleared until this is resolved.
+
+FluidAudio code, FluidInference contributors, Apache License 2.0:
+https://github.com/FluidInference/FluidAudio/blob/ee78635d23d52379117554ba72358b65a0612447/LICENSE
+Bundled dependency notices retain the SDK license independently of these model notices.
+
+Exact converted-repository notice, retained without treating it as a replacement for NVIDIA terms:
+"Apache 2.0. See the FluidAudio repository for details and usage guidance."

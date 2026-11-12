@@ -1,0 +1,30 @@
+--- a/VoiceMatrix/LocalVideoStudio.swift
++++ b/VoiceMatrix/LocalVideoStudio.swift
+@@ -174,7 +174,7 @@
+                 }
+                 let actualHash = try await withTaskCancellationHandler { try await digestTask.value } onCancel: { digestTask.cancel() }
+                 guard expectedHash == actualHash else { throw LocalError.source }
+-                try update("Checking local transcription", "Checking English on-device recognition. Server recognition is disabled.")
++                try update("Checking local transcription", "Checking the bundled Parakeet speech recognizer. No OS speech assets or server recognition are used.")
+                 try await transcriber.authorize()
+                 await speech.releaseModelsForCharacter()
+                 await engine.finishRequest(keepWarm: false)
+@@ -257,6 +257,9 @@
+                             try? self.update("Transcribing reference", "On-device recognition is producing results.", log: false)
+                         } }
+                         catch OnDeviceTranscription.Failure.noSpeech { continue }
++                        guard let transcriptionEvidence = transcriber.lastEvidence,
++                              transcriptionEvidence.inputSHA256 == Self.hash(clip.wave) else { throw LocalError.candidate }
++                        try JSONEncoder().encode(transcriptionEvidence).write(to: jobFolder.appendingPathComponent("transcription-evidence-" + attempt + ".json"), options: .atomic)
+                         try Data(transcript.utf8).write(to: jobFolder.appendingPathComponent("transcript-" + attempt + ".txt"), options: .atomic)
+                         try check(); previews += 1
+                         try update("Generating preview", "Loading the bundled F5 engine and generating preview \(previews) of at most 3 for speaker \(speaker.speaker). No laptop or server is used.")
+@@ -271,6 +274,8 @@
+                         let recognized: String
+                         do { recognized = try await transcriber.transcribe(preview) }
+                         catch OnDeviceTranscription.Failure.noSpeech { if previews >= 3 { break }; continue }
++                        guard let previewEvidence = transcriber.lastEvidence else { throw LocalError.preview }
++                        try JSONEncoder().encode(previewEvidence).write(to: jobFolder.appendingPathComponent("preview-asr-evidence-" + attempt + ".json"), options: .atomic)
+                         guard LocalStudioEvidence.wordErrorRate(expected: previewText, actual: recognized) <= 0.1 else {
+                             try update("Preview rejected", "Spoken words did not pass. This preview is retained but will not be imported.")
+                             if previews >= 3 { break }; continue

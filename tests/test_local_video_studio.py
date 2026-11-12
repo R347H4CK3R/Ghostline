@@ -5,8 +5,9 @@ class LocalStudioSourceTests(unittest.TestCase):
  def read(self,path):return (ROOT/path).read_text(encoding='utf8')
  def test_recognition_requires_local_engine_and_has_bounded_cancellation(self):
   s=self.read('VoiceMatrix/OnDeviceTranscription.swift')
-  for text in ['supportsOnDeviceRecognition','requiresOnDeviceRecognition = true','seconds(45)','withTaskCancellationHandler','guard token == run','task?.cancel()']:self.assertIn(text,s)
-  self.assertNotIn('requiresOnDeviceRecognition = false',s)
+  for text in ['AsrModels.loadLocal(','parallelChunkConcurrency: 1','seconds(45)','withTaskCancellationHandler','self.token == run','worker.cancel()','manager.cleanup()']:self.assertIn(text,s)
+  self.assertNotIn('import Speech',s)
+  self.assertNotIn('downloadAndLoad',s)
  def test_pipeline_never_contacts_companion_or_deletes_retained_work(self):
   s=self.read('VoiceMatrix/LocalVideoStudio.swift')
   for text in ['LaptopConnection','URLSession','removeItem','shutil','trainedModel": true']:self.assertNotIn(text,s)

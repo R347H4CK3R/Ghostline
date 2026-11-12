@@ -1,0 +1,50 @@
+name: Bundled ASR neutral-fixture diagnostic
+on:
+  push:
+    paths:
+    - '.github/workflows/bundled-asr-diagnostic.yml'
+    - 'VoiceMatrix/OnDeviceTranscription.swift'
+    - 'VoiceMatrix/BundledASR*.swift'
+    - 'VoiceMatrix/LocalStudioEvidence.swift'
+    - 'VoiceMatrix/Resources/ParakeetNotices/**'
+    - 'tools/bundle_asr.py'
+    - 'tools/asr-resource-lock.json'
+    - 'probes/native-asr/**'
+    - 'tests/fixtures/conversion-*'
+    - 'project.yml'
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  actual-asr:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+    - name: Check fixture identity and source policies
+      run: |
+        python3 tools/check_conversion_inputs.py
+        python3 -m unittest tests.test_bundled_asr tests.test_local_video_studio -v
+    - name: Stage immutable ASR assets at build time only
+      run: python3 tools/bundle_asr.py
+    - name: Build exact application recognizer on Apple Silicon
+      run: |
+        test "$(uname -m)" = arm64
+        brew install xcodegen
+        mkdir -p VoiceMatrix/Resources/{Phonon,OpenVoice,F5TTS}
+        python3 tools/create_diagnostic_collection.py
+        xcodegen generate
+        xcodebuild -project VoiceMatrix.xcodeproj -scheme BundledASRDiagnostic -configuration Release -derivedDataPath native-asr CODE_SIGNING_ALLOWED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build > asr-build.log 2>&1 || { tail -120 asr-build.log; exit 1; }
+    - name: Run real recognition with networking denied
+      run: |
+        sandbox-exec -p '(version 1)(allow default)(deny network*)' native-asr/Build/Products/Release/BundledASRDiagnostic VoiceMatrix/Resources/ParakeetASR tests/fixtures asr-evidence.json "$GITHUB_SHA"
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: Bundled-ASR-diagnostic-evidence
+        path: |
+          asr-evidence.json
+          asr-build.log
+        if-no-files-found: error
+        retention-days: 14

@@ -52,6 +52,7 @@ jobs:
     - name: Stage pinned shared engines with zero bundled profiles
       run: |-
         python3 tools/bundle_diarization.py
+        python3 tools/bundle_asr.py
         python3 tools/character_package.py prepare --cache character-cache --resources character-resources  > assets.json
         python3 - <<'PYCODE'
         from pathlib import Path
@@ -82,6 +83,7 @@ jobs:
         python3 tools/package_ipa.py Payload VoiceMatrix-0.4.9-character-test.ipa
         python3 tools/character_package.py inspect VoiceMatrix-0.4.9-character-test.ipa --expected-version 0.4.9 --dependency-proof dependency-notices.json > character-inspection.json
         python3 tools/bundle_diarization.py --inspect-ipa VoiceMatrix-0.4.9-character-test.ipa
+        python3 tools/bundle_asr.py --inspect-ipa VoiceMatrix-0.4.9-character-test.ipa
         shasum -a 256 VoiceMatrix-0.4.9-character-test.ipa > character-ipa.sha256
     - uses: actions/upload-artifact@v4
       with:
@@ -280,8 +282,10 @@ jobs:
         fi
     needs: resolve
 
+  bundled-asr:
+    uses: ./.github/workflows/bundled-asr-diagnostic.yml
   verify:
-    needs: [resolve, ipa, speech, conversion]
+    needs: [resolve, ipa, speech, conversion, bundled-asr]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4

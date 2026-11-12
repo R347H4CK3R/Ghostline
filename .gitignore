@@ -13,3 +13,6 @@ qa-attachments/
 
 VoiceMatrix/Resources/Diarization/*
 !VoiceMatrix/Resources/Diarization/.gitkeep
+
+VoiceMatrix/Resources/ParakeetASR/*
+!VoiceMatrix/Resources/ParakeetASR/.gitkeep
