@@ -11,6 +11,22 @@ class LocalStudioSourceTests(unittest.TestCase):
   s=self.read('VoiceMatrix/LocalVideoStudio.swift')
   for text in ['LaptopConnection','URLSession','removeItem','shutil','trainedModel": true']:self.assertNotIn(text,s)
   for text in ['sourceSHA256','importLocalGeneratedCollection','wordErrorRate','<= 0.1','keepWarm: false','Task.detached','thermalState']:self.assertIn(text,s)
+ def test_local_failed_generation_is_retained_without_changing_legacy_default(self):
+  self.assertIn('preserveIncomplete: true',self.read('VoiceMatrix/LocalVideoStudio.swift'))
+  engine=self.read('VoiceMatrix/F5ReferenceEngine.swift')
+  self.assertIn('preserveIncomplete: Bool = false',engine)
+  self.assertIn('!completed && !preserveIncomplete',engine)
+ def test_local_owner_cancels_optional_catalog_and_fences_import(self):
+  library=self.read('VoiceMatrix/CharacterLibraryView.swift')
+  self.assertIn('func beginLocalGeneration()',library)
+  self.assertIn('localGenerationOwner == owner',library)
+  self.assertIn('syncJob?.cancel()',library)
+  self.assertIn('library.endLocalGeneration(libraryOwner)',self.read('VoiceMatrix/LocalVideoStudio.swift'))
+ def test_memory_and_thermal_signals_request_safe_stop(self):
+  app=self.read('VoiceMatrix/App.swift')
+  self.assertIn('localVideo.memoryWarning()',app)
+  self.assertIn('localVideo.thermalChanged()',app)
+  self.assertIn('Stopping for memory',self.read('VoiceMatrix/LocalVideoStudio.swift'))
  def test_log_refresh_is_separate_from_last_activity(self):
   s=self.read('VoiceMatrix/LocalVideoStudioView.swift')
   for text in ['by: 1','Last actual update:','timeIntervalSince(job.updated) >= 30','not a failure declaration','No laptop or server fallback','one usable reference']:self.assertIn(text,s)

@@ -12,7 +12,7 @@ import XCTest
             for _ in 0..<5 where !generate.isHittable { app.swipeUp() }
             XCTAssertFalse(generate.isEnabled)
             XCTAssertTrue(app.buttons["local-video-import"].exists)
-            let log = app.descendants(matching: .any)["local-video-live-log"].firstMatch
+            let log = app.descendants(matching: .any).matching(identifier: "local-video-live-log").firstMatch
             for _ in 0..<8 where !log.isHittable { app.swipeUp() }
             XCTAssertTrue(log.exists)
             let capture = XCTAttachment(screenshot: app.screenshot())

@@ -66,7 +66,7 @@ actor F5ReferenceEngine {
         engine = try await F5TTSModel.fromBundle(localBundle)
         loadedURL = localBundle
     }
-    func speak(text: String, referenceAudio: URL, referenceText: String, destination: URL, pauseSeconds: Double = 0.12, progress: @escaping @Sendable (Int, Int) -> Void = { _, _ in }) async throws {
+    func speak(text: String, referenceAudio: URL, referenceText: String, destination: URL, pauseSeconds: Double = 0.12, preserveIncomplete: Bool = false, progress: @escaping @Sendable (Int, Int) -> Void = { _, _ in }) async throws {
         guard let engine, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               !referenceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw NSError(domain: "VoiceMatrix.F5", code: 1, userInfo: [NSLocalizedDescriptionKey: "Load a local engine and character reference first."])
@@ -82,7 +82,7 @@ actor F5ReferenceEngine {
         }
         var completed = false
         var writer: AVAudioFile? = try AVAudioFile(forWriting: destination, settings: [AVFormatIDKey: Int(kAudioFormatLinearPCM), AVSampleRateKey: 24000.0, AVNumberOfChannelsKey: 1, AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false])
-        defer { writer = nil; if !completed { try? FileManager.default.removeItem(at: destination) } }
+        defer { writer = nil; if !completed && !preserveIncomplete { try? FileManager.default.removeItem(at: destination) } }
         var writtenFrames = 0
         func append(_ samples: [Float]) throws {
             try Task.checkCancellation()

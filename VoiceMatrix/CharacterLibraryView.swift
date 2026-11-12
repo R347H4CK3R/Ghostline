@@ -189,14 +189,22 @@ import CryptoKit
         guard syncing, syncCanStop, syncRunID == run, !Task.isCancelled else { return }
         recordSync(event)
     }
-    func releaseForLocalGeneration() async throws {
-        guard !busy, !syncing else { throw CharacterImportError.invalid("Finish the current library operation first.") }
+    private var localGenerationOwner: UUID?
+    func beginLocalGeneration() async throws -> UUID {
+        guard !busy, localGenerationOwner == nil else { throw CharacterImportError.invalid("Finish the current library operation first.") }
+        let owner = UUID(); localGenerationOwner = owner; busy = true
+        // Optional laptop catalog refresh must never gate standalone generation.
+        syncJob?.cancel()
+        if let pending = syncJob { await pending.value }
         await engine.unload()
+        return owner
     }
-    func importLocalGeneratedCollection(_ url: URL) async throws {
-        guard !busy, !syncing else { throw CharacterImportError.invalid("Finish the current library operation first.") }
-        busy = true
-        defer { busy = false }
+    func endLocalGeneration(_ owner: UUID) {
+        guard localGenerationOwner == owner else { return }
+        localGenerationOwner = nil; busy = false
+    }
+    func importLocalGeneratedCollection(_ url: URL, owner: UUID) async throws {
+        guard localGenerationOwner == owner, busy else { throw CharacterImportError.invalid("The local generation owner changed; existing voices were kept.") }
         profiles = try await store.importCollection(at: url)
         storedVoiceBytes = try? await store.storedBytes()
         if let data = try? Data(contentsOf: url.appendingPathComponent("collection.json")),

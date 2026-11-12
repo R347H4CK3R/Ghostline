@@ -16,7 +16,7 @@ The private job directory retains the copied source, reference WAVs, transcripts
 
 The screen refreshes its log view every second. It labels view refresh separately from the last actual processing update. After 30 seconds without a processing update it reports that the operation may still be busy, not that it has failed. Logs retain the latest 160 events for each job. The latest status is committed atomically.
 
-Processing is foreground-first. Going into the background requests cancellation at a safe boundary, retains completed work and exposes Resume. Resume checks the source checksum and reruns selection/verification; this is stage retry, not an inference checkpoint. It does not promise unrestricted iOS background execution. The existing F5 engine discards incomplete generation files on failure; committed source/reference/completed preview files remain retained.
+Processing is foreground-first. Going into the background requests cancellation at a safe boundary, retains completed work and exposes Resume. Resume checks the source checksum and reruns selection/verification; this is stage retry, not an inference checkpoint. It does not promise unrestricted iOS background execution. The local studio opts into retaining incomplete F5 output files for diagnosis; other existing speech callers keep their previous temporary-output behavior. Incomplete files are not admitted as successful previews.
 
 ## Required verification
 

@@ -48,7 +48,7 @@ struct LocalVideoStudioView: View {
                             if local.busy, timeline.date.timeIntervalSince(job.updated) >= 30 {
                                 Text("No new stage activity for \(Int(timeline.date.timeIntervalSince(job.updated))) seconds. The current operation may still be busy; this is not a failure declaration.").foregroundStyle(.orange)
                             }
-                            ForEach(job.events) { event in
+                            ForEach(Array(job.events.reversed())) { event in
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(event.time.formatted(date: .omitted, time: .standard) + " · " + event.stage).font(.caption.bold())
                                     Text(event.message).font(.caption)

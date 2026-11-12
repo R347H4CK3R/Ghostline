@@ -59,11 +59,22 @@ import CryptoKit
         try JSONEncoder().encode(value).write(to: folder.appendingPathComponent("job.json"), options: .atomic)
         current = value; notice = text
     }
-    func selectHistory(_ job: Job) { guard !busy else { return }; current = job }
+    func selectHistory(_ job: Job) { guard !busy else { return }; current = job; notice = job.message }
     func setActive(_ value: Bool) { active = value; if !value, busy { cancel() } }
+    func memoryWarning() {
+        guard busy else { return }
+        operation?.cancel()
+        try? update("Stopping for memory", "iOS reported memory pressure. Stopping at a safe boundary and retaining source/output files.")
+    }
+    func thermalChanged() {
+        guard busy, ProcessInfo.processInfo.thermalState == .serious || ProcessInfo.processInfo.thermalState == .critical else { return }
+        operation?.cancel()
+        try? update("Stopping for temperature", "iPhone temperature is high. Let it cool before resuming; retained files are kept.")
+    }
     func cancel() { guard busy else { return }; operation?.cancel(); try? update("Stopping", "Stopping at a safe boundary. Source and completed outputs are retained.") }
     func start(_ source: URL, authorized: Bool, library: CharacterLibrary, audio: AudioStore, speech: SpeechStudio) {
         guard authorized, !busy, active else { return }
+        guard !audio.processingInUse, !audio.microphoneInUse else { notice = "Stop the other recording or speech job first."; return }
         do {
             try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
             let free = try root.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]).volumeAvailableCapacityForImportantUsage ?? 0
@@ -108,9 +119,11 @@ import CryptoKit
         let run = UUID(); runToken = run
         let jobFolder = folder
         operation = Task {
-            defer { busy = false; audio.releaseProcessing(lease); reloadHistory() }
+            var libraryOwner: UUID?
+            defer { if let libraryOwner { library.endLocalGeneration(libraryOwner) }; busy = false; audio.releaseProcessing(lease); reloadHistory() }
             do {
                 try check()
+                libraryOwner = try await library.beginLocalGeneration()
                 if let source {
                     let access = source.startAccessingSecurityScopedResource()
                     defer { if access { source.stopAccessingSecurityScopedResource() } }
@@ -125,10 +138,18 @@ import CryptoKit
                         let input = try FileHandle(forReadingFrom: source), output = try FileHandle(forWritingTo: destination)
                         defer { try? input.close(); try? output.close() }
                         var hash = SHA256(), count = 0
+                        var lastNotice = Date()
                         while let bytes = try input.read(upToCount: 1_048_576), !bytes.isEmpty {
                             try Task.checkCancellation(); count += bytes.count
                             guard count <= size else { throw LocalError.source }
                             try output.write(contentsOf: bytes); hash.update(data: bytes)
+                            if Date().timeIntervalSince(lastNotice) >= 1 {
+                                lastNotice = Date(); let copied = count
+                                Task { @MainActor [weak self] in
+                                    guard let self, self.runToken == run, self.busy, self.current?.stage == "Copying source" else { return }
+                                    try? self.update("Copying source", "Copied \(copied) of \(size) bytes into retained app storage.", log: false)
+                                }
+                            }
                         }
                         guard count == size else { throw LocalError.source }
                         try output.synchronize()
@@ -153,7 +174,7 @@ import CryptoKit
                 let duration = try await AVURLAsset(url: retained).load(.duration).seconds
                 let windows = LocalStudioEvidence.windows(duration: duration)
                 guard !windows.isEmpty else { throw LocalError.source }
-                try await library.releaseForLocalGeneration(); await speech.releaseModelsForCharacter()
+                await speech.releaseModelsForCharacter()
                 guard let bundle = Bundle.main.url(forResource: "F5TTS", withExtension: nil) else { throw LocalError.engine }
                 var previews = 0
                 for (index, window) in windows.enumerated() {
@@ -175,8 +196,8 @@ import CryptoKit
                     try update("Generating preview", "Loading the bundled F5 engine and generating preview \(previews) of at most 3. No laptop or server is used.")
                     let preview = jobFolder.appendingPathComponent("preview-" + attempt + ".wav")
                     try await engine.load(localBundle: bundle)
-                    try await engine.speak(text: previewText, referenceAudio: reference, referenceText: transcript, destination: preview) { [weak self] part, total in
-                        Task { @MainActor in guard let self, self.runToken == run, self.busy else { return }; try? self.update("Generating preview", "Generating speech part \(part) of \(total).", log: false) }
+                    try await engine.speak(text: previewText, referenceAudio: reference, referenceText: transcript, destination: preview, preserveIncomplete: true) { [weak self] part, total in
+                        Task { @MainActor in guard let self, self.runToken == run, self.busy, self.current?.stage == "Generating preview" else { return }; try? self.update("Generating preview", "Generating speech part \(part) of \(total).", log: false) }
                     }
                     await engine.finishRequest(keepWarm: false)
                     current?.previewFile = preview.lastPathComponent
@@ -189,6 +210,12 @@ import CryptoKit
                         if previews >= 3 { throw LocalError.preview }; continue
                     }
                     try check()
+                    if let existing = library.profiles.first(where: { $0.referenceSHA256 == Self.hash(clip.wave) && $0.referenceText == transcript }) {
+                        library.selectedID = existing.id
+                        current?.voiceID = existing.id; current?.completed = true
+                        try update("Reference ready", "This exact reference is already saved. Its verified preview is retained; the existing voice was reused without replacement. Likeness is not verified.")
+                        return
+                    }
                     let id = "local-" + current!.id.uuidString.lowercased()
                     let collection = jobFolder.appendingPathComponent("collection-" + attempt, isDirectory: true)
                     let voiceFolder = collection.appendingPathComponent(id, isDirectory: true)
@@ -198,7 +225,7 @@ import CryptoKit
                     try clip.wave.write(to: voiceFolder.appendingPathComponent("reference.wav"), options: .atomic)
                     try JSONSerialization.data(withJSONObject: ["schemaVersion": 1, "voices": [["id": id, "folder": id]]]).write(to: collection.appendingPathComponent("collection.json"), options: .atomic)
                     try update("Importing", "Atomically validating and registering the preview-only reference on this iPhone.")
-                    try await library.importLocalGeneratedCollection(collection)
+                    try await library.importLocalGeneratedCollection(collection, owner: libraryOwner!)
                     current?.voiceID = id; current?.completed = true
                     try update("Reference ready", "One local reference is saved and its preview passed the word check. Listen to judge resemblance; character identity, separation and RVC training are not verified.")
                     return
@@ -207,7 +234,8 @@ import CryptoKit
             } catch {
                 await engine.finishRequest(keepWarm: false)
                 let canceled = error is CancellationError || Task.isCancelled
-                let message = canceled ? "Paused. Retained source and completed outputs are safe. Resume while this app is open." : (error as? LocalizedError)?.errorDescription ?? "Local processing could not finish. Retained files and existing voices were kept."
+                let pauseMessage = current?.sourceFile == nil ? "Source copy interrupted. Partial data was kept; choose the source again to start a new job." : "Paused. Retained source and completed outputs are safe. Resume while this app is open."
+                let message = canceled ? pauseMessage : (error as? LocalizedError)?.errorDescription ?? "Local processing could not finish. Retained files and existing voices were kept."
                 do { try update(canceled ? "Paused" : "Needs attention", message) }
                 catch { notice = "Could not save the latest status. Existing files were kept; check iPhone storage." }
             }

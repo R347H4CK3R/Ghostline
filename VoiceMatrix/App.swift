@@ -11,7 +11,8 @@ import AVFoundation
     @StateObject private var localVideo = LocalVideoStudio()
     var body: some Scene {
         WindowGroup { RootView().environmentObject(studio).environmentObject(audio).environmentObject(characters).environmentObject(rvc).environmentObject(localVideo).preferredColorScheme(.dark).tint(StudioPalette.accent)
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in studio.memoryWarning(); characters.releaseWarmSpeech() }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in studio.memoryWarning(); characters.releaseWarmSpeech(); localVideo.memoryWarning() }
+            .onReceive(NotificationCenter.default.publisher(for: ProcessInfo.thermalStateDidChangeNotification)) { _ in localVideo.thermalChanged() }
             .onChange(of: scenePhase, initial: true) { _, phase in characters.setApplicationActive(phase == .active); localVideo.setActive(phase != .background) }
             .onChange(of: studio.busy) { _, busy in if busy { characters.releaseWarmSpeech() } }
         }
