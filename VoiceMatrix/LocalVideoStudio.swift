@@ -13,9 +13,13 @@ import CryptoKit
         var message: String
         var sourceFile: String?
         var sourceSHA256: String?
+        var analysisFile: String?
+        var analysisSHA256: String?
         var referenceFile: String?
         var previewFile: String?
         var voiceID: String?
+        var speakerVoiceIDs: [String:String]?
+        var speakerOutcomes: [String:String]?
         var completed = false
         var events: [Event] = []
     }
@@ -48,7 +52,7 @@ import CryptoKit
                   let data = try? Data(contentsOf: url.appendingPathComponent("job.json")),
                   let job = try? JSONDecoder().decode(Job.self, from: data), job.id.uuidString.lowercased() == url.lastPathComponent else { return nil }
             func safe(_ value: String?) -> Bool { value == nil || (value!.range(of: "^[a-zA-Z0-9_-]+(?:\\.[a-zA-Z0-9_-]+)*$", options: .regularExpression) != nil) }
-            guard safe(job.sourceFile), safe(job.referenceFile), safe(job.previewFile) else { return nil }
+            guard safe(job.sourceFile), safe(job.analysisFile), safe(job.referenceFile), safe(job.previewFile) else { return nil }
             return job
         }.sorted { $0.created > $1.created }
     }
@@ -102,7 +106,7 @@ import CryptoKit
             switch self {
             case .storage: return "Free at least 800 MB. Retained local jobs have a 2 GB admission limit; no old files were deleted."
             case .source: return "The retained source is missing, changed or unsupported. Existing voices were kept."
-            case .candidate: return "No acceptable reference was found. This mode does not separate overlapping speakers or identify characters."
+            case .candidate: return "No acceptable reference was found. Speaker timing is not proof of music-free speech or character identity."
             case .preview: return "Three previews failed the spoken-word check. References and completed previews were retained for review."
             case .engine: return "The bundled F5 engine is unavailable. A complete app build is required; no network fallback was used."
             case .thermal: return "iPhone temperature is too high for this job. Let it cool, then Resume."
@@ -171,66 +175,119 @@ import CryptoKit
                 guard expectedHash == actualHash else { throw LocalError.source }
                 try update("Checking local transcription", "Checking English on-device recognition. Server recognition is disabled.")
                 try await transcriber.authorize()
-                let duration = try await AVURLAsset(url: retained).load(.duration).seconds
-                let windows = LocalStudioEvidence.windows(duration: duration)
-                guard !windows.isEmpty else { throw LocalError.source }
                 await speech.releaseModelsForCharacter()
-                guard let bundle = Bundle.main.url(forResource: "F5TTS", withExtension: nil) else { throw LocalError.engine }
-                var previews = 0
-                for (index, window) in windows.enumerated() {
-                    try check()
-                    try update("Selecting reference", "Checking window \(index + 1) of \(windows.count). This is one-reference mode, not speaker separation.")
-                    let clip: LocalVideoAudio.Reference
-                    do { clip = try await LocalVideoAudio.extract(source: retained, start: window.start, seconds: window.seconds) }
-                    catch LocalVideoAudio.Failure.unusableAudio { continue }
-                    let attempt = UUID().uuidString.lowercased()
-                    let reference = jobFolder.appendingPathComponent("reference-" + attempt + ".wav")
-                    try clip.wave.write(to: reference, options: .atomic)
-                    current?.referenceFile = reference.lastPathComponent
-                    try update("Transcribing reference", "Recognizing this candidate locally. Identity and overlap are not verified.")
-                    let transcript: String
-                    do { transcript = try await transcriber.transcribe(reference) { [weak self] in try? self?.update("Transcribing reference", "On-device recognition is producing results.", log: false) } }
-                    catch OnDeviceTranscription.Failure.noSpeech { continue }
-                    try Data(transcript.utf8).write(to: jobFolder.appendingPathComponent("transcript-" + attempt + ".txt"), options: .atomic)
-                    try check(); previews += 1
-                    try update("Generating preview", "Loading the bundled F5 engine and generating preview \(previews) of at most 3. No laptop or server is used.")
-                    let preview = jobFolder.appendingPathComponent("preview-" + attempt + ".wav")
-                    try await engine.load(localBundle: bundle)
-                    try await engine.speak(text: previewText, referenceAudio: reference, referenceText: transcript, destination: preview, preserveIncomplete: true) { [weak self] part, total in
-                        Task { @MainActor in guard let self, self.runToken == run, self.busy, self.current?.stage == "Generating preview" else { return }; try? self.update("Generating preview", "Generating speech part \(part) of \(total).", log: false) }
-                    }
-                    await engine.finishRequest(keepWarm: false)
-                    current?.previewFile = preview.lastPathComponent
-                    try update("Verifying preview", "Checking the generated words locally. This does not verify likeness.")
-                    let recognized: String
-                    do { recognized = try await transcriber.transcribe(preview) }
-                    catch OnDeviceTranscription.Failure.noSpeech { if previews >= 3 { throw LocalError.preview }; continue }
-                    guard LocalStudioEvidence.wordErrorRate(expected: previewText, actual: recognized) <= 0.1 else {
-                        try update("Preview rejected", "Spoken words did not pass. This preview is retained but will not be imported.")
-                        if previews >= 3 { throw LocalError.preview }; continue
+                await engine.finishRequest(keepWarm: false)
+                let analysis: LocalSpeakerDiarization.Analysis
+                if let name = current?.analysisFile, let digest = current?.analysisSHA256 {
+                    let url = jobFolder.appendingPathComponent(name)
+                    let v = try url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey])
+                    guard v.isRegularFile == true, v.isSymbolicLink != true, (v.fileSize ?? Int.max) <= 4_000_000 else { throw LocalError.source }
+                    let data = try Data(contentsOf: url)
+                    guard Self.hash(data) == digest else { throw LocalError.source }
+                    analysis = try JSONDecoder().decode(LocalSpeakerDiarization.Analysis.self, from: data)
+                    try LocalSpeakerDiarization.validate(analysis)
+                    try update("Speaker analysis retained", "Reusing the verified retained analysis so speaker groups stay consistent across Resume.")
+                } else {
+                    try update("Analyzing speakers", "Loading bundled speaker analysis. Speaker groups are not character identities.")
+                    analysis = try await LocalSpeakerDiarization.analyze(source: retained) { [weak self] message in
+                        Task { @MainActor in
+                            guard let self, self.runToken == run, self.busy, self.current?.stage == "Analyzing speakers" else { return }
+                            try? self.update("Analyzing speakers", message, log: false)
+                        }
                     }
                     try check()
-                    if let existing = library.profiles.first(where: { $0.referenceSHA256 == Self.hash(clip.wave) && $0.referenceText == transcript }) {
-                        library.selectedID = existing.id
-                        current?.voiceID = existing.id; current?.completed = true
-                        try update("Reference ready", "This exact reference is already saved. Its verified preview is retained; the existing voice was reused without replacement. Likeness is not verified.")
-                        return
-                    }
-                    let id = "local-" + current!.id.uuidString.lowercased()
-                    let collection = jobFolder.appendingPathComponent("collection-" + attempt, isDirectory: true)
-                    let voiceFolder = collection.appendingPathComponent(id, isDirectory: true)
-                    try FileManager.default.createDirectory(at: voiceFolder, withIntermediateDirectories: true)
-                    let metadata: [String: Any] = ["id": id, "name": "Unidentified reference " + String(current!.id.uuidString.prefix(6)), "source": "User-authorized local media SHA256 " + expectedHash, "permission": "User affirmed source-use authorization in the local studio", "referenceText": transcript, "schemaVersion": 1, "kind": "f5-reference", "engine": "F5TTS_v1_Base", "referenceFile": "reference.wav", "referenceSHA256": Self.hash(clip.wave), "trainedModel": false, "categories": ["Local", "Unidentified", "Preview-only"], "referenceBytes": clip.wave.count, "seconds": clip.seconds]
-                    try JSONSerialization.data(withJSONObject: metadata, options: [.sortedKeys]).write(to: voiceFolder.appendingPathComponent("manifest.json"), options: .atomic)
-                    try clip.wave.write(to: voiceFolder.appendingPathComponent("reference.wav"), options: .atomic)
-                    try JSONSerialization.data(withJSONObject: ["schemaVersion": 1, "voices": [["id": id, "folder": id]]]).write(to: collection.appendingPathComponent("collection.json"), options: .atomic)
-                    try update("Importing", "Atomically validating and registering the preview-only reference on this iPhone.")
-                    try await library.importLocalGeneratedCollection(collection, owner: libraryOwner!)
-                    current?.voiceID = id; current?.completed = true
-                    try update("Reference ready", "One local reference is saved and its preview passed the word check. Listen to judge resemblance; character identity, separation and RVC training are not verified.")
-                    return
+                    let data = try JSONEncoder().encode(analysis)
+                    let name = "diarization-" + UUID().uuidString.lowercased() + ".json"
+                    try data.write(to: jobFolder.appendingPathComponent(name), options: .atomic)
+                    current?.analysisFile = name; current?.analysisSHA256 = Self.hash(data)
+                    try update("Speaker analysis retained", "Saved the source-bound speaker analysis before creating references.")
                 }
-                throw LocalError.candidate
+                let groups = analysis.speakerWindows
+                guard !groups.isEmpty else { throw LocalError.candidate }
+                try update("Speaker groups found", "Found \(groups.count) tentative speaker groups. Detected overlaps are excluded; music separation and character names are not verified.")
+                guard let bundle = Bundle.main.url(forResource: "F5TTS", withExtension: nil) else { throw LocalError.engine }
+                if current?.speakerVoiceIDs == nil { current?.speakerVoiceIDs = [:] }
+                if current?.speakerOutcomes == nil { current?.speakerOutcomes = [:] }
+                var saved = 0, unresolved = 0
+                for speaker in groups {
+                    try check()
+                    if let id = current?.speakerVoiceIDs?[speaker.speaker], library.profiles.contains(where: { $0.id == id }) {
+                        saved += 1
+                        try update("Reference already saved", "Retained reference for speaker \(speaker.speaker) is already in the library; keeping it unchanged.")
+                        continue
+                    }
+                    var previews = 0, imported = false
+                    for (index, window) in speaker.windows.enumerated() {
+                        try check()
+                        try update("Selecting reference", "Speaker \(speaker.speaker): checking candidate \(index + 1) of \(speaker.windows.count). Detected overlap was excluded; this is not music separation.")
+                        let clip: LocalVideoAudio.Reference
+                        do { clip = try await LocalVideoAudio.extract(source: retained, start: window.start, seconds: window.seconds) }
+                        catch LocalVideoAudio.Failure.unusableAudio { continue }
+                        let attempt = UUID().uuidString.lowercased()
+                        let reference = jobFolder.appendingPathComponent("reference-" + attempt + ".wav")
+                        try clip.wave.write(to: reference, options: .atomic)
+                        current?.referenceFile = reference.lastPathComponent
+                        try update("Transcribing reference", "Recognizing this candidate locally. Model-detected overlaps were excluded. Music and character identity are not verified.")
+                        let transcript: String
+                        do { transcript = try await transcriber.transcribe(reference) { [weak self] in
+                            guard let self, self.runToken == run, self.busy, self.current?.stage == "Transcribing reference", self.current?.referenceFile == reference.lastPathComponent else { return }
+                            try? self.update("Transcribing reference", "On-device recognition is producing results.", log: false)
+                        } }
+                        catch OnDeviceTranscription.Failure.noSpeech { continue }
+                        try Data(transcript.utf8).write(to: jobFolder.appendingPathComponent("transcript-" + attempt + ".txt"), options: .atomic)
+                        try check(); previews += 1
+                        try update("Generating preview", "Loading the bundled F5 engine and generating preview \(previews) of at most 3 for speaker \(speaker.speaker). No laptop or server is used.")
+                        let preview = jobFolder.appendingPathComponent("preview-" + attempt + ".wav")
+                        try await engine.load(localBundle: bundle)
+                        try await engine.speak(text: previewText, referenceAudio: reference, referenceText: transcript, destination: preview, preserveIncomplete: true) { [weak self] part, total in
+                            Task { @MainActor in guard let self, self.runToken == run, self.busy, self.current?.stage == "Generating preview", self.current?.referenceFile == reference.lastPathComponent else { return }; try? self.update("Generating preview", "Generating speech part \(part) of \(total).", log: false) }
+                        }
+                        await engine.finishRequest(keepWarm: false)
+                        current?.previewFile = preview.lastPathComponent
+                        try update("Verifying preview", "Checking the generated words locally. This does not verify likeness.")
+                        let recognized: String
+                        do { recognized = try await transcriber.transcribe(preview) }
+                        catch OnDeviceTranscription.Failure.noSpeech { if previews >= 3 { break }; continue }
+                        guard LocalStudioEvidence.wordErrorRate(expected: previewText, actual: recognized) <= 0.1 else {
+                            try update("Preview rejected", "Spoken words did not pass. This preview is retained but will not be imported.")
+                            if previews >= 3 { break }; continue
+                        }
+                        try check()
+                        if let existing = library.profiles.first(where: { $0.referenceSHA256 == Self.hash(clip.wave) && $0.referenceText == transcript }) {
+                            library.selectedID = existing.id
+                            current?.voiceID = existing.id
+                            current?.speakerVoiceIDs?[speaker.speaker] = existing.id
+                            current?.speakerOutcomes?[speaker.speaker] = "Saved reference; word check passed; likeness unverified"
+                            imported = true; saved += 1
+                            try update("Reference ready", "This exact reference is already saved. Its verified preview is retained; the existing voice was reused without replacement. Likeness is not verified.")
+                            break
+                        }
+                        let id = "local-" + current!.id.uuidString.lowercased() + "-" + speaker.speaker.lowercased()
+                        let collection = jobFolder.appendingPathComponent("collection-" + attempt, isDirectory: true)
+                        let voiceFolder = collection.appendingPathComponent(id, isDirectory: true)
+                        try FileManager.default.createDirectory(at: voiceFolder, withIntermediateDirectories: true)
+                        let metadata: [String: Any] = ["id": id, "name": "Unidentified speaker " + speaker.speaker + " " + String(current!.id.uuidString.prefix(6)), "source": "User-authorized local media SHA256 " + expectedHash, "permission": "User affirmed source-use authorization in the local studio", "referenceText": transcript, "schemaVersion": 1, "kind": "f5-reference", "engine": "F5TTS_v1_Base", "referenceFile": "reference.wav", "referenceSHA256": Self.hash(clip.wave), "trainedModel": false, "categories": ["Local", "Unidentified", "Preview-only"], "referenceBytes": clip.wave.count, "seconds": clip.seconds]
+                        try JSONSerialization.data(withJSONObject: metadata, options: [.sortedKeys]).write(to: voiceFolder.appendingPathComponent("manifest.json"), options: .atomic)
+                        try clip.wave.write(to: voiceFolder.appendingPathComponent("reference.wav"), options: .atomic)
+                        try JSONSerialization.data(withJSONObject: ["schemaVersion": 1, "voices": [["id": id, "folder": id]]]).write(to: collection.appendingPathComponent("collection.json"), options: .atomic)
+                        try update("Importing", "Atomically validating and registering the preview-only reference on this iPhone.")
+                        try await library.importLocalGeneratedCollection(collection, owner: libraryOwner!)
+                        current?.voiceID = id
+                        current?.speakerVoiceIDs?[speaker.speaker] = id
+                        current?.speakerOutcomes?[speaker.speaker] = "Saved reference; word check passed; likeness unverified"
+                        imported = true; saved += 1
+                        try update("Reference ready", "Reference for speaker \(speaker.speaker) is saved and passed the word check. Character identity, music separation and RVC training are not verified.")
+                        break
+                    }
+                    if !imported {
+                        unresolved += 1
+                        current?.speakerOutcomes?[speaker.speaker] = "No usable reference passed the word check"
+                        try update("Speaker needs review", "Speaker \(speaker.speaker) has no accepted reference. Sources and attempts were retained; continuing other groups.")
+                    }
+                }
+                current?.completed = saved > 0 && unresolved == 0
+                try update(unresolved == 0 ? "Speaker references ready" : "Partial result needs review", "Saved or reused \(saved) speaker references; \(unresolved) groups need review. Likeness, character identity, music separation and RVC training are not verified.")
+                return
             } catch {
                 await engine.finishRequest(keepWarm: false)
                 let canceled = error is CancellationError || Task.isCancelled

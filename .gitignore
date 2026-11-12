@@ -10,3 +10,6 @@ VoiceMatrix/Resources/OpenVoice/
 qa-audio/
 voice-synthesis-results.json
 qa-attachments/
+
+VoiceMatrix/Resources/Diarization/*
+!VoiceMatrix/Resources/Diarization/.gitkeep

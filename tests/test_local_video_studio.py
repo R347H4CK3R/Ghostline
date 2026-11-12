@@ -29,7 +29,7 @@ class LocalStudioSourceTests(unittest.TestCase):
   self.assertIn('Stopping for memory',self.read('VoiceMatrix/LocalVideoStudio.swift'))
  def test_log_refresh_is_separate_from_last_activity(self):
   s=self.read('VoiceMatrix/LocalVideoStudioView.swift')
-  for text in ['by: 1','Last actual update:','timeIntervalSince(job.updated) >= 30','not a failure declaration','No laptop or server fallback','one usable reference']:self.assertIn(text,s)
+  for text in ['by: 1','Last actual update:','timeIntervalSince(job.updated) >= 30','not a failure declaration','No laptop or server fallback','groups speakers']:self.assertIn(text,s)
  def test_native_verification_is_wired_not_merely_stored(self):
   s=self.read('.github/workflows/character-ui-smoke.yml')
   for target in ['VoiceMatrixTests/LocalVideoAudioTests','VoiceMatrixTests/LocalStudioEvidenceTests','VoiceMatrixUITests/LocalVideoStudioUITests']:self.assertGreaterEqual(s.count('-only-testing:'+target),2)

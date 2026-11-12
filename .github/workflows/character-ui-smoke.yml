@@ -42,8 +42,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Prepare source-only UI resources, not a speech build
+      - name: Prepare UI and bundled speaker-model resources, not a complete speech build
         run: |
+          python3 tools/bundle_diarization.py
           python3 tools/check_conversion_inputs.py
           python3 tools/create_diagnostic_collection.py
           mkdir -p VoiceMatrix/Resources/Phonon VoiceMatrix/Resources/OpenVoice VoiceMatrix/Resources/F5TTS
@@ -85,7 +86,7 @@ jobs:
           PYCODE
       - name: Build UI tests while the owned simulator starts
         run: |
-          xcodebuild build-for-testing -only-testing:VoiceMatrixUITests/CharacterWorkflowUITests -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests -only-testing:VoiceMatrixTests/PlaybackTests -only-testing:VoiceMatrixTests/LocalVideoAudioTests -only-testing:VoiceMatrixTests/LocalStudioEvidenceTests -only-testing:VoiceMatrixUITests/LocalVideoStudioUITests -only-testing:VoiceMatrixTests/AppUpdateTests -only-testing:VoiceMatrixTests/SpeechControlsTests -only-testing:VoiceMatrixUITests/SpeechFeatureUITests > character-ui-build.log 2>&1 || { tail -160 character-ui-build.log; exit 1; }
+          xcodebuild build-for-testing -only-testing:VoiceMatrixUITests/CharacterWorkflowUITests -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests -only-testing:VoiceMatrixTests/PlaybackTests -only-testing:VoiceMatrixTests/LocalVideoAudioTests -only-testing:VoiceMatrixTests/LocalStudioEvidenceTests -only-testing:VoiceMatrixTests/LocalSpeakerPolicyTests -only-testing:VoiceMatrixTests/LocalSpeakerModelTests -only-testing:VoiceMatrixUITests/LocalVideoStudioUITests -only-testing:VoiceMatrixTests/AppUpdateTests -only-testing:VoiceMatrixTests/SpeechControlsTests -only-testing:VoiceMatrixUITests/SpeechFeatureUITests > character-ui-build.log 2>&1 || { tail -160 character-ui-build.log; exit 1; }
       - name: Wait for the simulator launch services to finish booting
         run: |
           python3 - <<'PYCODE'
@@ -94,7 +95,7 @@ jobs:
           PYCODE
       - name: Exercise native playback and current SwiftUI empty-library flows
         run: |
-          xcodebuild test-without-building -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build -resultBundlePath character-ui.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests -only-testing:VoiceMatrixTests/PlaybackTests -only-testing:VoiceMatrixTests/LocalVideoAudioTests -only-testing:VoiceMatrixTests/LocalStudioEvidenceTests -only-testing:VoiceMatrixUITests/LocalVideoStudioUITests -only-testing:VoiceMatrixTests/AppUpdateTests -only-testing:VoiceMatrixTests/SpeechControlsTests -only-testing:VoiceMatrixUITests/SpeechFeatureUITests > character-ui.log 2>&1 || { tail -160 character-ui.log; exit 1; }
+          xcodebuild test-without-building -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build -resultBundlePath character-ui.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests -only-testing:VoiceMatrixTests/PlaybackTests -only-testing:VoiceMatrixTests/LocalVideoAudioTests -only-testing:VoiceMatrixTests/LocalStudioEvidenceTests -only-testing:VoiceMatrixTests/LocalSpeakerPolicyTests -only-testing:VoiceMatrixTests/LocalSpeakerModelTests -only-testing:VoiceMatrixUITests/LocalVideoStudioUITests -only-testing:VoiceMatrixTests/AppUpdateTests -only-testing:VoiceMatrixTests/SpeechControlsTests -only-testing:VoiceMatrixUITests/SpeechFeatureUITests > character-ui.log 2>&1 || { tail -160 character-ui.log; exit 1; }
       - name: Restart only the owned simulator before the second XCTest runner
         run: |
           # The prior batch may leave SpringBoard rejecting the next runner as

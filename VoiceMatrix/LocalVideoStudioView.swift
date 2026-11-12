@@ -15,12 +15,12 @@ struct LocalVideoStudioView: View {
             VStack(alignment: .leading, spacing: 18) {
                 Text("On this iPhone").font(.title2.bold())
                 Text("Import a local video or recording. Extraction, English transcription, reference-conditioned preview and voice registration run inside this app. No laptop or server fallback.")
-                Text("Current mode finds one usable reference. It does not separate every speaker, identify characters, remove music or train RVC models. Resemblance needs listening review.").font(.footnote).foregroundStyle(.secondary)
+                Text("Bundled analysis groups speakers and excludes detected overlap. It does not identify characters, remove music or train RVC models. Every accepted reference must pass a word check; resemblance needs listening review.").font(.footnote).foregroundStyle(.secondary)
                 Button(selected == nil ? "Choose video or audio" : "Choose a different file") { importing = true }
                     .buttonStyle(.bordered).disabled(local.busy).accessibilityIdentifier("local-video-import")
                 if selected != nil { Label("Local media selected", systemImage: "doc.fill") }
                 Toggle("I am authorized to use this media and its voices", isOn: $authorized).disabled(local.busy)
-                Button("Generate local reference") {
+                Button("Generate speaker references") {
                     if let selected { local.start(selected, authorized: authorized, library: library, audio: audio, speech: speech) }
                 }.buttonStyle(.borderedProminent).disabled(selected == nil || !authorized || local.busy)
                     .accessibilityIdentifier("local-video-generate")
@@ -34,8 +34,14 @@ struct LocalVideoStudioView: View {
                 }
                 if let reference = local.reference { Button("Listen to reference") { audio.play(reference) }.disabled(local.busy) }
                 if let preview = local.preview { Button("Listen to generated preview") { audio.play(preview) }.disabled(local.busy) }
-                if local.current?.completed == true {
-                    NavigationLink("Use saved reference for new speech") { CharacterLibraryView() }
+                if local.current?.voiceID != nil {
+                    NavigationLink("Use saved references for new speech") { CharacterLibraryView() }
+                }
+                if let outcomes = local.current?.speakerOutcomes, !outcomes.isEmpty {
+                    Text("Speaker results").font(.headline)
+                    ForEach(outcomes.keys.sorted(), id: \.self) { speaker in
+                        Text("Unidentified speaker \(speaker): \(outcomes[speaker] ?? "Pending")").font(.caption)
+                    }
                 }
                 Divider()
                 Text("Live processing log").font(.headline)
@@ -43,7 +49,7 @@ struct LocalVideoStudioView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Log view refreshed " + timeline.date.formatted(date: .omitted, time: .standard)).font(.caption)
                         if let job = local.current {
-                            Text("Stage: " + job.stage).font(.headline)
+                            Text((local.busy ? "Stage: " : "Not running · last retained stage: ") + job.stage).font(.headline)
                             Text("Last actual update: " + job.updated.formatted(date: .omitted, time: .standard)).font(.caption)
                             if local.busy, timeline.date.timeIntervalSince(job.updated) >= 30 {
                                 Text("No new stage activity for \(Int(timeline.date.timeIntervalSince(job.updated))) seconds. The current operation may still be busy; this is not a failure declaration.").foregroundStyle(.orange)

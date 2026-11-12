@@ -4,11 +4,11 @@ This is a development candidate, not VoiceMatrix 1.0.0 acceptance.
 
 ## Implemented source path
 
-An authorized local video or recording is copied into private app storage without sending it to a laptop or server. AVFoundation extracts bounded mono 24 kHz PCM windows. English speech recognition requires `supportsOnDeviceRecognition` and `requiresOnDeviceRecognition`; missing permission or local support stops explicitly. There is no server fallback.
+An authorized local video or recording is copied into private app storage without sending it to a laptop or server. Bundled CoreML speaker analysis first groups local 16 kHz audio into tentative speakers, excludes model-detected overlap and retains its timing evidence. AVFoundation then extracts bounded mono 24 kHz PCM reference windows. English speech recognition requires `supportsOnDeviceRecognition` and `requiresOnDeviceRecognition`; missing permission or local support stops explicitly. There is no server fallback.
 
-The first usable transcribed reference drives the bundled F5 engine. Up to three generated previews may be attempted on different candidate windows. An independent on-device spoken-word check must have at most 10% word error before the reference is atomically imported into the existing private library. The name is explicitly unidentified. A reference preset is never marked as a trained RVC model. The user can listen to the reference/preview and use the saved reference for new speech.
+Each tentative speaker group may supply up to three contiguous non-overlapping candidate windows. A usable transcribed reference drives the bundled F5 engine, with at most three preview attempts per group. An independent on-device spoken-word check must have at most 10% word error before the reference is atomically imported into the existing private library. The name is explicitly unidentified. A reference preset is never marked as a trained RVC model. The user can listen to the reference/preview and use the saved reference for new speech.
 
-This mode produces **one reference**, not a complete character cast. Audio energy and transcription confidence do not prove isolated speech, clean music separation, identity or likeness. A plausible transcript can still come from singing or overlapping speakers. Automatic diarization, visual attribution, separation, web-video acquisition and native RVC training remain outstanding.
+This mode attempts **one reference per tentative speaker group**, not a verified character cast. Audio energy and transcription confidence do not prove isolated speech, clean music separation, identity or likeness. A plausible transcript can still come from singing or overlapping speakers. Native diarization is wired but still needs real model/inference and physical-device verification. Visual attribution, separation, web-video acquisition and native RVC training remain outstanding. See `NATIVE-SPEAKER-ANALYSIS.md` for provenance and limits.
 
 ## Retention and activity
 
@@ -23,7 +23,7 @@ Processing is foreground-first. Going into the background requests cancellation 
 - Source contract tests check wiring and local-only safeguards, not native functionality.
 - Native unit tests cover real synthetic AVFoundation extraction, source preservation, bounds, silence refusal and text/window policies.
 - Native UI checks cover reopening without a laptop and disabled generation without selected media.
-- The actual OS recognition permission/installed language assets, F5 inference, thermal/memory behavior, complete import and airplane-mode new-text synthesis must still be tested on iPhone.
+- Speaker-analysis assets are pinned and packaged without a runtime download; hash-verified cache staging is not proof of inference. The actual OS recognition permission/installed language assets, F5 inference, thermal/memory behavior, complete import and airplane-mode new-text synthesis must still be tested on iPhone.
 - CI must compile the exact candidate. No native compile, phone test, character likeness or complete end-to-end success is claimed by this document.
 
 The laptop option and previous voices remain intact. Public source contains no user media, models, transcripts, pairing data or credentials. Publish 1.0.0 only after the agreed complete acceptance scope is verified; do not overwrite the released 0.4.9 IPA with this development candidate.
