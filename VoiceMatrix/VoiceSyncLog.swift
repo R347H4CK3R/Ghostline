@@ -4,10 +4,10 @@ enum VoiceSyncProgress: Sendable, Equatable {
     case requesting, laptopResponded, laptopReceived, laptopValidating
     case laptopValidated(Int, Int), laptopCatalogReady(Int), laptopCatalogSent, laptopFileSent(Int)
     case catalogValidated(Int, Int), downloading(Int, Int), receiving(Int, Int), fileValidated(Int, Int)
-    case unchanged, importing, completed(Int), deferred, stopping, stopped, failed, laptopFailed, activityUnavailable, laptopRejected(Int)
+    case catalogRefreshed(Int), unchanged, importing, completed(Int), deferred, stopping, stopped, failed, laptopFailed, activityUnavailable, laptopRejected(Int)
     var isTerminal: Bool {
         switch self {
-        case .unchanged, .completed, .deferred, .stopped, .failed: return true
+        case .catalogRefreshed, .unchanged, .completed, .deferred, .stopped, .failed: return true
         default: return false
         }
     }
@@ -31,7 +31,8 @@ enum VoiceSyncProgress: Sendable, Equatable {
         case let .downloading(index, total): return "Requesting file \(index) of \(total)…"
         case let .receiving(bytes, total): return "Receiving current file: \(bytes.formatted()) of \(total.formatted()) bytes."
         case let .fileValidated(index, total): return "Downloaded and verified file \(index) of \(total)."
-        case .unchanged: return "Up to date. The saved collection revision matches the laptop."
+        case let .catalogRefreshed(count): return "Catalog refreshed: \(count) voices available. Audio is downloaded only when you choose Download."
+        case .unchanged: return "Catalog up to date. Existing downloaded voices were kept; other voices remain on the laptop."
         case .importing: return "Validating and saving the collection on this iPhone…"
         case let .completed(count): return "Sync complete. \(count) voice references saved for offline use."
         case .deferred: return "Download finished. Import deferred because audio work started. Sync again when finished."

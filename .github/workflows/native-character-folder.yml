@@ -1,7 +1,7 @@
 name: Native character folder checks
 on:
   push:
-    paths: ['tools/**', 'tests/test_*.py', 'VoiceMatrix/VoiceSyncLog.swift', 'VoiceMatrix/VoiceFolderSync.swift', 'tests/native/VoiceFolderSyncChecks.swift', 'VoiceMatrix/CharacterReviewStore.swift', 'tests/native/CharacterReviewChecks.swift', 'VoiceMatrix/ConversionAudio.swift', 'VoiceMatrix/OfflineVoiceConverter.swift', 'tests/native/CharacterReferenceAudioChecks.swift', 'VoiceMatrix/F5SpeechChunks.swift', 'tests/native/F5SpeechChunkChecks.swift', 'VoiceMatrix/StudioActivity.swift', 'tests/native/StudioActivityChecks.swift', 'VoiceMatrix/CharacterFolderStore.swift', 'VoiceMatrix/CharacterLibraryView.swift', 'tests/native/CharacterFolderChecks.swift', 'tests/test_character_folder.py', 'tools/voice_pack.py', '.github/workflows/native-character-folder.yml']
+    paths: ['VoiceMatrix/RemoteVoiceCatalog.swift', 'VoiceMatrix/VoiceCatalogConnection.swift', 'tests/native/SelectiveVoiceDownloadChecks.swift', 'tools/**', 'tests/test_*.py', 'VoiceMatrix/VoiceSyncLog.swift', 'VoiceMatrix/VoiceFolderSync.swift', 'tests/native/VoiceFolderSyncChecks.swift', 'VoiceMatrix/CharacterReviewStore.swift', 'tests/native/CharacterReviewChecks.swift', 'VoiceMatrix/ConversionAudio.swift', 'VoiceMatrix/OfflineVoiceConverter.swift', 'tests/native/CharacterReferenceAudioChecks.swift', 'VoiceMatrix/F5SpeechChunks.swift', 'tests/native/F5SpeechChunkChecks.swift', 'VoiceMatrix/StudioActivity.swift', 'tests/native/StudioActivityChecks.swift', 'VoiceMatrix/CharacterFolderStore.swift', 'VoiceMatrix/CharacterLibraryView.swift', 'tests/native/CharacterFolderChecks.swift', 'tests/test_character_folder.py', 'tools/voice_pack.py', '.github/workflows/native-character-folder.yml']
   workflow_dispatch:
 permissions:
   contents: read

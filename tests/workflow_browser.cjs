@@ -21,6 +21,7 @@ const assert=require('node:assert/strict');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   assert.deepEqual(errors,[]);
   const response=await page.request.post(root+'/queue',{data:{videos:[{url:'https://youtu.be/SYNTHETIC04',name:'<script>private-name</script>'}]}});assert.equal(response.status(),200);
+  await page.locator('#refresh').click();
   await waiting.filter({hasText:'Laptop received this link again'}).waitFor({timeout:6000});
   assert.doesNotMatch(await page.locator('#videos').innerText(),/private-name/);
   await waiting.locator('a').click();await page.locator('#state').filter({hasText:'Connected'}).waitFor();

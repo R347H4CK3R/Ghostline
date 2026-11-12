@@ -82,3 +82,27 @@ class WorkflowActivityTests(unittest.TestCase):
   self.q.review_with(VIDEO,job['token'],publish)
   result=self.snapshot()['videos'][0]
   self.assertGreaterEqual(result['events'][-1]['time'],ended[0])
+
+ def test_current_stage_does_not_become_a_duplicate_receipt_or_heartbeat(self):
+  self.q.add(['https://youtu.be/'+VIDEO]);job=self.q.claim(now=10)
+  self.q.stage(VIDEO,job['token'],'synthesizing',now=11)
+  self.q.progress(VIDEO,.5,token=job['token'],now=20)
+  self.q.add(['https://youtu.be/'+VIDEO])
+  result=self.snapshot(now=21)['videos'][0]
+  self.assertEqual(result['currentStage'],'synthesizing');self.assertEqual(result['currentStageAt'],11)
+  self.assertEqual(result['updated'],20);self.assertTrue(result['workerActive'])
+  self.assertEqual(result['lastEventAt'],result['events'][-1]['time'])
+ def test_current_stage_is_absent_for_uninstrumented_attempt(self):
+  self.q.add(['https://youtu.be/'+VIDEO]);job=self.q.claim(now=10)
+  self.q.db.execute('DELETE FROM workflow_events');self.q.db.commit()
+  result=self.snapshot(now=11)['videos'][0]
+  self.assertIsNone(result['currentStage']);self.assertIsNone(result['currentStageAt']);self.assertIsNone(result['lastEventAt'])
+
+ def test_overview_retains_current_stage_even_after_many_duplicate_receipts(self):
+  from tools.workflow_activity import snapshot
+  self.q.add(['https://youtu.be/'+VIDEO]);job=self.q.claim(now=10)
+  self.q.stage(VIDEO,job['token'],'model_loading',now=11)
+  for _ in range(21):self.q.add(['https://youtu.be/'+VIDEO])
+  result=snapshot(self.path,now=12)['videos'][0]
+  self.assertEqual(len(result['events']),20)
+  self.assertEqual(result['currentStage'],'model_loading')

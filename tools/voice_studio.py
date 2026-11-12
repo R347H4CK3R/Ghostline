@@ -1,5 +1,5 @@
 """Desktop companion entry point. Run python -m tools.voice_studio --help."""
-import argparse,json,pathlib
+import argparse,json,pathlib,subprocess,sys
 from tools.voice_pack import export_reference_pack,validate_pack,export_collection_folder
 from tools.pack_speech import speak
 from tools.local_f5 import load_local_model
@@ -18,6 +18,14 @@ def main(argv=None):
  training=commands.add_parser('train-rvc',help='Run the pinned local RVC training stages; outputs require independent conversion checks')
  for flag in ['root','dataset','experiment','permission']:training.add_argument('--'+flag,required=True)
  training.add_argument('--epochs',type=int,default=200)
+ training.add_argument('--python',default=sys.executable,help='Python executable for the isolated RVC environment')
+ training.add_argument('--stage-timeout',type=float,default=6*60*60,help='Wall-time limit in seconds per training stage')
+ verification=commands.add_parser('verify-rvc',help='Check offline conversion with independent ASR; identity and iPhone support remain unverified')
+ for flag in ['root','training-report','input','output','text','whisper-cli','whisper-model']:verification.add_argument('--'+flag,required=True)
+ verification.add_argument('--python',default=sys.executable,help='Python executable for the isolated RVC environment')
+ verification.add_argument('--timeout',type=float,default=600,help='Wall-time limit in seconds for neural conversion')
+ rvc_export=commands.add_parser('export-rvc',help='Export checked RVC artifacts to a separate private folder; never publish to the live catalog')
+ for flag in ['report','metadata','output']:rvc_export.add_argument('--'+flag,required=True)
  speech=commands.add_parser('speak',help='Generate WAV speech with the selected voice pack')
  for flag in ['pack','text','output','checkpoint','vocoder-directory','vocab']:speech.add_argument('--'+flag,required=True)
  args=parser.parse_args(argv)
@@ -35,13 +43,23 @@ def main(argv=None):
    print(json.dumps(audit_dataset(args.dataset),indent=2))
   elif args.command=='train-rvc':
    from tools.rvc_training import train
-   print(json.dumps(train(args.root,args.dataset,args.experiment,args.permission,epochs=args.epochs),indent=2))
+   print(json.dumps(train(args.root,args.dataset,args.experiment,args.permission,epochs=args.epochs,python=args.python,stage_timeout=args.stage_timeout),indent=2))
+  elif args.command=='verify-rvc':
+   from tools.rvc_validation import verify_conversion
+   from tools.queue_processor import recognizer
+   verify_words=recognizer(args.whisper_cli,args.whisper_model)
+   report=verify_conversion(args.root,args.training_report,args.input,args.output,expected_text=args.text,verify_words=verify_words,python=args.python,timeout=args.timeout)
+   print(json.dumps(dict(report=str(report)),indent=2))
+  elif args.command=='export-rvc':
+   from tools.rvc_export import export_folder
+   folder=export_folder(args.report,json.loads(pathlib.Path(args.metadata).read_text(encoding='utf-8')),args.output)
+   print(json.dumps(dict(folder=str(folder)),indent=2))
   else:
    # Validate the selected pack and request before allocating large model weights.
    validate_pack(args.pack)
    if not args.text.strip() or len(args.text)>5000:raise ValueError('Enter 1–5000 characters')
    model=load_local_model(args.checkpoint,args.vocoder_directory,args.vocab)
    print(json.dumps(speak(args.pack,args.text,args.output,model),indent=2))
- except (ValueError,OSError) as error:parser.exit(2,str(error)+'\n')
+ except (ValueError,OSError,RuntimeError,subprocess.SubprocessError) as error:parser.exit(2,str(error)+'\n')
 
 if __name__=='__main__':main()

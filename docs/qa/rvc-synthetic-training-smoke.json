@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "dateUTC": "2026-11-12",
+  "status": "functional-smoke-passed-effective-training-data-floor-failed",
+  "voiceMatrixSourceRevision": "d371c28f4aead48e8262fe5a6ccd0795fd48d561",
+  "upstreamSourceRevision": "81eed5e8f68b6bed1789f682fe78cdd324495afc",
+  "trackedUpstreamChanges": "",
+  "epochs": 1,
+  "datasetUniqueActiveSeconds": 83.08,
+  "trainingPipelineSecondsApprox": 129.8,
+  "epochTrainingSeconds": 82.429766,
+  "validationAndExportSeconds": 30.19,
+  "optimizerEvidence": {
+    "changedNonembeddingTensors": 456,
+    "changedElements": 26184319,
+    "comparisonBaseline": "Pretrained tensors converted to the exact final tensor dtype; embedding excluded",
+    "loggedStep": 0,
+    "lossScalars": {
+      "loss/g/total": [
+        {
+          "step": 0,
+          "value": 62.79876708984375
+        }
+      ],
+      "loss/d/total": [
+        {
+          "step": 0,
+          "value": 4.193615436553955
+        }
+      ],
+      "loss/g/mel": [
+        {
+          "step": 0,
+          "value": 31.491106033325195
+        }
+      ],
+      "loss/g/kl": [
+        {
+          "step": 0,
+          "value": 9
+        }
+      ]
+    }
+  },
+  "audio": {
+    "sampleRate": 40000,
+    "seconds": 7.22,
+    "rms": 0.07847998612267552,
+    "fullScaleSamples": 0
+  },
+  "convertedSHA256": "28b8ee2682e289b520e0f66a044e1c419f8def8c052873dbbf8983f9a5f07bbb",
+  "wordErrorRate": 0,
+  "recognizerSHA256": "95e3c0b0e778ad9499eb0125f97c1dcf437dd9eb4ea77050b043574f93c2631d",
+  "recognizerModelSHA256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f",
+  "indexVectors": 1998,
+  "indexDimensions": 768,
+  "minimumFreeRAMBytes": 2664091648,
+  "isolatedBytes": 3065336509,
+  "exportFiles": {
+    "manifest.json": {
+      "bytes": 1178,
+      "sha256": "def29ef89136dee989a662214bdea1d8957b8a3ba9d783c530f311d3240926f4"
+    },
+    "model.index": {
+      "bytes": 6311059,
+      "sha256": "3e054e4047e0faec9b843e40105fc60045f1dcb4a37995d80c87146d16380e60"
+    },
+    "model.pth": {
+      "bytes": 55226199,
+      "sha256": "e3f7db24b87f886ef23978e2c072a457c54f8386b267e6d0fa25ea6626779c9b"
+    }
+  },
+  "helperSHA256": {
+    "master_voices.py": "2a81e31f24fcfe7fd3312efdaa18b78fe4cd3296a4856e1f757744a10e3f404a",
+    "rvc_export.py": "d087ab12a74e80172d644a2ef5b6529ad12c130a2116b77267108e0a71b891a5",
+    "rvc_training.py": "9a026a6a5b6a54335abc9d02ed47513636ccba13bda39832afb242591f67356d",
+    "rvc_validation.py": "6d0bb0c967900d9418576eaed48f2c486c58765437b027a55ac87d13187e4bcf",
+    "voice_pack.py": "726a4f4f419d85ea5854b02d1e231057b0559cb279cbd73ec13075bacdf2d6ca"
+  },
+  "nativeSafetyRuns": [
+    {
+      "tests": 25,
+      "passed": 25,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    {
+      "tests": 25,
+      "passed": 25,
+      "skipped": 0,
+      "exitCode": 0
+    }
+  ],
+  "sourceTests": {
+    "ran": 364,
+    "passed": 359,
+    "skipped": 5,
+    "scope": "Source tests, with expensive boundaries mocked. Separate native and neural evidence is recorded above."
+  },
+  "published": false,
+  "identityVerified": false,
+  "likenessVerified": false,
+  "nativeIPhoneRuntimeVerified": false,
+  "limitations": [
+    "One epoch on original synthetic Windows TTS speech only",
+    "No character identity or likeness validation",
+    "No YouTube source processing in this smoke",
+    "No live catalog publication or native iPhone RVC execution",
+    "Scalar log global_step is literally zero, after first optimizer updates; no exact optimizer step count asserted",
+    "Only40.195 seconds of preprocessed audio actually reached training, below the60-second effective-data floor. The83.08-second input audit is not an effective training-duration claim."
+  ],
+  "evidenceSummarySHA256": "995e0d9d561e432bfcf810a354c77a53c21bc150786e8d1bc4be1378a0f85d5d",
+  "effectiveTrainingData": {
+    "status": "below-required-floor",
+    "inputFiles": 6,
+    "inputTotalSeconds": 122.382,
+    "inputActiveSeconds": 83.08,
+    "preprocessedFiles": 13,
+    "preprocessedSeconds": 40.195,
+    "featureFiles": 13,
+    "featureRows": 1998,
+    "filelistRows": 13,
+    "minimumRequiredUniqueActiveSeconds": 60,
+    "silentOmittedSliceTails": 30,
+    "omittedTailSeconds": 76.79,
+    "reason": "Pinned upstream preprocess places the final norm_write outside its slice loop. Earlier short tails are silently dropped. Source-success logs did not detect this."
+  }
+}

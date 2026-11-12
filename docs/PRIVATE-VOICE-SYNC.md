@@ -1,5 +1,7 @@
 # Private laptop voice synchronization
 
+Current development source uses metadata-only refresh and explicit per-voice downloads. See [Selective voice downloads](SELECTIVE-VOICE-DOWNLOADS.md) for the current UI, protocol extension, migration and limits. The complete-revision transfer and published checks below document the earlier bulk-sync implementation, which remains available for older clients.
+
 The companion can serve its configured native Voices collection through the existing authenticated, tailnet-only HTTPS connection. The app downloads a complete revision into temporary storage, checks every byte, then uses the production CharacterFolderStore importer to commit private offline copies.
 
 ## Using it

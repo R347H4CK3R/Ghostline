@@ -1,6 +1,8 @@
 """Private prepared-reference queue processor; no automatic identity/rights claims."""
 import argparse,array,hashlib,json,math,pathlib,subprocess,sys,tempfile,threading,time,wave,gc
 from tools.source_inspection import inspect_source
+from tools.automatic_prepare import prepare as prepare_candidates
+from tools.video_request import load as load_candidate_request,preparation_wait,record_preparation_wait
 from tools.video_queue import VideoQueue,video_id
 from tools.voice_pack import export_reference_pack,validate_pack
 from tools.pack_speech import speak
@@ -67,7 +69,7 @@ class LazyModel:
   return self.model
  def release(self):self.model=None;gc.collect()
 
-def run_once(database,specifications,work,master,*,model_factory,verify,synthesize=speak,paused=lambda:False,retry_delay=30,recipe_directory=None,prepare_job=prepare,inspection_job=inspect_source):
+def run_once(database,specifications,work,master,*,model_factory,verify,synthesize=speak,paused=lambda:False,retry_delay=30,recipe_directory=None,prepare_job=prepare,inspection_job=inspect_source,automatic_job=prepare_candidates,candidate_analyzer=None):
  if paused():return None
  q=VideoQueue(str(database));job=None;stop=threading.Event();lost=threading.Event();percent=[0.0];thread=None;report=None
  def cancelled():return lost.is_set() or paused()
@@ -96,6 +98,8 @@ def run_once(database,specifications,work,master,*,model_factory,verify,synthesi
   thread=threading.Thread(target=heartbeat,daemon=True);thread.start()
   if hasattr(verify,'transcribe'):verify.job_cancelled=cancelled
   specroot=pathlib.Path(specifications).resolve();path=specroot/(job['id']+'.json')
+  # A reviewed recipe is an explicit correction, including after anonymous
+  # analysis could not find usable speech. Never let the old request override it.
   if not path.is_file() and recipe_directory is not None:
    recipe=pathlib.Path(recipe_directory)/(job['id']+'.json')
    if recipe.is_file():
@@ -104,6 +108,24 @@ def run_once(database,specifications,work,master,*,model_factory,verify,synthesi
     if not isinstance(recipe_data,dict) or video_id(recipe_data.get('videoURL',''))!=job['id']:raise ValueError('Preparation recipe does not match the queued video')
     activity('preparation_started')
     prepare_job(recipe,specroot,activity=activity,cancelled=cancelled,transcribe=getattr(verify,'transcribe',None),commit=lambda operation:q.owned_call(job['id'],job['token'],operation))
+    activity('preparation_ready')
+  if not path.is_file():
+   candidate_request=load_candidate_request(q.db,job['id'])
+   if candidate_request is not None:
+    wait_reason=preparation_wait(q.db,candidate_request['requestID'])
+    if wait_reason is not None:raise ReviewRequired(wait_reason)
+    if candidate_analyzer is None or not callable(getattr(verify,'transcribe',None)):
+     activity('candidate_runtime_missing')
+     raise ReviewRequired('Local speaker analysis and transcription must be configured; request and existing voices are preserved')
+    activity('preparation_started')
+    try:
+     automatic_job(candidate_request,specroot,analyze=candidate_analyzer,transcribe=verify.transcribe,activity=activity,cancelled=cancelled,commit=lambda operation:q.owned_call(job['id'],job['token'],operation))
+    except ReviewRequired:
+     # Persist only a completed preparation's review requirement, not missing
+     # runtime/cancellation/transient failures. Fence it against a stale worker.
+     reason='Automatic preparation needs reviewed speech segments; the same request will not download again'
+     q.owned_call(job['id'],job['token'],lambda:record_preparation_wait(q.db,candidate_request['requestID'],reason))
+     raise
     activity('preparation_ready')
   if not path.is_file():
    inspection_root=pathlib.Path(database).resolve().parent
@@ -172,9 +194,13 @@ def run_once(database,specifications,work,master,*,model_factory,verify,synthesi
 def main():
  p=argparse.ArgumentParser(description='Process prepared references or reviewed video recipes; character labels still require review')
  for key in ['database','specifications','work','master','checkpoint','vocoder-directory','vocab','whisper-cli','whisper-model']:p.add_argument('--'+key,required=True)
+ p.add_argument('--candidate-python',help='Separate verified CPU speaker runtime Python')
+ p.add_argument('--speaker-checkpoint',help='Pinned local ECAPA embedding state dict')
+ p.add_argument('--vad-checkpoint',help='Pinned local Silero ONNX speech detector')
  p.add_argument('--recipes',help='Private reviewed video recipes; defaults to a recipes folder beside specifications')
  p.add_argument('--threads',type=int,default=2,choices=range(1,5),help='CPU synthesis threads (default 2; maximum 4)')
  p.add_argument('--poll-seconds',type=float,default=30);p.add_argument('--once',action='store_true');a=p.parse_args()
+ if any([a.candidate_python,a.speaker_checkpoint,a.vad_checkpoint]) and not all([a.candidate_python,a.speaker_checkpoint,a.vad_checkpoint]):p.error('Configure all three candidate runtime paths together')
  if not math.isfinite(a.poll_seconds) or not 5<=a.poll_seconds<=3600:p.error('Poll every 5–3600 seconds')
  try:
   with worker_lock(a.database):
@@ -197,9 +223,13 @@ def process(a):
   if now-last_game[0]>=1:last_game[:]=[now,gaming()]
   return last_game[1]
  verifier=recognizer(a.whisper_cli,a.whisper_model,paused)
+ candidate_analyzer=None
+ if getattr(a,'candidate_python',None):
+  from tools.candidate_engine import analyzer
+  candidate_analyzer=analyzer(a.candidate_python,a.speaker_checkpoint,a.vad_checkpoint)
  while not (root/'stop').exists():
   try:
-   result=run_once(a.database,a.specifications,a.work,a.master,model_factory=factory,verify=verifier,paused=paused,recipe_directory=a.recipes or pathlib.Path(a.specifications).parent/'recipes')
+   result=run_once(a.database,a.specifications,a.work,a.master,model_factory=factory,verify=verifier,paused=paused,recipe_directory=a.recipes or pathlib.Path(a.specifications).parent/'recipes',candidate_analyzer=candidate_analyzer)
    if not result or result['status'] in ('paused','awaiting-preparation'):factory.release()
    if result:print(json.dumps({key:result[key] for key in ['videoID','attempt','status']}),flush=True)
   except Exception as error:

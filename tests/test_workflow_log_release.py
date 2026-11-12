@@ -89,8 +89,8 @@ class WorkflowReleaseTests(unittest.TestCase):
         self.assertIn('VoiceMatrix-0.4.8-character-test.ipa', text)
         self.assertIn("'0.4.8'", text)
         self.assertNotIn('0.4.7', text)
-        self.assertIn('MARKETING_VERSION: 0.4.8', (ROOT / 'project.yml').read_text())
-        self.assertIn("CURRENT_PROJECT_VERSION: '1'", (ROOT / 'project.yml').read_text())
+        # Historical 0.4.8 workflow stays version-bound; current app identity
+        # is checked separately by test_verbose_log_candidate.
 
 
 if __name__ == '__main__':

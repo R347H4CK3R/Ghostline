@@ -8,13 +8,14 @@ struct VideoWorkflowSnapshot: Decodable, Sendable {
     let hasMore: Bool?
     let eventLimit: Int?
     let videos: [VideoWorkflowVideo]
+    let catalog: WorkflowVoiceCatalog?
 
     static func decode(_ data: Data, videoID: String? = nil) throws -> Self {
         guard data.count <= byteLimit else { throw VideoWorkflowError.invalidSnapshot }
         let result = try JSONDecoder().decode(Self.self, from: data)
         guard result.schemaVersion == 1, validTime(result.observedAt), result.videos.count <= 200,
               Set(result.videos.map(\.id)).count == result.videos.count,
-              result.videos.allSatisfy(\.isValid),
+              result.videos.allSatisfy(\.isValid), result.catalog?.isValid ?? true,
               result.eventLimit.map({ (1...160).contains($0) }) ?? true else { throw VideoWorkflowError.invalidSnapshot }
         if let videoID {
             guard validID(videoID), result.videos.count <= 1,
@@ -82,21 +83,33 @@ struct VideoWorkflowVideo: Decodable, Identifiable, Sendable {
     let workerLeaseUntil: TimeInterval
     let workerActive: Bool
     let historyAvailable: Bool
+    let currentStage: VideoWorkflowStage?
+    let currentStageAt: TimeInterval?
+    let lastEventAt: TimeInterval?
     private let recordedEvents: [VideoWorkflowEvent]
     enum CodingKeys: String, CodingKey {
         case id, status, progress, updated, attempts, nextAttempt, workerLeaseUntil, workerActive, historyAvailable
+        case currentStage, currentStageAt, lastEventAt
         case recordedEvents = "events"
     }
     var events: [VideoWorkflowEvent] { recordedEvents.sorted { $0.sequence < $1.sequence } }
+    var lastRecordedStage: VideoWorkflowStage? {
+        currentStage ?? events.last(where: { $0.attempt == attempts && $0.stage.isWorkerStage })?.stage
+    }
+    var lastRecordedStageAt: TimeInterval? {
+        currentStageAt ?? events.last(where: { $0.attempt == attempts && $0.stage.isWorkerStage })?.time
+    }
     var isValid: Bool {
         VideoWorkflowSnapshot.validID(id) && progress.isFinite && (0...1).contains(progress)
             && VideoWorkflowSnapshot.validTime(updated) && VideoWorkflowSnapshot.validTime(nextAttempt)
             && VideoWorkflowSnapshot.validTime(workerLeaseUntil) && (0...1_000_000).contains(attempts)
+            && [currentStageAt, lastEventAt].allSatisfy { $0.map(VideoWorkflowSnapshot.validTime) ?? true }
             && recordedEvents.count <= 160 && recordedEvents.allSatisfy(\.isValid)
             && Set(recordedEvents.map(\.sequence)).count == recordedEvents.count
     }
     var workerHistoryNotice: String? {
         guard status == .processing || status == .needsReview,
+              currentStage?.isWorkerStage != true,
               !recordedEvents.contains(where: { $0.attempt == attempts && $0.stage.isWorkerStage }) else { return nil }
         return "No worker stages are retained for this attempt. The worker may predate verbose logging; no missing stages are inferred."
     }
@@ -109,6 +122,8 @@ struct VideoWorkflowVideo: Decodable, Identifiable, Sendable {
 enum VideoWorkflowStage: String, Decodable, Sendable {
     case received, claimed, resumed, paused, retry, failed, synthesizing, publishing, progress, extracting, transcribing, unknown
     case alreadyQueued = "already_queued"
+    case candidateRuntimeMissing = "candidate_runtime_missing"
+    case candidateRequested = "candidate_requested", speakerAnalyzing = "speaker_analyzing", temporaryMediaRemoved = "temporary_media_removed"
     case awaitingPreparation = "awaiting_preparation", reviewSaved = "review_saved"
     case inspectionRequested = "inspection_requested", inspectionStopRequested = "inspection_stop_requested"
     case inspectionStarted = "inspection_started", inspectionReady = "inspection_ready", inspectionAnalyzing = "inspection_analyzing"
@@ -122,7 +137,7 @@ enum VideoWorkflowStage: String, Decodable, Sendable {
     }
     var isWorkerStage: Bool {
         switch self {
-        case .claimed, .resumed, .preparationStarted, .preparationReady, .inspectionStarted,
+        case .speakerAnalyzing, .temporaryMediaRemoved, .claimed, .resumed, .preparationStarted, .preparationReady, .inspectionStarted,
              .inspectionAnalyzing, .inspectionReady, .downloadStarted, .downloadFinished,
              .mediaChecking, .extracting, .transcribing, .referencesChecking, .modelLoading,
              .synthesizing, .audioChecking, .wordsChecking, .publishing, .needsReview, .progress:
@@ -132,6 +147,10 @@ enum VideoWorkflowStage: String, Decodable, Sendable {
     }
     var message: String {
         switch self {
+        case .candidateRuntimeMissing: return "Automatic candidates are waiting for laptop speaker-analysis setup."
+        case .candidateRequested: return "Laptop saved the private voice-candidate request. Character identities are unreviewed."
+        case .speakerAnalyzing: return "Laptop is grouping possible speakers. Overlap and character identity remain unverified."
+        case .temporaryMediaRemoved: return "Temporary downloaded media was removed. Reference audio and existing voices remain."
         case .received: return "Laptop received this video request."
         case .alreadyQueued: return "Laptop received this link again; the existing queue entry was kept."
         case .claimed: return "A laptop worker claimed the request."
@@ -258,5 +277,75 @@ enum VideoWorkflowReceipt {
               receipt.namesStored, acknowledged.count == ids.count,
               Set(acknowledged).count == acknowledged.count,
               Set(acknowledged) == Set(ids) else { throw VideoWorkflowError.invalidSnapshot }
+    }
+}
+
+
+/// Connection freshness is distinct from worker progress and stage duration.
+enum VideoWorkflowFreshness {
+    static let refreshNanoseconds: UInt64 = 30_000_000_000
+    static func isStale(lastFetched: TimeInterval?, now: TimeInterval) -> Bool {
+        guard let lastFetched else { return true }
+        return now - lastFetched > 75
+    }
+}
+
+/// Catalog observation times never claim exact publication times or phone saving.
+struct WorkflowVoiceCatalog: Decodable, Sendable {
+    enum State: String, Decodable, Sendable {
+        case notChecked = "not_checked", checking, current, unavailable
+    }
+    struct Voice: Decodable, Identifiable, Sendable {
+        let id, name: String
+        let firstObservedAt, lastChangedAt: TimeInterval
+        var displayName: String { WorkflowVoiceCatalog.safeName(name) }
+        var isValid: Bool {
+            WorkflowVoiceCatalog.validID(id) && name.count <= 120
+                && VideoWorkflowSnapshot.validTime(firstObservedAt) && VideoWorkflowSnapshot.validTime(lastChangedAt)
+        }
+    }
+    struct Event: Decodable, Identifiable, Sendable {
+        enum Kind: String, Decodable, Sendable { case observed, added, changed, missing }
+        let sequence: Int
+        let time: TimeInterval
+        let kind: Kind
+        let voiceID, name: String
+        var id: Int { sequence }
+        var message: String {
+            let label = WorkflowVoiceCatalog.safeName(name)
+            switch kind {
+            case .observed: return "First observed in laptop list: \(label)"
+            case .added: return "New in observed laptop list: \(label)"
+            case .changed: return "Changed in laptop list: \(label). Downloaded copies were not replaced."
+            case .missing: return "No longer in observed laptop list: \(label). Downloaded copies were not removed."
+            }
+        }
+        var isValid: Bool {
+            sequence > 0 && VideoWorkflowSnapshot.validTime(time) && WorkflowVoiceCatalog.validID(voiceID) && name.count <= 120
+        }
+    }
+    let schemaVersion: Int
+    let state: State
+    let count: Int
+    let checkedAt, lastChangedAt: TimeInterval?
+    let voices: [Voice]
+    let events: [Event]
+    var isValid: Bool {
+        schemaVersion == 1 && (0...1000).contains(count) && voices.count == count
+            && Set(voices.map(\.id)).count == voices.count && voices.allSatisfy(\.isValid)
+            && events.count <= 160 && events.allSatisfy(\.isValid)
+            && Set(events.map(\.sequence)).count == events.count
+            && [checkedAt, lastChangedAt].allSatisfy { $0.map(VideoWorkflowSnapshot.validTime) ?? true }
+    }
+    static func validID(_ value: String) -> Bool {
+        value.range(of: "^[a-f0-9]{64}$", options: .regularExpression) != nil
+    }
+    static func safeName(_ value: String) -> String {
+        let clean = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let forbidden = CharacterSet.controlCharacters.union(.illegalCharacters).union(CharacterSet(charactersIn: "/\\:=<>@"))
+        guard (1...120).contains(value.count), value.utf8.count <= 160, !clean.isEmpty,
+              value.rangeOfCharacter(from: forbidden) == nil,
+              value.range(of: "(?i)\\b(bearer|token|password|secret|api[ _-]?key)\\b|[A-Za-z0-9_-]{32,}", options: .regularExpression) == nil else { return "Name hidden" }
+        return clean
     }
 }

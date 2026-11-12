@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "scope": "Isolated real ECAPA/Silero inference using existing synthetic Windows David/Zira fixtures only",
+  "finishedUTC": "2026-11-12T04:29:16.855421+00:00",
+  "moduleSHA256": "16a5886d340e1f53a15f3e552ceedd85800b72eaf37c725a593a3a823b1b33c8",
+  "modelSHA256": "0575cb64845e6b9a10db9bcb74d5ac32b326b8dc90352671d345e2ee3d0126a2",
+  "vadSHA256": "1a153a22f4509e292a94e67d6f9b85e8deb25b4988682b7e174c65279d8788e3",
+  "networkBlocked": true,
+  "cpuThreads": 2,
+  "initialGamingPauseStopCheck": "clear",
+  "timeoutSeconds": 120,
+  "returnCode": 0,
+  "loadSeconds": 3.3156848000071477,
+  "modelAndCasesSeconds": 5.378680299996631,
+  "guardedExecutionSeconds": 6.859045799996238,
+  "versions": {
+    "torch": "2.11.0+cpu",
+    "torchaudio": "2.11.0+cpu",
+    "speechbrain": "1.1.2",
+    "silero-vad": "6.2.3",
+    "onnxruntime": "1.31.1",
+    "numpy": "2.5.4",
+    "scikit-learn": "1.9.1"
+  },
+  "cases": [
+    {
+      "name": "silence",
+      "inputSHA256": "190415015d40eef0cd797e1b59ffe00846b01873050b12d44b3a216de3faa2a9",
+      "durationSeconds": 8.0,
+      "candidateGroups": 0,
+      "elapsedSeconds": 0.46281560001079924
+    },
+    {
+      "name": "one-voice",
+      "inputSHA256": "b948705ccb3054e419a11b30abc9864ffea23410de39aa1ba50abbe09158b717",
+      "durationSeconds": 10.745,
+      "candidateGroups": 1,
+      "elapsedSeconds": 0.4186816000001272
+    },
+    {
+      "name": "two-voices",
+      "inputSHA256": "f44f17e31f7c22655c6160e45c3e410b878d638298fb8d0f79848ba68e46b815",
+      "durationSeconds": 33.93,
+      "candidateGroups": 2,
+      "elapsedSeconds": 1.1758578000008129
+    }
+  ],
+  "passed": true,
+  "deployed": false,
+  "liveYouTubeVerified": false,
+  "characterIdentityVerified": false,
+  "overlapSeparated": false,
+  "trainedRVC": false,
+  "physicalDeviceVerified": false
+}

@@ -4,6 +4,8 @@ on:
     paths:
       - 'project.yml'
       - 'VoiceMatrix/VideoQueueView.swift'
+      - 'VoiceMatrix/VideoCandidateRequest.swift'
+      - 'tests/native/VideoCandidateRequestChecks.swift'
       - 'VoiceMatrix/VideoWorkflow*.swift'
       - 'tests/native/VideoWorkflowChecks.swift'
       - 'tools/workflow*'
@@ -24,7 +26,7 @@ jobs:
       - name: Typecheck queue screen against iPhone SDK
         run: |
           SDKROOT="$(xcrun --sdk iphoneos --show-sdk-path)"
-          xcrun swiftc -typecheck -sdk "$SDKROOT" -target arm64-apple-ios26.0 VoiceMatrix/VideoQueueView.swift VoiceMatrix/LaptopConnection.swift VoiceMatrix/VoiceFolderSync.swift VoiceMatrix/VoiceSyncLog.swift VoiceMatrix/VideoWorkflow.swift VoiceMatrix/VideoWorkflowView.swift
+          xcrun swiftc -typecheck -sdk "$SDKROOT" -target arm64-apple-ios26.0 VoiceMatrix/VideoQueueView.swift VoiceMatrix/VideoCandidateRequest.swift VoiceMatrix/LaptopConnection.swift VoiceMatrix/VoiceFolderSync.swift VoiceMatrix/VoiceSyncLog.swift VoiceMatrix/VideoWorkflow.swift VoiceMatrix/VideoWorkflowView.swift
       - name: Execute workflow model, cancellation and privacy checks
         run: |
           xcrun swiftc -parse-as-library VoiceMatrix/VideoWorkflow.swift tests/native/VideoWorkflowChecks.swift -o /tmp/workflow-checks
@@ -38,3 +40,7 @@ jobs:
               pathlib.Path('/tmp/workflow-fixture.json').write_text(json.dumps(snapshot(database)))
           PY
           /tmp/workflow-checks /tmp/workflow-fixture.json
+      - name: Execute explicit candidate request and receipt checks
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/VideoWorkflow.swift VoiceMatrix/VideoCandidateRequest.swift tests/native/VideoCandidateRequestChecks.swift -o /tmp/candidate-request-checks
+          /tmp/candidate-request-checks

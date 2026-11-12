@@ -18,4 +18,4 @@ The full-video worker reuses private reference transcripts when their source che
 
 Nine automated tests cover pack integrity, routing the selected reference and new words to the engine, WAV output, temporary reference cleanup, and refusing missing/corrupt synthesis weights. Routing tests use a test engine; actual full-video synthesis is tracked separately in the batch results. They do not establish character resemblance.
 
-Still pending: native iPhone UI/import integration, speaker separation, real RVC training/index generation and independent conversion checks, training export, cancellation, and device verification. No trained model export is claimed by these companion commands.
+RVC training, bounded process cancellation, independent conversion/word checks, and separate per-voice export commands are documented in [RVC training companion](RVC-TRAINING-COMPANION.md). They require their own pinned local runtime and real validation; ordinary source tests do not prove usable trained weights. Speaker separation, complete production queue integration, native iPhone RVC inference, and device verification remain pending.

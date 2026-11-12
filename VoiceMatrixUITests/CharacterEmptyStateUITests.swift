@@ -48,6 +48,23 @@ import XCTest
         }
     }
 
+    func testCandidateRequestNeedsExplicitSourceUseAndValidInputs() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-tutorialSeen", "YES", "-laptopURL", "https://127.0.0.1:9"]
+        app.launch()
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 30))
+        let requests = app.buttons["Video requests"]
+        reveal(requests, in: app); requests.tap()
+        let submit = app.buttons["request-voice-candidates"]
+        reveal(submit, in: app)
+        XCTAssertFalse(submit.isEnabled)
+        XCTAssertTrue(app.switches["I may use this source for private voice candidates"].exists)
+        XCTAssertTrue(app.buttons["Add to list without processing"].exists)
+        capture("Automatic request requires source-use affirmation", app: app)
+        app.navigationBars["Video List"].buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.tabBars.buttons["Home"].exists)
+    }
+
     func testLiveSyncLogOpensAndClosesRepeatedly() {
         let app = launch()
         app.tabBars.buttons["Voices"].tap()

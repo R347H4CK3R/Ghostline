@@ -4,10 +4,10 @@ import Security
 enum LaptopConnection {
     struct Pairing: Decodable { let url: String; let token: String }
     private static let service = "VoiceMatrix.Laptop"
-    private static var query: [String: Any] {
+    static var query: [String: Any] {
         [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: "pairing"]
     }
-    private static var bundledURL: String? {
+    static var bundledURL: String? {
         guard let file = Bundle.main.url(forResource: "LaptopSettings", withExtension: "json"), let data = try? Data(contentsOf: file), let settings = try? JSONDecoder().decode([String: String].self, from: data) else { return nil }
         return settings["url"]
     }
@@ -65,6 +65,36 @@ enum LaptopConnection {
         }
         try VideoWorkflowReceipt.validate(receipt, submitted: videos)
         return "Your laptop accepted the list. This does not mean voice processing is finished."
+    }
+    static func requestCandidates(_ candidate: VideoCandidateRequest) async throws {
+        guard let address = UserDefaults.standard.string(forKey: "laptopURL") ?? bundledURL,
+              let root = URL(string: address) else { throw VideoWorkflowError.invalidConnection }
+        _ = try VideoWorkflowSnapshot.endpoint(root: root)
+        let endpoint = root.appendingPathComponent("requests")
+        var lookup = query; lookup[kSecReturnData as String] = true; lookup[kSecMatchLimit as String] = kSecMatchLimitOne
+        var stored: CFTypeRef?
+        let found = SecItemCopyMatching(lookup as CFDictionary, &stored)
+        let token = found == errSecSuccess ? (stored as? Data).flatMap { String(data: $0, encoding: .utf8) } : nil
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = 15; configuration.timeoutIntervalForResource = 25
+        configuration.urlCache = nil
+        let session = URLSession(configuration: configuration, delegate: RejectRedirects(), delegateQueue: nil)
+        defer { session.invalidateAndCancel() }
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"; request.httpBody = try JSONEncoder().encode(candidate)
+        guard request.httpBody!.count <= 16_384 else { throw VideoWorkflowError.invalidSnapshot }
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token { request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization") }
+        try await withTaskCancellationHandler(operation: {
+            let (stream, response) = try await session.bytes(for: request)
+            guard let response = response as? HTTPURLResponse, response.url == endpoint else { throw VideoWorkflowError.invalidSnapshot }
+            guard response.statusCode == 200 else {
+                throw failure(response.statusCode == 404 ? "Update the laptop companion to start automatic candidates." : response.statusCode == 409 ? "The laptop preserved an existing request or prepared work. Open its workflow before changing the source." : "The laptop did not accept this request. Check Tailscale and the source-use affirmation.")
+            }
+            var data = Data()
+            for try await byte in stream { try Task.checkCancellation(); guard data.count < 16_384 else { throw VideoWorkflowError.invalidSnapshot }; data.append(byte) }
+            try Task.checkCancellation(); try candidate.validateReceipt(data)
+        }, onCancel: { session.invalidateAndCancel() })
     }
     static func workflow(videoID: String? = nil) async throws -> VideoWorkflowSnapshot {
         guard let address = UserDefaults.standard.string(forKey: "laptopURL") ?? bundledURL,

@@ -2,6 +2,8 @@
 import hashlib,json,pathlib,re,threading,os,stat,io,zipfile
 from tools.voice_pack import validate_pack
 
+CATALOG_BYTE_LIMIT=1048576
+
 class TransferError(ValueError):
  def __init__(self,status):self.status=status
 
@@ -57,7 +59,7 @@ class PrivateVoices:
    try:
     index=self.read(self.root/'collection.json',256000);value=json.loads(index);entries=value['voices']
     if value.get('schemaVersion')!=1 or not isinstance(entries,list) or not 1<=len(entries)<=1000:raise TransferError(409)
-    files={'collection.json':index};seen=set();owners=set();total=len(index)
+    files={'collection.json':index};seen=set();owners=set();total=len(index);profiles=[]
     for entry in entries:
      identifier=entry['id']
      if not isinstance(identifier,str) or not re.fullmatch(r'[a-z0-9_-]{1,100}',identifier) or entry['folder']!=identifier or identifier in seen:raise TransferError(409)
@@ -70,13 +72,15 @@ class PrivateVoices:
      # Revalidate the exact pair captured for this snapshot, not a later reread.
      captured=json.loads(manifest)
      if captured!=metadata:raise TransferError(409)
+     profiles.append(metadata)
      owners.add(metadata['referenceSHA256']);files[identifier+'/manifest.json']=manifest;files[identifier+'/reference.wav']=audio
      total+=len(manifest)+len(audio)
      if total>67108864:raise TransferError(413)
      progress(len(seen),len(entries))
     if self.read(self.root/'collection.json',256000)!=index:raise TransferError(409)
     rows=[dict(path=p,sha256=digest(data),bytes=len(data)) for p,data in sorted(files.items())]
-    result=dict(schemaVersion=1,revision=revision(rows),files=rows)
+    result=dict(schemaVersion=1,revision=revision(rows),files=rows,voices=profiles)
+    if len(json.dumps(result).encode())>CATALOG_BYTE_LIMIT:raise TransferError(413)
     self.current=result
     return result
    except TransferError:raise

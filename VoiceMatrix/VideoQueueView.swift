@@ -14,6 +14,10 @@ struct VideoQueueView: View {
     @State private var link = ""
     @State private var message = ""
     @State private var exported: URL?
+    @State private var sourceUseApproved = false
+    @State private var sourceUseRecord = ""
+    @State private var requestingCandidate = false
+    @State private var candidateSend: Task<Void, Never>?
     @State private var sending = false
     @State private var submissions = VideoWorkflowSubmissionLog()
     @State private var manualSend: Task<Void, Never>?
@@ -75,12 +79,37 @@ struct VideoQueueView: View {
                 : "Your list is saved. Laptop acceptance is unconfirmed. Check the connection and workflow before retrying."
         }
     }
+    private func requestCandidates(url: String, hint: String) {
+        do {
+            let candidate = try VideoCandidateRequest(url: url, displayName: hint, approved: sourceUseApproved, record: sourceUseRecord)
+            if !videos.contains(where: { $0.id == candidate.videoID }) {
+                videos.append(QueuedVideo(id: candidate.videoID, name: candidate.displayName, url: candidate.videoURL)); persist()
+            }
+            requestingCandidate = true
+            candidateSend = Task { @MainActor in
+                defer { requestingCandidate = false }
+                do {
+                    try await LaptopConnection.requestCandidates(candidate)
+                    message = "Laptop accepted automatic candidate processing. Follow the live workflow. Names and likeness remain unreviewed."
+                    link = ""; name = ""; sourceUseApproved = false
+                } catch {
+                    message = "Request acceptance is unconfirmed. Your video is saved. Check its live workflow before retrying. " + error.localizedDescription
+                }
+            }
+        } catch { message = "Enter a valid YouTube link and a source-use record, then affirm permission for private processing." }
+    }
     var body: some View {
         Form {
             Section("Step 1 · Add a video") {
                 TextField("Character names (optional)", text: $name).accessibilityLabel("Character names")
                 TextField("Paste YouTube link", text: $link).textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
-                Button("Add Video", action: add).disabled(link.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                TextField("Source-use basis (your recording or permission)", text: $sourceUseRecord, axis: .vertical)
+                Toggle("I may use this source for private voice candidates", isOn: $sourceUseApproved)
+                Button(requestingCandidate ? "Requesting…" : "Request voice candidates") { requestCandidates(url: link, hint: name) }
+                    .disabled(requestingCandidate || !sourceUseApproved || sourceUseRecord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || link.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .accessibilityIdentifier("request-voice-candidates")
+                Text("The laptop downloads temporary media, groups possible speakers and checks F5 voice candidates. Unknown voices receive unreviewed speaker labels. This does not guarantee every character or identical likeness, and does not create RVC weights.").font(.caption).foregroundStyle(.secondary)
+                Button("Add to list without processing", action: add).disabled(link.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             Section("Your list · \(videos.count) videos") {
                 if videos.isEmpty { Text("Add a video above to start your list.").foregroundStyle(.secondary) }
@@ -88,6 +117,9 @@ struct VideoQueueView: View {
                     VStack(alignment: .leading) {
                         Text(video.name.isEmpty ? "Video " + video.id : video.name).font(.headline)
                         Text(video.url).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+                        Button("Request candidates for this video") { requestCandidates(url: video.url, hint: video.name) }
+                            .disabled(requestingCandidate || !sourceUseApproved || sourceUseRecord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            .font(.caption)
                         NavigationLink("View laptop workflow") { VideoWorkflowView(videoID: video.id) }
                             .font(.caption)
                     }
@@ -137,7 +169,7 @@ struct VideoQueueView: View {
                 } catch is CancellationError { }
                 catch { message = "Your list is saved. The automatic laptop request could not be prepared." }
             }
-            .onDisappear { manualSend?.cancel() }
+            .onDisappear { manualSend?.cancel(); candidateSend?.cancel() }
             .onAppear {
                 guard !saved.isEmpty else { return }
                 do { videos = try JSONDecoder().decode([QueuedVideo].self, from: saved) }

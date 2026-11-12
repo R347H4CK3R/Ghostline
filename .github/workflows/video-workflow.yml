@@ -1,7 +1,7 @@
 name: Private video workflow checks
 on:
   push:
-    branches: ['feat/voicematrix-video-workflow-log', 'candidate/voicematrix-0.4.8']
+    branches: ['feat/voicematrix-video-workflow-log', 'candidate/voicematrix-0.4.8', 'feat/voicematrix-automatic-candidates', 'candidate/voicematrix-0.4.9']
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,6 +21,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg
+          python3 -m pip install numpy==2.3.5 scikit-learn==1.8.0
           npm install --no-save playwright@1.58.2
           npx playwright install --with-deps chromium
       - name: Run complete source regressions

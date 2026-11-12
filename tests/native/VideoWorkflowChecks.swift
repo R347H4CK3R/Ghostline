@@ -112,6 +112,30 @@ import Foundation
         }
         let wrongRequest = try JSONSerialization.data(withJSONObject: ["videos": [["id": identifier, "url": "https://www.youtube.com/watch?v=SYNTHETIC03"]]])
         rejects { try VideoWorkflowReceipt.validate(JSONSerialization.data(withJSONObject: receipt), submitted: wrongRequest) }
+        precondition(VideoWorkflowFreshness.refreshNanoseconds == 30_000_000_000)
+        precondition(!VideoWorkflowFreshness.isStale(lastFetched: 100, now: 131))
+        precondition(VideoWorkflowFreshness.isStale(lastFetched: 100, now: 176))
+        precondition(VideoWorkflowFreshness.isStale(lastFetched: nil, now: 100))
+        var staged = video(status: "processing", events: [event(2, stage: "synthesizing"), event(3, stage: "already_queued")])
+        staged["currentStage"] = "synthesizing"; staged["currentStageAt"] = 1_700_000_002.0
+        staged["lastEventAt"] = 1_700_000_003.0
+        let current = try decode([staged]).videos[0]
+        precondition(current.lastRecordedStage == .synthesizing)
+        precondition(current.lastRecordedStageAt == 1_700_000_002.0)
+        let catalog: [String: Any] = ["schemaVersion": 1, "state": "current", "count": 1,
+            "checkedAt": 100.0, "lastChangedAt": 100.0,
+            "voices": [["id": String(repeating: "a", count: 64), "name": "Voice One", "firstObservedAt": 100.0, "lastChangedAt": 100.0]],
+            "events": [["sequence": 1, "time": 100.0, "kind": "observed", "voiceID": String(repeating: "a", count: 64), "name": "Voice One"]]]
+        let catalogData = try JSONSerialization.data(withJSONObject: catalog)
+        let voiceList = try JSONDecoder().decode(WorkflowVoiceCatalog.self, from: catalogData)
+        precondition(voiceList.isValid && voiceList.voices[0].displayName == "Voice One")
+        precondition(voiceList.events[0].message.contains("First observed"))
+        for privateName in ["/Users/private", "token=private", "Bearer private", "https://private", "line\nprivate"] {
+            precondition(WorkflowVoiceCatalog.safeName(privateName) == "Name hidden")
+        }
+        var invalidCatalog = catalog; invalidCatalog["count"] = 2
+        let invalidList = try JSONDecoder().decode(WorkflowVoiceCatalog.self, from: JSONSerialization.data(withJSONObject: invalidCatalog))
+        precondition(!invalidList.isValid)
         let probe = FetchProbe(snapshot: snapshot)
         let gate = VideoWorkflowRequestGate()
         let firstFetch = Task { try await gate.fetch { await probe.wait() } }

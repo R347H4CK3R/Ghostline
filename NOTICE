@@ -5,3 +5,9 @@ Voice conditioning profiles — Gradium phonon-voices catalog, via FluidInferenc
 Source: https://huggingface.co/gradium/phonon-voices
 Converted pack: https://huggingface.co/FluidInference/pocket-tts-coreml/tree/c2e998e269e4d4b51f74061faddb8450cd8f9a9a/phonon/phonon-31m-en
 37 English publisher profiles; no celebrity or franchise identity claims. No physical-device verification or near-indistinguishable listening result is asserted.
+
+RVC integration, portable inference equations, and the pinned preprocessing test
+fixture reference Retrieval-based-Voice-Conversion-WebUI at revision
+81eed5e8f68b6bed1789f682fe78cdd324495afc. The upstream MIT copyright and permission
+notice is retained in LICENSES/RVC-LICENSE. This code license does not establish
+rights in training recordings, performer likenesses, or separately licensed weights.

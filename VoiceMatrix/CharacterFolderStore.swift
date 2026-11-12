@@ -1,7 +1,7 @@
 import Foundation
 import CryptoKit
 
-struct CharacterReference: Codable, Identifiable, Equatable {
+struct CharacterReference: Codable, Identifiable, Equatable, Sendable {
     let id, name, source, permission, referenceText: String
     let schemaVersion: Int
     let kind, engine, referenceFile, referenceSHA256: String
@@ -116,6 +116,21 @@ actor CharacterFolderStore {
             guard voice.id == id, Self.digest(manifest + audio) == revision else { throw CharacterImportError.invalid("A saved voice changed.") }
             return voice
         }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+    /// Counts all retained private files, including older immutable revisions. Nothing is removed.
+    func storedBytes() throws -> Int64 {
+        guard fm.fileExists(atPath: root.path) else { return 0 }
+        try directory(root)
+        var failure: Error?
+        guard let entries = fm.enumerator(at: root, includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey], errorHandler: { _, error in failure = error; return false }) else { throw CharacterImportError.invalid("Saved storage could not be measured.") }
+        var total: Int64 = 0
+        for case let url as URL in entries {
+            let values = try url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
+            if values.isSymbolicLink == true { entries.skipDescendants(); continue }
+            if values.isRegularFile == true { total += Int64(values.fileSize ?? 0) }
+        }
+        if let failure { throw failure }
+        return total
     }
     func referenceURL(id: String) throws -> URL {
         guard let revision = try index()[id] else { throw CharacterImportError.invalid("Choose an imported voice first.") }

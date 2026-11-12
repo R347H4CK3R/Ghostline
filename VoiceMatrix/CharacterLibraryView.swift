@@ -4,6 +4,33 @@ import CryptoKit
 
 @MainActor final class CharacterLibrary: ObservableObject {
     @Published var profiles: [CharacterReference] = []
+    @Published private(set) var remoteCatalog: RemoteVoiceCatalog?
+    @Published private(set) var catalogCheckedAt: Date?
+    @Published private(set) var catalogReachable = false
+    @Published private(set) var downloadingID: String?
+    @Published private(set) var storedVoiceBytes: Int64?
+    private var lastCatalogAttempt: Date?
+    private var loadedCatalogCache = false
+    var availableProfiles: [CharacterReference] {
+        let savedIDs = Set(profiles.map(\.id))
+        return (profiles + (remoteCatalog?.voices ?? []).filter { !savedIDs.contains($0.id) })
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+    func isDownloaded(_ id: String) -> Bool { profiles.contains { $0.id == id } }
+    func downloadSize(_ id: String) -> String {
+        ByteCountFormatter.string(fromByteCount: Int64(remoteCatalog?.downloadBytes(id: id) ?? 0), countStyle: .file)
+    }
+    func hasChangedRemoteReference(_ voice: CharacterReference) -> Bool {
+        guard let remote = remoteCatalog?.voices.first(where: { $0.id == voice.id }) else { return false }
+        return remote.referenceSHA256 != voice.referenceSHA256 || remote.referenceText != voice.referenceText
+    }
+    var catalogStatus: String {
+        if syncing { return downloadingID == nil ? "Refreshing laptop catalog…" : "Downloading selected voice…" }
+        if let catalogCheckedAt {
+            return (catalogReachable ? "Last connected " : "Cached catalog · last connected ") + catalogCheckedAt.formatted(date: .abbreviated, time: .shortened)
+        }
+        return "Connect to your laptop through Tailscale to browse and download voices."
+    }
     @Published var busy = false
     @Published private(set) var syncing = false
     @Published private(set) var syncCanStop = false
@@ -22,7 +49,8 @@ import CryptoKit
     @Published private(set) var outputCharacterID = ""
     @Published private(set) var outputReferenceHash = ""
     @Published private(set) var reviewSummaries: [String: CharacterListeningReview] = [:]
-    @Published var message = "Choose your Voices collection folder once. Your voice samples are copied privately to this iPhone."
+    @Published var message = "Browse your laptop catalog, then download the voices you want to use offline. Existing imported voices stay saved."
+    private let remoteCache: RemoteVoiceCatalogCache
     private let store: CharacterFolderStore
     private let reviewStore: CharacterReviewStore
     private let engine = F5ReferenceEngine()
@@ -40,7 +68,21 @@ import CryptoKit
     }
     func setApplicationActive(_ active: Bool) {
         applicationActive = active
-        if !active { releaseWarmSpeech() }
+        if !active {
+            releaseWarmSpeech()
+            // Switching to Tailscale to reconnect must allow an immediate retry.
+            if syncing || !catalogReachable { lastCatalogAttempt = nil }
+            catalogReachable = false
+            cancelSync()
+        }
+        else {
+            Task {
+                // The canceled job must finish releasing its session before a
+                // foreground refresh can acquire the single-sync slot.
+                if let interrupted = syncJob, interrupted.isCancelled { await interrupted.value }
+                await loadAndRefresh()
+            }
+        }
     }
     var engineAvailable: Bool {
         guard let root = Bundle.main.url(forResource: "F5TTS", withExtension: nil) else { return false }
@@ -52,6 +94,7 @@ import CryptoKit
     }
     init() {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        remoteCache = RemoteVoiceCatalogCache(file: support.appendingPathComponent("RemoteVoiceCatalog/catalog.json"))
         store = CharacterFolderStore(root: support.appendingPathComponent("CharacterReferences", isDirectory: true))
         reviewStore = CharacterReviewStore(root: support.appendingPathComponent("CharacterReviews", isDirectory: true))
     }
@@ -61,49 +104,84 @@ import CryptoKit
         do {
             let saved = try await store.profiles()
             guard catalogRefresh == ticket, !busy else { return }
-            profiles = saved; await refreshReviewSummaries()
+            profiles = saved
+            storedVoiceBytes = try? await store.storedBytes()
+            if !loadedCatalogCache {
+                loadedCatalogCache = true
+                if let cached = try? await remoteCache.load(), remoteCatalog == nil {
+                    remoteCatalog = cached.catalog; catalogCheckedAt = cached.checkedAt
+                }
+            }
+            await refreshReviewSummaries()
         }
         catch { message = error.localizedDescription; return }
-        if LaptopConnection.paired { syncVoices(); return }
-        guard !busy, let data = UserDefaults.standard.data(forKey: "characterFolderBookmark.v1") else { return }
-        do {
-            var stale = false
-            let url = try URL(resolvingBookmarkData: data, options: .withoutUI, relativeTo: nil, bookmarkDataIsStale: &stale)
-            importFolder(url)
-        } catch { message = "The master folder is unavailable. Your imported voices remain on this iPhone. Choose the folder again to refresh it." }
+        if LaptopConnection.paired { syncVoices(force: false); return }
+        // Imported references already live in private storage. Do not silently import
+        // new audio from an old bookmark when automatic catalog refresh runs offline.
     }
     func cancelSync() { guard syncCanStop else { return }; recordSync(.stopping); syncJob?.cancel() }
-    func syncVoices() {
-        guard !busy, !syncing, LaptopConnection.paired else { return }
+    /// Retains the old action name for callers, but automatic sync is now metadata only.
+    func syncVoices(force: Bool = true) {
+        guard !busy, !syncing, applicationActive, LaptopConnection.paired else { return }
+        if !force, let lastCatalogAttempt, Date().timeIntervalSince(lastCatalogAttempt) < 60 { return }
+        lastCatalogAttempt = Date()
         syncing = true; syncCanStop = true
         syncEvents = []; syncStarted = Date()
         let run = UUID(); syncRunID = run
         recordSync(.requesting)
         syncJob = Task {
-            let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("VoiceSync-" + UUID().uuidString)
-            defer { syncing = false; syncCanStop = false; try? FileManager.default.removeItem(at: temporary) }
+            defer { syncing = false; syncCanStop = false }
             do {
-                let previous = profiles.isEmpty ? nil : UserDefaults.standard.string(forKey: "remoteVoiceRevision.v1")
-                guard let revision = try await LaptopConnection.syncVoices(to: temporary, previousRevision: previous, syncID: run.uuidString.lowercased(), progress: { [weak self] event in
+                let catalog = try await LaptopConnection.voiceCatalog(syncID: run.uuidString.lowercased(), progress: { [weak self] event in
                     await self?.receiveSync(event, run: run)
-                }) else {
-                    try Task.checkCancellation()
-                    recordSync(.unchanged); message = "Your saved voices are up to date with the laptop."
-                    return
-                }
+                })
                 try Task.checkCancellation()
-                guard !busy else { recordSync(.deferred); return } // Never interrupt active speech, recording conversion or listening review.
+                let unchanged = remoteCatalog?.revision == catalog.revision
+                let checkedAt = Date()
+                try await remoteCache.save(catalog, checkedAt: checkedAt)
+                try Task.checkCancellation()
+                remoteCatalog = catalog; catalogCheckedAt = checkedAt; catalogReachable = true
+                if unchanged { recordSync(.unchanged) }
+                else { recordSync(.catalogRefreshed(catalog.voices.count)) }
+                if !busy { message = "\(catalog.voices.count) voices available on your laptop. Download only the ones you want offline." }
+            } catch {
+                catalogReachable = false
+                recordSync(Task.isCancelled ? .stopped : .failed)
+                if !busy { message = Task.isCancelled ? "Catalog refresh stopped. Downloaded voices were kept." : "Laptop unavailable. Downloaded voices still work offline; connect through Tailscale to refresh or download. " + error.localizedDescription }
+            }
+        }
+    }
+    func downloadVoice(_ voice: CharacterReference) {
+        guard !busy, !syncing, applicationActive, LaptopConnection.paired, !isDownloaded(voice.id),
+              remoteCatalog?.voices.contains(where: { $0 == voice }) == true else { return }
+        syncing = true; syncCanStop = true; downloadingID = voice.id
+        syncEvents = []; syncStarted = Date()
+        let run = UUID(); syncRunID = run
+        recordSync(.requesting)
+        syncJob = Task {
+            let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("VoiceSync-" + UUID().uuidString)
+            defer { syncing = false; syncCanStop = false; downloadingID = nil; try? FileManager.default.removeItem(at: temporary) }
+            do {
+                let catalog = try await LaptopConnection.downloadVoice(voice, to: temporary, syncID: run.uuidString.lowercased(), progress: { [weak self] event in
+                    await self?.receiveSync(event, run: run)
+                })
+                try Task.checkCancellation()
+                guard !busy else { recordSync(.deferred); message = "Download finished while audio was busy. Download again when it finishes."; return }
                 busy = true
                 defer { busy = false }
                 recordSync(.importing)
                 profiles = try await store.importCollection(at: temporary)
-                UserDefaults.standard.set(revision, forKey: "remoteVoiceRevision.v1")
-                recordSync(.completed(profiles.count))
+                // Once the atomic import committed, a late Stop must not misreport failure.
+                recordSync(.completed(1))
+                storedVoiceBytes = try? await store.storedBytes()
+                remoteCatalog = catalog; catalogCheckedAt = Date(); catalogReachable = true
+                if let checkedAt = catalogCheckedAt { try? await remoteCache.save(catalog, checkedAt: checkedAt) }
                 await refreshReviewSummaries()
-                message = "\(profiles.count) character references saved for offline use. Character resemblance still needs listening review."
+                message = "\(voice.name) downloaded for offline use. Choose it to create speech."
             } catch {
+                catalogReachable = false
                 recordSync(Task.isCancelled ? .stopped : .failed)
-                if !busy { message = Task.isCancelled ? "Sync stopped. Your saved voices were kept." : "Laptop sync unavailable. Your saved voices remain usable offline. " + error.localizedDescription }
+                if !busy { message = Task.isCancelled ? "Download stopped. Existing voices were kept." : "Download unavailable. Connect to the laptop through Tailscale, refresh the catalog and retry. Existing voices were kept. " + error.localizedDescription }
             }
         }
     }
@@ -112,7 +190,7 @@ import CryptoKit
         recordSync(event)
     }
     func importFolder(_ url: URL) {
-        guard !busy else { return }
+        guard !busy, downloadingID == nil else { return }
         catalogRefresh = UUID()
         busy = true; message = "Checking and copying your voices…"
         job = Task {
@@ -120,6 +198,7 @@ import CryptoKit
             defer { if access { url.stopAccessingSecurityScopedResource() }; busy = false }
             do {
                 profiles = try await store.importCollection(at: url)
+                storedVoiceBytes = try? await store.storedBytes()
                 await refreshReviewSummaries()
                 // Save access only after the whole collection passes validation.
                 if let bookmark = try? url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil) {
@@ -278,7 +357,7 @@ struct CharacterLibraryView: View {
                             Text("YOUR VOICE").font(.caption.weight(.bold)).tracking(1.5).foregroundStyle(.secondary)
                             Text(library.profiles.first(where: { $0.id == library.selectedID })?.name ?? "Choose a character")
                                 .font(.title3.bold()).foregroundStyle(.primary)
-                            Text(library.profiles.isEmpty ? "Import or sync your collection to get started" : "Tap to browse \(library.profiles.count) voices")
+                            Text(library.availableProfiles.isEmpty ? "Browse the laptop catalog to get started" : "Browse \(library.availableProfiles.count) voices · \(library.profiles.count) downloaded")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
@@ -293,15 +372,20 @@ struct CharacterLibraryView: View {
             }
             Section {
                 DisclosureGroup("Manage your collection") {
-                    Button { library.syncVoices() } label: { Label("Sync voices from laptop", systemImage: "arrow.triangle.2.circlepath") }
+                    Button { library.syncVoices() } label: { Label("Refresh laptop catalog", systemImage: "arrow.triangle.2.circlepath") }
                         .disabled(library.busy || library.syncing || !LaptopConnection.paired)
-                    if library.syncing { ProgressView("Syncing laptop voices…"); Button("Stop sync", role: .cancel) { library.cancelSync() }.disabled(!library.syncCanStop) }
+                    if library.syncing { ProgressView(library.downloadingID == nil ? "Refreshing catalog…" : "Downloading voice…"); Button("Stop sync", role: .cancel) { library.cancelSync() }.disabled(!library.syncCanStop) }
                     Button { showingSyncLog = true } label: { Label("Live sync log", systemImage: "list.bullet.rectangle") }
                         .accessibilityIdentifier("live-sync-log")
                     if let latest = library.syncEvents.last { Text(latest.progress.message).font(.caption).foregroundStyle(.secondary) }
                     Button { importKind = .folder; showingImporter = true } label: { Label("Choose Voices Folder", systemImage: "folder.badge.plus") }
-                        .disabled(library.busy).accessibilityIdentifier("import-character-folder")
-                    Text("Imported voices are saved privately on this iPhone and kept when the laptop is unavailable.")
+                        .disabled(library.busy || library.downloadingID != nil).accessibilityIdentifier("import-character-folder")
+                    Text(library.catalogStatus).font(.caption).foregroundStyle(.secondary)
+                    if let bytes = library.storedVoiceBytes {
+                        Text("Saved voice files: " + ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file))
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    Text("Refresh checks names and availability only. Download individual voices in the picker while online; downloaded and imported voices stay on this iPhone. The app refreshes when opened, not continuously in the background.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -451,9 +535,9 @@ struct CharacterPickerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var search = ""
     @State private var category = "All"
-    private var categories: [String] { ["All"] + Set(library.profiles.flatMap(\.categories)).sorted() }
+    private var categories: [String] { ["All"] + Set(library.availableProfiles.flatMap(\.categories)).sorted() }
     private var filtered: [CharacterReference] {
-        library.profiles.filter {
+        library.availableProfiles.filter {
             (category == "All" || $0.categories.contains(category)) &&
             (search.isEmpty || ([$0.name] + $0.categories).joined(separator: " ").localizedCaseInsensitiveContains(search))
         }
@@ -464,12 +548,21 @@ struct CharacterPickerView: View {
                 Picker("Category", selection: $category) {
                     ForEach(categories, id: \.self) { Text($0).tag($0) }
                 }
-                Text("\(filtered.count) voices").font(.caption).foregroundStyle(.secondary)
+                Text("\(filtered.count) voices · \(library.profiles.count) downloaded").font(.caption).foregroundStyle(.secondary)
+                Text(library.catalogStatus).font(.caption).foregroundStyle(.secondary)
+                Button("Refresh laptop catalog") { library.syncVoices() }
+                    .disabled(library.busy || library.syncing || !LaptopConnection.paired)
+                if library.syncing {
+                    ProgressView(library.downloadingID == nil ? "Refreshing catalog…" : "Downloading voice…")
+                    Button("Stop sync", role: .cancel) { library.cancelSync() }.disabled(!library.syncCanStop)
+                }
+                Text(library.message).font(.caption).foregroundStyle(.secondary)
+                Text("Online required for new downloads. Downloaded voices work without the laptop.").font(.caption).foregroundStyle(.secondary)
             }
             if filtered.isEmpty {
-                ContentUnavailableView(library.profiles.isEmpty ? "Add your voices" : "No matching voices",
+                ContentUnavailableView(library.availableProfiles.isEmpty ? "Browse your voices" : "No matching voices",
                     systemImage: "person.2.wave.2",
-                    description: Text(library.profiles.isEmpty ? "Close this picker and open Manage your collection to import or sync voices." : "Try a different name or category."))
+                    description: Text(library.availableProfiles.isEmpty ? "Connect through Tailscale and refresh the laptop catalog, or import your Voices folder." : "Try a different name or category."))
             }
             ForEach(filtered) { voice in
                 VStack(alignment: .leading, spacing: 8) {
@@ -486,9 +579,20 @@ struct CharacterPickerView: View {
                             }
                             Spacer()
                         }.padding(.vertical, 8)
-                    }.buttonStyle(.plain).disabled(library.busy)
+                    }.buttonStyle(.plain).disabled(library.busy || !library.isDownloaded(voice.id))
                         .accessibilityIdentifier("select-character-" + voice.id)
                         .accessibilityValue(library.selectedID == voice.id ? "Selected" : "Not selected")
+                    if library.isDownloaded(voice.id) {
+                        Label("Downloaded · ready offline", systemImage: "checkmark.circle.fill").font(.caption).foregroundStyle(StudioPalette.mint)
+                        if library.hasChangedRemoteReference(voice) {
+                            Text("The laptop has a changed reference. Your saved version is kept until a reviewed replacement is supported.").font(.caption).foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Button { library.downloadVoice(voice) } label: { Label("Download for offline · " + library.downloadSize(voice.id), systemImage: "arrow.down.circle") }
+                            .disabled(library.busy || library.syncing || !LaptopConnection.paired)
+                            .accessibilityIdentifier("download-character-" + voice.id)
+                        Text("Online required · available on laptop").font(.caption).foregroundStyle(.secondary)
+                    }
                     DisclosureGroup("Voice details") {
                         Text("Source: " + voice.source)
                         Text("Permission record: " + voice.permission)
@@ -497,6 +601,7 @@ struct CharacterPickerView: View {
                 }
             }
         }
+        .task { await library.loadAndRefresh() }
         .navigationTitle("Choose a voice")
         .searchable(text: $search, prompt: "Search names or categories")
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
@@ -521,7 +626,7 @@ private struct VoiceSyncLogView: View {
                     }
                     Button("Stop sync", role: .cancel) { library.cancelSync() }.disabled(!library.syncCanStop)
                 } else {
-                    Button("Sync voices from laptop") { library.syncVoices() }
+                    Button("Refresh laptop catalog") { library.syncVoices() }
                         .disabled(library.busy || !LaptopConnection.paired)
                 }
                 Text("Laptop entries are based on received responses. iPhone entries show download, validation and saving. No voice names, recordings or transcripts are logged.")

@@ -6,6 +6,10 @@ Writers use the queue's transaction so a rolled-back transition leaves no receip
 import math,pathlib,re,sqlite3,time
 
 MESSAGES={
+ 'speaker_analyzing':'Laptop is grouping possible speakers locally; character identity and overlap remain unverified.',
+ 'temporary_media_removed':'The temporary downloaded source media was removed; retained reference audio and existing voices remain.',
+ 'candidate_runtime_missing':'Automatic candidates are waiting because the local speaker-analysis runtime is not configured.',
+ 'candidate_requested':'Laptop saved an explicit private candidate-processing request; character identities are not verified.',
  'received':'Laptop saved the video link in its queue; processing has not started.',
  'already_queued':'Laptop received this link again; the existing queue entry was kept.',
  'claimed':'Worker claimed this video attempt.',
@@ -74,7 +78,14 @@ def snapshot(database,identifier=None,*,now=None):
    if 'workflow_events' in tables:
     for sequence,at,stage,attempt,completed,total in reversed(db.execute('SELECT sequence,time,stage,attempt,completed,total FROM workflow_events WHERE video_id=? ORDER BY sequence DESC LIMIT ?',(video,event_limit)).fetchall()):
      if stage in MESSAGES:events.append(dict(sequence=sequence,time=at,stage=stage,message=MESSAGES[stage],attempt=attempt,completed=completed,total=total))
-   result['videos'].append(dict(id=video,status=status,progress=progress,updated=updated,attempts=attempts,nextAttempt=next_attempt,workerLeaseUntil=lease,workerActive=status=='processing' and lease>now,historyAvailable=bool(events and events[0]['stage']=='received'),events=events))
+   # Receipts and review requests cannot replace a worker's current stage.
+   non_stage={'received','already_queued','candidate_requested','review_saved','inspection_requested','inspection_stop_requested','listening_recorded'}
+   current=None
+   if 'workflow_events' in tables:
+    for stage,at in db.execute('SELECT stage,time FROM workflow_events WHERE video_id=? AND attempt=? ORDER BY sequence DESC LIMIT 160',(video,attempts)):
+     if stage in MESSAGES and stage not in non_stage:
+      current=dict(stage=stage,time=at);break
+   result['videos'].append(dict(id=video,status=status,progress=progress,updated=updated,attempts=attempts,nextAttempt=next_attempt,workerLeaseUntil=lease,workerActive=status=='processing' and lease>now,historyAvailable=bool(events and events[0]['stage']=='received'),currentStage=current['stage'] if current else None,currentStageAt=current['time'] if current else None,lastEventAt=events[-1]['time'] if events else None,events=events))
   return result
  finally:db.close()
 

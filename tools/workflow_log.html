@@ -1,11 +1,11 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VoiceMatrix video workflow</title>
 <style nonce="__NONCE__">body{font:16px system-ui;background:#10141d;color:#edf3fa;max-width:950px;margin:auto;padding:24px}article{border:1px solid #465269;border-radius:16px;padding:16px;margin:16px 0}a{color:#b8d4ff}li{margin:12px 0}small,.detail{color:#bac7d8}button{font:inherit;padding:10px 18px}h2{font-size:21px}.warning{color:#ffdc99}nav{display:flex;gap:18px;flex-wrap:wrap}</style>
 <h1>Live video workflow</h1>
-<p>Actual laptop receipts and recorded worker stages, refreshed every two seconds while this page is visible. Submitting a YouTube link does not upload a movie or start voice creation immediately.</p>
+<p>Actual laptop receipts and recorded worker stages, refreshed every 30 seconds while this page is visible. Submitting a YouTube link does not upload a movie or start voice creation immediately.</p>
 <nav><a href="/workflow-log">All videos</a><a href="/review">Source review</a><a href="/listening">Listening review</a><a href="/sync-log">Live voice sync log</a></nav>
-<p id="state" role="status">Checking laptop…</p><button id="refresh" type="button">Refresh now</button><main id="videos"></main>
+<p id="state" role="status">Checking laptop…</p><button id="refresh" type="button">Refresh now</button><section id="catalog"></section><main id="videos"></main>
 <section><h2>Sync and completion</h2><p>Checked new profiles may enter the private collection while likeness and device checks remain pending. Open the voice sync log above for actual catalog/file responses, then the phone’s Live sync log for validation and saved voices. Collection sync is separate: this page cannot prove that a specific video reached the phone.</p><p>No current pipeline stage marks a video fully complete. “Needs review” means technical processing ended, not that every check passed.</p></section>
-<small>This authenticated page shows fixed stage messages and counters only. It never reads recordings, transcripts, voice names or raw worker errors. Up to 160 recent events are kept per video; the overview shows the latest 20 events for each of the 200 most recently updated videos. Older history and uninstrumented workers may have gaps. Links and voices are never cleared by this log.</small>
+<small>This authenticated page shows fixed stage messages and counters only. Safe catalog names are shown separately. Recordings, transcripts, credentials, private paths and raw worker errors are never included. Up to 160 recent events are kept per video; the overview shows the latest 20 events for each of the 200 most recently updated videos. Older history and uninstrumented workers may have gaps. Links and voices are never cleared by this log.</small>
 <script nonce="__NONCE__">
 const query=new URLSearchParams(location.search),selected=query.get('video');
 const validSelection=!query.toString()||(query.size===1&&/^[A-Za-z0-9_-]{11}$/.test(selected||''));
@@ -13,32 +13,51 @@ const names={waiting:'Waiting for a worker',processing:'Worker processing',retry
 let timer,controller,running=false;
 function element(tag,text,cls){const node=document.createElement(tag);node.textContent=text;if(cls)node.className=cls;return node}
 function time(value){return new Date(value*1000).toLocaleString()}
+function renderCatalog(catalog){
+ const host=document.querySelector('#catalog');host.replaceChildren();
+ if(!catalog){host.append(element('p','Update the laptop companion to show voice-list observations.','detail'));return}
+ host.append(element('h2','Laptop voice list · '+catalog.count));
+ const states={not_checked:'No verified voice-list observation yet.',checking:'Checking the existing laptop collection…',current:'Verified laptop list.',unavailable:'Voice-list check failed. Showing the last verified list; existing voices were kept.'};
+ host.append(element('p',states[catalog.state]||'Unknown catalog state'));
+ if(catalog.checkedAt!=null)host.append(element('p','List checked '+time(catalog.checkedAt)+(Date.now()/1000-catalog.checkedAt>75?' · Catalog observation is stale.':''),'detail'));
+ const list=element('details','');list.append(element('summary','Voices currently observed · '+catalog.count));
+ const names=element('ul','');for(const voice of catalog.voices){names.append(element('li',voice.name+' · First observed '+time(voice.firstObservedAt)))}list.append(names);host.append(list);
+ const changes=element('details','');changes.append(element('summary','Voice-list changes · '+catalog.events.length));
+ const events=element('ol',''),labels={observed:'First observed in list',added:'New in observed list',changed:'Changed in list',missing:'No longer in observed list'};
+ for(const event of [...catalog.events].reverse())events.append(element('li',time(event.time)+' · '+(labels[event.kind]||'Observed')+': '+event.name));
+ changes.append(events);host.append(changes);
+ host.append(element('p','Observation times are not exact creation times. History retains up to 160 events until the companion restarts. First observed is not newly created. This log never downloads, replaces or deletes saved voices.','detail'));
+}
 function render(data){
+ renderCatalog(data.catalog);
  const host=document.querySelector('#videos');host.replaceChildren();
  for(const video of data.videos){
   const article=element('article','');article.append(element('h2','Video '+video.id));
   article.append(element('p',names[video.status]||'Unrecognized queue state'));
   article.append(element('p','Attempt '+video.attempts+'/4 · Last queue update '+time(video.updated),'detail'));
-  if(video.status==='processing')article.append(element('p',(video.workerActive?'Worker lease is current. Last reported stage progress: ':'No current worker heartbeat. Last reported stage progress: ')+Math.round(video.progress*100)+'%. This is a coarse stage estimate, not whole-job completion.',video.workerActive?'detail':'warning'));
+  if(video.currentStage){const stage=video.events.find(e=>e.stage===video.currentStage&&e.time===video.currentStageAt);article.append(element('p',(video.status==='processing'?'Current reported stage: ':'Last recorded stage: ')+(stage?stage.message:video.currentStage.replaceAll('_',' '))))}
+  if(video.currentStageAt!=null)article.append(element('p','Last stage event '+time(video.currentStageAt),'detail'));
+  if(video.lastEventAt!=null)article.append(element('p','Last recorded event '+time(video.lastEventAt),'detail'));
+  if(video.status==='processing')article.append(element('p',video.workerActive?'Worker lease was active at this snapshot. This reports responsiveness, not compute progress. Long computation alone does not prove a stall.':'No active worker lease was reported. Worker responsiveness is unconfirmed; check the laptop. This alone does not establish why processing stopped reporting.',video.workerActive?'detail':'warning'));
   if(video.status==='retry')article.append(element('p','Eligible for retry after '+time(video.nextAttempt)+'. This is not a promise that a worker will start then.','detail'));
   if(!video.historyAvailable)article.append(element('p','History is partial or unavailable. Earlier stages were not recorded or are outside this view; no steps have been reconstructed.','warning'));
   const workerStages=new Set(['claimed','resumed','preparation_started','inspection_started','references_checking','model_loading','synthesizing','audio_checking','words_checking','publishing','needs_review']);
-  if(['processing','needs-review'].includes(video.status)&&!video.events.some(e=>e.attempt===video.attempts&&workerStages.has(e.stage)))article.append(element('p','No worker stages are retained for this attempt. The worker may predate verbose logging; no missing stages are inferred.','warning'));
+  if(['processing','needs-review'].includes(video.status)&&!workerStages.has(video.currentStage)&&!video.events.some(e=>e.attempt===video.attempts&&workerStages.has(e.stage)))article.append(element('p','No worker stages are retained for this attempt. The worker may predate verbose logging; no missing stages are inferred.','warning'));
   const detail=element('a',selected?'Source review':'View longer video history');detail.href=(selected?'/review?video=':'/workflow-log?video=')+encodeURIComponent(video.id);article.append(detail);
   const list=element('ol','');
   for(const event of video.events){const counter=event.total?' · '+event.completed+'/'+event.total+' completed before this stage':'';list.append(element('li',time(event.time)+' · '+event.message+' · Attempt '+event.attempt+counter))}
   if(!video.events.length)article.append(element('p','No recorded events for this video. Current queue state is shown above.','detail'));
   article.append(list);host.append(article);
  }
- document.querySelector('#state').textContent='Connected · Snapshot '+time(data.observedAt)+(data.videos.length?'':' · No matching queued videos')+(data.hasMore?' · More than 200 queued videos; showing the most recently updated':'');
+ document.querySelector('#state').textContent='Connected · Last refreshed '+new Date().toLocaleString()+' · Laptop snapshot '+time(data.observedAt)+(data.videos.length?'':' · No matching queued videos')+(data.hasMore?' · More than 200 queued videos; showing the most recently updated':'');
 }
 async function refresh(){
  if(running||document.hidden)return;
  if(!validSelection){document.querySelector('#state').textContent='Invalid video selection. Open All videos.';return}
- clearTimeout(timer);running=true;controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),10000);
+ clearTimeout(timer);running=true;const started=performance.now();controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),10000);
  try{const response=await fetch('/workflow'+(selected?'?video='+encodeURIComponent(selected):''),{cache:'no-store',signal:controller.signal});if(!response.ok)throw Error();const data=await response.json();if(data.schemaVersion!==1||!Array.isArray(data.videos))throw Error();if(!document.hidden)render(data)}
  catch{document.querySelector('#state').textContent=document.hidden?'Paused while this page is hidden.':'Cannot refresh. Displayed history is stale; check Tailscale and the companion connection.'}
- finally{clearTimeout(timeout);running=false;controller=null;if(!document.hidden)timer=setTimeout(refresh,2000)}
+ finally{clearTimeout(timeout);running=false;controller=null;if(!document.hidden)timer=setTimeout(refresh,Math.max(0,30000-(performance.now()-started)))}
 }
 document.querySelector('#refresh').addEventListener('click',refresh);
 document.addEventListener('visibilitychange',()=>{clearTimeout(timer);if(document.hidden){controller?.abort();document.querySelector('#state').textContent='Paused while this page is hidden. Displayed history may be stale.'}else refresh()});

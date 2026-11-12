@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "dateUTC": "2026-11-12",
+  "status": "corrected-synthetic-training-conversion-and-synthesizer-parity-passed",
+  "sourceRevision": "14f9ff3",
+  "upstreamSourceRevision": "81eed5e8f68b6bed1789f682fe78cdd324495afc",
+  "epochs": 1,
+  "epochSeconds": 271.855,
+  "effectiveTrainingData": {
+    "gateVersion": 1,
+    "status": "passed",
+    "minimumActiveSeconds": 60,
+    "activeLowerBoundSeconds": 74.155,
+    "effectiveDatasetSHA256": "a14e27e05a44d246ea54317ffdc93f2443369f1bd292bccb8bfb8f1d995f8bc9"
+  },
+  "modelSHA256": "6389a24d8b9edabbe1af838ac8177eb5c5f147062a0975df248dac17eefa9a1e",
+  "indexSHA256": "e641fb859373126e122dd99ef5b08402dfbc1e7fa667e9a6b0502e45342d0490",
+  "indexVectors": 5819,
+  "indexDimensions": 768,
+  "changedNonembeddingTensors": 456,
+  "changedElements": 26578654,
+  "trainingReportSHA256": "70aba743049f86215b3c8e8eccd61579d75b98d2ec7586823de3b4574d99a286",
+  "conversionProofSHA256": "196c90a0b0cf3799909ae6bb8d3db3e500513c80c10d1be571256ed0e0146cfa",
+  "conversion": {
+    "seconds": 7.22,
+    "sampleRate": 40000,
+    "rms": 0.06879460322324729,
+    "fullScaleSamples": 0,
+    "wordErrorRate": 0,
+    "wavSHA256": "0f67062b15551fb41ef84596a8106ba2ec6f6ecb2e9171b95334263e37d46919"
+  },
+  "portableSynthesizer": {
+    "status": "synthesizer-parity-checked",
+    "provider": "CPUExecutionProvider",
+    "opset": 17,
+    "irVersion": 8,
+    "frames": 100,
+    "samples": 40000,
+    "bytes": 110550455,
+    "sha256": "1d7dd41135f8cf4e88c0f186298b6e2d2b599e553acdec3fcd82737eb00dd0bf",
+    "cases": [
+      "voiced",
+      "unvoiced",
+      "mixed_pitch_edges",
+      "length_one",
+      "length_last"
+    ],
+    "originalAdapterMaximumAbsoluteError": 0,
+    "originalORTMaximumAbsoluteError": 4.839897155761719e-05,
+    "originalORTMaximumRMSError": 7.658118418156749e-06
+  },
+  "tests": {
+    "nativeWindows": {
+      "ran": 63,
+      "passed": 63,
+      "skipped": 0
+    },
+    "fullSource": {
+      "ran": 486,
+      "passed": 481,
+      "skipped": 5
+    },
+    "focusedPortable": {
+      "ran": 15,
+      "passed": 15
+    }
+  },
+  "published": false,
+  "identityVerified": false,
+  "likenessVerified": false,
+  "nativeIPhoneRuntimeVerified": false,
+  "limitations": [
+    "Original synthetic speech, one diagnostic epoch only",
+    "No YouTube source processing or real character identity/quality verified",
+    "RVC request/dataset/queue integration is source-only, not deployed",
+    "Portable test covers fixed-shape synthesizer only, not HuBERT, pitch, retrieval, DSP, long audio or iPhone inference",
+    "No new IPA published; existing voices and live services preserved"
+  ],
+  "evidenceLocation": "Isolated laptop rvc-smoke-20261112: run05 training/conversion, portable06 parity; failed attempts retained"
+}
