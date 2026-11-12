@@ -129,7 +129,7 @@ class WorkerTests(unittest.TestCase):
                 output=[]
                 self.assertIn(worker.run(args, platform=platform, runtime_factory=forbidden, once_runner=forbidden, emit=output.append), (0,2,4))
                 self.assertNotIn('private machine details', str(output))
-                with __import__('sqlite3').connect(pathlib.Path(d).resolve()/'rvc'/'rvc-queue.db') as db:
+                with contextlib.closing(__import__('sqlite3').connect(pathlib.Path(d).resolve()/'rvc'/'rvc-queue.db')) as db, db:
                     self.assertEqual(db.execute('SELECT status FROM jobs').fetchone()[0],'waiting')
 
     def test_live_pause_game_resource_loss_and_signal_cancel_reach_runtime_callback(self):

@@ -96,7 +96,7 @@ class RVCTransportTests(unittest.TestCase):
             body['sourceUse']['record'] = 'Different permission'
             self.assertEqual(self.request('/rvc/requests', body)[0], 409)
             self.assertEqual((self.f5/'queue.db').read_bytes(), f5_before)
-            with sqlite3.connect(self.rvc/'rvc-queue.db') as db:
+            with contextlib.closing(sqlite3.connect(self.rvc/'rvc-queue.db')) as db, db:
                 saved = json.loads(db.execute('SELECT body FROM rvc_requests').fetchone()[0])
             self.assertIn('日本語', saved['sourceUse']['record'])
             self.assertEqual(self.request('/status')[1]['videos'][0]['id'], '12345678901')
@@ -116,7 +116,7 @@ class RVCTransportTests(unittest.TestCase):
     def test_status_is_bounded_allowlisted_and_never_returns_transcripts_or_paths(self):
         with self.server():
             self.request('/rvc/requests', request_body())
-            with sqlite3.connect(self.rvc/'rvc-queue.db') as db:
+            with contextlib.closing(sqlite3.connect(self.rvc/'rvc-queue.db')) as db, db:
                 db.execute("UPDATE job_control SET reason=?,token=?", ('PRIVATE TRANSCRIPT '+str(self.base), 'secret-token'))
                 for index in range(105):
                     name = f'{index:011d}'

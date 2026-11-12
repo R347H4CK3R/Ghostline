@@ -32,7 +32,7 @@ class RVCCLITests(unittest.TestCase):
    result=self.invoke(self.verify_args()+['--python','isolated-python','--timeout','123'])
   recognizer.assert_called_once_with('whisper-cli','whisper.bin')
   verify.assert_called_once_with('rvc','training.json','heldout.wav','checks',expected_text='A held-out sentence.',verify_words=verifier,python='isolated-python',timeout=123)
-  self.assertEqual(result,{'report':'checks/conversion.json'})
+  self.assertEqual(result,{'report':str(pathlib.Path('checks/conversion.json'))})
  def test_verify_defaults(self):
   with mock.patch('tools.queue_processor.recognizer') as recognizer, mock.patch('tools.rvc_validation.verify_conversion',return_value='report') as verify:
    self.invoke(self.verify_args())
@@ -42,7 +42,7 @@ class RVCCLITests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as d:
    metadata=pathlib.Path(d).resolve()/'meta.json';value={'name':'Example'};metadata.write_text(json.dumps(value))
    with mock.patch('tools.rvc_export.export_folder',return_value=pathlib.Path('private/voice')) as export, mock.patch('tools.master_voices.publish') as publish:
-    self.assertEqual(self.invoke(['export-rvc','--report','conversion.json','--metadata',str(metadata),'--output','private']),{'folder':'private/voice'})
+    self.assertEqual(self.invoke(['export-rvc','--report','conversion.json','--metadata',str(metadata),'--output','private']),{'folder':str(pathlib.Path('private/voice'))})
    export.assert_called_once_with('conversion.json',value,'private');publish.assert_not_called()
  def test_stage_errors_exit_cleanly(self):
   for error in [ValueError('invalid'),OSError('missing'),RuntimeError('failed'),subprocess.CalledProcessError(1,['child']),subprocess.TimeoutExpired(['child'],1)]:
