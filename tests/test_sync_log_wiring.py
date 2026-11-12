@@ -13,6 +13,11 @@ class SyncLogWiringTests(unittest.TestCase):
   self.assertIn('X-VoiceMatrix-Sync-ID',source)
   self.assertIn('VoiceSyncRemoteSnapshot',source)
   self.assertLess(source.index('let (stream, response)'),source.index('progress(.laptopResponded)'))
+ def test_terminal_sync_cannot_be_replaced_by_a_late_stop(self):
+  source=(ROOT/'VoiceMatrix/CharacterLibraryView.swift').read_text()
+  self.assertIn('if progress.isTerminal || progress == .stopping { syncCanStop = false }',source)
+  self.assertIn('func cancelSync() { guard syncCanStop else { return }',source)
+  self.assertIn('guard syncing, syncCanStop, syncRunID == run',source)
  def test_log_is_accessible_and_bounded(self):
   source=(ROOT/'VoiceMatrix/CharacterLibraryView.swift').read_text()
   self.assertIn('Live sync log',source);self.assertIn('syncEvents.count > 200',source)

@@ -76,6 +76,7 @@ enum LaptopConnection {
         let activity = Task {
             var sequence = 0
             var warned = false
+            var missingReceipts = 0
             while !Task.isCancelled {
                 do {
                     var request = URLRequest(url: root.appendingPathComponent("voice-sync/" + syncID))
@@ -88,10 +89,17 @@ enum LaptopConnection {
                             data.append(byte)
                         }
                         let snapshot = try JSONDecoder().decode(VoiceSyncRemoteSnapshot.self, from: data)
+                        guard snapshot.schemaVersion == 1, snapshot.syncID == syncID else { throw failure("Activity response did not match this sync") }
+                        missingReceipts = 0
                         for event in snapshot.newer(than: sequence, for: syncID) {
                             try Task.checkCancellation()
                             if let eventProgress = event.progress { await progress(eventProgress) }
                             sequence = event.sequence
+                        }
+                    } else {
+                        missingReceipts += 1
+                        if (response as? HTTPURLResponse)?.statusCode != 404 || missingReceipts >= 3 {
+                            throw failure("Laptop activity unavailable")
                         }
                     }
                 } catch {
@@ -110,6 +118,7 @@ enum LaptopConnection {
             request.setValue(syncID, forHTTPHeaderField: "X-VoiceMatrix-Sync-ID")
             if let token { request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization") }
             let (stream, response) = try await session.bytes(for: request)
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 { await progress(.laptopRejected(http.statusCode)) }
             guard let response = response as? HTTPURLResponse, response.statusCode == 200,
                   response.expectedContentLength <= Int64(limit) else { throw failure("Your laptop voice folder is unavailable or changed. Your saved voices were kept.") }
             if path == "voices" { await progress(.laptopResponded) }

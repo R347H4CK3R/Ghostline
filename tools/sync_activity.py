@@ -1,5 +1,5 @@
 """Bounded, memory-only sync evidence. Never retain voice paths, text, audio or credentials."""
-import collections, copy, datetime, threading, time, uuid
+import collections, copy, datetime, hashlib, threading, time, uuid
 
 class SyncActivity:
  def __init__(self):
@@ -26,7 +26,8 @@ class SyncActivity:
    self._prune();session=self.sessions.get(identifier)
    if session is None:return
    if file_key is not None:
-    session['files'].add(file_key);completed=len(session['files'])
+    if len(session['files'])<2001:session['files'].add(hashlib.sha256(file_key.encode()).digest())
+    completed=len(session['files'])
    session['sequence']+=1;session['updated']=time.monotonic()
    session['events'].append(dict(sequence=session['sequence'],time=datetime.datetime.now(datetime.timezone.utc).isoformat(),stage=stage,completed=completed,total=total,bytes=byte_count))
    session['events']=session['events'][-160:]

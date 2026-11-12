@@ -6,10 +6,12 @@ import CryptoKit
     @Published var profiles: [CharacterReference] = []
     @Published var busy = false
     @Published private(set) var syncing = false
+    @Published private(set) var syncCanStop = false
     @Published private(set) var syncEvents: [VoiceSyncLogEntry] = []
     @Published private(set) var syncStarted: Date?
     private var syncRunID = UUID()
     private func recordSync(_ progress: VoiceSyncProgress) {
+        if progress.isTerminal || progress == .stopping { syncCanStop = false }
         syncEvents.append(VoiceSyncLogEntry(progress: progress))
         if syncEvents.count > 200 { syncEvents.removeFirst(syncEvents.count - 200) }
     }
@@ -70,16 +72,16 @@ import CryptoKit
             importFolder(url)
         } catch { message = "The master folder is unavailable. Your imported voices remain on this iPhone. Choose the folder again to refresh it." }
     }
-    func cancelSync() { recordSync(.stopping); syncJob?.cancel() }
+    func cancelSync() { guard syncCanStop else { return }; recordSync(.stopping); syncJob?.cancel() }
     func syncVoices() {
         guard !busy, !syncing, LaptopConnection.paired else { return }
-        syncing = true
+        syncing = true; syncCanStop = true
         syncEvents = []; syncStarted = Date()
         let run = UUID(); syncRunID = run
         recordSync(.requesting)
         syncJob = Task {
             let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("VoiceSync-" + UUID().uuidString)
-            defer { syncing = false; try? FileManager.default.removeItem(at: temporary) }
+            defer { syncing = false; syncCanStop = false; try? FileManager.default.removeItem(at: temporary) }
             do {
                 let previous = profiles.isEmpty ? nil : UserDefaults.standard.string(forKey: "remoteVoiceRevision.v1")
                 guard let revision = try await LaptopConnection.syncVoices(to: temporary, previousRevision: previous, syncID: run.uuidString.lowercased(), progress: { [weak self] event in
@@ -106,7 +108,7 @@ import CryptoKit
         }
     }
     private func receiveSync(_ event: VoiceSyncProgress, run: UUID) {
-        guard syncing, syncRunID == run, !Task.isCancelled else { return }
+        guard syncing, syncCanStop, syncRunID == run, !Task.isCancelled else { return }
         recordSync(event)
     }
     func importFolder(_ url: URL) {
@@ -293,7 +295,7 @@ struct CharacterLibraryView: View {
                 DisclosureGroup("Manage your collection") {
                     Button { library.syncVoices() } label: { Label("Sync voices from laptop", systemImage: "arrow.triangle.2.circlepath") }
                         .disabled(library.busy || library.syncing || !LaptopConnection.paired)
-                    if library.syncing { ProgressView("Syncing laptop voices…"); Button("Stop sync", role: .cancel) { library.cancelSync() } }
+                    if library.syncing { ProgressView("Syncing laptop voices…"); Button("Stop sync", role: .cancel) { library.cancelSync() }.disabled(!library.syncCanStop) }
                     Button { showingSyncLog = true } label: { Label("Live sync log", systemImage: "list.bullet.rectangle") }
                         .accessibilityIdentifier("live-sync-log")
                     if let latest = library.syncEvents.last { Text(latest.progress.message).font(.caption).foregroundStyle(.secondary) }
@@ -517,7 +519,7 @@ private struct VoiceSyncLogView: View {
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
-                    Button("Stop sync", role: .cancel) { library.cancelSync() }
+                    Button("Stop sync", role: .cancel) { library.cancelSync() }.disabled(!library.syncCanStop)
                 } else {
                     Button("Sync voices from laptop") { library.syncVoices() }
                         .disabled(library.busy || !LaptopConnection.paired)

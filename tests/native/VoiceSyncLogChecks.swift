@@ -19,6 +19,12 @@ import Foundation
         precondition(VoiceSyncProgress.laptopReceived.source == "Laptop")
         precondition(VoiceSyncProgress.fileValidated(1, 3).message.contains("verified"))
         precondition(VoiceSyncProgress.completed(60).message.contains("saved"))
+        precondition(VoiceSyncProgress.completed(60).isTerminal)
+        precondition(VoiceSyncProgress.unchanged.isTerminal)
+        precondition(VoiceSyncProgress.failed.isTerminal)
+        precondition(!VoiceSyncProgress.importing.isTerminal)
+        precondition(VoiceSyncProgress.laptopRejected(401).source == "Laptop")
+        precondition(VoiceSyncProgress.laptopRejected(401).message.contains("Tailscale"))
         print("Sync log request correlation, deduplication, stage allowlist and source labels passed")
     }
 }

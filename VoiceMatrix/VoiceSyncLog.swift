@@ -4,10 +4,16 @@ enum VoiceSyncProgress: Sendable, Equatable {
     case requesting, laptopResponded, laptopReceived, laptopValidating
     case laptopValidated(Int, Int), laptopCatalogReady(Int), laptopCatalogSent, laptopFileSent(Int)
     case catalogValidated(Int, Int), downloading(Int, Int), receiving(Int, Int), fileValidated(Int, Int)
-    case unchanged, importing, completed(Int), deferred, stopping, stopped, failed, laptopFailed, activityUnavailable
+    case unchanged, importing, completed(Int), deferred, stopping, stopped, failed, laptopFailed, activityUnavailable, laptopRejected(Int)
+    var isTerminal: Bool {
+        switch self {
+        case .unchanged, .completed, .deferred, .stopped, .failed: return true
+        default: return false
+        }
+    }
     var source: String {
         switch self {
-        case .laptopResponded, .laptopReceived, .laptopValidating, .laptopValidated, .laptopCatalogReady, .laptopCatalogSent, .laptopFileSent, .laptopFailed: return "Laptop"
+        case .laptopResponded, .laptopReceived, .laptopValidating, .laptopValidated, .laptopCatalogReady, .laptopCatalogSent, .laptopFileSent, .laptopFailed, .laptopRejected: return "Laptop"
         default: return "iPhone"
         }
     }
@@ -33,6 +39,9 @@ enum VoiceSyncProgress: Sendable, Equatable {
         case .stopped: return "Sync stopped. Previously saved voices were kept."
         case .failed: return "Sync failed at the last reported step. Previously saved voices were kept. Check the connection and retry."
         case .laptopFailed: return "Laptop could not finish serving the snapshot. Check the companion and retry."
+        case let .laptopRejected(status):
+            if status == 401 { return "Laptop received the request but requires the same Tailscale account or valid pairing." }
+            return "Laptop received the request but returned HTTP \(status). Check the companion collection and retry."
         case .activityUnavailable: return "Live laptop activity is unavailable. Transfer will continue; receipt is confirmed only when a response arrives."
         }
     }
