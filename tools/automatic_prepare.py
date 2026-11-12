@@ -1,5 +1,6 @@
 """Source-bound anonymous F5 candidates. No character identity or RVC claim."""
 import hashlib,json,math,os,pathlib,re,shutil,tempfile,wave
+from tools.source_retention import retained_directory,check_capacity
 from tools.video_request import validate
 from tools.video_queue import video_id
 from tools.video_reference import acquire,ffmpeg_path
@@ -73,7 +74,7 @@ def _review_artifact(root,identifier,request_id,evidence,outcomes,cancelled,comm
   if cancelled():raise InterruptedError('Candidate evidence paused before commit')
   if commit is None:publish_review()
   else:commit(publish_review)
- finally:pathlib.Path(name).unlink(missing_ok=True)
+ finally:pass # Retain unpublished metadata; no sync acknowledgement exists yet.
  return destination
 
 
@@ -87,11 +88,11 @@ def prepare(request,specifications,*,analyze,transcribe,acquire_source=acquire,c
  movie=None;rows=[];files={};analysis=None;source_hash=None
  with _publish_lock(root/('.'+identifier+'.prepare.lock')):
   try:
-   with acquire_source(request['videoURL'],[dict(id='candidate-probe',start=0,end=.5)],cancelled=cancelled,activity=activity) as source:
+   with acquire_source(request['videoURL'],[dict(id='candidate-probe',start=0,end=.5)],cancelled=cancelled,activity=activity,retention_root=root.parent/'retained-sources',request_id=request['requestID']) as source:
     if source['videoID']!=identifier:raise ValueError('Downloaded source identity changed')
     movie=pathlib.Path(source['privateMoviePath']);source_hash=source['sourceSHA256']
     if not isinstance(source_hash,str) or not re.fullmatch('[a-f0-9]{64}',source_hash):raise ValueError('Invalid source proof')
-    with tempfile.TemporaryDirectory(prefix='.candidate-audio-',dir=root) as scratch:
+    with retained_directory(prefix='.candidate-audio-',dir=pathlib.Path(source.get('retentionDirectory',root/'retained-work'))) as scratch:
      scratch=pathlib.Path(scratch);decoded=scratch/'analysis.wav';ff=ffmpeg_path()
      checked_process([ff,'-v','error','-threads','1','-i',str(movie),'-t','1800.02','-fs','57600800','-vn','-ac','1','-ar','16000','-c:a','pcm_s16le',str(decoded)],timeout=90,cancelled=cancelled)
      with wave.open(str(decoded),'rb') as decoded_audio:
@@ -133,7 +134,7 @@ def prepare(request,specifications,*,analyze,transcribe,acquire_source=acquire,c
      target=root/'references'/identifier/revision
      if any(p.is_symlink() for p in [target,*target.parents] if p!=root.parent):raise ValueError('Linked reference destinations are unsupported')
      target.parent.mkdir(parents=True,exist_ok=True)
-     with tempfile.TemporaryDirectory(prefix='.candidate-reference-',dir=target.parent) as directory:
+     with retained_directory(prefix='.candidate-reference-',dir=target.parent) as directory:
       stage=pathlib.Path(directory)
       for name,data in files.items():
        with (stage/name).open('wb') as stream:stream.write(data);stream.flush();os.fsync(stream.fileno())
@@ -157,5 +158,5 @@ def prepare(request,specifications,*,analyze,transcribe,acquire_source=acquire,c
     os.link(name,output)
    if commit is None:publish_pointer()
    else:commit(publish_pointer)
-  finally:pathlib.Path(name).unlink(missing_ok=True)
+  finally:pass # Retain unpublished metadata; no sync acknowledgement exists yet.
   return output

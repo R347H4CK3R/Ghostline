@@ -8,10 +8,11 @@ import AVFoundation
     @StateObject private var audio = AudioStore()
     @StateObject private var characters = CharacterLibrary()
     @StateObject private var rvc = RVCOnlineStudio()
+    @StateObject private var localVideo = LocalVideoStudio()
     var body: some Scene {
-        WindowGroup { RootView().environmentObject(studio).environmentObject(audio).environmentObject(characters).environmentObject(rvc).preferredColorScheme(.dark).tint(StudioPalette.accent)
+        WindowGroup { RootView().environmentObject(studio).environmentObject(audio).environmentObject(characters).environmentObject(rvc).environmentObject(localVideo).preferredColorScheme(.dark).tint(StudioPalette.accent)
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in studio.memoryWarning(); characters.releaseWarmSpeech() }
-            .onChange(of: scenePhase, initial: true) { _, phase in characters.setApplicationActive(phase == .active) }
+            .onChange(of: scenePhase, initial: true) { _, phase in characters.setApplicationActive(phase == .active); localVideo.setActive(phase != .background) }
             .onChange(of: studio.busy) { _, busy in if busy { characters.releaseWarmSpeech() } }
         }
     }
@@ -61,6 +62,9 @@ struct HomeView: View {
                 Text("Pick a character. Create something worth hearing.")
                     .foregroundStyle(.secondary)
                 VStack(spacing: 12) {
+                    NavigationLink { LocalVideoStudioView() } label: {
+                        HomeCard(title: "Video Voice Studio", detail: "On this iPhone · no laptop needed.", icon: "iphone.gen3")
+                    }.accessibilityIdentifier("local-video-studio")
                     NavigationLink { CharacterLibraryView() } label: {
                         HomeCard(title: "Make speech", detail: "Type a message. Bring it to life.", icon: "text.bubble.fill", prominent: true)
                     }.accessibilityIdentifier("make-speech")

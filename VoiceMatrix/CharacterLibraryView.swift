@@ -189,6 +189,22 @@ import CryptoKit
         guard syncing, syncCanStop, syncRunID == run, !Task.isCancelled else { return }
         recordSync(event)
     }
+    func releaseForLocalGeneration() async throws {
+        guard !busy, !syncing else { throw CharacterImportError.invalid("Finish the current library operation first.") }
+        await engine.unload()
+    }
+    func importLocalGeneratedCollection(_ url: URL) async throws {
+        guard !busy, !syncing else { throw CharacterImportError.invalid("Finish the current library operation first.") }
+        busy = true
+        defer { busy = false }
+        profiles = try await store.importCollection(at: url)
+        storedVoiceBytes = try? await store.storedBytes()
+        if let data = try? Data(contentsOf: url.appendingPathComponent("collection.json")),
+           let value = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let first = (value["voices"] as? [[String: String]])?.first, let id = first["id"] { selectedID = id }
+        await refreshReviewSummaries()
+        message = "Local preview-only reference saved. Listen before judging resemblance; identity is not verified."
+    }
     func importFolder(_ url: URL) {
         guard !busy, downloadingID == nil else { return }
         catalogRefresh = UUID()

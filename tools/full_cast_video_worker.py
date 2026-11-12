@@ -1,4 +1,6 @@
 """Resumable full-cast reference-conditioned preview worker. Not RVC training or iOS admission."""
+# Historical standalone worker deletes sources without destination acknowledgement.
+raise SystemExit('Legacy full-cast worker disabled pending verified-delivery retention; use the retained queue pipeline.')
 import os,pathlib,json,time,hashlib,re,subprocess,wave,tempfile,zipfile,contextlib,traceback
 from local_f5 import load_local_model,MODEL_SHA256
 from retry_policy import attempt_with_retries

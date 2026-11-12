@@ -253,7 +253,7 @@ class DatasetTests(unittest.TestCase):
         self.assertTrue(all(not movie.exists() for movie in self.acquisitions))
         self.assertEqual(list(self.output.rglob('manifest.json')), [])
 
-    def test_cancellation_and_stale_commit_remove_temporary_source_without_publishing(self):
+    def test_cancellation_and_stale_commit_retain_generated_data_without_publishing(self):
         with self.assertRaises(InterruptedError):
             self.prepare(cancelled=lambda: True)
         self.assertEqual(self.acquisitions, [])
@@ -265,8 +265,8 @@ class DatasetTests(unittest.TestCase):
         with self.assertRaises(InterruptedError):
             self.prepare(commit=stale)
         self.assertTrue(all(not movie.exists() for movie in self.acquisitions))
-        self.assertEqual(list(self.output.rglob('*.wav')), [])
-        self.assertEqual(list(self.output.rglob('manifest.json')), [])
+        self.assertTrue(list(self.output.rglob('*.wav')))
+        self.assertTrue(all(p.parent.name.startswith('.') for p in self.output.rglob('manifest.json')))
 
     def test_existing_outputs_survive_new_revision_and_changed_cache_is_rejected(self):
         old_path, old = self.prepare()

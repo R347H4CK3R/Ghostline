@@ -5,10 +5,12 @@ import hashlib,json,pathlib,re,shutil,subprocess,tempfile,math
 from tools.process_control import checked_process
 from urllib.parse import urlparse
 from contextlib import contextmanager
+from tools.source_retention import source_slot,write_record
 def validate_request(url,segments):
  parsed=urlparse(url)
  if parsed.scheme!='https' or parsed.hostname not in {'youtube.com','www.youtube.com','youtu.be'} or parsed.username or parsed.password:
   raise ValueError('Use a public HTTPS YouTube link')
+ if not isinstance(segments,list) or not 1<=len(segments)<=64:raise ValueError('Choose 1–64 reference segments')
  seen=set()
  for s in segments:
   if not re.fullmatch(r'[a-z0-9_-]+',s['id']) or s['id'] in seen:raise ValueError('Unsafe or repeated profile ID')
@@ -58,41 +60,48 @@ def download_video(url,root,ff,downloader_factory=None,*,cancelled=lambda:False,
  return {k:metadata[k] for k in ['id','title','duration']}
 
 @contextmanager
-def acquire(url,segments,downloader_factory=None,*,cancelled=lambda:False,max_duration=1800,max_bytes=268435456,max_download_seconds=300,activity=lambda *args:None):
+def acquire(url,segments,downloader_factory=None,*,cancelled=lambda:False,max_duration=1800,max_bytes=268435456,max_download_seconds=300,activity=lambda *args:None,retention_root=None,request_id=None):
  validate_request(url,segments);ff=ffmpeg_path()
+ if cancelled():raise InterruptedError('Video preparation paused')
  if isinstance(max_duration,bool) or not isinstance(max_duration,(int,float)) or not math.isfinite(max_duration) or not 1<=max_duration<=3600:raise ValueError('Video duration limit must be 1–3600 seconds')
  if isinstance(max_bytes,bool) or not isinstance(max_bytes,int) or not 1024<=max_bytes<=1073741824:raise ValueError('Video byte limit must be 1 KiB–1 GiB')
  if isinstance(max_download_seconds,bool) or not isinstance(max_download_seconds,(int,float)) or not math.isfinite(max_download_seconds) or not .1<=max_download_seconds<=900:raise ValueError('Download deadline must be 0.1–900 seconds')
- with tempfile.TemporaryDirectory(prefix='voicematrix-reference-') as temporary:
-  root=pathlib.Path(temporary)
-  activity('download_started')
-  if downloader_factory is None:
-   import importlib.util,sys
-   if importlib.util.find_spec('yt_dlp') is None:raise ValueError('Install the local yt-dlp download dependency')
-   command=[sys.executable,str(pathlib.Path(__file__).with_name('video_download.py')),url,str(root),ff,str(max_duration),str(max_bytes)]
-   try:checked_process(command,timeout=max_download_seconds,cancelled=cancelled)
-   except subprocess.CalledProcessError as e:raise ValueError('Video download failed: '+e.stderr.decode(errors='replace')[-800:]) from e
-   record=root/'download-metadata.json'
-   if not record.is_file() or record.stat().st_size>65536:raise ValueError('Invalid video metadata')
-   metadata=json.loads(record.read_text(encoding='utf8'))
+ with source_slot(retention_root,url,max_bytes,request_id) as (root,usage,cached):
+  if cached is None:
+   activity('download_started')
+   if downloader_factory is None:
+    import importlib.util,sys
+    if importlib.util.find_spec('yt_dlp') is None:raise ValueError('Install the local yt-dlp download dependency')
+    command=[sys.executable,str(pathlib.Path(__file__).with_name('video_download.py')),url,str(root),ff,str(max_duration),str(max_bytes)]
+    try:checked_process(command,timeout=max_download_seconds,cancelled=cancelled)
+    except subprocess.CalledProcessError as e:raise ValueError('Video download failed: '+e.stderr.decode(errors='replace')[-800:]) from e
+    record=root/'download-metadata.json'
+    if not record.is_file() or record.stat().st_size>65536:raise ValueError('Invalid video metadata')
+    metadata=json.loads(record.read_text(encoding='utf8'))
+   else:
+    # In-process factory injection is a test seam; the real downloader is a child.
+    metadata=download_video(url,root,ff,downloader_factory,cancelled=cancelled,max_duration=max_duration,max_bytes=max_bytes)
+   activity('download_finished')
   else:
-   # In-process factory injection is a test seam; the real downloader is a child.
-   metadata=download_video(url,root,ff,downloader_factory,cancelled=cancelled,max_duration=max_duration,max_bytes=max_bytes)
-  activity('download_finished')
+   metadata=cached['metadata']
+  if not isinstance(metadata,dict) or not isinstance(metadata.get('id'),str) or not 1<=len(metadata['id'])<=128 or not isinstance(metadata.get('title'),str) or len(metadata['title'])>8192 or type(metadata.get('duration')) not in (int,float) or not math.isfinite(metadata['duration']) or not 0<metadata['duration']<=max_duration:raise ValueError('Invalid retained media metadata')
   movie=root/'source.mp4'
   if not movie.is_file() or movie.is_symlink() or movie.stat().st_size>max_bytes:raise ValueError('Video is missing or exceeds the byte limit')
   activity('media_checking')
   checked_process([ff,'-v','error','-i',str(movie),'-t','0.2','-map','0:v:0','-map','0:a:0','-f','null','-'],timeout=60,cancelled=cancelled)
+  with movie.open('rb') as stream:source_hash=hashlib.file_digest(stream,'sha256').hexdigest()
+  if cached is None:write_record(root/'source.json',dict(schemaVersion=1,videoID=metadata['id'],sourceURL=url,sourceSHA256=source_hash,sourceBytes=movie.stat().st_size,metadata=metadata,cleanupEligible=False))
+  write_record(usage/'source-binding.json',dict(schemaVersion=1,videoID=metadata['id'],requestID=request_id,sourceURL=url,sourceSHA256=source_hash,sourceBytes=movie.stat().st_size,cleanupEligible=False))
   rows=[]
   for index,s in enumerate(segments):
    activity('extracting',index,len(segments))
    if s['end']>metadata['duration']:raise ValueError('Reference extends beyond video')
-   output=root/(s['id']+'.wav')
+   output=usage/(s['id']+'.wav')
    checked_process([ff,'-v','error','-ss',str(s['start']),'-i',str(movie),'-t',str(s['end']-s['start']),'-vn','-ac','1','-ar','24000','-c:a','pcm_s16le',str(output)],timeout=60,cancelled=cancelled)
    rows.append(dict(s,audioPath=str(output),sha256=hashlib.sha256(output.read_bytes()).hexdigest()))
   with movie.open('rb') as f:source_hash=hashlib.file_digest(f,'sha256').hexdigest()
-  yield dict(privateMoviePath=str(movie),sourceURL=url,title=metadata['title'],duration=metadata['duration'],videoID=metadata['id'],sourceSHA256=source_hash,segments=rows,characterIdentification='Reviewed source labels, not biometric identification.',authorizedLikeness=False)
- # TemporaryDirectory removes source and extracted references even on failure.
+  yield dict(retentionDirectory=str(usage),cleanupEligible=False,privateMoviePath=str(movie),sourceURL=url,title=metadata['title'],duration=metadata['duration'],videoID=metadata['id'],sourceSHA256=source_hash,segments=rows,characterIdentification='Reviewed source labels, not biometric identification.',authorizedLikeness=False)
+ # Source, extracted segments and private failure records remain retained.
 def synthesize(references,texts,output_directory,model=None):
  import numpy as np
  import soundfile as sf

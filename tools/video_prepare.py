@@ -1,5 +1,6 @@
 """Prepare reviewed video references for the queue processor."""
 import hashlib,json,os,pathlib,re,shutil,tempfile
+from tools.source_retention import retained_directory,check_capacity
 from tools.video_reference import acquire,validate_request
 from tools.video_queue import video_id
 from tools.voice_pack import _metadata,_audio
@@ -41,7 +42,7 @@ def prepare(recipe_path,spec_directory,*,cancelled=lambda:False,transcribe=None,
  root=root.resolve();root.mkdir(parents=True,exist_ok=True)
  with _publish_lock(root/('.'+identifier+'.prepare.lock')):
   if cancelled():raise InterruptedError('Video preparation paused')
-  with acquire(recipe['videoURL'],segments,downloader_factory,cancelled=cancelled,activity=activity,max_duration=recipe.get('maxVideoSeconds',1800),max_bytes=recipe.get('maxDownloadBytes',268435456),max_download_seconds=recipe.get('maxDownloadSeconds',300)) as source:
+  with acquire(recipe['videoURL'],segments,downloader_factory,cancelled=cancelled,activity=activity,max_duration=recipe.get('maxVideoSeconds',1800),max_bytes=recipe.get('maxDownloadBytes',268435456),max_download_seconds=recipe.get('maxDownloadSeconds',300),retention_root=root.parent/'retained-sources') as source:
    if source['videoID']!=identifier:raise ValueError('Downloaded video does not match the queued video ID')
    if 'inspectedSourceSHA256' in recipe and source['sourceSHA256']!=recipe['inspectedSourceSHA256']:raise ReviewRequired('Source bytes changed after inspection; new source review is required')
    rows=[];files={};owners=set()
@@ -61,6 +62,7 @@ def prepare(recipe_path,spec_directory,*,cancelled=lambda:False,transcribe=None,
    target=root/'references'/identifier/revision
    if any(p.is_symlink() for p in [target,*target.parents] if p!=root.parent):raise ValueError('Linked reference destinations are unsupported')
    target.parent.mkdir(parents=True,exist_ok=True)
+   check_capacity(target.parent)
    stage=pathlib.Path(tempfile.mkdtemp(prefix='.preparing-',dir=target.parent))
    try:
     for name,data in files.items():
@@ -80,7 +82,7 @@ def prepare(recipe_path,spec_directory,*,cancelled=lambda:False,transcribe=None,
      operation=lambda:os.replace(name,output)
      if commit is None:operation()
      else:commit(operation)
-    finally:pathlib.Path(name).unlink(missing_ok=True)
+    finally:pass # Retain unpublished metadata; no sync acknowledgement exists yet.
     return output
    finally:
-    if stage.exists():shutil.rmtree(stage)
+    pass # Unpublished generated references remain recoverable.

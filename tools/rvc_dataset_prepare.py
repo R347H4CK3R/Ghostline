@@ -21,6 +21,7 @@ import stat
 import tempfile
 import wave
 
+from tools.source_retention import retained_directory,check_capacity
 from tools.master_voices import _publish_lock, _sync_directory
 from tools.process_control import checked_process
 from tools.rvc_training import audit_dataset
@@ -230,7 +231,11 @@ def _audit_rows(directory, rows, omit, group, cancelled):
     for row in list(rows):
         name = pathlib.PurePosixPath(row['file']).name
         if name not in admitted:
-            (directory / name).unlink()
+            rejected = directory.parents[3] / ('rejected-' + directory.parents[2].name) / directory.parent.name / directory.name
+            rejected.mkdir(parents=True, exist_ok=True, mode=0o700)
+            target = rejected / name
+            if target.exists() or target.is_symlink():raise FileExistsError('Existing rejected reference preserved')
+            os.rename(directory / name, target)
             rows.remove(row)
             omit('audio-audit-rejected', group=group, start=row['start'], end=row['end'])
         else:
@@ -472,6 +477,7 @@ def prepare(request, output_root, *, analyze, acquire_source=acquire,
             load_manifest(target / 'manifest.json', request=request, cancelled=cancelled)
             activity('rvc_dataset_reused')
             return target / 'manifest.json'
+        check_capacity(destination)
         stage = pathlib.Path(tempfile.mkdtemp(prefix='.preparing-', dir=destination))
         omissions = []
         omitted_count = 0
@@ -485,7 +491,8 @@ def prepare(request, output_root, *, analyze, acquire_source=acquire,
             activity('rvc_dataset_preparing')
             with acquire_source(url, [dict(id='rvc-probe', start=0, end=.5)],
                                 cancelled=cancelled, activity=activity, max_duration=MAX_VIDEO_SECONDS,
-                                max_bytes=MAX_DOWNLOAD_BYTES, max_download_seconds=300) as acquired:
+                                max_bytes=MAX_DOWNLOAD_BYTES, max_download_seconds=300,
+                                retention_root=destination.parent/'retained-sources', request_id=request.get('requestID')) as acquired:
                 _cancel(cancelled)
                 if acquired.get('videoID') != identifier:
                     raise ValueError('Acquired source does not match requested video')
@@ -497,7 +504,7 @@ def prepare(request, output_root, *, analyze, acquire_source=acquire,
                 if digest != acquired.get('sourceSHA256'):
                     raise ValueError('Acquired source checksum mismatch')
                 source = dict(videoURL=url, videoID=identifier, sourceSHA256=digest, sourceUse=request['sourceUse'])
-                with tempfile.TemporaryDirectory(prefix='.decoding-', dir=destination) as scratch:
+                with retained_directory(prefix='.decoding-', dir=pathlib.Path(acquired.get('retentionDirectory',destination))) as scratch:
                     decoded = pathlib.Path(scratch) / 'original-40k.wav'
                     analysis_audio = pathlib.Path(scratch) / 'analysis-16k.wav'
                     ffmpeg = ffmpeg_path()
@@ -567,5 +574,4 @@ def prepare(request, output_root, *, analyze, acquire_source=acquire,
             activity('rvc_dataset_ready')
             return target / 'manifest.json'
         finally:
-            if stage.exists():
-                shutil.rmtree(stage)
+            pass # Keep interrupted generated datasets for recovery.

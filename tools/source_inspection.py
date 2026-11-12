@@ -1,5 +1,6 @@
 """Bounded audio-activity suggestions. These are NOT diarization or character labels."""
 import array,hashlib,json,math,os,pathlib,re,sys,tempfile,time,wave
+from tools.source_retention import retained_directory,check_capacity
 from tools.video_queue import video_id
 from tools.video_reference import acquire,ffmpeg_path
 from tools.process_control import checked_process
@@ -86,14 +87,14 @@ def inspect_source(request_path,root,*,cancelled=lambda:False,downloader_factory
  if any(p.is_symlink() for p in [destination,*destination.parents]):raise ValueError('Linked proposal folders are unsupported')
  destination.mkdir(parents=True,exist_ok=True)
  with _publish_lock(root/('.'+identifier+'.inspection.lock')):
-  with tempfile.TemporaryDirectory(prefix='.inspecting-',dir=destination) as temporary:
+  with retained_directory(prefix='.inspecting-',dir=destination) as temporary:
    stage=pathlib.Path(temporary);ff=ffmpeg_path()
    activity('inspection_started')
-   # Acquisition remains bounded/cancellable; its temporary original is deleted on exit.
-   with acquire(request['videoURL'],[dict(id='inspection-probe',start=0,end=.5)],downloader_factory,cancelled=paused,activity=activity) as source:
+   # Acquisition remains bounded/cancellable; its original and extracted files remain retained.
+   with acquire(request['videoURL'],[dict(id='inspection-probe',start=0,end=.5)],downloader_factory,cancelled=paused,activity=activity,retention_root=root/'retained-sources') as source:
     if source['videoID']!=identifier:raise ValueError('Inspected source does not match the queued video')
     activity('inspection_analyzing')
-    decoded=stage/'analysis.wav'
+    decoded=pathlib.Path(source['retentionDirectory'])/'analysis.wav'
     checked_process([ff,'-v','error','-threads','1','-i',source['privateMoviePath'],'-t','1800.02','-fs','57600800','-vn','-ac','1','-ar','16000','-c:a','pcm_s16le',str(decoded)],timeout=90,cancelled=paused)
     spans=activity_spans(decoded,paused);rows=[]
     for n,(start,end) in enumerate(spans):
@@ -104,7 +105,7 @@ def inspect_source(request_path,root,*,cancelled=lambda:False,downloader_factory
      if len(data)>848000:raise ValueError('Proposal clip too large')
      rows.append(dict(start=start,end=end,file=name,sha256=checksum(data),labelStatus='uncertain'))
     result=dict(schemaVersion=1,videoID=identifier,status='needs-source-review',requestSHA256=request_hash,sourceSHA256=source['sourceSHA256'],speakerSeparated=False,likenessVerified=False,segments=rows,scope='Audio activity suggestions only; names, clean speakers and reference use require explicit review')
-   decoded.unlink();result['revision']=checksum(json.dumps(result,sort_keys=True,separators=(',',':')).encode())
+   result['revision']=checksum(json.dumps(result,sort_keys=True,separators=(',',':')).encode())
    if paused():raise InterruptedError('Source inspection paused before publication')
    target=destination/result['revision']
    def publish():
@@ -116,7 +117,7 @@ def inspect_source(request_path,root,*,cancelled=lambda:False,downloader_factory
     try:
      with os.fdopen(fd,'w',encoding='utf8') as f:json.dump(result,f,indent=2);f.write('\n');f.flush();os.fsync(f.fileno())
      os.replace(name,destination/'index.json')
-    finally:pathlib.Path(name).unlink(missing_ok=True)
+    finally:pass # Retain unpublished metadata; no sync acknowledgement exists yet.
    if commit is None:publish()
    else:commit(publish)
    activity('inspection_ready')

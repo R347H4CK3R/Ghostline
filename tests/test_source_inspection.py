@@ -30,7 +30,7 @@ class InspectionTests(unittest.TestCase):
   for segment in result['segments']:
    self.assertEqual(segment['labelStatus'],'uncertain');self.assertTrue(.5<=segment['end']-segment['start']<=15)
    audio=self.root/'proposals/SYNTHETIC03'/result['revision']/segment['file'];self.assertEqual(hashlib.sha256(audio.read_bytes()).hexdigest(),segment['sha256'])
-  self.assertTrue(all(not path.exists() for path in calls))
+  self.assertTrue(all(path.exists() for path in calls))
   self.inspector()(self.path,self.root,downloader_factory=lambda _:self.fail('Unchanged inspection downloaded again'))
  def test_same_owned_queue_worker_inspects_without_allocating_synthesis_model(self):
   factory,calls=self.fixture();q=VideoQueue(str(self.root/'queue.db'));q.add([self.request['videoURL']])
@@ -63,8 +63,10 @@ class InspectionTests(unittest.TestCase):
   row=proposal['segments'][0]
   recipe=dict(schemaVersion=1,videoURL=self.request['videoURL'],inspectionRevision=proposal['revision'],inspectedSourceSHA256=proposal['sourceSHA256'],referenceUseReview=dict(decision='approved-local-processing',reviewer='Fixture creator',record='Original fixture'),segments=[dict(id='fixture',name='Original fixture',categories=['Original'],source='Original fixture',permission='Original fixture',start=row['start'],end=row['end'],labelStatus='original-speaker-reviewed')])
   save_initial_review(self.root,recipe)
-  # Real AV bytes change while retaining the same canonical URL.
-  movie=self.root/'fixture.mp4';movie.write_bytes(movie.read_bytes()+b'changed source bytes')
+  # A review bound to different source bytes must fail before transcription,
+  # even though the real original video is now retained and reused.
+  recipe_path=self.root/'recipes/SYNTHETIC03.json'
+  saved=json.loads(recipe_path.read_text());saved['inspectedSourceSHA256']='0'*64;recipe_path.write_text(json.dumps(saved))
   with self.assertRaisesRegex(ReviewRequired,'Source bytes changed'):
    prepare(self.root/'recipes/SYNTHETIC03.json',self.root/'specifications',downloader_factory=factory,transcribe=lambda _:self.fail('Changed source transcribed'))
   self.assertFalse((self.root/'specifications/SYNTHETIC03.json').exists())

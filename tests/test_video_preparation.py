@@ -8,7 +8,7 @@ from tools.video_reference import acquire
 
 class PreparationTests(unittest.TestCase):
  def setUp(self):
-  self.temp=tempfile.TemporaryDirectory();self.root=pathlib.Path(self.temp.name);self.recipes=self.root/'recipes';self.recipes.mkdir();self.specs=self.root/'specs';self.specs.mkdir()
+  self.temp=tempfile.TemporaryDirectory();self.root=pathlib.Path(self.temp.name).resolve();self.recipes=self.root/'recipes';self.recipes.mkdir();self.specs=self.root/'specs';self.specs.mkdir()
   self.recipe=dict(schemaVersion=1,videoURL='https://youtu.be/SYNTHETIC03',referenceUseReview=dict(decision='approved-local-processing',reviewer='Fixture creator',record='Original synthetic AV fixture'),segments=[dict(id='original-fixture',start=0,end=.7,labelStatus='original-speaker-reviewed',name='Original fixture',categories=['Animation','Fantasy'],source='Synthetic AV fixture',permission='Original synthetic fixture',referenceText='A reference sentence.')])
   self.path=self.recipes/'SYNTHETIC03.json';self.save()
  def save(self):self.path.write_text(json.dumps(self.recipe))
@@ -38,7 +38,7 @@ class PreparationTests(unittest.TestCase):
   result=self.prepare(downloader_factory=Downloader,transcribe=lambda _: 'A reference sentence.')
   self.assertTrue(result.is_file());spec=json.loads(result.read_text());row=spec['profiles'][0]
   reference=self.specs/row['referenceFile'];self.assertEqual(hashlib.sha256(reference.read_bytes()).hexdigest(),row['referenceSHA256'])
-  self.assertFalse(sources[0].exists());self.assertFalse(spec['provenance']['likenessVerified'])
+  self.assertTrue(sources[0].exists());self.assertFalse(spec['provenance']['likenessVerified'])
   q=VideoQueue(str(self.root/'queue.db'));q.add([self.recipe['videoURL']])
   def synth(pack,text,out,model):shutil.copyfile(reference,out)
   result.unlink()
@@ -48,8 +48,9 @@ class PreparationTests(unittest.TestCase):
   report=run_once(self.root/'queue.db',self.specs,self.root/'work',self.root/'Voices',model_factory=lambda:object(),synthesize=synth,verify=verify,recipe_directory=self.recipes,prepare_job=prepare_job)
   from tools.workflow_activity import snapshot
   stages=[e['stage'] for e in snapshot(self.root/'queue.db')['videos'][0]['events']]
-  self.assertEqual(stages[:9],['received','claimed','preparation_started','download_started','download_finished','media_checking','extracting','transcribing','preparation_ready'])
-  self.assertEqual(len(sources),2);self.assertTrue(all(not p.exists() for p in sources))
+  self.assertEqual(stages[:7],['received','claimed','preparation_started','media_checking','extracting','transcribing','preparation_ready'])
+  self.assertEqual(len(sources),1) # The verified original was reused, not downloaded again.
+  self.assertEqual(len(sources),1);self.assertTrue(all(p.exists() for p in sources))
   self.assertEqual(report['status'],'needs-review');self.assertTrue((self.root/'Voices/original-fixture/reference.wav').exists());q.close()
  def test_whole_pipeline_waits_then_automatically_retries_when_spec_arrives(self):
   import wave
@@ -93,12 +94,12 @@ class PreparationTests(unittest.TestCase):
    sys.path.insert(0,str(fake))
    with patch.dict(os.environ,values):yield marker
   finally:sys.path[:]=old
- def test_real_downloader_child_has_deadline_and_cleans_temporary_video(self):
+ def test_real_downloader_child_has_deadline_and_retains_interrupted_download(self):
   started=time.monotonic()
   with self.child_downloader(delay=20) as marker:
    with self.assertRaises(TimeoutError):
-    with acquire(self.recipe['videoURL'],self.recipe['segments'],max_download_seconds=3):self.fail('Slow download admitted')
-   self.assertTrue(marker.is_file());self.assertFalse(pathlib.Path(marker.read_text()).exists())
+    with acquire(self.recipe['videoURL'],self.recipe['segments'],max_download_seconds=3,retention_root=self.root/"retained-sources"):self.fail('Slow download admitted')
+   self.assertTrue(marker.is_file());self.assertTrue(pathlib.Path(marker.read_text()).exists())
   self.assertLess(time.monotonic()-started,8)
  @unittest.skipUnless(shutil.which('ffmpeg'),'FFmpeg required')
  def test_production_child_path_decodes_and_prepares_actual_video(self):
@@ -106,7 +107,7 @@ class PreparationTests(unittest.TestCase):
   subprocess.run(['ffmpeg','-v','error','-f','lavfi','-i','color=c=purple:s=160x90:d=1','-f','lavfi','-i','sine=frequency=440:duration=1','-c:v','mpeg4','-c:a','aac','-shortest',str(fixture)],check=True,capture_output=True)
   with self.child_downloader(fixture) as marker:
    result=self.prepare();spec=json.loads(result.read_text())
-   self.assertEqual(len(spec['profiles']),1);self.assertFalse(pathlib.Path(marker.read_text()).exists())
+   self.assertEqual(len(spec['profiles']),1);self.assertTrue(pathlib.Path(marker.read_text()).exists())
  def test_provisional_transcript_status_survives_in_native_folder(self):
   # The earlier whole pipeline checks exercise automatic ASR. This schema field
   # must never become a fabricated human approval during pack export.
@@ -117,7 +118,7 @@ class PreparationTests(unittest.TestCase):
   m={k:self.recipe['segments'][0][k] for k in ['id','name','categories','source','permission','referenceText']};m['referenceTranscriptStatus']='automatic-needs-review'
   pack=export_reference_pack(audio,m,self.root/'status.vmpack')
   self.assertEqual(validate_pack(pack)['referenceTranscriptStatus'],'automatic-needs-review')
- def test_oversized_download_is_rejected_and_removed_before_decoding(self):
+ def test_oversized_download_is_rejected_and_retained_before_decoding(self):
   roots=[]
   class Downloader:
    def __init__(self,o):self.root=pathlib.Path(o['outtmpl']).parent;roots.append(self.root)
@@ -127,8 +128,8 @@ class PreparationTests(unittest.TestCase):
     (self.root/'source.mp4').write_bytes(b'x'*2048)
     return dict(id='SYNTHETIC03',title='Oversize fixture',duration=1)
   with self.assertRaisesRegex(ValueError,'byte limit'):
-   with acquire(self.recipe['videoURL'],self.recipe['segments'],Downloader,max_bytes=1024):self.fail('Oversized source admitted')
-  self.assertFalse(roots[0].exists())
+   with acquire(self.recipe['videoURL'],self.recipe['segments'],Downloader,max_bytes=1024,retention_root=self.root/"retained-sources"):self.fail('Oversized source admitted')
+  self.assertTrue(roots[0].exists())
  @unittest.skipUnless(shutil.which('ffmpeg'),'FFmpeg required')
  def test_failed_replacement_preserves_previous_specification_and_reference(self):
   fixture=self.root/'rollback-fixture.mp4'
@@ -137,7 +138,8 @@ class PreparationTests(unittest.TestCase):
   previous=output.read_bytes();row=json.loads(previous)['profiles'][0];reference=(self.specs/row['referenceFile']).read_bytes()
   self.recipe['segments'][0]['name']='Changed candidate';self.save()
   bad=self.root/'bad-video.mp4';bad.write_text('<html>Unavailable</html>')
-  with self.child_downloader(bad) as marker:
-   with self.assertRaises(subprocess.CalledProcessError):self.prepare()
-   self.assertFalse(pathlib.Path(marker.read_text()).exists())
+  retained=next((self.root/'retained-sources').rglob('source.mp4'));retained.write_bytes(b'corrupted cached source')
+  with self.child_downloader(bad):
+   with self.assertRaisesRegex(ValueError,'Retained source changed'):self.prepare()
+  self.assertEqual(retained.read_bytes(),b'corrupted cached source')
   self.assertEqual(output.read_bytes(),previous);self.assertEqual((self.specs/row['referenceFile']).read_bytes(),reference)
