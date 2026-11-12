@@ -9,11 +9,11 @@ REPO = "R347H4CK3R/Ghostline"
 VERSION = "0.4.8"
 TAG = "voicematrix-v0.4.8"
 IPA = "VoiceMatrix-0.4.8.ipa"
-# Deliberately unbound until the fresh 0.4.8 candidate and every gate pass.
-# No previous release evidence can make this publisher run.
-CANDIDATE = ""
-EXPECTED_IPA_SHA256 = ""
-EXPECTED_IPA_BYTES = 0
+# Bound to the fresh 0.4.8 candidate evidence. Every gate is rechecked before
+# any publication; no previous release evidence can satisfy these bindings.
+CANDIDATE = 'f8cb410be37e4747e180234a37a724c2801ec3ef'
+EXPECTED_IPA_SHA256 = '21bd2d6e7ea4f2da1646e50c698f0b62ef3470dfca01670685da73831920b189'
+EXPECTED_IPA_BYTES = 731244571
 REQUIRED_GATES = (
     ".github/workflows/voicematrix-048-candidate.yml",
     ".github/workflows/character-ui-smoke.yml",
@@ -24,7 +24,16 @@ REQUIRED_GATES = (
     ".github/workflows/queue-processor.yml",
     ".github/workflows/queue-recovery.yml",
 )
-GATES = dict.fromkeys(REQUIRED_GATES, 0)
+GATES = {
+    ".github/workflows/voicematrix-048-candidate.yml": 43133962680,
+    ".github/workflows/character-ui-smoke.yml": 43133962600,
+    ".github/workflows/native-app.yml": 43133962569,
+    ".github/workflows/native-queue.yml": 43133962462,
+    ".github/workflows/native-character-folder.yml": 43133962451,
+    ".github/workflows/video-workflow.yml": 43133962551,
+    ".github/workflows/queue-processor.yml": 43133962454,
+    ".github/workflows/queue-recovery.yml": 43133962455
+}
 ROOT = pathlib.Path("release-evidence")
 NOTES = """VoiceMatrix 0.4.8
 

@@ -1,4 +1,5 @@
 name: Publish verified VoiceMatrix 0.4.8
+# Candidate f8cb410be37e4747e180234a37a724c2801ec3ef; all eight bound gates must pass.
 'on':
   push:
     branches: ['release/voicematrix-0.4.8']
