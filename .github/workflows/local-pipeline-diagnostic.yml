@@ -8,6 +8,8 @@ on:
         required: false
   workflow_dispatch:
   push:
+    branches-ignore:
+      - 'candidate/voicematrix-0.4.9'
     paths:
       - 'probes/native-local-studio/**'
       - '.github/workflows/local-pipeline-diagnostic.yml'

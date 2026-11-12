@@ -61,6 +61,16 @@ class CharacterPackageTests(unittest.TestCase):
         self.assertFalse(result['physicalIPhoneVerified'])
         self.assertFalse(result['characterLikenessVerified'])
 
+    def test_explicit_build_identity_rejects_reused_package(self):
+        with self.assertRaises(ValueError):
+            self.module.inspect_ipa(self.archive(),self.files,self.base_files,self.dependency_proof,expected_build='2')
+        info=plistlib.loads(self.entries['Info.plist']);info['CFBundleVersion']='2'
+        self.entries['Info.plist']=plistlib.dumps(info)
+        with self.assertRaises(ValueError):
+            self.module.inspect_ipa(self.archive(),self.files,self.base_files,self.dependency_proof)
+        result=self.module.inspect_ipa(self.archive(),self.files,self.base_files,self.dependency_proof,expected_build='2')
+        self.assertEqual(result['build'],'2')
+
     def test_missing_or_tampered_f5_asset_fails(self):
         name='F5TTS/model.safetensors'
         for replacement in [None,b'tampered']:
