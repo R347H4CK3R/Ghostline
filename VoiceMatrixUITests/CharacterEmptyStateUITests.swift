@@ -27,6 +27,22 @@ import XCTest
         add(attachment)
     }
 
+    func testLiveSyncLogOpensAndClosesRepeatedly() {
+        let app = launch()
+        app.tabBars.buttons["Voices"].tap()
+        XCTAssertTrue(app.navigationBars["Make Speech"].waitForExistence(timeout: 20))
+        app.buttons["Manage your collection"].tap()
+        for _ in 0..<2 {
+            let log = app.buttons["live-sync-log"]
+            reveal(log, in: app); log.tap()
+            XCTAssertTrue(app.navigationBars["Live sync log"].waitForExistence(timeout: 20))
+            XCTAssertTrue(app.staticTexts["Latest activity first"].exists)
+            capture("Live private sync activity", app: app)
+            app.buttons["Done"].tap()
+            XCTAssertTrue(app.navigationBars["Live sync log"].waitForNonExistence(timeout: 20))
+        }
+    }
+
     func testEmptySpeechCannotGenerateOrClaimReview() {
         let app = launch()
         let make = app.buttons["make-speech"]
