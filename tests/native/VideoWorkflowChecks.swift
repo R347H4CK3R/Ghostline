@@ -36,7 +36,7 @@ import Foundation
         // Historical synthesis cannot replace a newer pause in the current snapshot.
         let paused = try decode([video(status: "awaiting-preparation", events: [event(9, stage: "synthesizing")])]).videos[0]
         precondition(paused.status == .awaitingPreparation)
-        precondition(paused.status.title == "Waiting for reviewed speech segments")
+        precondition(paused.status.title == "Waiting for voice preparation")
         let duplicate = try decode([video(events: [event(3, stage: "already_queued")])]).videos[0]
         precondition(duplicate.events[0].stage == .alreadyQueued)
         precondition(duplicate.events[0].message.contains("existing queue entry"))

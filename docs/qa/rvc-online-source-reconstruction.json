@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "scope": "historical source-only reconstruction checkpoint, before later UI/runtime/receipt integration",
+  "base": "82081bf88fdd9d7a478d68f99e6df457f126e34b",
+  "sourceSuite": {
+    "tests": 583,
+    "skipped": 6,
+    "passed": true,
+    "seconds": 214.702
+  },
+  "focusedSuite": {
+    "tests": 73,
+    "skipped": 1,
+    "passed": true
+  },
+  "review": "Two independent review rounds; reported lifecycle, storage, integrity and WAV-contract defects fixed and regression-tested",
+  "neuralBoundary": "test doubles only in online source tests",
+  "nativeSwiftVerified": false,
+  "neuralOnlineServiceVerified": false,
+  "intermediateNeuralCaptureVerified": false,
+  "physicalIPhoneVerified": false,
+  "offlineRVCRuntimeVerified": false,
+  "identityVerified": false,
+  "likenessVerified": false,
+  "liveServicesChanged": false,
+  "checkpointCommit": "40ddb82f902d61861ce1f18e891cb2580321292f"
+}

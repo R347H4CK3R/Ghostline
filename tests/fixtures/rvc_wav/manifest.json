@@ -1,0 +1,12 @@
+{
+  "valid_pcm16.wav": true,
+  "valid_junk.wav": true,
+  "valid_odd_junk_pad.wav": true,
+  "valid_fmt18.wav": true,
+  "invalid_duplicate_fmt.wav": false,
+  "invalid_duplicate_data.wav": false,
+  "invalid_data_before_fmt.wav": false,
+  "invalid_odd_pcm.wav": false,
+  "invalid_missing_pad.wav": false,
+  "invalid_trailing.wav": false
+}

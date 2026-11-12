@@ -40,8 +40,8 @@ import XCTest
             let log = app.buttons["live-video-workflow"]
             reveal(log, in: app); log.tap()
             XCTAssertTrue(app.navigationBars["Video workflow"].waitForExistence(timeout: 15))
-            XCTAssertTrue(app.staticTexts["Live workflow unavailable"].waitForExistence(timeout: 20))
-            XCTAssertFalse(app.staticTexts["Laptop snapshot received"].exists)
+            XCTAssertTrue(app.staticTexts["Could not reach laptop workflow"].waitForExistence(timeout: 20))
+            XCTAssertFalse(app.staticTexts["Connected · laptop snapshot received"].exists)
             capture("Video workflow unavailable without fabricated progress", app: app)
             app.navigationBars["Video workflow"].buttons["Video List"].tap()
             XCTAssertTrue(app.navigationBars["Video List"].waitForExistence(timeout: 15))

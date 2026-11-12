@@ -39,3 +39,53 @@ class VideoReferenceTests(unittest.TestCase):
    with module.acquire('https://youtu.be/example',[dict(id='rick',start=0,end=.6)],FakeDownloader) as result:
     path=pathlib.Path(result['segments'][0]['audioPath']);self.assertGreater(path.stat().st_size,44)
    self.assertFalse(path.exists())
+ def test_split_av_fallback_and_mp4_merge_are_bounded(self):
+  captured={}
+  class Downloader:
+   def __init__(self,options):captured.update(options)
+   def __enter__(self):return self
+   def __exit__(self,*args):pass
+   def extract_info(self,*args,**kwargs):return dict(id='fixture',title='fixture',duration=518)
+  with tempfile.TemporaryDirectory() as temp:module.download_video('https://youtu.be/example',pathlib.Path(temp),'ffmpeg',Downloader)
+  self.assertEqual(captured['format'],'best[ext=mp4][height<=480]/bestvideo[ext=mp4][height<=480][vcodec^=avc1]+bestaudio[ext=m4a][acodec^=mp4a]')
+  self.assertEqual(captured['merge_output_format'],'mp4')
+  self.assertEqual(captured['max_filesize'],268435456)
+ def test_split_download_aggregate_bytes_cannot_exceed_limit(self):
+  class Downloader:
+   def __init__(self,options):self.options=options
+   def __enter__(self):return self
+   def __exit__(self,*args):pass
+   def extract_info(self,*args,**kwargs):
+    hook=self.options['progress_hooks'][0]
+    hook(dict(filename='source.f135.mp4',downloaded_bytes=700))
+    hook(dict(filename='source.f135.mp4',downloaded_bytes=700))
+    hook(dict(filename='source.f140.m4a',downloaded_bytes=400))
+    return dict(id='fixture',title='fixture',duration=518)
+  with tempfile.TemporaryDirectory() as temp:
+   with self.assertRaises(ValueError):module.download_video('https://youtu.be/example',pathlib.Path(temp),'ffmpeg',Downloader,max_bytes=1024)
+ def test_selected_stream_size_metadata_respects_aggregate_limit(self):
+  captured={}
+  class Downloader:
+   def __init__(self,options):captured.update(options)
+   def __enter__(self):return self
+   def __exit__(self,*args):pass
+   def extract_info(self,*args,**kwargs):return dict(id='fixture',title='fixture',duration=518)
+  with tempfile.TemporaryDirectory() as temp:module.download_video('https://youtu.be/example',pathlib.Path(temp),'ffmpeg',Downloader,max_bytes=1024)
+  self.assertIsNotNone(captured['match_filter'](dict(duration=518,requested_formats=[dict(filesize=700),dict(filesize=400)])))
+ @unittest.skipUnless(importlib.util.find_spec('yt_dlp'),'Uses installed yt-dlp selector without network')
+ def test_real_selector_split_only_fixture_never_chooses_high_resolution(self):
+  from yt_dlp import YoutubeDL
+  captured={}
+  class Downloader:
+   def __init__(self,options):captured.update(options)
+   def __enter__(self):return self
+   def __exit__(self,*args):pass
+   def extract_info(self,*args,**kwargs):return dict(id='fixture',title='fixture',duration=518)
+  with tempfile.TemporaryDirectory() as temp:module.download_video('https://youtu.be/example',pathlib.Path(temp),'ffmpeg',Downloader)
+  formats=[dict(format_id='140',ext='m4a',acodec='mp4a.40.2',vcodec='none',url='https://invalid.example/audio'),dict(format_id='135',ext='mp4',height=480,acodec='none',vcodec='avc1.4D401F',url='https://invalid.example/video'),dict(format_id='137',ext='mp4',height=1080,acodec='none',vcodec='avc1.640028',url='https://invalid.example/high')]
+  with YoutubeDL(dict(quiet=True)) as ydl:
+   selector=ydl.build_format_selector(captured['format'])
+   chosen=list(selector(dict(formats=formats,incomplete_formats=False)))
+   self.assertEqual([f['format_id'] for f in chosen[0]['requested_formats']],['135','140'])
+   highonly=[f for f in formats if f['format_id']!='135']
+   self.assertEqual(list(selector(dict(formats=highonly,incomplete_formats=False))),[])

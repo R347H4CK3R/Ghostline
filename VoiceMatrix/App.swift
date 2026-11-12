@@ -7,8 +7,9 @@ import AVFoundation
     @StateObject private var studio = SpeechStudio()
     @StateObject private var audio = AudioStore()
     @StateObject private var characters = CharacterLibrary()
+    @StateObject private var rvc = RVCOnlineStudio()
     var body: some Scene {
-        WindowGroup { RootView().environmentObject(studio).environmentObject(audio).environmentObject(characters).preferredColorScheme(.dark).tint(StudioPalette.accent)
+        WindowGroup { RootView().environmentObject(studio).environmentObject(audio).environmentObject(characters).environmentObject(rvc).preferredColorScheme(.dark).tint(StudioPalette.accent)
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in studio.memoryWarning(); characters.releaseWarmSpeech() }
             .onChange(of: scenePhase, initial: true) { _, phase in characters.setApplicationActive(phase == .active) }
             .onChange(of: studio.busy) { _, busy in if busy { characters.releaseWarmSpeech() } }
@@ -66,6 +67,9 @@ struct HomeView: View {
                     NavigationLink { CharacterLibraryView(mode: .conversion) } label: {
                         HomeCard(title: "Change my voice", detail: "Record or import your own words.", icon: "mic.fill")
                     }.accessibilityIdentifier("change-my-voice")
+                    NavigationLink { RVCOnlineView() } label: {
+                        HomeCard(title: "Laptop RVC", detail: "Online speech-to-speech conversion.", icon: "laptopcomputer")
+                    }.accessibilityIdentifier("laptop-rvc")
                 }
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Your collection").font(.title3.bold())

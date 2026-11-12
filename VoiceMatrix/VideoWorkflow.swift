@@ -64,7 +64,7 @@ enum VideoWorkflowStatus: String, Decodable, Sendable {
         case .waiting: return "Waiting for a laptop worker"
         case .retry: return "Waiting to retry"
         case .paused: return "Paused on the laptop"
-        case .awaitingPreparation: return "Waiting for reviewed speech segments"
+        case .awaitingPreparation: return "Waiting for voice preparation"
         case .processing: return "Processing on the laptop"
         case .needsReview: return "Technical processing ended; review pending"
         case .failed: return "Failed on the laptop"
@@ -93,6 +93,44 @@ struct VideoWorkflowVideo: Decodable, Identifiable, Sendable {
         case recordedEvents = "events"
     }
     var events: [VideoWorkflowEvent] { recordedEvents.sorted { $0.sequence < $1.sequence } }
+    /// Only a retained receipt event supplies a receipt time. A queue/heartbeat
+    /// timestamp, legacy snapshot, or later worker stage must never stand in for it.
+    var receiptEvent: VideoWorkflowEvent? {
+        events.last { [.received, .alreadyQueued, .candidateRequested].contains($0.stage) }
+    }
+    var processingSummary: String {
+        switch status {
+        case .processing: return workerActive ? "Processing reported by laptop" : "Processing not confirmed"
+        case .unknown: return "Processing state unknown"
+        default: return "Not processing"
+        }
+    }
+    /// Current state determines the next step, never historical progress events.
+    var nextAction: String {
+        switch status {
+        case .awaitingPreparation:
+            if let latest = events.last, latest.attempt == attempts, latest.stage == .candidateRuntimeMissing {
+                return "The latest retained event reports that automatic candidates were waiting for laptop speaker-analysis setup. Check that setup in the laptop companion; resending the link does not resolve it."
+            }
+            return "The link is on the laptop, but voice preparation is waiting. Check the latest setup and source-review events in the laptop companion; resending the link does not resolve preparation."
+        case .waiting:
+            return "This request is queued, not running. Keep the laptop companion and its worker available; receipt alone does not start processing."
+        case .retry:
+            return "The laptop scheduled another attempt. Check the companion for the prior failure and keep its worker available. Do not resend the link just to refresh its status."
+        case .paused:
+            return "Open this request in the laptop companion to check why it is paused and whether it can be resumed. Refreshing does not resume it."
+        case .processing:
+            return workerActive
+                ? "The laptop reports an active worker. Follow recorded stages below; elapsed time and heartbeat updates are not completion percentages."
+                : "No active worker lease was reported. Check the laptop worker; this snapshot cannot confirm that computation is still running."
+        case .needsReview:
+            return "Open the laptop companion for listening review. Technical processing ending does not confirm approval or saving voices on this iPhone."
+        case .failed:
+            return "Check this request in the laptop companion for the failure and next step. Existing saved voices are unchanged."
+        case .unknown:
+            return "Check the laptop companion and app versions. This app cannot interpret the reported state."
+        }
+    }
     var lastRecordedStage: VideoWorkflowStage? {
         currentStage ?? events.last(where: { $0.attempt == attempts && $0.stage.isWorkerStage })?.stage
     }
@@ -155,7 +193,7 @@ enum VideoWorkflowStage: String, Decodable, Sendable {
         case .alreadyQueued: return "Laptop received this link again; the existing queue entry was kept."
         case .claimed: return "A laptop worker claimed the request."
         case .resumed: return "Laptop resumed the request."
-        case .awaitingPreparation: return "Waiting for reviewed speech segments before voice preparation."
+        case .awaitingPreparation: return "Waiting before voice preparation."
         case .paused: return "Laptop paused this request."
         case .retry: return "Laptop scheduled another attempt."
         case .leaseExpired: return "The laptop worker lease expired before the stage finished."
@@ -287,6 +325,51 @@ enum VideoWorkflowFreshness {
     static func isStale(lastFetched: TimeInterval?, now: TimeInterval) -> Bool {
         guard let lastFetched else { return true }
         return now - lastFetched > 75
+    }
+}
+
+/// Show only the configured host, never pairing credentials or a URL path/query.
+enum VideoWorkflowConnectionDisplay {
+    static func host(_ address: String?) -> String? {
+        guard let address, let root = URL(string: address),
+              (try? VideoWorkflowSnapshot.endpoint(root: root)) != nil,
+              let host = root.host, !host.isEmpty, host.count <= 255,
+              !host.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else { return nil }
+        return host + (root.port.map { ":\($0)" } ?? "")
+    }
+}
+
+/// Transport failures are not queue states. Do not expose raw error text or infer
+/// that a responding but incompatible companion is offline.
+enum VideoWorkflowConnectionIssue: Equatable {
+    case unreachable, configuration, unverified
+    init(error: Error) {
+        if let workflow = error as? VideoWorkflowError, case .invalidConnection = workflow {
+            self = .configuration
+        } else if let url = error as? URLError,
+                  [.notConnectedToInternet, .cannotFindHost, .cannotConnectToHost,
+                   .networkConnectionLost, .timedOut, .dnsLookupFailed].contains(url.code) {
+            self = .unreachable
+        } else {
+            self = .unverified
+        }
+    }
+    var title: String {
+        switch self {
+        case .unreachable: return "Could not reach laptop workflow"
+        case .configuration: return "Laptop connection is not configured"
+        case .unverified: return "Laptop workflow response not verified"
+        }
+    }
+    var explanation: String {
+        switch self {
+        case .unreachable:
+            return "The latest connection attempt failed or timed out. Check Tailscale on both devices and keep the laptop companion running. This does not mean the video request was lost."
+        case .configuration:
+            return "Check the configured HTTPS laptop address and pairing. Existing saved voices remain available offline."
+        case .unverified:
+            return "This is not a processing update. Check pairing and the laptop companion version; the response may be unsupported or invalid. This alone does not establish that the laptop is offline."
+        }
     }
 }
 

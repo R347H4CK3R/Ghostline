@@ -48,7 +48,7 @@ def _rvc_status(root):
   return result
  finally:db.close()
 
-def create_server(root,token,port=0,trusted_login=None,master=None,rvc_root=None):
+def create_server(root,token,port=0,trusted_login=None,master=None,rvc_root=None,rvc_online=None):
  if len(token)<32:raise ValueError('Use a strong pairing token')
  if rvc_root is not None:rvc_root=_rvc_roots(root,rvc_root)
  root=pathlib.Path(root);root.mkdir(parents=True,exist_ok=True);lock=threading.Lock()
@@ -70,6 +70,8 @@ def create_server(root,token,port=0,trusted_login=None,master=None,rvc_root=None
    return bool(trusted_login and login and hmac.compare_digest(login,trusted_login))
   def do_GET(self):
    if not self.authorized():return self.respond(401,dict(error='Pairing required'))
+   from tools.rvc_online_http import dispatch
+   if dispatch(self,rvc_online):return
    address=urlsplit(self.path)
    if address.path=='/rvc/capabilities':
     return self.respond(200,dict(schemaVersion=1,rvcQueueConfigured=rvc_root is not None,format='rvc-v2-pth-index',nativeIPhoneRuntimeVerified=False))
@@ -165,6 +167,8 @@ def create_server(root,token,port=0,trusted_login=None,master=None,rvc_root=None
    finally:q.close()
   def do_POST(self):
    if not self.authorized():return self.respond(401,dict(error='Pairing required'))
+   from tools.rvc_online_http import dispatch
+   if dispatch(self,rvc_online):return
    if self.path=='/rvc/requests':
     if rvc_root is None:return self.respond(404,dict(error='Private RVC queue is not configured'))
     try:

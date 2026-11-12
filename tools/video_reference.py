@@ -23,19 +23,30 @@ def ffmpeg_path():
  return imageio_ffmpeg.get_ffmpeg_exe()
 def download_video(url,root,ff,downloader_factory=None,*,cancelled=lambda:False,max_duration=1800,max_bytes=268435456):
  """Download implementation used by a separately bounded production child."""
+ transferred={}
  def metadata_filter(info,*,incomplete=False):
   if cancelled():raise InterruptedError('Video preparation paused')
   duration=info.get('duration')
   if duration is None and incomplete:return None
   if isinstance(duration,bool) or not isinstance(duration,(int,float)) or not math.isfinite(duration) or not 0<duration<=max_duration:return 'Video duration is unknown or exceeds the configured limit'
+  streams=info.get('requested_formats') or [info]
+  if not isinstance(streams,list) or len(streams)>2 or any(not isinstance(row,dict) for row in streams):return 'Invalid selected media streams'
+  sizes=[row.get('filesize') for row in streams]
+  if any(value is not None and (type(value) is not int or value<0) for value in sizes):return 'Invalid media size'
+  if sum(value for value in sizes if value is not None)>max_bytes:return 'Selected streams exceed the aggregate byte limit'
  def progress_hook(info):
   if cancelled():raise InterruptedError('Video preparation paused')
-  if info.get('downloaded_bytes',0)>max_bytes:raise ValueError('Downloaded video exceeds the byte limit')
+  count=info.get('downloaded_bytes',0)
+  if type(count) is not int or count<0:raise ValueError('Invalid download progress')
+  key=info.get('info_dict',{}).get('format_id') or info.get('filename') or 'single'
+  if not isinstance(key,str) or len(key)>4096:raise ValueError('Invalid stream progress identity')
+  transferred[key]=max(count,transferred.get(key,0))
+  if len(transferred)>4 or sum(transferred.values())>max_bytes:raise ValueError('Downloaded streams exceed the aggregate byte limit')
  if downloader_factory is None:
   try:from yt_dlp import YoutubeDL
   except ImportError as e:raise ValueError('Install the local yt-dlp download dependency') from e
   downloader_factory=YoutubeDL
- options=dict(format='best[ext=mp4][height<=480]',outtmpl=str(root/'source.%(ext)s'),noplaylist=True,socket_timeout=25,retries=0,fragment_retries=0,extractor_retries=0,file_access_retries=0,ffmpeg_location=ff,max_filesize=max_bytes,match_filter=metadata_filter,progress_hooks=[progress_hook],quiet=True,no_warnings=True)
+ options=dict(format='best[ext=mp4][height<=480]/bestvideo[ext=mp4][height<=480][vcodec^=avc1]+bestaudio[ext=m4a][acodec^=mp4a]',merge_output_format='mp4',outtmpl=str(root/'source.%(ext)s'),noplaylist=True,socket_timeout=25,retries=0,fragment_retries=0,extractor_retries=0,file_access_retries=0,ffmpeg_location=ff,max_filesize=max_bytes,match_filter=metadata_filter,progress_hooks=[progress_hook],quiet=True,no_warnings=True)
  node=shutil.which('node')
  if node:options['js_runtimes']={'node':{'path':node}}
  try:
@@ -80,7 +91,7 @@ def acquire(url,segments,downloader_factory=None,*,cancelled=lambda:False,max_du
    checked_process([ff,'-v','error','-ss',str(s['start']),'-i',str(movie),'-t',str(s['end']-s['start']),'-vn','-ac','1','-ar','24000','-c:a','pcm_s16le',str(output)],timeout=60,cancelled=cancelled)
    rows.append(dict(s,audioPath=str(output),sha256=hashlib.sha256(output.read_bytes()).hexdigest()))
   with movie.open('rb') as f:source_hash=hashlib.file_digest(f,'sha256').hexdigest()
-  yield dict(privateMoviePath=str(movie),sourceURL=url,title=metadata['title'],videoID=metadata['id'],sourceSHA256=source_hash,segments=rows,characterIdentification='Reviewed source labels, not biometric identification.',authorizedLikeness=False)
+  yield dict(privateMoviePath=str(movie),sourceURL=url,title=metadata['title'],duration=metadata['duration'],videoID=metadata['id'],sourceSHA256=source_hash,segments=rows,characterIdentification='Reviewed source labels, not biometric identification.',authorizedLikeness=False)
  # TemporaryDirectory removes source and extracted references even on failure.
 def synthesize(references,texts,output_directory,model=None):
  import numpy as np

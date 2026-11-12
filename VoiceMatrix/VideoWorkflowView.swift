@@ -5,13 +5,14 @@ struct VideoWorkflowView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var snapshot: VideoWorkflowSnapshot?
     @State private var lastFetched: Date?
-    @State private var unavailable = false
+    @State private var connectionIssue: VideoWorkflowConnectionIssue?
     @State private var refreshing = false
     @State private var visible = false
     @State private var refreshID = UUID()
     @State private var requestGate = VideoWorkflowRequestGate()
 
     private struct PollID: Hashable { let active: Bool; let revision: UUID }
+    private var unavailable: Bool { connectionIssue != nil }
 
     init(videoID: String? = nil) { self.videoID = videoID }
 
@@ -26,28 +27,35 @@ struct VideoWorkflowView: View {
             guard visible, scenePhase == .active else { return }
             snapshot = received
             lastFetched = Date()
-            unavailable = false
+            connectionIssue = nil
         } catch {
-            if !Task.isCancelled { unavailable = true }
+            if !Task.isCancelled { connectionIssue = VideoWorkflowConnectionIssue(error: error) }
         }
     }
 
     var body: some View {
         List {
             Section("Laptop connection") {
+                if let host = VideoWorkflowConnectionDisplay.host(UserDefaults.standard.string(forKey: "laptopURL") ?? LaptopConnection.bundledURL) {
+                    Text("Configured laptop host: \(host)")
+                        .font(.caption).textSelection(.enabled)
+                } else {
+                    Text("No valid HTTPS laptop host is configured.").font(.caption).foregroundStyle(.orange)
+                }
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     let stale = VideoWorkflowFreshness.isStale(lastFetched: lastFetched?.timeIntervalSince1970, now: context.date.timeIntervalSince1970)
                     if scenePhase != .active {
                         Label("Updates paused while this screen is inactive", systemImage: "pause.circle")
-                    } else if unavailable {
-                        Label("Live workflow unavailable", systemImage: "wifi.slash").foregroundStyle(.orange)
-                        Text("The laptop may be offline or this companion may not support workflow logs. Check the connection and pairing. Saved voices remain available offline.").font(.caption)
+                    } else if let connectionIssue {
+                        Label(connectionIssue.title, systemImage: connectionIssue == .unreachable ? "wifi.slash" : "exclamationmark.triangle").foregroundStyle(.orange)
+                        Text(connectionIssue.explanation).font(.caption)
                     } else if snapshot == nil {
                         Text("Waiting for a verified laptop response…")
                     } else if stale {
                         Label("Snapshot is stale. Waiting for a fresh response…", systemImage: "clock.badge.exclamationmark")
                     } else {
-                        Label("Laptop snapshot received", systemImage: "checkmark.circle")
+                        Label("Connected · laptop snapshot received", systemImage: "checkmark.circle")
+                        Text("The laptop responded. A video can still be waiting and not processing; see its receipt and next step below.").font(.caption)
                     }
                     if let snapshot {
                         Text("Laptop snapshot: \(Date(timeIntervalSince1970: snapshot.observedAt).formatted(date: .abbreviated, time: .standard))")
@@ -63,12 +71,10 @@ struct VideoWorkflowView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             if let snapshot {
-                if let catalog = snapshot.catalog { WorkflowVoiceCatalogView(catalog: catalog) }
-                else { Text("Update the laptop companion to include voice-list observations in this log.").font(.caption).foregroundStyle(.secondary) }
                 if snapshot.videos.isEmpty {
                     Section("Video requests") {
                         Text(videoID == nil ? "No video requests were returned by the laptop." : "The laptop has no workflow snapshot for this video.")
-                        Text("An empty history does not prove the phone list was received. Check the sending log on Video List.").font(.caption).foregroundStyle(.secondary)
+                        Text("Laptop receipt not confirmed. No receipt for this selection was returned; check the sending log on Video List before retrying. An empty result does not prove the request was lost.").font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 ForEach(snapshot.videos) { video in
@@ -95,6 +101,8 @@ struct VideoWorkflowView: View {
                     Text("Showing at most 200 laptop requests. Open a video's workflow from Video List if it is missing here.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                if let catalog = snapshot.catalog { WorkflowVoiceCatalogView(catalog: catalog) }
+                else { Text("Update the laptop companion to include voice-list observations in this log.").font(.caption).foregroundStyle(.secondary) }
             }
             Section("Phone saving is separate") {
                 Text("Listening review is not completion. Sending a collection from the laptop does not mean it was saved on this iPhone.")
@@ -127,13 +135,25 @@ private struct VideoWorkflowSummary: View {
     let video: VideoWorkflowVideo
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(video.status.title).font(.headline)
-            Text("Current laptop status, not inferred from events").font(.caption).foregroundStyle(.secondary)
-            if video.status == .processing {
-                Text("Processing is active in the queue. Stage duration is not a completion percentage.").font(.caption)
+            if let receipt = video.receiptEvent {
+                Label("Received on laptop", systemImage: "checkmark.circle")
+                Text(Date(timeIntervalSince1970: receipt.time).formatted(date: .abbreviated, time: .standard))
+                    .font(.caption.monospacedDigit())
+                Text(receipt.stage == .alreadyQueued
+                     ? "Latest retained receipt: this link was received again; the existing request was kept. This is not a new processing run."
+                     : "Latest retained receipt for this video. Receipt is not processing, approval or phone saving.")
+                    .font(.caption).foregroundStyle(.secondary)
+            } else {
+                Label("Video is on the laptop", systemImage: "checkmark.circle")
+                Text("Receipt time unavailable; earlier history may no longer be retained. This queue entry does not identify which phone send attempt was received.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
+            Text(video.processingSummary).font(.headline)
+            Text(video.status.title)
+            Text("Status at the last verified laptop snapshot, not inferred from events").font(.caption).foregroundStyle(.secondary)
+            Text("Next step: \(video.nextAction)").font(.caption)
             if let stage = video.lastRecordedStage {
-                Text("\(video.status == .processing ? "Current reported stage" : "Last recorded stage"): \(stage.message)")
+                Text("\(video.status == .processing && video.workerActive ? "Current reported stage" : "Last recorded stage"): \(stage.message)")
             }
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 if let at = video.lastRecordedStageAt {
