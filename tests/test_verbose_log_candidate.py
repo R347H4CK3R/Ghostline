@@ -20,3 +20,6 @@ class VerboseCandidateTests(unittest.TestCase):
  def test_candidate_config_retriggers_every_same_source_gate(self):
   for name in ['character-ui-smoke','native-app','native-queue','native-character-folder','queue-processor','queue-recovery']:
    self.assertIn('.github/workflows/voicematrix-049-candidate.yml',(ROOT/f'.github/workflows/{name}.yml').read_text(),name)
+ def test_cross_platform_full_suite_has_expanded_bounded_budget(self):
+  source=(ROOT/'.github/workflows/queue-processor.yml').read_text()
+  self.assertIn('timeout-minutes: 20',source)
