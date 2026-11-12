@@ -2,6 +2,7 @@ name: Native queue UI checks
 on:
   push:
     paths:
+      - '.github/workflows/voicematrix-049-candidate.yml'
       - 'project.yml'
       - 'VoiceMatrix/VideoQueueView.swift'
       - 'VoiceMatrix/VideoCandidateRequest.swift'

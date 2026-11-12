@@ -13,3 +13,10 @@ class VerboseCandidateTests(unittest.TestCase):
   self.assertNotIn('0.4.8',text)
   self.assertIn('MARKETING_VERSION: 0.4.9',(ROOT/'project.yml').read_text())
   self.assertIn("CURRENT_PROJECT_VERSION: '1'",(ROOT/'project.yml').read_text())
+ def test_queue_recovery_installs_media_fixture_dependency(self):
+  text=(ROOT/'.github/workflows/queue-recovery.yml').read_text()
+  self.assertIn('choco install ffmpeg',text)
+  self.assertIn('apt-get install -y ffmpeg',text)
+ def test_candidate_config_retriggers_every_same_source_gate(self):
+  for name in ['character-ui-smoke','native-app','native-queue','native-character-folder','queue-processor','queue-recovery']:
+   self.assertIn('.github/workflows/voicematrix-049-candidate.yml',(ROOT/f'.github/workflows/{name}.yml').read_text(),name)

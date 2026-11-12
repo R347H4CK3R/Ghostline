@@ -16,6 +16,7 @@ jobs:
         python-version: '3.12'
     - name: Run source and packaging regressions
       run: |-
+        # Queue/dataset fixtures require the real media decoder on every runner.
         command -v ffmpeg >/dev/null || brew install ffmpeg
         python3 -m unittest discover -s tests -v
     - name: Freeze exact shared package graph
@@ -158,6 +159,7 @@ jobs:
         path: whisper-runtime
     - name: Build pinned independent word recognizer
       run: |-
+        # Queue/dataset fixtures require the real media decoder on every runner.
         command -v ffmpeg >/dev/null || brew install ffmpeg
         cmake -S whisper-runtime -B whisper-runtime/build -DGGML_METAL=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_SERVER=OFF -DCMAKE_BUILD_TYPE=Release
         cmake --build whisper-runtime/build --target whisper-cli -j 3
@@ -249,6 +251,7 @@ jobs:
         path: whisper-runtime
     - name: Build pinned independent word recognizer
       run: |-
+        # Queue/dataset fixtures require the real media decoder on every runner.
         command -v ffmpeg >/dev/null || brew install ffmpeg
         cmake -S whisper-runtime -B whisper-runtime/build -DGGML_METAL=OFF -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_SERVER=OFF -DCMAKE_BUILD_TYPE=Release
         cmake --build whisper-runtime/build --target whisper-cli -j 3

@@ -1,7 +1,7 @@
 name: Laptop queue recovery checks
 on:
   push:
-    paths: ['tools/video_queue.py', 'tools/queue_transport.py', 'tests/test_video_queue.py', 'tests/test_queue_recovery.py', 'tests/test_queue_transport.py', '.github/workflows/queue-recovery.yml']
+    paths: ['.github/workflows/voicematrix-049-candidate.yml', 'tools/video_queue.py', 'tools/queue_transport.py', 'tests/test_video_queue.py', 'tests/test_queue_recovery.py', 'tests/test_queue_transport.py', '.github/workflows/queue-recovery.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,11 +11,17 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install Windows media test dependency
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg -y --no-progress
+      - name: Install Linux media test dependency
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Exercise real SQLite workers and authenticated HTTP transport
         run: python -m unittest discover -s tests -p "test_*queue*.py" -v

@@ -2,6 +2,7 @@ name: Current no-stock character UI smoke
 on:
   push:
     paths:
+      - '.github/workflows/voicematrix-049-candidate.yml'
       - 'VoiceMatrix/F5ReferenceEngine.swift'
       - 'VoiceMatrix/F5SpeechChunks.swift'
       - 'VoiceMatrix/SpeechRendering.swift'
