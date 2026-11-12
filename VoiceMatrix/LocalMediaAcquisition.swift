@@ -155,7 +155,7 @@ enum LocalMediaAcquisition {
         let role:LocalMediaURLPolicy.Role,folder:URL,ext:String,maximumBytes:Int64,progress:Progress
         let configuration: URLSessionConfiguration
         var session:URLSession?,task:URLSessionDataTask?,continuation:CheckedContinuation<Result,Error>?
-        var file:FileHandle?,destination:URL?,hash=SHA256(),count:Int64=0,expected:Int64 = -1
+        var file:FileHandle?,destination:URL?,contentHash=SHA256(),count:Int64=0,expected:Int64 = -1
         var canceled=false,done=false,redirects=0,lastProgress=Date.distantPast
         init(role:LocalMediaURLPolicy.Role,folder:URL,ext:String,maximumBytes:Int64,configuration:URLSessionConfiguration,progress:@escaping Progress) {
             self.configuration=configuration
@@ -221,7 +221,7 @@ enum LocalMediaAcquisition {
             guard !done else { return }
             do {
                 guard Int64(data.count)<=maximumBytes-count else { throw LocalMediaURLPolicy.Failure.bounds }
-                try file?.write(contentsOf:data);hash.update(data:data);count += Int64(data.count)
+                try file?.write(contentsOf:data);contentHash.update(data:data);count += Int64(data.count)
                 if Date().timeIntervalSince(lastProgress)>=1 {
                     lastProgress=Date();try file?.synchronize()
                     let free=try folder.resourceValues(forKeys:[.volumeAvailableCapacityForImportantUsageKey]).volumeAvailableCapacityForImportantUsage ?? 0
@@ -234,7 +234,7 @@ enum LocalMediaAcquisition {
             guard !done else { return }
             guard error==nil,count>0,expected<0 || count==expected,let destination else { finish(.failure(LocalMediaURLPolicy.Failure.response));return }
             do { try file?.synchronize() } catch { finish(.failure(LocalMediaURLPolicy.Failure.storage));return }
-            finish(.success(Result(file:destination.lastPathComponent,sha256:hash.finalize().map{String(format:"%02x",$0)}.joined(),bytes:count)))
+            finish(.success(Result(file:destination.lastPathComponent,sha256:contentHash.finalize().map{String(format:"%02x",$0)}.joined(),bytes:count)))
         }
     }
 }

@@ -142,7 +142,58 @@ targets:
     settings:
       base:
         MACOSX_DEPLOYMENT_TARGET: '15.0'
+  LocalStudioDiagnostic:
+    type: tool
+    platform: macOS
+    sources:
+    - path: probes/native-local-studio/Diagnostic.swift
+    - path: VoiceMatrix/LocalVideoStudio.swift
+    - path: VoiceMatrix/LocalMediaAcquisition.swift
+    - path: VoiceMatrix/LocalMediaURLPolicy.swift
+    - path: VoiceMatrix/LocalVideoAudio.swift
+    - path: VoiceMatrix/LocalSpeakerDiarization.swift
+    - path: VoiceMatrix/LocalSpeakerPolicy.swift
+    - path: VoiceMatrix/LocalSoundQuality.swift
+    - path: VoiceMatrix/LocalSoundQualityPolicy.swift
+    - path: VoiceMatrix/LocalStudioEvidence.swift
+    - path: VoiceMatrix/OnDeviceTranscription.swift
+    - path: VoiceMatrix/BundledASRAssets.swift
+    - path: VoiceMatrix/BundledASRPolicy.swift
+    - path: VoiceMatrix/F5ReferenceEngine.swift
+    - path: VoiceMatrix/F5SpeechChunks.swift
+    - path: VoiceMatrix/CharacterLibrary.swift
+    - path: VoiceMatrix/CharacterFolderStore.swift
+    - path: VoiceMatrix/CharacterReviewStore.swift
+    - path: VoiceMatrix/CharacterVoiceConversion.swift
+    - path: VoiceMatrix/RemoteVoiceCatalog.swift
+    - path: VoiceMatrix/VoiceCatalogConnection.swift
+    - path: VoiceMatrix/VoiceFolderSync.swift
+    - path: VoiceMatrix/VoiceSyncLog.swift
+    - path: VoiceMatrix/LaptopConnection.swift
+    - path: VoiceMatrix/VideoWorkflow.swift
+    - path: VoiceMatrix/VideoCandidateRequest.swift
+    - path: VoiceMatrix/AudioStore.swift
+    - path: VoiceMatrix/StudioActivity.swift
+    - path: VoiceMatrix/SpeechEngine.swift
+    - path: VoiceMatrix/Catalog.swift
+    - path: VoiceMatrix/DeviceChecks.swift
+    - path: VoiceMatrix/OfflineVoiceConverter.swift
+    - path: VoiceMatrix/ConversionAudio.swift
+    - path: VoiceMatrix/HybridAudio.swift
+    - path: VoiceMatrix/TemporaryAudio.swift
+    - path: VoiceMatrix/SpeechRendering.swift
+    dependencies:
+    - package: FluidAudio
+    - package: SpeechSwift
+      product: F5TTS
+    settings:
+      base:
+        MACOSX_DEPLOYMENT_TARGET: '15.0'
 schemes:
+  LocalStudioDiagnostic:
+    build:
+      targets:
+        LocalStudioDiagnostic: all
   BundledASRDiagnostic:
     build:
       targets:

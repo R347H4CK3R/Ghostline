@@ -32,8 +32,8 @@ enum LocalSpeakerDiarization {
         let expected = try LocalSpeakerPolicy.speakerWindows(analysis.segments,duration:analysis.seconds)
         guard expected == analysis.speakerWindows else { throw Failure.invalidAudio }
     }
-    static func analyze(source: URL, progress: @escaping @Sendable (String) -> Void) async throws -> Analysis {
-        guard let bundle = Bundle.main.url(forResource:"Diarization",withExtension:nil) else { throw Failure.bundleUnavailable }
+    static func analyze(source: URL, bundle: URL? = Bundle.main.url(forResource:"Diarization",withExtension:nil), progress: @escaping @Sendable (String) -> Void) async throws -> Analysis {
+        guard let bundle else { throw Failure.bundleUnavailable }
         let worker = Task.detached(priority:.userInitiated) {
             try Task.checkCancellation()
             progress("Checking bundled speaker-analysis hashes.")

@@ -10,7 +10,7 @@ struct DeviceVoiceChecks: Codable {
     static var appVersion: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "development" }
     static var appBuild: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "development" }
     static var isPhysical: Bool {
-        #if targetEnvironment(simulator)
+        #if targetEnvironment(simulator) || !os(iOS)
         false
         #else
         true

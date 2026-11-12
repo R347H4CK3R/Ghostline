@@ -18,7 +18,7 @@ class LocalStudioSourceTests(unittest.TestCase):
   self.assertIn('preserveIncomplete: Bool = false',engine)
   self.assertIn('!completed && !preserveIncomplete',engine)
  def test_local_owner_cancels_optional_catalog_and_fences_import(self):
-  library=self.read('VoiceMatrix/CharacterLibraryView.swift')
+  library=self.read('VoiceMatrix/CharacterLibrary.swift')
   self.assertIn('func beginLocalGeneration()',library)
   self.assertIn('localGenerationOwner == owner',library)
   self.assertIn('syncJob?.cancel()',library)

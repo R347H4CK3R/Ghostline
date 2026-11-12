@@ -31,14 +31,21 @@ import CryptoKit
     @Published private(set) var busy = false
     @Published private(set) var notice = "Import an authorized local video or recording. Processing runs on this iPhone. URL acquisition contacts only the source website."
     private let root: URL
-    private let transcriber = OnDeviceTranscription()
+    private let transcriber: OnDeviceTranscription
+    private let f5Bundle: URL?
+    private let speakerBundle: URL?
     private let engine = F5ReferenceEngine(idleRetention: .zero)
     private var operation: Task<Void, Never>?
     private var active = true
     private var runToken = UUID()
     private let previewText = "I found a strange device near the portal."
-    init() {
-        root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("LocalVideoStudio", isDirectory: true)
+    init(root: URL? = nil,
+         asrBundle: URL? = Bundle.main.url(forResource: "ParakeetASR", withExtension: nil),
+         f5Bundle: URL? = Bundle.main.url(forResource: "F5TTS", withExtension: nil),
+         speakerBundle: URL? = Bundle.main.url(forResource: "Diarization", withExtension: nil)) {
+        self.transcriber = OnDeviceTranscription(bundle: asrBundle)
+        self.f5Bundle = f5Bundle; self.speakerBundle = speakerBundle
+        self.root = root ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("LocalVideoStudio", isDirectory: true)
         reloadHistory()
         current = history.first
         if current?.completed == false { notice = "Previous work was retained. Resume to continue while this app is open." }
@@ -209,7 +216,7 @@ import CryptoKit
                     try update("Speaker analysis retained", "Reusing the verified retained analysis so speaker groups stay consistent across Resume.")
                 } else {
                     try update("Analyzing speakers", "Loading bundled speaker analysis. Speaker groups are not character identities.")
-                    analysis = try await LocalSpeakerDiarization.analyze(source: retained) { [weak self] message in
+                    analysis = try await LocalSpeakerDiarization.analyze(source: retained, bundle: speakerBundle) { [weak self] message in
                         Task { @MainActor in
                             guard let self, self.runToken == run, self.busy, self.current?.stage == "Analyzing speakers" else { return }
                             try? self.update("Analyzing speakers", message, log: false)
@@ -225,7 +232,7 @@ import CryptoKit
                 let groups = analysis.speakerWindows
                 guard !groups.isEmpty else { throw LocalError.candidate }
                 try update("Speaker groups found", "Found \(groups.count) tentative speaker groups. Detected overlaps are excluded; music separation and character names are not verified.")
-                guard let bundle = Bundle.main.url(forResource: "F5TTS", withExtension: nil) else { throw LocalError.engine }
+                guard let bundle = f5Bundle else { throw LocalError.engine }
                 if current?.speakerVoiceIDs == nil { current?.speakerVoiceIDs = [:] }
                 if current?.speakerOutcomes == nil { current?.speakerOutcomes = [:] }
                 if current?.qualityPolicyVersions == nil { current?.qualityPolicyVersions = [:] }

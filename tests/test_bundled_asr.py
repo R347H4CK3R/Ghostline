@@ -104,7 +104,7 @@ class BundleASRTests(unittest.TestCase):
 
     def test_full_ipa_and_ui_workflows_include_asr_gates(self):
         workflow=(ROOT/'.github/workflows/voicematrix-049-candidate.yml').read_text()
-        self.assertIn('needs: [resolve, ipa, speech, conversion, bundled-asr]', workflow)
+        self.assertIn('needs: [resolve, ipa, speech, conversion, bundled-asr, local-pipeline]', workflow)
         self.assertIn('uses: ./.github/workflows/bundled-asr-diagnostic.yml', workflow)
         self.assertIn('  workflow_call:', (ROOT/'.github/workflows/bundled-asr-diagnostic.yml').read_text())
         self.assertIn('python3 tools/bundle_asr.py\n',workflow)

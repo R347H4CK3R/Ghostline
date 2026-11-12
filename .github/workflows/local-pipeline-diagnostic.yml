@@ -1,0 +1,70 @@
+name: Actual standalone local pipeline diagnostic
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'probes/native-local-studio/**'
+      - '.github/workflows/local-pipeline-diagnostic.yml'
+      - 'VoiceMatrix/Local*.swift'
+      - 'VoiceMatrix/CharacterLibrary.swift'
+      - 'VoiceMatrix/OnDeviceTranscription.swift'
+      - 'VoiceMatrix/F5ReferenceEngine.swift'
+      - 'project.yml'
+permissions:
+  contents: read
+jobs:
+  actual-local-pipeline:
+    runs-on: macos-26
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source and prepare pinned shared assets
+        run: |
+          python3 -m unittest tests.test_local_pipeline_diagnostic tests.test_local_video_studio -v
+          python3 tools/bundle_asr.py
+          python3 tools/bundle_diarization.py
+          python3 tools/character_package.py prepare --cache character-cache --resources character-resources > assets.json
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          target=Path('VoiceMatrix/Resources/F5TTS')
+          if target.is_symlink(): raise SystemExit('Unexpected link')
+          if target.exists(): shutil.rmtree(target)
+          shutil.copytree('character-resources/F5TTS',target)
+          PY
+      - name: Create neutral runtime fixture using installed macOS speech
+        run: |
+          mkdir -p local-evidence
+          python3 - <<'PY'
+          import subprocess,re,json,hashlib,platform
+          from pathlib import Path
+          sandbox=['/usr/bin/sandbox-exec','-p','(version 1)(allow default)(deny network*)']
+          voices=subprocess.check_output(sandbox+['/usr/bin/say','-v','?'],text=True)
+          choices=[re.match(r'^(.*?)\s+en_US\s+#',line) for line in voices.splitlines()]
+          choices=[m.group(1).strip() for m in choices if m]
+          if not choices: raise SystemExit('No installed English voice; no download or fallback')
+          voice='Samantha' if 'Samantha' in choices else choices[0]
+          text='Please open the blue notebook and write down these instructions. First close the window and put the book on the table. Then bring a glass of water to the quiet room. We will check every sentence before saving the recording.'
+          path=Path('local-evidence/neutral.wav')
+          subprocess.run(sandbox+['/usr/bin/say','-v',voice,'-r','155','--file-format=WAVE','--data-format=LEI16@24000','-o',str(path),text],check=True,timeout=120)
+          Path('local-evidence/fixture.json').write_text(json.dumps(dict(text=text,voice=voice,os=platform.platform(),sha256=hashlib.sha256(path.read_bytes()).hexdigest(),kind='macOS installed synthetic neutral voice; no character likeness claim'),indent=2))
+          PY
+          python3 tools/create_diagnostic_collection.py
+      - name: Build exact production coordinator on Apple Silicon
+        run: |
+          test "$(uname -m)" = arm64
+          brew install xcodegen
+          mkdir -p VoiceMatrix/Resources/{Phonon,OpenVoice,F5TTS}
+          xcodegen generate
+          xcodebuild -project VoiceMatrix.xcodeproj -scheme LocalStudioDiagnostic -configuration Release -derivedDataPath local-build CODE_SIGNING_ALLOWED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build > local-evidence/build.log 2>&1 || { tail -120 local-evidence/build.log; exit 1; }
+      - name: Require actual retained-source pipeline with networking denied
+        run: |
+          sandbox-exec -p '(version 1)(allow default)(deny network*)' local-build/Build/Products/Release/LocalStudioDiagnostic VoiceMatrix/Resources local-evidence/neutral.wav tests/fixtures/DiagnosticVoices local-evidence/isolated-work local-evidence/pipeline-evidence.json "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Actual-local-pipeline-evidence
+          path: local-evidence
+          if-no-files-found: error
+          retention-days: 14

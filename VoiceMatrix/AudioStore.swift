@@ -15,12 +15,18 @@ struct SavedAudio: Identifiable {
     private var player: AVAudioPlayer?
     var elapsedSeconds: TimeInterval { player?.currentTime ?? 0 }
     var durationSeconds: TimeInterval { player?.duration ?? 0 }
+    #if os(iOS)
     var outputVolumePercent: Int { Int((AVAudioSession.sharedInstance().outputVolume * 100).rounded()) }
     var outputRoute: String {
         let outputs = AVAudioSession.sharedInstance().currentRoute.outputs
         // Show route types, never personal Bluetooth device names.
         return outputs.isEmpty ? "No audio output" : outputs.map { $0.portType.rawValue }.joined(separator: ", ")
     }
+    #else
+    // macOS does not expose AVAudioSession routes. No simulated route/volume.
+    var outputVolumePercent: Int { -1 }
+    var outputRoute: String { "System audio output" }
+    #endif
     @Published private var activity = StudioActivity()
     var microphoneInUse: Bool { activity.microphoneInUse }
     var processingInUse: Bool { activity.processingInUse }
@@ -37,10 +43,12 @@ struct SavedAudio: Identifiable {
         return recordings.contains { $0.id == name }
     }
     private func persistSources() { UserDefaults.standard.set(savedSources, forKey: "savedSources") }
+    private var recordingRoot: URL?
     private var folder: URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Recordings", isDirectory: true)
+        recordingRoot ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Recordings", isDirectory: true)
     }
     override init() { super.init(); refresh() }
+    init(recordingRoot: URL) { self.recordingRoot = recordingRoot; super.init(); refresh() }
     func refresh() {
         do {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -54,8 +62,10 @@ struct SavedAudio: Identifiable {
         stop(); error = nil
         var stage = "configuring audio output"
         do {
+            #if os(iOS)
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
+            #endif
             stage = "opening the recording"
             let sound = try AVAudioPlayer(contentsOf: url)
             guard sound.duration > 0 else { throw StudioError.emptyAudio }

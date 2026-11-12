@@ -284,8 +284,10 @@ jobs:
 
   bundled-asr:
     uses: ./.github/workflows/bundled-asr-diagnostic.yml
+  local-pipeline:
+    uses: ./.github/workflows/local-pipeline-diagnostic.yml
   verify:
-    needs: [resolve, ipa, speech, conversion, bundled-asr]
+    needs: [resolve, ipa, speech, conversion, bundled-asr, local-pipeline]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4

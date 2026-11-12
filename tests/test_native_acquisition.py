@@ -41,3 +41,10 @@ class NativeAcquisitionTests(unittest.TestCase):
   self.assertIn('addingReportingOverflow',s)
 
   self.assertIn('let retained = try LocalMediaAcquisition.retainedBytes(root: root)', (ROOT/'VoiceMatrix/LocalVideoStudio.swift').read_text())
+
+ def test_transfer_digest_does_not_override_nsobject_hash(self):
+  s=(ROOT/'VoiceMatrix/LocalMediaAcquisition.swift').read_text().split('final class Transfer:',1)[1]
+  self.assertNotIn('hash=SHA256()',s)
+  self.assertIn('contentHash=SHA256()',s)
+  self.assertIn('contentHash.update(data:data)',s)
+  self.assertIn('contentHash.finalize()',s)
