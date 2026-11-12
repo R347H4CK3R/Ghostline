@@ -33,7 +33,9 @@ enum LaptopConnection {
         UserDefaults.standard.set(url.absoluteString, forKey: "laptopURL")
     }
     static func send(_ videos: Data) async throws -> String {
-        guard let address = UserDefaults.standard.string(forKey: "laptopURL") ?? bundledURL, let root = URL(string: address), root.scheme == "https" else {
+        guard let address = UserDefaults.standard.string(forKey: "laptopURL") ?? bundledURL, let root = URL(string: address), root.scheme == "https", root.host != nil,
+              root.user == nil, root.password == nil, root.query == nil, root.fragment == nil,
+              root.path.isEmpty || root.path == "/" else {
             throw failure("Connect your laptop using its pairing file first.")
         }
         var lookup = query; lookup[kSecReturnData as String] = true; lookup[kSecMatchLimit as String] = kSecMatchLimitOne
@@ -42,18 +44,62 @@ enum LaptopConnection {
         let token = found == errSecSuccess ? (stored as? Data).flatMap { String(data: $0, encoding: .utf8) } : nil
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 20
+        configuration.timeoutIntervalForResource = 30
         let session = URLSession(configuration: configuration, delegate: RejectRedirects(), delegateQueue: nil)
         defer { session.invalidateAndCancel() }
         var request = URLRequest(url: root.appendingPathComponent("queue"))
         request.httpMethod = "POST"; request.httpBody = videos
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if let token { request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization") }
-        let (_, response) = try await session.data(for: request)
+        let (stream, response) = try await session.bytes(for: request)
+        var receipt = Data()
+        for try await byte in stream {
+            try Task.checkCancellation()
+            guard receipt.count < 65_536 else { throw failure("Your laptop returned an oversized acceptance response.") }
+            receipt.append(byte)
+        }
+        try Task.checkCancellation()
         guard let response = response as? HTTPURLResponse else { throw failure("Your laptop returned an unreadable response.") }
         guard response.statusCode == 200 else {
             throw failure(response.statusCode == 401 ? "Connect Tailscale using the same account as your laptop, or import its pairing file." : "Your laptop could not accept the list. Your saved list is unchanged.")
         }
+        try VideoWorkflowReceipt.validate(receipt, submitted: videos)
         return "Your laptop accepted the list. This does not mean voice processing is finished."
+    }
+    static func workflow(videoID: String? = nil) async throws -> VideoWorkflowSnapshot {
+        guard let address = UserDefaults.standard.string(forKey: "laptopURL") ?? bundledURL,
+              let root = URL(string: address) else { throw VideoWorkflowError.invalidConnection }
+        let endpoint = try VideoWorkflowSnapshot.endpoint(root: root, videoID: videoID)
+        var lookup = query; lookup[kSecReturnData as String] = true; lookup[kSecMatchLimit as String] = kSecMatchLimitOne
+        var stored: CFTypeRef?
+        let found = SecItemCopyMatching(lookup as CFDictionary, &stored)
+        let token = found == errSecSuccess ? (stored as? Data).flatMap { String(data: $0, encoding: .utf8) } : nil
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = 5
+        configuration.timeoutIntervalForResource = 8
+        configuration.urlCache = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        let session = URLSession(configuration: configuration, delegate: RejectRedirects(), delegateQueue: nil)
+        defer { session.invalidateAndCancel() }
+        var request = URLRequest(url: endpoint)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let token { request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization") }
+        return try await withTaskCancellationHandler(operation: {
+            try Task.checkCancellation()
+            let (stream, response) = try await session.bytes(for: request)
+            guard let response = response as? HTTPURLResponse, response.statusCode == 200,
+                  response.url == endpoint, response.expectedContentLength <= Int64(VideoWorkflowSnapshot.byteLimit) else {
+                throw failure("Live laptop workflow is unavailable. Check the connection, pairing and companion version.")
+            }
+            var data = Data()
+            for try await byte in stream {
+                if data.count % 32_768 == 0 { try Task.checkCancellation() }
+                guard data.count < VideoWorkflowSnapshot.byteLimit else { throw VideoWorkflowError.invalidSnapshot }
+                data.append(byte)
+            }
+            try Task.checkCancellation()
+            return try VideoWorkflowSnapshot.decode(data, videoID: videoID)
+        }, onCancel: { session.invalidateAndCancel() })
     }
     static func syncVoices(to folder: URL, previousRevision: String?, syncID: String, progress: @escaping @Sendable (VoiceSyncProgress) async -> Void) async throws -> String? {
         guard let address = UserDefaults.standard.string(forKey: "laptopURL") ?? bundledURL,

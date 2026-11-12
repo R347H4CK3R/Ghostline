@@ -2,7 +2,12 @@ name: Native queue UI checks
 on:
   push:
     paths:
+      - 'project.yml'
       - 'VoiceMatrix/VideoQueueView.swift'
+      - 'VoiceMatrix/VideoWorkflow*.swift'
+      - 'tests/native/VideoWorkflowChecks.swift'
+      - 'tools/workflow*'
+      - 'tests/test_workflow*'
       - 'VoiceMatrix/LaptopConnection.swift'
       - 'VoiceMatrix/VoiceFolderSync.swift'
       - 'VoiceMatrix/VoiceSyncLog.swift'
@@ -19,4 +24,17 @@ jobs:
       - name: Typecheck queue screen against iPhone SDK
         run: |
           SDKROOT="$(xcrun --sdk iphoneos --show-sdk-path)"
-          xcrun swiftc -typecheck -sdk "$SDKROOT" -target arm64-apple-ios26.0 VoiceMatrix/VideoQueueView.swift VoiceMatrix/LaptopConnection.swift VoiceMatrix/VoiceFolderSync.swift VoiceMatrix/VoiceSyncLog.swift
+          xcrun swiftc -typecheck -sdk "$SDKROOT" -target arm64-apple-ios26.0 VoiceMatrix/VideoQueueView.swift VoiceMatrix/LaptopConnection.swift VoiceMatrix/VoiceFolderSync.swift VoiceMatrix/VoiceSyncLog.swift VoiceMatrix/VideoWorkflow.swift VoiceMatrix/VideoWorkflowView.swift
+      - name: Execute workflow model, cancellation and privacy checks
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/VideoWorkflow.swift tests/native/VideoWorkflowChecks.swift -o /tmp/workflow-checks
+          python3 - <<'PY'
+          import json,tempfile,pathlib
+          from tools.video_queue import VideoQueue
+          from tools.workflow_activity import snapshot
+          with tempfile.TemporaryDirectory() as directory:
+              database=pathlib.Path(directory)/'queue.db'
+              queue=VideoQueue(str(database));queue.add(['https://youtu.be/EAT0nWoEzJ8']);queue.close()
+              pathlib.Path('/tmp/workflow-fixture.json').write_text(json.dumps(snapshot(database)))
+          PY
+          /tmp/workflow-checks /tmp/workflow-fixture.json

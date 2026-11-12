@@ -46,6 +46,9 @@ class PreparationTests(unittest.TestCase):
   verify.transcribe=lambda _: 'A reference sentence.'
   prepare_job=lambda *args,**kwargs:video_prepare.prepare(*args,**kwargs,downloader_factory=Downloader)
   report=run_once(self.root/'queue.db',self.specs,self.root/'work',self.root/'Voices',model_factory=lambda:object(),synthesize=synth,verify=verify,recipe_directory=self.recipes,prepare_job=prepare_job)
+  from tools.workflow_activity import snapshot
+  stages=[e['stage'] for e in snapshot(self.root/'queue.db')['videos'][0]['events']]
+  self.assertEqual(stages[:9],['received','claimed','preparation_started','download_started','download_finished','media_checking','extracting','transcribing','preparation_ready'])
   self.assertEqual(len(sources),2);self.assertTrue(all(not p.exists() for p in sources))
   self.assertEqual(report['status'],'needs-review');self.assertTrue((self.root/'Voices/original-fixture/reference.wav').exists());q.close()
  def test_whole_pipeline_waits_then_automatically_retries_when_spec_arrives(self):

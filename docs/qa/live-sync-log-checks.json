@@ -2,7 +2,7 @@
   "sourceCommit": "cff6190170a1ee64a4af86e7eb30db15cf2422be",
   "checkedAtUTC": "2026-11-12",
   "scope": "Private voice synchronization activity, not neural processing or likeness verification",
-  "localPythonTestsPassed": 228,
+  "localPythonTestsPassed": 231,
   "feedSafetyTestsPassed": 7,
   "windowsTargetedTestsPassed": 11,
   "companionInstalled": true,
@@ -27,12 +27,40 @@
   "simulatorUIRun": 43129173637,
   "simulatorUIStatus": "success",
   "physicalIPhoneSyncVerified": false,
-  "publishedPhoneUpdate": false,
+  "publishedPhoneUpdate": true,
   "candidateIPASHA256": "590eff59107e555076418c80682f1a3be823ba4b461b5d85ff8c4129cf25fb29",
   "candidateIPABytes": 731161976,
   "simulatorTestSource": "ab84585377c5464d70736e629acb6f9b8870a81f",
   "simulatorSourceMatchesCandidate": true,
   "supersededSimulatorRun": 43126844097,
   "supersededSimulatorReason": "Default simulator boot did not complete; identical app/tests rerun on an owned simulator",
-  "supersededSimulatorStatus": "cancelled after simulator boot stalled"
+  "supersededSimulatorStatus": "cancelled after simulator boot stalled",
+  "publicationRun": 43132806265,
+  "publicationStatus": "success",
+  "publicationSourceCommit": "03959cbb650579b6eafbcb12104f66340f6b36f9",
+  "releaseURL": "https://github.com/R347H4CK3R/Ghostline/releases/tag/voicematrix-v0.4.7",
+  "publicReleaseAndAllEvidenceRedownloadVerified": true,
+  "independentFeedReadbacks": {
+    "livecontainer-test.json": {
+      "version": "0.4.7",
+      "buildVersion": "1",
+      "verified": true,
+      "ipaSHA256": "590eff59107e555076418c80682f1a3be823ba4b461b5d85ff8c4129cf25fb29",
+      "ipaBytes": 731161976
+    },
+    "source.json": {
+      "version": "0.4.7",
+      "buildVersion": "1",
+      "verified": true,
+      "ipaSHA256": "590eff59107e555076418c80682f1a3be823ba4b461b5d85ff8c4129cf25fb29",
+      "ipaBytes": 731161976
+    },
+    "strata-source.json": {
+      "version": "0.4.7",
+      "buildVersion": "1",
+      "verified": true,
+      "ipaSHA256": "590eff59107e555076418c80682f1a3be823ba4b461b5d85ff8c4129cf25fb29",
+      "ipaBytes": 731161976
+    }
+  }
 }
