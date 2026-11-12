@@ -1,0 +1,36 @@
+name: Private video workflow checks
+on:
+  push:
+    branches: ['feat/voicematrix-video-workflow-log', 'candidate/voicematrix-0.4.8']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backend-and-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install local fixture tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Run complete source regressions
+        run: python3 -m unittest discover -s tests -v
+      - name: Exercise authenticated live workflow in mobile Chromium
+        run: VM_WORKFLOW_SCREENSHOT=workflow-mobile.png node tests/workflow_browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Synthetic-workflow-browser
+          path: workflow-mobile.png
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,5 +1,5 @@
 """Authenticated queue API; loopback only until an encrypted device transport is paired."""
-import hmac,json,pathlib,threading,secrets,re
+import hmac,json,pathlib,threading,secrets,re,sqlite3
 from urllib.parse import urlsplit,parse_qs
 from tools.listening_review import ListeningReview,page as listening_page
 from tools.source_review import save_initial_review,page,save_inspection,stop_inspection
@@ -9,6 +9,7 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from tools.video_queue import VideoQueue,video_id
 from tools.private_voices import PrivateVoices,TransferError
 from tools.sync_activity import SyncActivity,page as sync_page
+from tools.workflow_activity import snapshot as workflow_snapshot,page as workflow_page
 
 def create_server(root,token,port=0,trusted_login=None,master=None):
  if len(token)<32:raise ValueError('Use a strong pairing token')
@@ -31,6 +32,13 @@ def create_server(root,token,port=0,trusted_login=None,master=None):
   def do_GET(self):
    if not self.authorized():return self.respond(401,dict(error='Pairing required'))
    address=urlsplit(self.path)
+   if address.path in ('/workflow','/workflow-log'):
+    selection=parse_qs(address.query,keep_blank_values=True)
+    if selection and (set(selection)!={'video'} or len(selection['video'])!=1 or not re.fullmatch(r'[A-Za-z0-9_-]{11}',selection['video'][0])):return self.respond(400,dict(error='Invalid workflow selection'))
+    if address.path=='/workflow':
+     try:return self.respond(200,workflow_snapshot(root/'queue.db',selection.get('video',[None])[0]))
+     except (OSError,ValueError,sqlite3.Error):return self.respond(503,dict(error='Workflow snapshot unavailable; existing queue is unchanged'))
+    body=workflow_page(csrf);self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.send_header('Content-Security-Policy',"default-src 'none'; script-src 'nonce-"+csrf+"'; style-src 'nonce-"+csrf+"'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'");self.end_headers();self.wfile.write(body);return
    if self.path=='/voice-sync' or self.path.startswith('/voice-sync/'):
     identifier=self.path[len('/voice-sync/'):] if self.path.startswith('/voice-sync/') else None
     data=activity.snapshot(identifier)

@@ -62,7 +62,7 @@ def activity_spans(path,cancelled):
    stop=min(start+12,end);result.append((round(start,3),round(stop,3)));start=stop
  return result
 
-def inspect_source(request_path,root,*,cancelled=lambda:False,downloader_factory=None,commit=None,expected_video=None):
+def inspect_source(request_path,root,*,cancelled=lambda:False,downloader_factory=None,commit=None,expected_video=None,activity=lambda *args:None):
  request_path=pathlib.Path(request_path).absolute();root=pathlib.Path(root).resolve()
  if any(p.is_symlink() or getattr(p,'is_junction',lambda:False)() for p in [request_path,*request_path.parents]) or request_path.stat().st_size>16384:raise ValueError('Invalid inspection request file')
  # Expand legitimate Windows short names before exact opened-handle comparison.
@@ -88,9 +88,11 @@ def inspect_source(request_path,root,*,cancelled=lambda:False,downloader_factory
  with _publish_lock(root/('.'+identifier+'.inspection.lock')):
   with tempfile.TemporaryDirectory(prefix='.inspecting-',dir=destination) as temporary:
    stage=pathlib.Path(temporary);ff=ffmpeg_path()
+   activity('inspection_started')
    # Acquisition remains bounded/cancellable; its temporary original is deleted on exit.
-   with acquire(request['videoURL'],[dict(id='inspection-probe',start=0,end=.5)],downloader_factory,cancelled=paused) as source:
+   with acquire(request['videoURL'],[dict(id='inspection-probe',start=0,end=.5)],downloader_factory,cancelled=paused,activity=activity) as source:
     if source['videoID']!=identifier:raise ValueError('Inspected source does not match the queued video')
+    activity('inspection_analyzing')
     decoded=stage/'analysis.wav'
     checked_process([ff,'-v','error','-threads','1','-i',source['privateMoviePath'],'-t','1800.02','-fs','57600800','-vn','-ac','1','-ar','16000','-c:a','pcm_s16le',str(decoded)],timeout=90,cancelled=paused)
     spans=activity_spans(decoded,paused);rows=[]
@@ -117,4 +119,5 @@ def inspect_source(request_path,root,*,cancelled=lambda:False,downloader_factory
     finally:pathlib.Path(name).unlink(missing_ok=True)
    if commit is None:publish()
    else:commit(publish)
+   activity('inspection_ready')
    return result

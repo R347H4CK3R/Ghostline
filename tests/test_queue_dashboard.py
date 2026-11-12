@@ -66,6 +66,7 @@ class DashboardTests(unittest.TestCase):
   html=(self.root/'Progress.html').read_text()
   self.assertIn('https://laptop.example.ts.net:9443/review?video=EAT0nWoEzJ8',html)
   self.assertEqual(state['sourceReviewURL'],'https://laptop.example.ts.net:9443/review')
+  self.assertIn('https://laptop.example.ts.net:9443/workflow-log',html)
   (self.root/'recipes').mkdir();(self.root/'recipes/EAT0nWoEzJ8.json').write_text('{}');tick(self.root)
   html=(self.root/'Progress.html').read_text();self.assertNotIn('review?video=',html);self.assertIn('Review saved',html)
  def test_review_links_do_not_leak_secrets_or_point_to_untrusted_urls(self):

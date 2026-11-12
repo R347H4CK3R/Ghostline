@@ -81,6 +81,8 @@ def run_once(database,specifications,work,master,*,model_factory,verify,synthesi
   except Exception:lost.set()
   finally:
    if pulse:pulse.close()
+ def activity(stage,completed=0,total=0):
+  q.stage(job['id'],job['token'],stage,completed=completed,total=total)
  def progress(value):
   if lost.is_set():raise ValueError('Worker ownership was lost')
   if paused():raise InterruptedError('Processing paused; retained for resume')
@@ -100,12 +102,14 @@ def run_once(database,specifications,work,master,*,model_factory,verify,synthesi
     if recipe.is_symlink() or recipe.stat().st_size>512000:raise ValueError('Invalid preparation recipe')
     recipe_data=json.loads(recipe.read_text(encoding='utf8'))
     if not isinstance(recipe_data,dict) or video_id(recipe_data.get('videoURL',''))!=job['id']:raise ValueError('Preparation recipe does not match the queued video')
-    prepare_job(recipe,specroot,cancelled=cancelled,transcribe=getattr(verify,'transcribe',None),commit=lambda operation:q.owned_call(job['id'],job['token'],operation))
+    activity('preparation_started')
+    prepare_job(recipe,specroot,activity=activity,cancelled=cancelled,transcribe=getattr(verify,'transcribe',None),commit=lambda operation:q.owned_call(job['id'],job['token'],operation))
+    activity('preparation_ready')
   if not path.is_file():
    inspection_root=pathlib.Path(database).resolve().parent
    request=inspection_root/'inspections'/(job['id']+'.json')
    if request.is_file():
-    proposal=inspection_job(request,inspection_root,expected_video=job['id'],cancelled=cancelled,commit=lambda operation:q.owned_call(job['id'],job['token'],operation))
+    proposal=inspection_job(request,inspection_root,activity=activity,expected_video=job['id'],cancelled=cancelled,commit=lambda operation:q.owned_call(job['id'],job['token'],operation))
     report['inspectionRevision']=proposal['revision']
    report.update(status='awaiting-preparation',reason='Private audio activity previews are ready for source and label review; link remains queued' if 'inspectionRevision' in report else 'Prepared labeled references or a reviewed video recipe are missing; link remains queued')
    atomic(out/'result.json',report);q.pause(job['id'],job['token'],status='awaiting-preparation');return report
@@ -114,6 +118,7 @@ def run_once(database,specifications,work,master,*,model_factory,verify,synthesi
   if not isinstance(spec,dict) or spec.get('schemaVersion')!=1 or video_id(spec.get('videoURL',''))!=job['id'] or not isinstance(spec.get('profiles'),list) or not 1<=len(spec['profiles'])<=64:raise ValueError('Invalid prepared video reference specification')
   packs=[];ids=set();hashes=set()
   for n,row in enumerate(spec['profiles']):
+   activity('references_checking',n,len(spec['profiles']))
    progress(.1*(n+1)/len(spec['profiles']))
    name=row.get('referenceFile','')
    if not isinstance(name,str) or not name or '\\' in name or ':' in name or pathlib.Path(name).is_absolute() or '..' in pathlib.Path(name).parts:raise ValueError('Unsafe prepared reference path')
@@ -125,12 +130,13 @@ def run_once(database,specifications,work,master,*,model_factory,verify,synthesi
    if m['referenceSHA256']!=row['referenceSHA256']:raise ValueError('Reference changed during preparation')
    if identifier in ids or m['referenceSHA256'] in hashes:raise ValueError('Repeated profile ID or reference in prepared job')
    ids.add(identifier);hashes.add(m['referenceSHA256']);packs.append(pack)
-  progress(.15);model=AttemptModel(model_factory(),job['attempt'],cancelled)
+  progress(.15);activity('model_loading');model=AttemptModel(model_factory(),job['attempt'],cancelled)
   for n,pack in enumerate(packs):
    progress(.15+.7*n/len(packs));m=validate_pack(pack);audio=out/(m['id']+'-preview.wav')
-   synthesize(pack,TEXT,audio,model)
+   activity('synthesizing',n,len(packs));synthesize(pack,TEXT,audio,model)
    progress(.15+.7*(n+.5)/len(packs))
-   checked=audio_check(audio);words=verify(audio,TEXT)
+   activity('audio_checking',n,len(packs));checked=audio_check(audio)
+   activity('words_checking',n,len(packs));words=verify(audio,TEXT)
    report['profiles'].append(dict(id=m['id'],referenceSHA256=m['referenceSHA256'],referenceTranscriptStatus=m.get('referenceTranscriptStatus','provided-unverified'),audio=checked,wordcheck=words,seed=model.seed))
    atomic(out/'progress.json',report)
    if words.get('passed') is not True or not isinstance(words.get('wordErrorRate'),(int,float)) or not 0<=words['wordErrorRate']<=.1 or words.get('wavSHA256')!=checked['wavSHA256']:raise ValueError('Independent generated-word check failed (WER '+str(words.get('wordErrorRate'))+')')
@@ -140,6 +146,7 @@ def run_once(database,specifications,work,master,*,model_factory,verify,synthesi
    report['publication']=publish(packs,master)
    report.update(status='needs-review',reason='Desktop audio passed; character likeness and individual native/device checks remain pending')
    atomic(out/'result.json',report)
+  activity('publishing')
   q.review_with(job['id'],job['token'],publication);return report
  except Exception as error:
   if not job:raise

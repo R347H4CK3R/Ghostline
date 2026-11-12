@@ -15,6 +15,8 @@ struct VideoQueueView: View {
     @State private var message = ""
     @State private var exported: URL?
     @State private var sending = false
+    @State private var submissions = VideoWorkflowSubmissionLog()
+    @State private var manualSend: Task<Void, Never>?
 
     private func persist() {
         do {
@@ -55,6 +57,24 @@ struct VideoQueueView: View {
             exported = destination; message = "Your current list is ready to share."
         } catch { message = "The list could not be exported. Please try again." }
     }
+    @MainActor private func sendList(_ pending: [QueuedVideo]) async {
+        guard !sending, !pending.isEmpty, !Task.isCancelled else { return }
+        sending = true
+        let attempt = submissions.begin(count: pending.count)
+        defer { sending = false }
+        do {
+            let data = try JSONEncoder().encode(["videos": pending])
+            let accepted = try await LaptopConnection.send(data)
+            try Task.checkCancellation()
+            submissions.finish(attempt: attempt, outcome: .accepted)
+            message = accepted
+        } catch {
+            submissions.finish(attempt: attempt, outcome: Task.isCancelled ? .interrupted : .failed)
+            message = Task.isCancelled
+                ? "Stopped waiting for laptop acceptance. Your list is saved; check the workflow for receipt."
+                : "Your list is saved. Laptop acceptance is unconfirmed. Check the connection and workflow before retrying."
+        }
+    }
     var body: some View {
         Form {
             Section("Step 1 · Add a video") {
@@ -68,6 +88,8 @@ struct VideoQueueView: View {
                     VStack(alignment: .leading) {
                         Text(video.name.isEmpty ? "Video " + video.id : video.name).font(.headline)
                         Text(video.url).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+                        NavigationLink("View laptop workflow") { VideoWorkflowView(videoID: video.id) }
+                            .font(.caption)
                     }
                 }.onDelete { offsets in videos.remove(atOffsets: offsets); persist() }
             }
@@ -75,16 +97,29 @@ struct VideoQueueView: View {
                 Button("Prepare Updated List", action: exportList).disabled(videos.isEmpty)
                 if let exported { ShareLink(item: exported) { Label("Share List", systemImage: "square.and.arrow.up") } }
                 Button(sending ? "Sending…" : "Send List to Laptop") {
-                    sending = true
-                    Task { @MainActor in
-                        defer { sending = false }
-                        do {
-                            let data = try JSONEncoder().encode(["videos": videos])
-                            message = try await LaptopConnection.send(data)
-                        } catch { message = error.localizedDescription }
-                    }
+                    manualSend = Task { @MainActor in await sendList(videos) }
                 }.disabled(sending || videos.isEmpty)
                 Text("Your laptop address is included. Connect Tailscale on both devices using the same account, then tap Send List to Laptop. No JSON selection is needed. Voice creation and review are separate steps. Offline speech does not need this connection.").font(.caption).foregroundStyle(.secondary)
+            }
+            Section("Laptop workflow") {
+                NavigationLink { VideoWorkflowView() } label: {
+                    Label("Live video workflow", systemImage: "list.bullet.rectangle")
+                }.accessibilityIdentifier("live-video-workflow")
+                Text("See laptop receipt, review pauses, preparation, voice processing and checks. Voice transfer and saving are recorded separately in Voices → Live sync log.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            if !submissions.events.isEmpty {
+                Section("Phone sending log · latest first") {
+                    ForEach(submissions.events.reversed()) { event in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(event.message)
+                            Text("\(event.date.formatted(date: .abbreviated, time: .standard)) · iPhone · Send attempt \(event.attempt)")
+                                .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        }.accessibilityElement(children: .combine)
+                    }
+                    Text("Only the latest 80 sending events in this view are retained. No video names, links or transcripts are logged here.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
             if !message.isEmpty { Text(message).accessibilityAddTraits(.updatesFrequently) }
         }.navigationTitle("Video List")
@@ -94,12 +129,15 @@ struct VideoQueueView: View {
                     let pending = try JSONDecoder().decode([QueuedVideo].self, from: saved)
                     guard !pending.isEmpty else { return }
                     try await Task.sleep(nanoseconds: 700_000_000)
-                    sending = true
-                    defer { sending = false }
-                    message = try await LaptopConnection.send(JSONEncoder().encode(["videos": pending]))
+                    // A changed list waits for the prior request rather than overlapping it.
+                    while sending {
+                        try await Task.sleep(nanoseconds: 100_000_000)
+                    }
+                    await sendList(pending)
                 } catch is CancellationError { }
-                catch { message = "Your list is saved. Automatic laptop connection failed: " + error.localizedDescription }
+                catch { message = "Your list is saved. The automatic laptop request could not be prepared." }
             }
+            .onDisappear { manualSend?.cancel() }
             .onAppear {
                 guard !saved.isEmpty else { return }
                 do { videos = try JSONDecoder().decode([QueuedVideo].self, from: saved) }

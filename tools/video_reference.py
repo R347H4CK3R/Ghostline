@@ -47,13 +47,14 @@ def download_video(url,root,ff,downloader_factory=None,*,cancelled=lambda:False,
  return {k:metadata[k] for k in ['id','title','duration']}
 
 @contextmanager
-def acquire(url,segments,downloader_factory=None,*,cancelled=lambda:False,max_duration=1800,max_bytes=268435456,max_download_seconds=300):
+def acquire(url,segments,downloader_factory=None,*,cancelled=lambda:False,max_duration=1800,max_bytes=268435456,max_download_seconds=300,activity=lambda *args:None):
  validate_request(url,segments);ff=ffmpeg_path()
  if isinstance(max_duration,bool) or not isinstance(max_duration,(int,float)) or not math.isfinite(max_duration) or not 1<=max_duration<=3600:raise ValueError('Video duration limit must be 1–3600 seconds')
  if isinstance(max_bytes,bool) or not isinstance(max_bytes,int) or not 1024<=max_bytes<=1073741824:raise ValueError('Video byte limit must be 1 KiB–1 GiB')
  if isinstance(max_download_seconds,bool) or not isinstance(max_download_seconds,(int,float)) or not math.isfinite(max_download_seconds) or not .1<=max_download_seconds<=900:raise ValueError('Download deadline must be 0.1–900 seconds')
  with tempfile.TemporaryDirectory(prefix='voicematrix-reference-') as temporary:
   root=pathlib.Path(temporary)
+  activity('download_started')
   if downloader_factory is None:
    import importlib.util,sys
    if importlib.util.find_spec('yt_dlp') is None:raise ValueError('Install the local yt-dlp download dependency')
@@ -66,11 +67,14 @@ def acquire(url,segments,downloader_factory=None,*,cancelled=lambda:False,max_du
   else:
    # In-process factory injection is a test seam; the real downloader is a child.
    metadata=download_video(url,root,ff,downloader_factory,cancelled=cancelled,max_duration=max_duration,max_bytes=max_bytes)
+  activity('download_finished')
   movie=root/'source.mp4'
   if not movie.is_file() or movie.is_symlink() or movie.stat().st_size>max_bytes:raise ValueError('Video is missing or exceeds the byte limit')
+  activity('media_checking')
   checked_process([ff,'-v','error','-i',str(movie),'-t','0.2','-map','0:v:0','-map','0:a:0','-f','null','-'],timeout=60,cancelled=cancelled)
   rows=[]
-  for s in segments:
+  for index,s in enumerate(segments):
+   activity('extracting',index,len(segments))
    if s['end']>metadata['duration']:raise ValueError('Reference extends beyond video')
    output=root/(s['id']+'.wav')
    checked_process([ff,'-v','error','-ss',str(s['start']),'-i',str(movie),'-t',str(s['end']-s['start']),'-vn','-ac','1','-ar','24000','-c:a','pcm_s16le',str(output)],timeout=60,cancelled=cancelled)

@@ -36,6 +36,9 @@ class InspectionTests(unittest.TestCase):
   factory,calls=self.fixture();q=VideoQueue(str(self.root/'queue.db'));q.add([self.request['videoURL']])
   report=run_once(self.root/'queue.db',self.root/'specifications',self.root/'separate-work',self.root/'Voices',model_factory=lambda:self.fail('Inspection loaded F5'),verify=lambda *args:{},recipe_directory=self.root/'recipes',inspection_job=lambda *args,**kw:self.inspector()(*args,**kw,downloader_factory=factory))
   self.assertEqual(report['status'],'awaiting-preparation');self.assertEqual(q.export()['videos'][0]['attempts'],1)
+  from tools.workflow_activity import snapshot
+  stages=[e['stage'] for e in snapshot(self.root/'queue.db')['videos'][0]['events']]
+  self.assertEqual(stages,['received','claimed','inspection_started','download_started','download_finished','media_checking','extracting','inspection_analyzing','inspection_ready','awaiting_preparation'])
   self.assertTrue((self.root/'proposals/SYNTHETIC03/index.json').is_file());self.assertFalse((self.root/'Voices').exists());q.close()
  def test_inspection_cancellation_keeps_private_master_unchanged(self):
   factory,_=self.fixture()

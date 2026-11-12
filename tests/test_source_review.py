@@ -37,12 +37,17 @@ class SourceReviewTests(unittest.TestCase):
   self.assertEqual(self.request('/inspection',body,auth=False,csrf=self.token())[0],401)
   self.assertEqual(self.request('/inspection',body,csrf=self.token())[0],200)
   self.assertEqual(json.loads((self.root/'inspections/SYNTHETIC03.json').read_text()),body)
+  from tools.workflow_activity import snapshot
+  self.assertEqual(snapshot(self.root/'queue.db')['videos'][0]['events'][-1]['stage'],'inspection_requested')
   self.assertEqual(self.request('/inspection?video=SYNTHETIC03')[0],200)
   self.assertEqual(self.request('/inspection/SYNTHETIC03/../../secret')[0],404)
   self.assertFalse((self.root/'recipes/SYNTHETIC03.json').exists())
  def test_initial_review_saved_in_actual_processor_recipe_format(self):
   self.assertEqual(self.request('/review',self.recipe,csrf=self.token())[0],200)
   saved=json.loads((self.root/'recipes/SYNTHETIC03.json').read_text());self.assertEqual(saved,self.recipe)
+  from tools.workflow_activity import snapshot
+  evidence=snapshot(self.root/'queue.db');self.assertEqual(evidence['videos'][0]['events'][-1]['stage'],'review_saved')
+  self.assertNotIn('Fixture creator',json.dumps(evidence));self.assertNotIn('A reference sentence',json.dumps(evidence))
   from tools.video_prepare import validate_recipe
   self.assertEqual(validate_recipe(saved,transcribe_available=True)[0],'SYNTHETIC03')
   q=VideoQueue(str(self.root/'queue.db'));self.assertEqual(q.export()['videos'][0]['status'],'waiting');q.close()
@@ -84,6 +89,8 @@ class SourceReviewTests(unittest.TestCase):
   self.assertEqual(self.request('/inspection',body,csrf=token)[0],200)
   self.assertEqual(self.request('/inspection/stop',dict(videoID='SYNTHETIC03'),csrf=token)[0],200)
   self.assertTrue((self.root/'inspections/SYNTHETIC03.cancel').is_file())
+  from tools.workflow_activity import snapshot
+  self.assertEqual(snapshot(self.root/'queue.db')['videos'][0]['events'][-1]['stage'],'inspection_stop_requested')
   self.assertEqual(json.loads(self.request('/inspection?video=SYNTHETIC03')[1])['status'],'stop-requested')
   self.assertEqual(self.request('/inspection',body,csrf=token)[0],200)
   self.assertFalse((self.root/'inspections/SYNTHETIC03.cancel').exists())

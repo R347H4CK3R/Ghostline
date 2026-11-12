@@ -27,6 +27,27 @@ import XCTest
         add(attachment)
     }
 
+    func testVideoWorkflowOpensAndReportsUnavailableWithoutInventingActivity() {
+        let app = XCUIApplication()
+        // Test-only defaults point at a closed loopback port, never the private laptop.
+        app.launchArguments = ["-tutorialSeen", "YES", "-laptopURL", "https://127.0.0.1:9"]
+        app.launch()
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 30))
+        let requests = app.buttons["Video requests"]
+        reveal(requests, in: app); requests.tap()
+        XCTAssertTrue(app.navigationBars["Video List"].waitForExistence(timeout: 15))
+        for _ in 0..<2 {
+            let log = app.buttons["live-video-workflow"]
+            reveal(log, in: app); log.tap()
+            XCTAssertTrue(app.navigationBars["Video workflow"].waitForExistence(timeout: 15))
+            XCTAssertTrue(app.staticTexts["Live workflow unavailable"].waitForExistence(timeout: 20))
+            XCTAssertFalse(app.staticTexts["Laptop snapshot received"].exists)
+            capture("Video workflow unavailable without fabricated progress", app: app)
+            app.navigationBars["Video workflow"].buttons["Video List"].tap()
+            XCTAssertTrue(app.navigationBars["Video List"].waitForExistence(timeout: 15))
+        }
+    }
+
     func testLiveSyncLogOpensAndClosesRepeatedly() {
         let app = launch()
         app.tabBars.buttons["Voices"].tap()

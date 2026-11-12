@@ -16,6 +16,8 @@ on:
       - 'VoiceMatrixTests/PlaybackTests.swift'
       - 'VoiceMatrix/CharacterLibraryView.swift'
       - 'VoiceMatrix/LaptopConnection.swift'
+      - 'VoiceMatrix/VideoQueueView.swift'
+      - 'VoiceMatrix/VideoWorkflow*.swift'
       - 'VoiceMatrixUITests/CharacterEmptyStateUITests.swift'
       - 'VoiceMatrixUITests/CharacterWorkflowUITests.swift'
       - 'project.yml'
@@ -88,6 +90,17 @@ jobs:
       - name: Exercise native playback and current SwiftUI empty-library flows
         run: |
           xcodebuild test-without-building -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build -resultBundlePath character-ui.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterEmptyStateUITests -only-testing:VoiceMatrixTests/PlaybackTests -only-testing:VoiceMatrixTests/AppUpdateTests -only-testing:VoiceMatrixTests/SpeechControlsTests -only-testing:VoiceMatrixUITests/SpeechFeatureUITests > character-ui.log 2>&1 || { tail -160 character-ui.log; exit 1; }
+      - name: Restart only the owned simulator before the second XCTest runner
+        run: |
+          # The prior batch may leave SpringBoard rejecting the next runner as
+          # Busy / failed preflight checks. Reboot without erasing test app data.
+          python3 - <<'PYCODE'
+          import os,subprocess
+          device=os.environ['SIMULATOR_ID']
+          subprocess.run(['xcrun','simctl','shutdown',device],check=True,timeout=120)
+          subprocess.run(['xcrun','simctl','boot',device],check=True,timeout=60)
+          subprocess.run(['xcrun','simctl','bootstatus',device,'-b'],check=True,timeout=360)
+          PYCODE
       - name: Import a synthetic voice, select, play reference and relaunch
         run: |
           xcodebuild test-without-building -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme VoiceMatrix -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath ui-build -resultBundlePath character-workflow.xcresult CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO -only-testing:VoiceMatrixUITests/CharacterWorkflowUITests > character-workflow.log 2>&1 || { tail -160 character-workflow.log; exit 1; }

@@ -1,0 +1,79 @@
+name: Publish verified VoiceMatrix 0.4.8
+# Candidate f8cb410be37e4747e180234a37a724c2801ec3ef; all eight bound gates must pass.
+'on':
+  push:
+    branches: ['release/voicematrix-0.4.8']
+    paths: ['.github/workflows/voicematrix-048-release.yml']
+  workflow_dispatch: null
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: voicematrix-048-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      actions: read
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Install audio test dependency
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq ffmpeg
+    - name: Check publisher syntax and source regressions
+      run: |
+        python3 -m py_compile tools/publish_voicematrix_048.py
+        python3 -m unittest discover -s tests -v
+    - name: Require finished exact-source gates before downloading artifacts
+      id: gates
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        python3 - <<'PYCODE'
+        import os
+        from tools.publish_voicematrix_048 import wait_for_gates, GATES, REQUIRED_GATES
+        wait_for_gates()
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+            output.write(f"candidate_run={GATES[REQUIRED_GATES[0]]}\n")
+        PYCODE
+    - uses: actions/download-artifact@v4
+      with:
+        github-token: ${{ github.token }}
+        run-id: ${{ steps.gates.outputs.candidate_run }}
+        name: Character-test-IPA
+        path: release-evidence/ipa
+    - uses: actions/download-artifact@v4
+      with:
+        github-token: ${{ github.token }}
+        run-id: ${{ steps.gates.outputs.candidate_run }}
+        name: Character-speech-evidence
+        path: release-evidence/speech
+    - uses: actions/download-artifact@v4
+      with:
+        github-token: ${{ github.token }}
+        run-id: ${{ steps.gates.outputs.candidate_run }}
+        name: Character-conversion-evidence
+        path: release-evidence/conversion
+    - uses: actions/download-artifact@v4
+      with:
+        github-token: ${{ github.token }}
+        run-id: ${{ steps.gates.outputs.candidate_run }}
+        name: VoiceMatrix-0.4.8-candidate-verification
+        path: release-evidence/candidate
+    - name: Verify candidate, publish, redownload and update sources
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: python3 -m tools.publish_voicematrix_048
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: VoiceMatrix-0.4.8-publication-report
+        path: release-evidence/publication-report.json
+        if-no-files-found: warn
