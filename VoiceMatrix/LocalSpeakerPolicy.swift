@@ -33,14 +33,25 @@ enum LocalSpeakerPolicy {
             }
             prior = time
         }
-        return identities.map { speaker in
-            let clean = (spans[speaker] ?? []).map { Window(start:$0.start + 0.15,end:$0.end - 0.15) }.filter { $0.seconds >= 3 }.sorted {
-                $0.seconds == $1.seconds ? $0.start < $1.start : $0.seconds > $1.seconds
+        var speakers: [Speaker] = []
+        for speaker in identities {
+            var clean: [Window] = []
+            for span in spans[speaker] ?? [] {
+                let trimmed = Window(start: span.start + 0.15, end: span.end - 0.15)
+                if trimmed.seconds >= 3 { clean.append(trimmed) }
+            }
+            clean.sort { (left: Window, right: Window) -> Bool in
+                if left.seconds == right.seconds { return left.start < right.start }
+                return left.seconds > right.seconds
             }
             // Bound expensive F5 attempts. Separate contiguous turns outrank extra
             // crops from one turn; do not concatenate speech across other speakers.
-            let windows = clean.prefix(3).map { Window(start:$0.start,end:min($0.end,$0.start+8)) }
-            return Speaker(speaker:speaker,windows:windows)
+            var windows: [Window] = []
+            for span in clean.prefix(3) {
+                windows.append(Window(start: span.start, end: min(span.end, span.start + 8)))
+            }
+            speakers.append(Speaker(speaker: speaker, windows: windows))
         }
+        return speakers
     }
 }

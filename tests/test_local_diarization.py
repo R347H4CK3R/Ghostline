@@ -9,7 +9,7 @@ class LocalDiarizationTests(unittest.TestCase):
  def test_stage_rejects_corruption_and_never_replaces_existing_bytes(self):
   mod=self.module()
   with tempfile.TemporaryDirectory() as tmp:
-   target=pathlib.Path(tmp)/'Diarization'; payload=b'approved'; lock={'files':{'NOTICE.md':{'size':len(payload),'sha256':hashlib.sha256(payload).hexdigest()}}}
+   target=pathlib.Path(tmp).resolve()/'Diarization'; payload=b'approved'; lock={'files':{'NOTICE.md':{'size':len(payload),'sha256':hashlib.sha256(payload).hexdigest()}}}
    with self.assertRaises(ValueError):mod.stage(target,lock,lambda p:b'corrupt!')
    self.assertFalse((target/'NOTICE.md').exists())
    mod.stage(target,lock,lambda p:payload)
@@ -20,10 +20,10 @@ class LocalDiarizationTests(unittest.TestCase):
  def test_stage_rejects_traversal_and_symlink(self):
   mod=self.module()
   with tempfile.TemporaryDirectory() as tmp:
-   target=pathlib.Path(tmp)/'Diarization'; payload=b'x'; entry={'size':1,'sha256':hashlib.sha256(payload).hexdigest()}
+   target=pathlib.Path(tmp).resolve()/'Diarization'; payload=b'x'; entry={'size':1,'sha256':hashlib.sha256(payload).hexdigest()}
    for path in ['../escape','/absolute','a/../../b','a\\b']:
     with self.assertRaises(ValueError):mod.stage(target,{'files':{path:entry}},lambda p:payload)
-   target.mkdir(exist_ok=True);(target/'NOTICE.md').symlink_to(pathlib.Path(tmp)/'victim')
+   target.mkdir(exist_ok=True);(target/'NOTICE.md').symlink_to(pathlib.Path(tmp).resolve()/'victim')
    with self.assertRaises(ValueError):mod.stage(target,{'files':{'NOTICE.md':entry}},lambda p:payload)
  def test_ipa_inspection_checks_exact_model_bytes(self):
   mod=self.module();payload=b'approved';lock={'files':{'NOTICE.md':{'size':len(payload),'sha256':hashlib.sha256(payload).hexdigest()}}}
