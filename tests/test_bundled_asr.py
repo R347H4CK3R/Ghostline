@@ -15,6 +15,7 @@ class BundleASRTests(unittest.TestCase):
     def test_stage_streams_verified_bytes_and_reuses_exact_files(self):
         from tools.bundle_asr import stage
         with tempfile.TemporaryDirectory() as directory:
+            directory = str(pathlib.Path(directory).resolve())
             data=b'model-fixture'; lock=self.lock(data); seen=[]
             def fetch(path):
                 seen.append(path); return io.BytesIO(data)
@@ -31,12 +32,14 @@ class BundleASRTests(unittest.TestCase):
     def test_existing_mismatch_is_preserved(self):
         from tools.bundle_asr import stage
         with tempfile.TemporaryDirectory() as directory:
+            directory = str(pathlib.Path(directory).resolve())
             target=pathlib.Path(directory)/'Encoder.mlmodelc/weights/weight.bin'; target.parent.mkdir(parents=True); target.write_bytes(b'keep-existing')
             with self.assertRaises(ValueError): stage(directory,self.lock(),lambda _:self.fail('Do not replace'))
             self.assertEqual(target.read_bytes(), b'keep-existing')
     def test_traversal_and_symlinks_are_rejected(self):
         from tools.bundle_asr import stage
         with tempfile.TemporaryDirectory() as directory:
+            directory = str(pathlib.Path(directory).resolve())
             for name in ['../outside','/outside','a/../outside','a//x','a\\x']:
                 lock=self.lock(); lock['files']={name:next(iter(lock['files'].values()))}
                 with self.assertRaises(ValueError):stage(directory,lock,lambda _:io.BytesIO(b'model-fixture'))
@@ -73,6 +76,7 @@ class BundleASRTests(unittest.TestCase):
         compiler=shutil.which('swiftc')
         if not compiler: self.skipTest('Swift unavailable; real token-evidence policy not executed')
         with tempfile.TemporaryDirectory() as directory:
+            directory = str(pathlib.Path(directory).resolve())
             binary=pathlib.Path(directory)/'asr-policy'
             subprocess.run([compiler,str(ROOT/'VoiceMatrix/BundledASRPolicy.swift'),str(ROOT/'tests/native/BundledASRPolicyChecks.swift'),'-o',str(binary)],check=True,timeout=60)
             subprocess.run([str(binary)],check=True,timeout=10)
@@ -82,6 +86,7 @@ class BundleASRTests(unittest.TestCase):
         import zipfile
         from unittest.mock import patch
         with tempfile.TemporaryDirectory() as directory:
+            directory = str(pathlib.Path(directory).resolve())
             root=pathlib.Path(directory); lock=self.lock(); manifest=root/'lock.json'
             manifest.write_text(json.dumps(lock)); archive=root/'app.ipa'
             prefix='Payload/VoiceMatrix.app/ParakeetASR/'
@@ -131,6 +136,7 @@ class BundleASRTests(unittest.TestCase):
                 return super().read(count)
         data=b'x'*(CHUNK*2+13)
         with tempfile.TemporaryDirectory() as directory:
+            directory = str(pathlib.Path(directory).resolve())
             stage(directory,self.lock(data),lambda _:BoundedStream(data))
 
     def test_notices_and_asset_selection_are_packaged(self):
@@ -148,6 +154,7 @@ class BundleASRTests(unittest.TestCase):
         import zipfile
         from unittest.mock import patch
         with tempfile.TemporaryDirectory() as directory:
+            directory = str(pathlib.Path(directory).resolve())
             root=pathlib.Path(directory);lock=self.lock();manifest=root/'lock.json';manifest.write_text(json.dumps(lock));archive=root/'app.ipa'
             prefix='Payload/VoiceMatrix.app/ParakeetASR/'
             with zipfile.ZipFile(archive,'w') as out:
