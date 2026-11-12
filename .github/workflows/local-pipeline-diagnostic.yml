@@ -1,6 +1,11 @@
 name: Actual standalone local pipeline diagnostic
 on:
   workflow_call:
+    inputs:
+      use-frozen:
+        type: boolean
+        default: false
+        required: false
   workflow_dispatch:
   push:
     paths:
@@ -19,6 +24,11 @@ jobs:
     timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        if: ${{ inputs.use-frozen }}
+        with:
+          name: Character-frozen-dependencies
+          path: frozen
       - name: Validate source and prepare pinned shared assets
         run: |
           python3 -m unittest tests.test_local_pipeline_diagnostic tests.test_local_video_studio -v
@@ -52,12 +62,33 @@ jobs:
           PY
           python3 tools/create_diagnostic_collection.py
       - name: Build exact production coordinator on Apple Silicon
+        env:
+          USE_FROZEN: ${{ inputs.use-frozen || false }}
         run: |
           test "$(uname -m)" = arm64
           brew install xcodegen
           mkdir -p VoiceMatrix/Resources/{Phonon,OpenVoice,F5TTS}
           xcodegen generate
-          xcodebuild -project VoiceMatrix.xcodeproj -scheme LocalStudioDiagnostic -configuration Release -derivedDataPath local-build CODE_SIGNING_ALLOWED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build > local-evidence/build.log 2>&1 || { tail -120 local-evidence/build.log; exit 1; }
+          graph=VoiceMatrix.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          if [ "$USE_FROZEN" = true ]; then
+            mkdir -p "$(dirname "$graph")"
+            cp frozen/Package.resolved "$graph"
+            xcodebuild -resolvePackageDependencies -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme LocalStudioDiagnostic -derivedDataPath local-build > local-evidence/resolve.log 2>&1 || { tail -120 local-evidence/resolve.log; exit 1; }
+            cmp frozen/Package.resolved "$graph"
+          else
+            xcodebuild -resolvePackageDependencies -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme LocalStudioDiagnostic -derivedDataPath local-build > local-evidence/resolve.log 2>&1 || { tail -120 local-evidence/resolve.log; exit 1; }
+          fi
+          cp "$graph" local-evidence/Package.resolved
+          xcodebuild -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile -skipPackagePluginValidation -project VoiceMatrix.xcodeproj -scheme LocalStudioDiagnostic -configuration Release -derivedDataPath local-build CODE_SIGNING_ALLOWED=NO ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build > local-evidence/build.log 2>&1 || { tail -120 local-evidence/build.log; exit 1; }
+          cmp local-evidence/Package.resolved "$graph"
+          python3 - <<'PYCODE'
+          import hashlib,json,os
+          from pathlib import Path
+          raw=Path('local-evidence/Package.resolved').read_bytes()
+          frozen=os.environ['USE_FROZEN']=='true'
+          if frozen and raw!=Path('frozen/Package.resolved').read_bytes(): raise SystemExit('Frozen dependency graph changed')
+          Path('local-evidence/dependency-evidence.json').write_text(json.dumps(dict(sourceCommit=os.environ['GITHUB_SHA'],dependencyGraphSHA256=hashlib.sha256(raw).hexdigest(),dependencyMode='candidate-shared-frozen-graph' if frozen else 'independently-resolved',frozenGraphVerified=frozen),indent=2))
+          PYCODE
       - name: Require actual retained-source pipeline with networking denied
         run: |
           sandbox-exec -p '(version 1)(allow default)(deny network*)' local-build/Build/Products/Release/LocalStudioDiagnostic VoiceMatrix/Resources local-evidence/neutral.wav tests/fixtures/DiagnosticVoices local-evidence/isolated-work local-evidence/pipeline-evidence.json "$GITHUB_SHA"

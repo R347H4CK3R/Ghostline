@@ -285,7 +285,10 @@ jobs:
   bundled-asr:
     uses: ./.github/workflows/bundled-asr-diagnostic.yml
   local-pipeline:
+    needs: resolve
     uses: ./.github/workflows/local-pipeline-diagnostic.yml
+    with:
+      use-frozen: true
   verify:
     needs: [resolve, ipa, speech, conversion, bundled-asr, local-pipeline]
     runs-on: ubuntu-latest

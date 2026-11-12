@@ -23,3 +23,11 @@ class LocalPipelineDiagnosticTests(unittest.TestCase):
   s=(ROOT/'.github/workflows/voicematrix-049-candidate.yml').read_text()
   self.assertIn('uses: ./.github/workflows/local-pipeline-diagnostic.yml',s)
   self.assertIn('needs: [resolve, ipa, speech, conversion, bundled-asr, local-pipeline]',s)
+
+ def test_frozen_graph_and_existing_plugin_consent_are_used(self):
+  s=(ROOT/'.github/workflows/local-pipeline-diagnostic.yml').read_text()
+  for term in ['use-frozen:', 'type: boolean', 'default: false', 'name: Character-frozen-dependencies', 'frozen/Package.resolved', '-skipPackagePluginValidation', '-disableAutomaticPackageResolution', '-onlyUsePackageVersionsFromResolvedFile', 'dependency-evidence.json', 'independently-resolved']:
+   self.assertIn(term,s)
+  main=(ROOT/'.github/workflows/voicematrix-049-candidate.yml').read_text()
+  self.assertIn('  local-pipeline:\n    needs: resolve\n',main)
+  self.assertIn('      use-frozen: true',main)

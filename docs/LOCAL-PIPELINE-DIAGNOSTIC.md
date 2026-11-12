@@ -21,3 +21,7 @@ With networking denied, the executable:
 The workflow always uploads the synthetic evidence directory. Failure retains the job/status and generated attempts; success emits `pipeline-evidence.json` bound to the source commit and input hashes. It does not prove general YouTube acquisition, music separation, character identification, RVC training, perceptual similarity, arbitrary content performance, physical iPhone memory/thermal behavior, external speakers, or final 1.0.0 acceptance.
 
 Required before release: this native target actually passes on the exact candidate, the iPhone build and UI gates pass, and remaining product/device requirements are checked independently. Presence of the workflow, Linux source-contract tests, or a successful build is not an end-to-end success.
+
+## Dependency identity
+
+The aggregate reusable call waits for `resolve`, downloads `Character-frozen-dependencies`, and resolves/builds with automatic package resolution disabled and only the supplied lockfile permitted. Byte comparisons require the graph to remain unchanged. Standalone/manual runs resolve their own graph, freeze it before building and explicitly report `independently-resolved`, not aggregate graph parity. Both routes retain the exact lockfile and `dependency-evidence.json` source/hash/mode evidence. The existing pinned MLX package plugin uses the same `-skipPackagePluginValidation` invocation already used by the app/F5 gates; model, inference and output acceptance checks are not bypassed.
