@@ -1,6 +1,12 @@
 import Foundation
 import CryptoKit
 
+actor SyncProgressRecorder {
+    private var values: [VoiceSyncProgress] = []
+    func append(_ value: VoiceSyncProgress) { values.append(value) }
+    func all() -> [VoiceSyncProgress] { values }
+}
+
 @main struct VoiceFolderSyncChecks {
     static func hash(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
     static func main() async throws {
@@ -24,7 +30,12 @@ import CryptoKit
             return blobs[String(path.dropFirst(("voices/" + revision + "/").count))]!
         }
         let staged = work.appendingPathComponent("staged")
-        let downloaded = try await VoiceFolderSync.download(to: staged, previousRevision: nil, fetch: fetch)
+        let events = SyncProgressRecorder()
+        let downloaded = try await VoiceFolderSync.download(to: staged, previousRevision: nil, progress: { await events.append($0) }, fetch: fetch)
+        let recorded = await events.all()
+        precondition(recorded.first == .catalogValidated(3, blobs.values.reduce(0) { $0 + $1.count }))
+        precondition(recorded.last == .fileValidated(3, 3))
+        precondition(recorded.filter { if case .fileValidated = $0 { return true }; return false }.count == 3)
         precondition(downloaded == revision && calls == 4)
         let store = CharacterFolderStore(root: work.appendingPathComponent("private"))
         let profiles = try await store.importCollection(at: staged)

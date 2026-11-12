@@ -1,7 +1,7 @@
 name: Native character folder checks
 on:
   push:
-    paths: ['tools/**', 'tests/test_*.py', 'VoiceMatrix/VoiceFolderSync.swift', 'tests/native/VoiceFolderSyncChecks.swift', 'VoiceMatrix/CharacterReviewStore.swift', 'tests/native/CharacterReviewChecks.swift', 'VoiceMatrix/ConversionAudio.swift', 'VoiceMatrix/OfflineVoiceConverter.swift', 'tests/native/CharacterReferenceAudioChecks.swift', 'VoiceMatrix/F5SpeechChunks.swift', 'tests/native/F5SpeechChunkChecks.swift', 'VoiceMatrix/StudioActivity.swift', 'tests/native/StudioActivityChecks.swift', 'VoiceMatrix/CharacterFolderStore.swift', 'VoiceMatrix/CharacterLibraryView.swift', 'tests/native/CharacterFolderChecks.swift', 'tests/test_character_folder.py', 'tools/voice_pack.py', '.github/workflows/native-character-folder.yml']
+    paths: ['tools/**', 'tests/test_*.py', 'VoiceMatrix/VoiceSyncLog.swift', 'VoiceMatrix/VoiceFolderSync.swift', 'tests/native/VoiceFolderSyncChecks.swift', 'VoiceMatrix/CharacterReviewStore.swift', 'tests/native/CharacterReviewChecks.swift', 'VoiceMatrix/ConversionAudio.swift', 'VoiceMatrix/OfflineVoiceConverter.swift', 'tests/native/CharacterReferenceAudioChecks.swift', 'VoiceMatrix/F5SpeechChunks.swift', 'tests/native/F5SpeechChunkChecks.swift', 'VoiceMatrix/StudioActivity.swift', 'tests/native/StudioActivityChecks.swift', 'VoiceMatrix/CharacterFolderStore.swift', 'VoiceMatrix/CharacterLibraryView.swift', 'tests/native/CharacterFolderChecks.swift', 'tests/test_character_folder.py', 'tools/voice_pack.py', '.github/workflows/native-character-folder.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -59,7 +59,12 @@ jobs:
         if: always()
         run: python3 -m unittest discover -s tests -v
 
+      - name: Check request-correlated, private sync log events
+        run: |
+          xcrun swiftc -parse-as-library VoiceMatrix/VoiceSyncLog.swift tests/native/VoiceSyncLogChecks.swift -o sync-log-checks
+          ./sync-log-checks
+
       - name: Check bounded private transfer and native folder staging
         run: |
-          xcrun swiftc -parse-as-library VoiceMatrix/CharacterFolderStore.swift VoiceMatrix/VoiceFolderSync.swift tests/native/VoiceFolderSyncChecks.swift -o private-transfer-checks
+          xcrun swiftc -parse-as-library VoiceMatrix/CharacterFolderStore.swift VoiceMatrix/VoiceFolderSync.swift VoiceMatrix/VoiceSyncLog.swift tests/native/VoiceFolderSyncChecks.swift -o private-transfer-checks
           ./private-transfer-checks folder-check-fixture/Voices

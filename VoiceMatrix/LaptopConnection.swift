@@ -55,7 +55,7 @@ enum LaptopConnection {
         }
         return "Your laptop accepted the list. This does not mean voice processing is finished."
     }
-    static func syncVoices(to folder: URL, previousRevision: String?) async throws -> String? {
+    static func syncVoices(to folder: URL, previousRevision: String?, syncID: String, progress: @escaping @Sendable (VoiceSyncProgress) async -> Void) async throws -> String? {
         guard let address = UserDefaults.standard.string(forKey: "laptopURL") ?? bundledURL,
               let root = URL(string: address), root.scheme == "https", root.host != nil,
               root.user == nil, root.password == nil, root.query == nil, root.fragment == nil,
@@ -69,16 +69,59 @@ enum LaptopConnection {
         configuration.timeoutIntervalForResource = 120
         let session = URLSession(configuration: configuration, delegate: RejectRedirects(), delegateQueue: nil)
         defer { session.invalidateAndCancel() }
+        let pollConfiguration = URLSessionConfiguration.ephemeral
+        pollConfiguration.timeoutIntervalForRequest = 3
+        pollConfiguration.timeoutIntervalForResource = 5
+        let pollSession = URLSession(configuration: pollConfiguration, delegate: RejectRedirects(), delegateQueue: nil)
+        let activity = Task {
+            var sequence = 0
+            var warned = false
+            var missingReceipts = 0
+            while !Task.isCancelled {
+                do {
+                    var request = URLRequest(url: root.appendingPathComponent("voice-sync/" + syncID))
+                    if let token { request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization") }
+                    let (stream, response) = try await pollSession.bytes(for: request)
+                    if let http = response as? HTTPURLResponse, http.statusCode == 200 {
+                        var data = Data()
+                        for try await byte in stream {
+                            guard data.count < 65_536 else { throw failure("Activity response too large") }
+                            data.append(byte)
+                        }
+                        let snapshot = try JSONDecoder().decode(VoiceSyncRemoteSnapshot.self, from: data)
+                        guard snapshot.schemaVersion == 1, snapshot.syncID == syncID else { throw failure("Activity response did not match this sync") }
+                        missingReceipts = 0
+                        for event in snapshot.newer(than: sequence, for: syncID) {
+                            try Task.checkCancellation()
+                            if let eventProgress = event.progress { await progress(eventProgress) }
+                            sequence = event.sequence
+                        }
+                    } else {
+                        missingReceipts += 1
+                        if (response as? HTTPURLResponse)?.statusCode != 404 || missingReceipts >= 3 {
+                            throw failure("Laptop activity unavailable")
+                        }
+                    }
+                } catch {
+                    if !Task.isCancelled && !warned { await progress(.activityUnavailable); warned = true }
+                }
+                do { try await Task.sleep(nanoseconds: 1_000_000_000) } catch { return }
+            }
+        }
+        defer { activity.cancel(); pollSession.invalidateAndCancel() }
         let started = Date()
         return try await VoiceFolderSync.bounded(onTimeout: { session.invalidateAndCancel() }) {
-          try await VoiceFolderSync.download(to: folder, previousRevision: previousRevision) { path, limit in
+          try await VoiceFolderSync.download(to: folder, previousRevision: previousRevision, progress: progress) { path, limit in
             try Task.checkCancellation()
             guard Date().timeIntervalSince(started) < 120 else { throw failure("Voice sync timed out. Your saved voices were kept.") }
             var request = URLRequest(url: root.appendingPathComponent(path))
+            request.setValue(syncID, forHTTPHeaderField: "X-VoiceMatrix-Sync-ID")
             if let token { request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization") }
             let (stream, response) = try await session.bytes(for: request)
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 { await progress(.laptopRejected(http.statusCode)) }
             guard let response = response as? HTTPURLResponse, response.statusCode == 200,
                   response.expectedContentLength <= Int64(limit) else { throw failure("Your laptop voice folder is unavailable or changed. Your saved voices were kept.") }
+            if path == "voices" { await progress(.laptopResponded) }
             var bytes = Data(); bytes.reserveCapacity(limit)
             for try await byte in stream {
                 if bytes.count % 32768 == 0 {
@@ -87,6 +130,7 @@ enum LaptopConnection {
                 }
                 guard bytes.count < limit else { throw failure("The laptop sent an oversized voice file.") }
                 bytes.append(byte)
+                if path != "voices" && bytes.count % 262144 == 0 { await progress(.receiving(bytes.count, limit)) }
             }
             return bytes
           }

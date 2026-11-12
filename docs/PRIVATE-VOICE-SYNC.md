@@ -29,3 +29,14 @@ At source d6799389e993c131167df06434e9c069f582bb42, all 190 Python tests passed 
 The installed companion endpoint downloaded its actual private collection through same-account HTTPS: 121 files, 25,103,331 bytes, 60 profiles and 60 distinct reference hashes, in 5.12 seconds. Every transferred file's size/hash and the strict native-format collection were verified in temporary private storage, then deleted. Anonymous local access returned 401. The master folder was not modified; no neural synthesis or character review was performed. See [public-safe measurements](qa/private-voice-sync-checks.json).
 
 The speech worker and queue monitor were not restarted. Full automatic source labeling, human feedback/promotion and final completion-ledger cleanup remain separate unfinished work.
+
+
+## Live sync activity
+
+Open **Voices → Manage your collection → Live sync log** to see the current app session's latest sync, with the newest event first. Sending a request is labeled as waiting until a laptop response or request-correlated activity proves receipt. Laptop events show collection checking, catalog preparation and file responses. Phone events show byte transfer, hash validation, deferred import, unchanged revision, and completed private storage. Stop and errors keep previously saved voices. The elapsed timer is not a claim of progress.
+
+The companion exposes authenticated `/sync-log` (browser) and `/voice-sync/<random-UUID>` (phone) through the existing private connection. Older clients also appear in the browser when their catalog request arrives. The log keeps up to 32 recent syncs for 15 minutes in memory, 160 events each; the phone keeps the latest 200 events until the next sync or app restart. Names, paths, recordings, transcripts, credentials and source revisions are not stored in log events. Opaque file identities used to deduplicate counts are capped at the 2001-file protocol bound. No log upload or automatic export is added.
+
+The phone sends `X-VoiceMatrix-Sync-ID` on transfer requests; receipt is recorded before catalog validation holds the collection lock. Status polling runs independently once per second during transfer and cannot change whether a transfer succeeds. A legacy companion still works, but only its HTTP responses confirm receipt. A laptop file-sent event is not proof of phone import or voice processing/training completion. Stopping after the private store has committed cannot replace a successful completion with a misleading pending-stop state.
+
+This feature is being checked for the 0.4.7 candidate. It is not yet a verified published phone update or a physical-device sync claim.

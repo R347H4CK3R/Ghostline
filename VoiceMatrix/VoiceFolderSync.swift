@@ -24,7 +24,7 @@ enum VoiceFolderSync {
     }
     static func digest(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
     private static func invalid() -> NSError { NSError(domain: "VoiceMatrix.Sync", code: 1, userInfo: [NSLocalizedDescriptionKey: "The laptop voice snapshot changed or failed validation. Your saved voices were kept."]) }
-    static func download(to folder: URL, previousRevision: String?, fetch: (String, Int) async throws -> Data) async throws -> String? {
+    static func download(to folder: URL, previousRevision: String?, progress: @Sendable (VoiceSyncProgress) async -> Void = { _ in }, fetch: (String, Int) async throws -> Data) async throws -> String? {
         let data = try await fetch("voices", 1_048_576)
         guard data.count <= 1_048_576 else { throw invalid() }
         let catalog = try JSONDecoder().decode(Catalog.self, from: data)
@@ -47,15 +47,18 @@ enum VoiceFolderSync {
         guard paths.contains("collection.json"), ids.allSatisfy({ paths.contains($0 + "/manifest.json") && paths.contains($0 + "/reference.wav") }) else { throw invalid() }
         let proof = catalog.files.sorted { $0.path < $1.path }.map { $0.path + ":" + $0.sha256 + ":" + String($0.bytes) + "\n" }.joined()
         guard digest(Data(proof.utf8)) == catalog.revision else { throw invalid() }
+        await progress(.catalogValidated(catalog.files.count, total))
         if previousRevision == catalog.revision { return nil }
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        for file in catalog.files {
+        for (index, file) in catalog.files.enumerated() {
             try Task.checkCancellation()
+            await progress(.downloading(index + 1, catalog.files.count))
             let bytes = try await fetch("voices/" + catalog.revision + "/" + file.path, file.bytes)
             guard bytes.count == file.bytes, digest(bytes) == file.sha256 else { throw invalid() }
             let destination = folder.appendingPathComponent(file.path)
             try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
             try bytes.write(to: destination, options: .atomic)
+            await progress(.fileValidated(index + 1, catalog.files.count))
         }
         try Task.checkCancellation()
         return catalog.revision

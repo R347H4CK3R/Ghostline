@@ -52,7 +52,7 @@ class PrivateVoices:
    finally:os.close(fd)
   if len(data)>limit or identity(self.root.stat())!=self.identity:raise TransferError(409)
   return data
- def catalog(self):
+ def catalog(self,progress=lambda completed,total:None):
   with self.lock:
    try:
     index=self.read(self.root/'collection.json',256000);value=json.loads(index);entries=value['voices']
@@ -73,6 +73,7 @@ class PrivateVoices:
      owners.add(metadata['referenceSHA256']);files[identifier+'/manifest.json']=manifest;files[identifier+'/reference.wav']=audio
      total+=len(manifest)+len(audio)
      if total>67108864:raise TransferError(413)
+     progress(len(seen),len(entries))
     if self.read(self.root/'collection.json',256000)!=index:raise TransferError(409)
     rows=[dict(path=p,sha256=digest(data),bytes=len(data)) for p,data in sorted(files.items())]
     result=dict(schemaVersion=1,revision=revision(rows),files=rows)

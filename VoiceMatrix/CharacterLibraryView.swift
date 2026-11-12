@@ -6,6 +6,15 @@ import CryptoKit
     @Published var profiles: [CharacterReference] = []
     @Published var busy = false
     @Published private(set) var syncing = false
+    @Published private(set) var syncCanStop = false
+    @Published private(set) var syncEvents: [VoiceSyncLogEntry] = []
+    @Published private(set) var syncStarted: Date?
+    private var syncRunID = UUID()
+    private func recordSync(_ progress: VoiceSyncProgress) {
+        if progress.isTerminal || progress == .stopping { syncCanStop = false }
+        syncEvents.append(VoiceSyncLogEntry(progress: progress))
+        if syncEvents.count > 200 { syncEvents.removeFirst(syncEvents.count - 200) }
+    }
     @Published var selectedID = ""
     @Published var output: URL?
     @Published private(set) var outputKind = "speech"
@@ -63,28 +72,44 @@ import CryptoKit
             importFolder(url)
         } catch { message = "The master folder is unavailable. Your imported voices remain on this iPhone. Choose the folder again to refresh it." }
     }
-    func cancelSync() { syncJob?.cancel() }
+    func cancelSync() { guard syncCanStop else { return }; recordSync(.stopping); syncJob?.cancel() }
     func syncVoices() {
         guard !busy, !syncing, LaptopConnection.paired else { return }
-        syncing = true
+        syncing = true; syncCanStop = true
+        syncEvents = []; syncStarted = Date()
+        let run = UUID(); syncRunID = run
+        recordSync(.requesting)
         syncJob = Task {
             let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("VoiceSync-" + UUID().uuidString)
-            defer { syncing = false; try? FileManager.default.removeItem(at: temporary) }
+            defer { syncing = false; syncCanStop = false; try? FileManager.default.removeItem(at: temporary) }
             do {
                 let previous = profiles.isEmpty ? nil : UserDefaults.standard.string(forKey: "remoteVoiceRevision.v1")
-                guard let revision = try await LaptopConnection.syncVoices(to: temporary, previousRevision: previous) else { return }
+                guard let revision = try await LaptopConnection.syncVoices(to: temporary, previousRevision: previous, syncID: run.uuidString.lowercased(), progress: { [weak self] event in
+                    await self?.receiveSync(event, run: run)
+                }) else {
+                    try Task.checkCancellation()
+                    recordSync(.unchanged); message = "Your saved voices are up to date with the laptop."
+                    return
+                }
                 try Task.checkCancellation()
-                guard !busy else { return } // Never interrupt active speech, recording conversion or listening review.
+                guard !busy else { recordSync(.deferred); return } // Never interrupt active speech, recording conversion or listening review.
                 busy = true
                 defer { busy = false }
+                recordSync(.importing)
                 profiles = try await store.importCollection(at: temporary)
                 UserDefaults.standard.set(revision, forKey: "remoteVoiceRevision.v1")
+                recordSync(.completed(profiles.count))
                 await refreshReviewSummaries()
                 message = "\(profiles.count) character references saved for offline use. Character resemblance still needs listening review."
             } catch {
+                recordSync(Task.isCancelled ? .stopped : .failed)
                 if !busy { message = Task.isCancelled ? "Sync stopped. Your saved voices were kept." : "Laptop sync unavailable. Your saved voices remain usable offline. " + error.localizedDescription }
             }
         }
+    }
+    private func receiveSync(_ event: VoiceSyncProgress, run: UUID) {
+        guard syncing, syncCanStop, syncRunID == run, !Task.isCancelled else { return }
+        recordSync(event)
     }
     func importFolder(_ url: URL) {
         guard !busy else { return }
@@ -233,6 +258,7 @@ struct CharacterLibraryView: View {
     @State private var importKind: ImportKind = .folder
     @State private var showingImporter = false
     @State private var choosingVoice = false
+    @State private var showingSyncLog = false
     @FocusState private var editingWords: Bool
     init(mode: CharacterStudioMode = .speech) { _mode = State(initialValue: mode) }
     @EnvironmentObject private var library: CharacterLibrary
@@ -269,7 +295,10 @@ struct CharacterLibraryView: View {
                 DisclosureGroup("Manage your collection") {
                     Button { library.syncVoices() } label: { Label("Sync voices from laptop", systemImage: "arrow.triangle.2.circlepath") }
                         .disabled(library.busy || library.syncing || !LaptopConnection.paired)
-                    if library.syncing { ProgressView("Syncing laptop voices…"); Button("Stop sync", role: .cancel) { library.cancelSync() } }
+                    if library.syncing { ProgressView("Syncing laptop voices…"); Button("Stop sync", role: .cancel) { library.cancelSync() }.disabled(!library.syncCanStop) }
+                    Button { showingSyncLog = true } label: { Label("Live sync log", systemImage: "list.bullet.rectangle") }
+                        .accessibilityIdentifier("live-sync-log")
+                    if let latest = library.syncEvents.last { Text(latest.progress.message).font(.caption).foregroundStyle(.secondary) }
                     Button { importKind = .folder; showingImporter = true } label: { Label("Choose Voices Folder", systemImage: "folder.badge.plus") }
                         .disabled(library.busy).accessibilityIdentifier("import-character-folder")
                     Text("Imported voices are saved privately on this iPhone and kept when the laptop is unavailable.")
@@ -380,6 +409,7 @@ struct CharacterLibraryView: View {
         .background(StudioPalette.background)
         .scrollDismissesKeyboard(.interactively)
         .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Done") { editingWords = false } } }
+        .sheet(isPresented: $showingSyncLog) { NavigationStack { VoiceSyncLogView() } }
         .sheet(isPresented: $choosingVoice) { NavigationStack { CharacterPickerView() } }
         // One presenter avoids the audio importer masking the folder importer.
         .fileImporter(isPresented: $showingImporter,
@@ -471,5 +501,44 @@ struct CharacterPickerView: View {
         .searchable(text: $search, prompt: "Search names or categories")
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         .scrollContentBackground(.hidden).background(StudioPalette.background)
+    }
+}
+
+
+private struct VoiceSyncLogView: View {
+    @EnvironmentObject private var library: CharacterLibrary
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        List {
+            Section {
+                if library.syncing, let started = library.syncStarted {
+                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                        Text("Sync running · \(Int(context.date.timeIntervalSince(started))) seconds elapsed")
+                        if let last = library.syncEvents.last {
+                            Text("Last activity \(max(0, Int(context.date.timeIntervalSince(last.date)))) seconds ago. Waiting is not proof of progress.")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    Button("Stop sync", role: .cancel) { library.cancelSync() }.disabled(!library.syncCanStop)
+                } else {
+                    Button("Sync voices from laptop") { library.syncVoices() }
+                        .disabled(library.busy || !LaptopConnection.paired)
+                }
+                Text("Laptop entries are based on received responses. iPhone entries show download, validation and saving. No voice names, recordings or transcripts are logged.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Section("Latest activity first") {
+                if library.syncEvents.isEmpty { Text("No sync activity in this app session yet.") }
+                ForEach(library.syncEvents.reversed()) { event in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(event.progress.message)
+                        Text("\(event.date.formatted(date: .omitted, time: .standard)) · \(event.progress.source)")
+                            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .navigationTitle("Live sync log")
+        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
     }
 }

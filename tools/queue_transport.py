@@ -8,16 +8,20 @@ from tools.master_voices import PublishBusy
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from tools.video_queue import VideoQueue,video_id
 from tools.private_voices import PrivateVoices,TransferError
+from tools.sync_activity import SyncActivity,page as sync_page
 
 def create_server(root,token,port=0,trusted_login=None,master=None):
  if len(token)<32:raise ValueError('Use a strong pairing token')
  root=pathlib.Path(root);root.mkdir(parents=True,exist_ok=True);lock=threading.Lock()
  csrf=secrets.token_urlsafe(32)
  voices=PrivateVoices(master) if master is not None else None
+ activity=SyncActivity()
  class Handler(BaseHTTPRequestHandler):
   def log_message(self,*args):pass # Do not log tokens or submitted names/links.
   def respond(self,code,data):
-   body=json.dumps(data).encode();self.send_response(code);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
+   body=json.dumps(data).encode();self.send_response(code);
+   if getattr(self,'sync_id',None):self.send_header('X-VoiceMatrix-Sync-ID',self.sync_id)
+   self.send_header('Cache-Control','no-store');self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
   def authorized(self):
    if hmac.compare_digest(self.headers.get('Authorization',''),'Bearer '+token):return True
    # Opt-in only, on this loopback-bound server behind Tailscale Serve.
@@ -27,6 +31,12 @@ def create_server(root,token,port=0,trusted_login=None,master=None):
   def do_GET(self):
    if not self.authorized():return self.respond(401,dict(error='Pairing required'))
    address=urlsplit(self.path)
+   if self.path=='/voice-sync' or self.path.startswith('/voice-sync/'):
+    identifier=self.path[len('/voice-sync/'):] if self.path.startswith('/voice-sync/') else None
+    data=activity.snapshot(identifier)
+    return self.respond(200,data) if data is not None else self.respond(404,dict(error='No receipt recorded'))
+   if self.path=='/sync-log':
+    body=sync_page(csrf);self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.send_header('Content-Security-Policy',"default-src 'none'; script-src 'nonce-"+csrf+"'; style-src 'nonce-"+csrf+"'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'");self.end_headers();self.wfile.write(body);return
    if self.path=='/listening':
     body=listening_page(csrf);self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.send_header('Content-Security-Policy',"default-src 'none'; script-src 'nonce-"+csrf+"'; style-src 'nonce-"+csrf+"'; connect-src 'self'; media-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");self.end_headers();self.wfile.write(body);return
    if self.path=='/listening/catalog' or address.path.startswith('/listening/assets/'):
@@ -61,13 +71,29 @@ def create_server(root,token,port=0,trusted_login=None,master=None):
     except (OSError,ValueError,KeyError,TypeError):return self.respond(409,dict(error='Private preview unavailable or changed'))
     self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','audio/wav');self.send_header('Content-Length',str(len(data)));self.send_header('X-Content-Type-Options','nosniff');self.end_headers();self.wfile.write(data);return
    if self.path=='/voices' or self.path.startswith('/voices/'):
-    if voices is None:return self.respond(404,dict(error='Private master is not configured'))
+    self.sync_id=self.headers.get('X-VoiceMatrix-Sync-ID')
+    if self.path=='/voices':
+     try:self.sync_id=activity.start(self.sync_id)
+     except ValueError:
+      self.sync_id=None;return self.respond(400,dict(error='Invalid or reused sync ID'))
+    elif self.sync_id and activity.snapshot(self.sync_id) is None:self.sync_id=None
+    if voices is None:
+     activity.add(self.sync_id,'failed');return self.respond(404,dict(error='Private master is not configured'))
     try:
-     if self.path=='/voices':return self.respond(200,voices.catalog())
+     if self.path=='/voices':
+      activity.add(self.sync_id,'validating')
+      catalog=voices.catalog(progress=lambda completed,total:activity.add(self.sync_id,'validated',completed,total))
+      activity.add(self.sync_id,'catalog_ready',total=len(catalog['files']),byte_count=sum(row['bytes'] for row in catalog['files']))
+      self.respond(200,catalog);activity.add(self.sync_id,'catalog_sent',total=len(catalog['files']));return
      parts=self.path.split('/',3)
      if len(parts)!=4:return self.respond(404,dict(error='Unknown voice asset'))
-     data=voices.file(parts[2],parts[3]);self.send_response(200);self.send_header('Cache-Control','no-store');self.send_header('Content-Type','application/octet-stream');self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data);return
-    except TransferError as error:return self.respond(error.status,dict(error='Private voice snapshot unavailable or changed; refresh the catalog'))
+     data=voices.file(parts[2],parts[3]);self.send_response(200)
+     if self.sync_id:self.send_header('X-VoiceMatrix-Sync-ID',self.sync_id)
+     self.send_header('Cache-Control','no-store');self.send_header('Content-Type','application/octet-stream');self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
+     activity.add(self.sync_id,'file_sent',byte_count=len(data),file_key=parts[3]);return
+    except TransferError as error:
+     activity.add(self.sync_id,'failed');return self.respond(error.status,dict(error='Private voice snapshot unavailable or changed; refresh the catalog'))
+    except (BrokenPipeError,ConnectionResetError):activity.add(self.sync_id,'disconnected');return
    if self.path!='/status':return self.respond(404,dict(error='Unknown action'))
    q=VideoQueue(str(root/'queue.db'))
    try:
