@@ -4,7 +4,7 @@ import Combine
 import CryptoKit
 
 @MainActor final class LocalVideoStudio: ObservableObject {
-    struct Event: Codable, Identifiable { let id: UUID; let time: Date; let stage: String; let message: String }
+    typealias Event = LocalStudioJournal.Event
     struct Job: Codable, Identifiable {
         let id: UUID
         let created: Date
@@ -70,9 +70,22 @@ import CryptoKit
     private func update(_ stage: String, _ text: String, log: Bool = true) throws {
         guard var value = current else { return }
         value.updated = Date(); value.stage = stage; value.message = text
-        if log { value.events.append(Event(id: UUID(), time: value.updated, stage: stage, message: text)); value.events = Array(value.events.suffix(160)) }
+        // Every real activity update is durable, including byte counters. UI refresh never calls update.
+        let event=LocalStudioJournal.sanitized(Event(id:UUID(),time:value.updated,stage:stage,message:text))
+        try LocalStudioJournal.append(event,folder:folder,legacy:value.events)
+        if log { value.events.append(event); value.events = Array(value.events.suffix(160)) }
         try JSONEncoder().encode(value).write(to: folder.appendingPathComponent("job.json"), options: .atomic)
         current = value; notice = text
+    }
+    func journalPage(offset: Int = 0) throws -> LocalStudioJournal.Page {
+        guard offset>=0,let current else { throw LocalStudioJournal.Failure.unsafe }
+        let file=folder.appendingPathComponent(LocalStudioJournal.filename)
+        if !FileManager.default.fileExists(atPath:file.path) {
+            // Read-only legacy compatibility; do not claim already-lost events exist.
+            let entries=Array(current.events.dropFirst(offset).prefix(100))
+            return LocalStudioJournal.Page(events:entries.map(LocalStudioJournal.sanitized),offset:offset,total:current.events.count)
+        }
+        return try LocalStudioJournal.read(folder:folder,offset:offset)
     }
     func selectHistory(_ job: Job) { guard !busy else { return }; current = job; notice = job.message }
     func setActive(_ value: Bool) { active = value; if !value, busy { cancel() } }
@@ -211,8 +224,15 @@ import CryptoKit
                     guard v.isRegularFile == true, v.isSymbolicLink != true, (v.fileSize ?? Int.max) <= 4_000_000 else { throw LocalError.source }
                     let data = try Data(contentsOf: url)
                     guard Self.hash(data) == digest else { throw LocalError.source }
-                    analysis = try JSONDecoder().decode(LocalSpeakerDiarization.Analysis.self, from: data)
-                    try LocalSpeakerDiarization.validate(analysis)
+                    let storedAnalysis = try JSONDecoder().decode(LocalSpeakerDiarization.Analysis.self, from: data)
+                    analysis = try LocalSpeakerDiarization.validatedForCurrentPolicy(storedAnalysis)
+                    if storedAnalysis.selectionPolicyVersion != 2 {
+                        let upgraded = try JSONEncoder().encode(analysis)
+                        let upgradedName = "diarization-" + UUID().uuidString.lowercased() + ".json"
+                        try upgraded.write(to: jobFolder.appendingPathComponent(upgradedName), options: .atomic)
+                        current?.analysisFile = upgradedName; current?.analysisSHA256 = Self.hash(upgraded)
+                        try update("Reference selection upgraded", "Validated older speaker evidence and added bounded alternate crops. Original analysis and media are retained.")
+                    }
                     try update("Speaker analysis retained", "Reusing the verified retained analysis so speaker groups stay consistent across Resume.")
                 } else {
                     try update("Analyzing speakers", "Loading bundled speaker analysis. Speaker groups are not character identities.")

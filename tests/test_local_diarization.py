@@ -67,4 +67,16 @@ class LocalDiarizationTests(unittest.TestCase):
    binary=pathlib.Path(tmp)/'speaker-policy'
    subprocess.run(['swiftc',str(ROOT/'VoiceMatrix/LocalSpeakerPolicy.swift'),str(ROOT/'tests/native/LocalSpeakerPolicyChecks.swift'),'-o',str(binary)],check=True,timeout=60)
    subprocess.run([str(binary)],check=True,timeout=10)
+
+class AlternateCropContractTests(unittest.TestCase):
+ def test_bounded_fallbacks_and_explicit_legacy_upgrade(self):
+  policy=(ROOT/'VoiceMatrix/LocalSpeakerPolicy.swift').read_text()
+  for term in ['includeFallbacks: Bool = true','for seconds in [4.0, 3.0]','windows.count < 3','windows.contains','span.end - seconds']:self.assertIn(term,policy)
+  diarization=(ROOT/'VoiceMatrix/LocalSpeakerDiarization.swift').read_text()
+  self.assertIn('selectionPolicyVersion',diarization)
+  self.assertIn('validatedForCurrentPolicy',diarization)
+  self.assertIn('expected == analysis.speakerWindows',diarization)
+  studio=(ROOT/'VoiceMatrix/LocalVideoStudio.swift').read_text()
+  self.assertIn('LocalSpeakerDiarization.validatedForCurrentPolicy',studio)
+
 if __name__=='__main__':unittest.main()

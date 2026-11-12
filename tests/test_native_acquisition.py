@@ -30,6 +30,7 @@ class NativeAcquisitionTests(unittest.TestCase):
  def test_native_behavior_gate_wired(self):
   s=(ROOT/'.github/workflows/character-ui-smoke.yml').read_text()
   self.assertEqual(s.count('-only-testing:VoiceMatrixTests/LocalMediaAcquisitionTests'),2)
+  self.assertEqual(s.count('-test-timeouts-enabled YES -default-test-execution-time-allowance 120 -maximum-test-execution-time-allowance 300'),2)
 
  def test_retention_scan_fails_closed(self):
   s=(ROOT/'VoiceMatrix/LocalMediaAcquisition.swift').read_text()

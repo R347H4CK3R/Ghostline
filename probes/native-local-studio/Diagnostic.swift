@@ -127,6 +127,11 @@ import Metal
             try encoder.encode(result).write(to:report,options:.atomic)
             print("Actual local coordinator completed with retained source, cancellation/resume and persisted imports. iPhone behavior and likeness are unverified.")
         } catch {
+            // A failed native gate must expose the actual final stage in CI logs.
+            if let job=studio.current {
+                let lines = ["Local pipeline failed at stage: " + job.stage + "; status: " + job.message] + job.events.suffix(12).map { $0.stage + ": " + $0.message }
+                try? FileHandle.standardError.write(contentsOf: Data((lines.joined(separator:"\n") + "\n").utf8))
+            }
             studio.cancel()
             try? await settle(studio,seconds:120)
             if let job=studio.current { try? JSONEncoder().encode(job).write(to:report.deletingLastPathComponent().appendingPathComponent("failed-job.json"),options:.atomic) }

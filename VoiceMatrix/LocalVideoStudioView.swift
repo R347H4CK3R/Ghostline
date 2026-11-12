@@ -6,6 +6,8 @@ struct LocalVideoStudioView: View {
     @EnvironmentObject private var library: CharacterLibrary
     @EnvironmentObject private var audio: AudioStore
     @EnvironmentObject private var speech: SpeechStudio
+    @State private var journalPage: LocalStudioJournal.Page?
+    @State private var journalError: String?
     @State private var sourceURL = ""
     @State private var importing = false
     @State private var selected: URL?
@@ -72,6 +74,24 @@ struct LocalVideoStudioView: View {
                         } else { Text("No local job has started.").font(.caption) }
                     }
                 }.accessibilityIdentifier("local-video-live-log")
+                if local.current != nil {
+                    DisclosureGroup("Complete retained event history") {
+                        Text("Oldest entries first, 100 per page. Older jobs may only have their previously saved snapshot. Refresh reads actual events without changing activity timestamps.").font(.caption)
+                        Button("Refresh from first event") { loadJournal(0) }
+                        if let journalError { Text(journalError).foregroundStyle(.orange) }
+                        if let page=journalPage {
+                            Text("Showing \(page.offset + (page.events.isEmpty ? 0 : 1))–\(page.offset + page.events.count) of \(page.total) retained events").font(.caption)
+                            ForEach(page.events) { event in
+                                Text(event.time.formatted(date:.abbreviated,time:.standard) + " · " + event.stage + "\n" + event.message).font(.caption).textSelection(.enabled)
+                            }
+                            HStack {
+                                if page.offset>0 { Button("Previous 100") { loadJournal(max(0,page.offset-100)) } }
+                                if let next=page.next { Button("Next 100") { loadJournal(next) } }
+                            }
+                            ShareLink("Share this log page",item:page.text)
+                        }
+                    }.accessibilityIdentifier("local-video-durable-log")
+                }
                 Text("Keep VoiceMatrix open while processing. Leaving the app pauses at a safe boundary. Files remain available for Resume; iOS does not guarantee unlimited background processing.").font(.footnote).foregroundStyle(.secondary)
                 if !local.history.isEmpty {
                     Divider(); Text("Retained job history").font(.headline)
@@ -87,6 +107,7 @@ struct LocalVideoStudioView: View {
             }.padding(20)
         }
         .navigationTitle("Video Voice Studio")
+        .onChange(of: local.current?.id) { _, _ in journalPage=nil; journalError=nil }
         .onChange(of: sourceURL) { _, _ in authorized = false }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.movie, .audio]) { result in
             switch result {
@@ -95,4 +116,9 @@ struct LocalVideoStudioView: View {
             }
         }
     }
+    private func loadJournal(_ offset: Int) {
+        do { journalPage=try local.journalPage(offset:offset);journalError=nil }
+        catch { journalPage=nil;journalError=error.localizedDescription }
+    }
+
 }

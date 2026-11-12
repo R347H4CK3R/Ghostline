@@ -12,6 +12,7 @@ enum LocalSpeakerDiarization {
         let seconds: Double
         let segments: [LocalSpeakerPolicy.Segment]
         let speakerWindows: [LocalSpeakerPolicy.Speaker]
+        var selectionPolicyVersion: Int? = nil
     }
     enum Failure: LocalizedError {
         case bundleUnavailable, invalidBundle, invalidAudio, invalidTimeline, resourceBound
@@ -27,10 +28,16 @@ enum LocalSpeakerDiarization {
     }
     private struct Lock: Decodable { struct File: Decodable { let size:Int; let sha256:String }; let revision:String; let files:[String:File] }
     private static let revision = "df2625ac79a7ac6b65ad868fee6d80f320da4232"
-    static func validate(_ analysis: Analysis) throws {
+    static func validate(_ analysis: Analysis) throws { _ = try validatedForCurrentPolicy(analysis) }
+    /// Older retained analyses keep their exact legacy-window check before upgrade.
+    /// Raw segments/model revision must validate; arbitrary stored crops are never trusted.
+    static func validatedForCurrentPolicy(_ analysis: Analysis) throws -> Analysis {
         guard analysis.modelRevision == revision else { throw Failure.invalidBundle }
-        let expected = try LocalSpeakerPolicy.speakerWindows(analysis.segments,duration:analysis.seconds)
+        guard analysis.selectionPolicyVersion == nil || analysis.selectionPolicyVersion == 1 || analysis.selectionPolicyVersion == 2 else { throw Failure.invalidBundle }
+        let expected = try LocalSpeakerPolicy.speakerWindows(analysis.segments,duration:analysis.seconds,includeFallbacks:analysis.selectionPolicyVersion == 2)
         guard expected == analysis.speakerWindows else { throw Failure.invalidAudio }
+        let windows = try LocalSpeakerPolicy.speakerWindows(analysis.segments,duration:analysis.seconds)
+        return Analysis(modelRevision:analysis.modelRevision,seconds:analysis.seconds,segments:analysis.segments,speakerWindows:windows,selectionPolicyVersion:2)
     }
     static func analyze(source: URL, bundle: URL? = Bundle.main.url(forResource:"Diarization",withExtension:nil), progress: @escaping @Sendable (String) -> Void) async throws -> Analysis {
         guard let bundle else { throw Failure.bundleUnavailable }
@@ -70,7 +77,7 @@ enum LocalSpeakerDiarization {
             let duration = Double(samples.count)/16_000
             let segments = result.segments.map { LocalSpeakerPolicy.Segment(speaker:$0.speakerId,start:Double($0.startTimeSeconds),end:Double($0.endTimeSeconds)) }
             let windows = try LocalSpeakerPolicy.speakerWindows(segments,duration:duration)
-            return Analysis(modelRevision:revision,seconds:duration,segments:segments,speakerWindows:windows)
+            return Analysis(modelRevision:revision,seconds:duration,segments:segments,speakerWindows:windows,selectionPolicyVersion:2)
         }
         return try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
     }
