@@ -20,6 +20,7 @@ import CryptoKit
         var voiceID: String?
         var speakerVoiceIDs: [String:String]?
         var speakerOutcomes: [String:String]?
+        var qualityPolicyVersions: [String:Int]?
         var completed = false
         var events: [Event] = []
     }
@@ -208,12 +209,13 @@ import CryptoKit
                 guard let bundle = Bundle.main.url(forResource: "F5TTS", withExtension: nil) else { throw LocalError.engine }
                 if current?.speakerVoiceIDs == nil { current?.speakerVoiceIDs = [:] }
                 if current?.speakerOutcomes == nil { current?.speakerOutcomes = [:] }
+                if current?.qualityPolicyVersions == nil { current?.qualityPolicyVersions = [:] }
                 var saved = 0, unresolved = 0
                 for speaker in groups {
                     try check()
-                    if let id = current?.speakerVoiceIDs?[speaker.speaker], library.profiles.contains(where: { $0.id == id }) {
+                    if current?.qualityPolicyVersions?[speaker.speaker] == LocalSoundQualityPolicy.version, let id = current?.speakerVoiceIDs?[speaker.speaker], let existing = library.profiles.first(where: { $0.id == id }) {
                         saved += 1
-                        try update("Reference already saved", "Retained reference for speaker \(speaker.speaker) is already in the library; keeping it unchanged.")
+                        try update("Reference already saved", "Reused \(existing.name) (ID \(existing.id)). Library now contains \(library.profiles.count) voices; previous voices were kept.")
                         continue
                     }
                     var previews = 0, imported = false
@@ -227,6 +229,27 @@ import CryptoKit
                         let reference = jobFolder.appendingPathComponent("reference-" + attempt + ".wav")
                         try clip.wave.write(to: reference, options: .atomic)
                         current?.referenceFile = reference.lastPathComponent
+                        try update("Screening candidate", "Checking speaker \(speaker.speaker) for music, singing and speech evidence on this iPhone.")
+                        let quality: LocalSoundQuality.Evidence
+                        do {
+                            quality = try await LocalSoundQuality.analyze(source: reference) { [weak self] message in
+                                Task { @MainActor in
+                                    guard let self, self.runToken == run, self.busy, self.current?.stage == "Screening candidate", self.current?.referenceFile == reference.lastPathComponent else { return }
+                                    try? self.update("Screening candidate", message, log: false)
+                                }
+                            }
+                        } catch {
+                            let failure: [String:Any] = ["schemaVersion":1,"policyVersion":LocalSoundQualityPolicy.version,"sourceSHA256":Self.hash(clip.wave),"status":"Screening did not complete","reason":error.localizedDescription]
+                            try? JSONSerialization.data(withJSONObject:failure,options:[.sortedKeys]).write(to:jobFolder.appendingPathComponent("quality-" + attempt + ".json"),options:.atomic)
+                            throw error
+                        }
+                        guard quality.sourceSHA256 == Self.hash(clip.wave) else { throw LocalError.source }
+                        try JSONEncoder().encode(quality).write(to:jobFolder.appendingPathComponent("quality-" + attempt + ".json"),options:.atomic)
+                        guard quality.decision.admitted else {
+                            try update("Candidate needs review", quality.decision.reason)
+                            continue
+                        }
+                        try check()
                         try update("Transcribing reference", "Recognizing this candidate locally. Model-detected overlaps were excluded. Music and character identity are not verified.")
                         let transcript: String
                         do { transcript = try await transcriber.transcribe(reference) { [weak self] in
@@ -257,9 +280,10 @@ import CryptoKit
                             library.selectedID = existing.id
                             current?.voiceID = existing.id
                             current?.speakerVoiceIDs?[speaker.speaker] = existing.id
+                            current?.qualityPolicyVersions?[speaker.speaker] = LocalSoundQualityPolicy.version
                             current?.speakerOutcomes?[speaker.speaker] = "Saved reference; word check passed; likeness unverified"
                             imported = true; saved += 1
-                            try update("Reference ready", "This exact reference is already saved. Its verified preview is retained; the existing voice was reused without replacement. Likeness is not verified.")
+                            try update("Reference ready", "Reused \(existing.name) (ID \(existing.id)). Library now contains \(library.profiles.count) voices. Preview and screening evidence were retained; likeness is not verified.")
                             break
                         }
                         let id = "local-" + current!.id.uuidString.lowercased() + "-" + speaker.speaker.lowercased()
@@ -272,16 +296,18 @@ import CryptoKit
                         try JSONSerialization.data(withJSONObject: ["schemaVersion": 1, "voices": [["id": id, "folder": id]]]).write(to: collection.appendingPathComponent("collection.json"), options: .atomic)
                         try update("Importing", "Atomically validating and registering the preview-only reference on this iPhone.")
                         try await library.importLocalGeneratedCollection(collection, owner: libraryOwner!)
+                        guard let savedProfile = library.profiles.first(where: { $0.id == id }) else { throw LocalError.candidate }
                         current?.voiceID = id
                         current?.speakerVoiceIDs?[speaker.speaker] = id
+                        current?.qualityPolicyVersions?[speaker.speaker] = LocalSoundQualityPolicy.version
                         current?.speakerOutcomes?[speaker.speaker] = "Saved reference; word check passed; likeness unverified"
                         imported = true; saved += 1
-                        try update("Reference ready", "Reference for speaker \(speaker.speaker) is saved and passed the word check. Character identity, music separation and RVC training are not verified.")
+                        try update("Reference ready", "Added \(savedProfile.name) (ID \(savedProfile.id)). Library now contains \(library.profiles.count) voices; previous voices were kept. Screening and word checks passed, but character identity, separation and RVC training are not verified.")
                         break
                     }
                     if !imported {
                         unresolved += 1
-                        current?.speakerOutcomes?[speaker.speaker] = "No usable reference passed the word check"
+                        current?.speakerOutcomes?[speaker.speaker] = "No candidate passed all screening and spoken-word checks"
                         try update("Speaker needs review", "Speaker \(speaker.speaker) has no accepted reference. Sources and attempts were retained; continuing other groups.")
                     }
                 }

@@ -15,7 +15,7 @@ struct LocalVideoStudioView: View {
             VStack(alignment: .leading, spacing: 18) {
                 Text("On this iPhone").font(.title2.bold())
                 Text("Import a local video or recording. Extraction, English transcription, reference-conditioned preview and voice registration run inside this app. No laptop or server fallback.")
-                Text("Bundled analysis groups speakers and excludes detected overlap. It does not identify characters, remove music or train RVC models. Every accepted reference must pass a word check; resemblance needs listening review.").font(.footnote).foregroundStyle(.secondary)
+                Text("Bundled analysis groups speakers and excludes detected overlap. Local sound screening rejects likely music, singing or insufficient speech. It does not identify characters, remove music or train RVC models. Every accepted reference must pass a word check; resemblance needs listening review.").font(.footnote).foregroundStyle(.secondary)
                 Button(selected == nil ? "Choose video or audio" : "Choose a different file") { importing = true }
                     .buttonStyle(.bordered).disabled(local.busy).accessibilityIdentifier("local-video-import")
                 if selected != nil { Label("Local media selected", systemImage: "doc.fill") }
