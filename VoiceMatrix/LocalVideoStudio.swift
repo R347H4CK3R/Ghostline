@@ -5,6 +5,12 @@ import CryptoKit
 
 @MainActor final class LocalVideoStudio: ObservableObject {
     typealias Event = LocalStudioJournal.Event
+    struct Similarity: Codable {
+        let referenceFile: String
+        let previewFile: String
+        let measured: Date
+        let report: SpeakerSimilarityService.Report
+    }
     struct Job: Codable, Identifiable {
         let id: UUID
         let created: Date
@@ -17,6 +23,8 @@ import CryptoKit
         var sourceSHA256: String?
         var analysisFile: String?
         var analysisSHA256: String?
+        var visualEvidence: LocalVisualEvidence.Report?
+        var similarity: Similarity?
         var referenceFile: String?
         var previewFile: String?
         var voiceID: String?
@@ -34,9 +42,23 @@ import CryptoKit
             else { return nil }
             return previewFile
         }
+        var matchingSimilarity: Similarity? {
+            guard let similarity, similarity.referenceFile == referenceFile,
+                  similarity.previewFile == matchingPreviewFile else { return nil }
+            let r=similarity.report
+            guard r.schemaVersion == 1, r.modelRevision == SpeakerSimilarityService.modelRevision,
+                  r.algorithm == "bundled-raw256-l2-cosine-v1", !r.likenessVerified, !r.identityVerified,
+                  r.cosineSimilarity.isFinite, (-1...1).contains(r.cosineSimilarity),
+                  r.referenceSeconds.isFinite, (3...30).contains(r.referenceSeconds),
+                  r.generatedSeconds.isFinite, (3...30).contains(r.generatedSeconds),
+                  r.referenceSHA256.range(of:"^[a-f0-9]{64}$",options:.regularExpression) != nil,
+                  r.generatedSHA256.range(of:"^[a-f0-9]{64}$",options:.regularExpression) != nil else { return nil }
+            return similarity
+        }
         mutating func selectReference(_ file: String) {
             referenceFile = file
             previewFile = nil
+            similarity = nil
         }
     }
     @Published private(set) var current: Job?
@@ -48,6 +70,7 @@ import CryptoKit
     private let f5Bundle: URL?
     private let speakerBundle: URL?
     private let engine = F5ReferenceEngine(idleRetention: .zero)
+    private let similarityService = SpeakerSimilarityService()
     private var operation: Task<Void, Never>?
     private var active = true
     private var runToken = UUID()
@@ -99,6 +122,27 @@ import CryptoKit
             return LocalStudioJournal.Page(events:entries.map(LocalStudioJournal.sanitized),offset:offset,total:current.events.count)
         }
         return try LocalStudioJournal.read(folder:folder,offset:offset)
+    }
+    func visualFrameData(_ frame: LocalVisualEvidence.Frame) -> Data? {
+        guard let report=current?.visualEvidence, report.sourceSHA256 == current?.sourceSHA256,
+              report.frames.contains(where: { $0.id == frame.id && $0.sha256 == frame.sha256 }) else { return nil }
+        return try? LocalVisualEvidence.frameData(frame,folder:folder)
+    }
+    /// Read and hash bounded current snapshots before displaying a recorded metric.
+    /// This is not a hostile-filesystem sandbox or a claim about subsequent edits.
+    func validatedSimilarity() -> Similarity? {
+        guard !busy, let evidence=current?.matchingSimilarity else { return nil }
+        do {
+            for (name,expected) in [(evidence.referenceFile,evidence.report.referenceSHA256),(evidence.previewFile,evidence.report.generatedSHA256)] {
+                guard name.range(of:"^(?:reference|preview)-[A-Za-z0-9_-]+\\.wav$",options:.regularExpression) != nil else { return nil }
+                let url=folder.appendingPathComponent(name)
+                let v=try url.resourceValues(forKeys:[.isRegularFileKey,.isSymbolicLinkKey,.fileSizeKey])
+                guard v.isRegularFile == true,v.isSymbolicLink != true,(44...4_194_304).contains(v.fileSize ?? 0) else { return nil }
+                let bytes=try Data(contentsOf:url)
+                guard bytes.count == v.fileSize,Self.hash(bytes) == expected else { return nil }
+            }
+            return evidence
+        } catch { return nil }
     }
     func selectHistory(_ job: Job) { guard !busy else { return }; current = job; notice = job.message }
     func setActive(_ value: Bool) { active = value; if !value, busy { cancel() } }
@@ -265,6 +309,33 @@ import CryptoKit
                 let groups = analysis.speakerWindows
                 guard !groups.isEmpty else { throw LocalError.candidate }
                 try update("Speaker groups found", "Found \(groups.count) tentative speaker groups. Detected overlaps are excluded; music separation and character names are not verified.")
+                if let report = current?.visualEvidence,
+                   (try? LocalVisualEvidence.validate(report,sourceSHA256:expectedHash,folder:jobFolder,groups:groups)) != nil {
+                    try update("Visual evidence retained", "Reusing source-bound frames and visible text. They do not establish a character identity.")
+                } else {
+                    try update("Inspecting video frames", "Sampling up to 12 speaker-timed frames locally. Visible characters may not be the speakers; OCR text is not a verified name.")
+                    do {
+                        let report = try await LocalVisualEvidence.analyze(source:retained,sourceSHA256:expectedHash,groups:groups,folder:jobFolder) { [weak self] done,total in
+                            Task { @MainActor in
+                                guard let self, self.runToken == run, self.busy, self.current?.stage == "Inspecting video frames" else { return }
+                                try? self.update("Inspecting video frames", "Inspected \(done) of \(total) sampled video frames.",log:false)
+                            }
+                        }
+                        try check()
+                        current?.visualEvidence = report
+                        try update("Visual evidence retained", report.audioOnly ? "Audio-only source: no visible character evidence. Speaker labels stay unidentified." : "Retained \(report.frames.count) sampled frames; \(report.unavailableFrames) unavailable; \(report.omittedSpeakers) speakers outside the sampling bound. Identity remains unverified.")
+                    } catch is CancellationError { throw CancellationError() }
+                    catch LocalVisualEvidence.Failure.sourceChanged { throw LocalError.source }
+                    catch {
+                        try check()
+                        // Unsupported visual media is optional only while retained source bytes still match.
+                        do { try await LocalVisualEvidence.verifySource(retained,sha256:expectedHash) }
+                        catch is CancellationError { throw CancellationError() }
+                        catch { throw LocalError.source }
+                        try check()
+                        try update("Visual evidence unavailable", "Video frames could not be inspected safely. Continuing audio analysis without names or visible-character claims; existing media is retained.")
+                    }
+                }
                 guard let bundle = f5Bundle else { throw LocalError.engine }
                 if current?.speakerVoiceIDs == nil { current?.speakerVoiceIDs = [:] }
                 if current?.speakerOutcomes == nil { current?.speakerOutcomes = [:] }
@@ -339,7 +410,44 @@ import CryptoKit
                             if previews >= 3 { break }; continue
                         }
                         try check()
+                        // Changed preview bytes must fail the job, not become an optional diagnostic failure.
+                        let values=try preview.resourceValues(forKeys:[.isRegularFileKey,.isSymbolicLinkKey,.fileSizeKey])
+                        guard values.isRegularFile == true, values.isSymbolicLink != true,
+                              (44...4_194_304).contains(values.fileSize ?? 0) else { throw LocalError.preview }
+                        let generated=try Data(contentsOf:preview)
+                        guard generated.count == values.fileSize, Self.hash(generated) == previewEvidence.inputSHA256 else { throw LocalError.preview }
                         current?.previewFile = preview.lastPathComponent
+                        // Diagnostic only: never promote a cosine score into identity/likeness approval.
+                        try update("Measuring speaker similarity", "Comparing the retained reference and word-checked preview locally; not identity or likeness verification.")
+                        do {
+                            guard let speakerBundle else { throw LocalSpeakerDiarization.Failure.bundleUnavailable }
+                            let report=try await similarityService.compare(referenceWAV:clip.wave,generatedWAV:generated,bundle:speakerBundle) { [weak self] message in
+                                Task { @MainActor in
+                                    guard let self,self.runToken == run,self.busy,self.current?.stage == "Measuring speaker similarity",self.current?.referenceFile == reference.lastPathComponent else { return }
+                                    try? self.update("Measuring speaker similarity",message,log:false)
+                                }
+                            }
+                            try check()
+                            guard report.referenceSHA256 == Self.hash(clip.wave), report.generatedSHA256 == previewEvidence.inputSHA256 else { throw LocalError.preview }
+                            let evidence=Similarity(referenceFile:reference.lastPathComponent,previewFile:preview.lastPathComponent,measured:Date(),report:report)
+                            try JSONEncoder().encode(evidence).write(to:jobFolder.appendingPathComponent("similarity-" + attempt + ".json"),options:.atomic)
+                            current?.similarity=evidence
+                            try update("Speaker similarity recorded", "Saved a hash-bound numeric diagnostic. No identity or likeness acceptance threshold was applied.")
+                        } catch let error as LocalError { throw error }
+                        catch {
+                            try check()
+                            current?.similarity=nil
+                            let reason: String
+                            switch error as? SpeakerSimilarityService.Failure {
+                            case .resourceBound: reason="A clip is outside the 3–30 second or 4 MiB diagnostic limit."
+                            case .invalidWave: reason="A clip is not suitable nonsilent mono PCM16 audio."
+                            case .conversion: reason="Local sample-rate conversion did not complete."
+                            case .embedding: reason="The bundled speaker model did not return a valid embedding."
+                            case .busy: reason="Another similarity comparison is already running."
+                            case nil: reason="The local model or comparison could not complete."
+                            }
+                            try update("Similarity unavailable", reason + " The word-checked reference remains usable; identity and likeness remain unverified.")
+                        }
                         if let existing = library.profiles.first(where: { $0.referenceSHA256 == Self.hash(clip.wave) && $0.referenceText == transcript }) {
                             library.selectedID = existing.id
                             current?.voiceID = existing.id

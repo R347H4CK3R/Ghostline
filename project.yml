@@ -148,6 +148,9 @@ targets:
     sources:
     - path: probes/native-local-studio/Diagnostic.swift
     - path: VoiceMatrix/LocalVideoStudio.swift
+    - path: VoiceMatrix/LocalVisualEvidence.swift
+    - path: VoiceMatrix/SpeakerSimilarityPolicy.swift
+    - path: VoiceMatrix/SpeakerSimilarityService.swift
     - path: VoiceMatrix/LocalStudioJournal.swift
     - path: VoiceMatrix/LocalMediaAcquisition.swift
     - path: VoiceMatrix/LocalMediaURLPolicy.swift

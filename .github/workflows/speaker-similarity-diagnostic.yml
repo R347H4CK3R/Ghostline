@@ -1,0 +1,52 @@
+name: Native speaker similarity diagnostic
+on:
+  workflow_dispatch:
+  push:
+    paths:
+    - '.github/workflows/speaker-similarity-diagnostic.yml'
+    - 'probes/native-similarity/**'
+    - 'VoiceMatrix/SpeakerSimilarity*.swift'
+    - 'VoiceMatrix/LocalSpeakerDiarization.swift'
+    - 'tests/native/SpeakerSimilarityChecks.swift'
+permissions:
+  contents: read
+jobs:
+  actual-model:
+    runs-on: macos-26
+    timeout-minutes: 35
+    steps:
+    - uses: actions/checkout@v4
+    - name: Check real Swift policy and stage pinned bundled models
+      run: |
+        python3 -m unittest tests.test_speaker_similarity tests.test_local_diarization -v
+        python3 tools/bundle_diarization.py
+    - name: Build production service on Apple Silicon
+      run: |
+        test "$(uname -m)" = arm64
+        brew install xcodegen
+        mkdir -p similarity-evidence
+        xcodegen generate --spec probes/native-similarity/project.yml
+        xcodebuild -project probes/native-similarity/SpeakerSimilarityDiagnostic.xcodeproj -scheme SpeakerSimilarityDiagnostic -configuration Release -derivedDataPath similarity-build ARCHS=arm64 ONLY_ACTIVE_ARCH=YES CODE_SIGNING_ALLOWED=NO build > similarity-evidence/build.log 2>&1 || { tail -100 similarity-evidence/build.log; exit 1; }
+    - name: Generate original neutral fixtures using installed speech only
+      run: |
+        python3 - <<'PY'
+        import subprocess,re
+        sandbox=['sandbox-exec','-p','(version 1)(allow default)(deny network*)']
+        voices=subprocess.check_output(sandbox+['say','-v','?'],text=True)
+        matches=[re.match(r'^(.*?)\s+en_US\s+#',x) for x in voices.splitlines()]
+        names=[x.group(1).strip() for x in matches if x]
+        if not names:raise SystemExit('No installed neutral voice; no download fallback')
+        voice='Samantha' if 'Samantha' in names else names[0]
+        for filename,text in [('reference','This diagnostic measures mathematical similarity between synthetic recordings. It does not establish identity or verify voice likeness.'),('generated','Please put the green notebook on the table. Then open the window and bring a glass of water into the quiet room.')]:
+          subprocess.run(sandbox+['say','-v',voice,'-r','155','--file-format=WAVE','--data-format=LEI16@24000','-o','similarity-evidence/'+filename+'.wav',text],check=True,timeout=90)
+        PY
+    - name: Execute actual embeddings with network denied
+      run: |
+        sandbox-exec -p '(version 1)(allow default)(deny network*)' similarity-build/Build/Products/Release/SpeakerSimilarityDiagnostic VoiceMatrix/Resources/Diarization similarity-evidence/reference.wav similarity-evidence/generated.wav similarity-evidence/report.json "$GITHUB_SHA"
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: Speaker-similarity-diagnostic
+        path: similarity-evidence
+        retention-days: 14
+        if-no-files-found: error

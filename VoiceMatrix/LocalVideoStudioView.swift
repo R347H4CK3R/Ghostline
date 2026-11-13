@@ -1,3 +1,4 @@
+import UIKit
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -25,6 +26,20 @@ struct LocalVideoStudioView: View {
                 TextField("YouTube or supported HTTPS media URL", text: $sourceURL)
                     .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
                     .textFieldStyle(.roundedBorder).disabled(local.busy).accessibilityIdentifier("local-video-url")
+                PasteButton(payloadType: String.self) { values in
+                    authorized = false
+                    guard values.count == 1, let raw = values.first, raw.utf8.count <= 16_384 else {
+                        selectionError = "Clipboard must contain one supported video URL of at most 16,384 bytes."
+                        return
+                    }
+                    do {
+                        sourceURL = try LocalMediaURLPolicy.input(raw).absoluteString
+                        selected = nil
+                        selectionError = nil
+                    } catch { selectionError = error.localizedDescription }
+                }.buttonStyle(.bordered).disabled(local.busy)
+                    .accessibilityLabel("Paste video URL from Clipboard")
+                    .accessibilityIdentifier("local-video-paste")
                 Text("URL acquisition needs internet to contact the source website. Public YouTube pages with direct supported streams, and direct media on upload.wikimedia.org or archive.org, are supported candidates. Sign-in, age checks, encrypted signatures and challenges are not bypassed; those sources need local-file import.").font(.footnote).foregroundStyle(.secondary)
                 Toggle("I am authorized to use this media and its voices", isOn: $authorized).disabled(local.busy)
                 Button("Generate speaker references") {
@@ -45,6 +60,14 @@ struct LocalVideoStudioView: View {
                 }
                 if let reference = local.reference { Button("Listen to reference") { audio.play(reference) }.disabled(local.busy) }
                 if let preview = local.preview { Button("Listen to generated preview") { audio.play(preview) }.disabled(local.busy) }
+                if let similarity=local.validatedSimilarity() {
+                    VStack(alignment:.leading,spacing:4) {
+                        Text("Recorded speaker similarity").font(.headline)
+                        Text(String(format:"Cosine diagnostic: %.3f",similarity.report.cosineSimilarity)).font(.caption.monospaced())
+                        Text("Measured " + similarity.measured.formatted(date:.abbreviated,time:.standard)).font(.caption)
+                        Text("This is not a likeness percentage or identity verification. There is no calibrated acceptance threshold. Listen to both clips; the diagnostic describes only this retained reference/preview pair.").font(.caption).foregroundStyle(.secondary)
+                    }.accessibilityIdentifier("local-video-similarity")
+                }
                 if local.current?.voiceID != nil {
                     NavigationLink("Use saved references for new speech") { CharacterLibraryView() }
                 }
@@ -53,6 +76,27 @@ struct LocalVideoStudioView: View {
                     ForEach(outcomes.keys.sorted(), id: \.self) { speaker in
                         Text("Unidentified speaker \(speaker): \(outcomes[speaker] ?? "Pending")").font(.caption)
                     }
+                }
+                if let evidence = local.current?.visualEvidence {
+                    DisclosureGroup("Sampled visual evidence") {
+                        Text("Visible text is not a verified character name. These frames coincide with a tentative speaker turn, but the actual speaker may be off screen. OCR confidence measures text recognition, not identity.").font(.caption)
+                        if evidence.audioOnly { Text("Audio-only source; no frames available.").font(.caption) }
+                        ForEach(evidence.frames) { frame in
+                            VStack(alignment:.leading,spacing:6) {
+                                Text("Unidentified speaker \(frame.speaker) · frame at \(frame.actualSeconds, specifier: "%.2f") s").font(.caption.bold())
+                                if let data=local.visualFrameData(frame), let image=UIImage(data:data) {
+                                    Image(uiImage:image).resizable().scaledToFit().frame(maxHeight:240)
+                                        .accessibilityLabel("Sampled video frame; speaker identity unverified")
+                                    ForEach(Array(frame.lines.enumerated()),id:\.offset) { _, line in
+                                        Text("Visible text: \(line.text) · OCR \(Int(line.confidence * 100))%").font(.caption).textSelection(.enabled)
+                                    }
+                                    if frame.lines.isEmpty { Text("No readable English text detected in this frame.").font(.caption) }
+                                } else { Text("Retained frame missing or changed; frame and OCR evidence not displayed.").font(.caption) }
+                            }
+                        }
+                        if evidence.omittedSpeakers > 0 { Text("\(evidence.omittedSpeakers) speaker groups were not sampled to limit resource use.").font(.caption) }
+                        if evidence.unavailableFrames > 0 { Text("\(evidence.unavailableFrames) requested frames were unavailable.").font(.caption) }
+                    }.accessibilityIdentifier("local-video-visual-evidence")
                 }
                 Divider()
                 Text("Live processing log").font(.headline)

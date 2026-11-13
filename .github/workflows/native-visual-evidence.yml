@@ -1,0 +1,26 @@
+name: Native local visual evidence
+'on':
+  push:
+    branches: ['feature/native-visual-evidence', 'feature/native-visual-quality']
+    paths: ['VoiceMatrix/LocalVisualEvidence.swift', 'VoiceMatrix/LocalSpeakerPolicy.swift', 'probes/native-visual-evidence/**', '.github/workflows/native-visual-evidence.yml']
+  workflow_dispatch: null
+permissions:
+  contents: read
+jobs:
+  actual-visual-evidence:
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+    - name: Compile production scanner and synthetic native regression
+      run: swiftc -swift-version 5 -parse-as-library VoiceMatrix/LocalSpeakerPolicy.swift VoiceMatrix/LocalVisualEvidence.swift probes/native-visual-evidence/Checks.swift -o /tmp/visual-evidence-check
+    - name: Extract real video frames and run Vision OCR without networking
+      run: |
+        set -euo pipefail
+        sandbox-exec -p '(version 1)(allow default)(deny network*)' /tmp/visual-evidence-check | tee visual-evidence.log
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: Native-visual-evidence-checks
+        path: visual-evidence.log
+        if-no-files-found: warn

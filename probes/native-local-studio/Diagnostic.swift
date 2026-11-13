@@ -80,7 +80,10 @@ import Metal
                   let ids=completed.speakerVoiceIDs,!ids.isEmpty, !audio.processingInUse,!library.busy else { throw Failure.pipeline }
             let folder=retained.deletingLastPathComponent()
             let files=try FileManager.default.contentsOfDirectory(atPath:folder.path)
-            for prefix in ["diarization-","quality-","transcription-evidence-","preview-asr-evidence-","preview-"] {
+            guard let similarity=completed.matchingSimilarity,
+                  similarity.report.referenceSHA256 == (try digest(folder.appendingPathComponent(similarity.referenceFile))),
+                  similarity.report.generatedSHA256 == (try digest(folder.appendingPathComponent(similarity.previewFile))) else { throw Failure.evidence }
+            for prefix in ["similarity-","diarization-","quality-","transcription-evidence-","preview-asr-evidence-","preview-"] {
                 guard files.contains(where:{$0.hasPrefix(prefix)}) else { throw Failure.evidence }
             }
             guard let preview=studio.preview else { throw Failure.evidence }
