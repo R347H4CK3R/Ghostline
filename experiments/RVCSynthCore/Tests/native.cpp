@@ -45,5 +45,27 @@ int main(int argc,char**argv){
  rvc_cancel_destroy(cancel);rvc_synth_destroy(s);
  s=nullptr;assert(rvc_synth_create(model.data(),128*1024*1024+1,&s)==RVC_INVALID_ARGUMENT);
  assert(rvc_synth_create("bad",3,&s)==RVC_INVALID_MODEL && !s);
+ // A real contextual RVC boundary needs more than 100 frames.
+ auto contextual=read(root+"/valid300.onnx");
+ assert(!contextual.empty());
+ assert(rvc_synth_create_for_frames(contextual.data(),contextual.size(),300,&s)==RVC_OK);
+ phone.resize(300*768,.1f);pitchf.resize(300,220);latent.resize(192*300,.1f);
+ noise.resize(120000,.25f);out.resize(120000,999);pitch.resize(300,100);lengths[0]=300;
+ a[1]=c[1]=d[2]=300;f[1]=120000;
+ in[0].data=phone.data();in[0].bytes=phone.size()*4;
+ in[2].data=pitch.data();in[2].bytes=pitch.size()*8;
+ in[3].data=pitchf.data();in[3].bytes=pitchf.size()*4;
+ in[5].data=latent.data();in[5].bytes=latent.size()*4;
+ in[7].data=noise.data();in[7].bytes=noise.size()*4;
+ cancel=rvc_cancel_create();
+ assert(rvc_synth_run(s,in,8,out.data(),out.size(),cancel,1000)==RVC_OK);
+ for(float v:out)assert(v==.125f);
+ lengths[0]=301;
+ assert(rvc_synth_run(s,in,8,out.data(),out.size(),cancel,1000)==RVC_INVALID_TENSOR);
+ assert(rvc_synth_run(s,in,8,out.data(),40000,cancel,1000)==RVC_INVALID_TENSOR);
+ rvc_cancel_destroy(cancel);rvc_synth_destroy(s);s=nullptr;
+ assert(rvc_synth_create_for_frames(contextual.data(),contextual.size(),100,&s)==RVC_INVALID_MODEL && !s);
+ for(size_t n:{size_t(0),size_t(1001),size_t(-1)})
+  assert(rvc_synth_create_for_frames(model.data(),model.size(),n,&s)==RVC_INVALID_ARGUMENT && !s);
  std::cout<<"Native ORT synthesis contract: all assertions passed\n";
 }

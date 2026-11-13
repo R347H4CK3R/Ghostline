@@ -25,6 +25,10 @@ typedef struct {
  * Session creation is synchronous and must not run on the main/UI thread.
  * Model buffer is borrowed for creation only; ORT owns its parsed session. */
 RVCStatus rvc_synth_create(const void* model, size_t bytes, RVCSynthSession** result);
+/* Explicit fixed-frame contract, 1..1000 frames at 400 output samples/frame.
+ * Strictly matches all static model axes; symbolic/dynamic axes remain rejected.
+ * The legacy create call selects 100 frames. This is not full voice conversion. */
+RVCStatus rvc_synth_create_for_frames(const void* model, size_t bytes, size_t frames, RVCSynthSession** result);
 void rvc_synth_destroy(RVCSynthSession* session);
 RVCCancel* rvc_cancel_create(void);
 void rvc_cancel_request(RVCCancel* cancel);
@@ -33,7 +37,7 @@ void rvc_cancel_destroy(RVCCancel* cancel);
  * run returns. Destroy session/token only after all calls finish. A token is
  * one-shot. Cancellation/deadline use ORT cooperative termination, not hard RT.
  * One concurrent run per session; others return BUSY. timeout_ms:1..10000.
- * output_count must be40000. Failed runs do not modify the caller's output. */
+ * output_count must be frames*400 (40000 for legacy create). Failed runs do not modify the caller's output. */
 RVCStatus rvc_synth_run(RVCSynthSession* session, const RVCTensor* tensors, size_t count,
  float* output, size_t output_count, RVCCancel* cancel, uint32_t timeout_ms);
 const char* rvc_synth_runtime_version(void);

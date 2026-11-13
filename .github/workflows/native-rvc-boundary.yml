@@ -1,7 +1,7 @@
 name: Isolated native RVC boundary checks
 'on':
   push:
-    branches: ['work/native-rvc-boundary']
+    branches: ['work/native-rvc-boundary', 'work/native-rvc-bounded-frames']
   workflow_dispatch: null
 permissions:
   contents: read
