@@ -1,0 +1,39 @@
+name: Isolated native RVC boundary checks
+'on':
+  push:
+    branches: ['work/native-rvc-boundary']
+  workflow_dispatch: null
+permissions:
+  contents: read
+jobs:
+  linux-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+    - name: Fetch hash-pinned official runtime and run actual C++ contract
+      run: |
+        curl --fail --location --retry 2 https://github.com/microsoft/onnxruntime/releases/download/v1.24.2/onnxruntime-linux-x64-1.24.2.tgz -o "$RUNNER_TEMP/ort.tgz"
+        echo "43725474ba5663642e17684717946693850e2005efbd724ac72da278fead25e6  $RUNNER_TEMP/ort.tgz" | sha256sum --check
+        tar -xzf "$RUNNER_TEMP/ort.tgz" -C "$RUNNER_TEMP"
+        ORT="$RUNNER_TEMP/onnxruntime-linux-x64-1.24.2"
+        c++ -std=c++17 -O2 -pthread -I experiments/RVCSynthCore/Sources/RVCSynthCore/include -I "$ORT/include" experiments/RVCSynthCore/Sources/RVCSynthCore/RVCSynthCore.cpp experiments/RVCSynthCore/Tests/native.cpp -L "$ORT/lib" -lonnxruntime -Wl,-rpath,"$ORT/lib" -o "$RUNNER_TEMP/rvc-contract"
+        "$RUNNER_TEMP/rvc-contract" experiments/RVCSynthCore/fixtures
+  apple-contract:
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@v4
+    - name: Resolve pinned Apple binary and run real contract on Apple Silicon
+      working-directory: experiments/RVCSynthCore
+      run: swift run RVCContractDiagnostic fixtures
+    - name: Compile native boundary for iPhone ARM64 without app integration
+      working-directory: experiments/RVCSynthCore
+      run: |
+        xcodebuild -scheme RVCSynthCore -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/rvc-device" CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/rvc-device.log" 2>&1 || { tail -120 "$RUNNER_TEMP/rvc-device.log"; exit 1; }
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: Isolated-RVC-native-build-log
+        path: ${{ runner.temp }}/rvc-device.log
+        if-no-files-found: warn
