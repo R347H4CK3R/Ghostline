@@ -2,6 +2,7 @@
 import ctypes as C
 import math
 import random
+import struct
 import pathlib
 import subprocess
 import tempfile
@@ -59,6 +60,24 @@ class FeatureTests(unittest.TestCase):
             low=1127*math.log1p(50/700);high=1127*math.log1p(1100/700)
             expected=round(min(255,max(1,(mel-low)*254/(high-low)+1))) if hz else 1
             self.assertEqual(bins[i],expected)
+    def test_pitch_bins_near_every_half_boundary(self):
+        # Input is explicitly float32; math contract thereafter is double precision.
+        # This tests rounding, not parity with every upstream pitch estimator dtype.
+        low=1127*math.log1p(50/700);high=1127*math.log1p(1100/700)
+        hz=[]
+        for k in range(1,255):
+            boundary=700*math.expm1((low+(k-.5)*(high-low)/254)/1127)
+            bits=struct.unpack('<I',struct.pack('<f',boundary))[0]
+            hz.extend(struct.unpack('<f',struct.pack('<I',bits+d))[0] for d in [-2,-1,0,1,2])
+        for start in range(0,len(hz),1000):
+            pitch=hz[start:start+1000]
+            if len(pitch)%2:pitch.append(0)
+            ok,out,bins=self.call([1]*(len(pitch)//2),[1]*(len(pitch)//2),pitch,frames=len(pitch)//2,channels=1)
+            self.assertEqual(ok,1)
+            for h,actual in zip(pitch,bins):
+                expected=round(min(255,max(1,(1127*math.log1p(h/700)-low)*254/(high-low)+1))) if h else 1
+                self.assertEqual(actual,expected)
+
     def test_null_and_oversized_contract_rejected_before_access(self):
         x=(C.c_float*1)(3); y=(C.c_int64*1)(4)
         f=self.lib.rvc_prepare_features

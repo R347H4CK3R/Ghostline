@@ -29,3 +29,12 @@ Numerical and invalid-input tests passed on Linux. The native harness also check
 in-place input/output and rejects overlapping outputs. Local ASan/UBSan passed
 with leak detection disabled because this executor runs under ptrace; CI retains
 default leak detection. These results do not establish trained-graph parity.
+
+Pitch numeric contract is float32 input converted to double for mel mapping, then
+nearest-even integer rounding. Tests cover two adjacent float32 values on each
+side of every bin half-boundary. This is not an assertion of bit-exact parity with
+all upstream extractors: Praat commonly supplies float64 whereas neural paths may
+use float32, and float32 mel arithmetic can cross a neighboring half-bin boundary.
+A real imported model/frontend contract must declare its dtype and pass retained
+intermediate parity before integration; this component must not silently replace
+an extractor with different numerical semantics.
