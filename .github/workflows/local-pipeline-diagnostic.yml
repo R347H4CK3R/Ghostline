@@ -12,6 +12,7 @@ on:
       - 'candidate/voicematrix-0.4.9'
     paths:
       - 'probes/native-local-studio/**'
+      - 'probes/native-local-studio-fixtures/**'
       - '.github/workflows/local-pipeline-diagnostic.yml'
       - 'VoiceMatrix/Local*.swift'
       - 'VoiceMatrix/CharacterLibrary.swift'
@@ -22,6 +23,10 @@ permissions:
   contents: read
 jobs:
   actual-local-pipeline:
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [audio, video]
     runs-on: macos-26
     timeout-minutes: 50
     steps:
@@ -63,6 +68,18 @@ jobs:
           Path('local-evidence/fixture.json').write_text(json.dumps(dict(text=text,voice=voice,os=platform.platform(),sha256=hashlib.sha256(path.read_bytes()).hexdigest(),kind='macOS installed synthetic neutral voice; no character likeness claim'),indent=2))
           PY
           python3 tools/create_diagnostic_collection.py
+      - name: Create original video fixture with real audio track
+        if: matrix.fixture == 'video'
+        run: |
+          xcrun swiftc -target arm64-apple-macos15.0 -swift-version 5 -parse-as-library probes/native-local-studio-fixtures/CreateVideoFixture.swift -o local-evidence/create-video-fixture
+          sandbox-exec -p '(version 1)(allow default)(deny network*)' local-evidence/create-video-fixture local-evidence/neutral.wav local-evidence/neutral.mov
+          python3 - <<'PYCODE'
+          import hashlib,json
+          from pathlib import Path
+          video=Path('local-evidence/neutral.mov')
+          audio=Path('local-evidence/neutral.wav')
+          Path('local-evidence/video-fixture.json').write_text(json.dumps(dict(kind='Original synthetic label movie plus installed neutral speech; no character likeness claim',videoSHA256=hashlib.sha256(video.read_bytes()).hexdigest(),audioSHA256=hashlib.sha256(audio.read_bytes()).hexdigest(),expectedVisibleText='VISIBLE LABEL: DEMO'),indent=2))
+          PYCODE
       - name: Build exact production coordinator on Apple Silicon
         env:
           USE_FROZEN: ${{ inputs.use-frozen || false }}
@@ -92,12 +109,16 @@ jobs:
           Path('local-evidence/dependency-evidence.json').write_text(json.dumps(dict(sourceCommit=os.environ['GITHUB_SHA'],dependencyGraphSHA256=hashlib.sha256(raw).hexdigest(),dependencyMode='candidate-shared-frozen-graph' if frozen else 'independently-resolved',frozenGraphVerified=frozen),indent=2))
           PYCODE
       - name: Require actual retained-source pipeline with networking denied
+        env:
+          FIXTURE_KIND: ${{ matrix.fixture }}
         run: |
-          sandbox-exec -p '(version 1)(allow default)(deny network*)' local-build/Build/Products/Release/LocalStudioDiagnostic VoiceMatrix/Resources local-evidence/neutral.wav tests/fixtures/DiagnosticVoices local-evidence/isolated-work local-evidence/pipeline-evidence.json "$GITHUB_SHA"
+          fixture=local-evidence/neutral.wav
+          if [ "$FIXTURE_KIND" = video ]; then fixture=local-evidence/neutral.mov; fi
+          sandbox-exec -p '(version 1)(allow default)(deny network*)' local-build/Build/Products/Release/LocalStudioDiagnostic VoiceMatrix/Resources "$fixture" tests/fixtures/DiagnosticVoices local-evidence/isolated-work local-evidence/pipeline-evidence.json "$GITHUB_SHA" "$FIXTURE_KIND"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Actual-local-pipeline-evidence
+          name: ${{ matrix.fixture == 'audio' && 'Actual-local-pipeline-evidence' || 'Actual-local-video-pipeline-evidence' }}
           path: local-evidence
           if-no-files-found: error
           retention-days: 14

@@ -74,7 +74,9 @@ import CryptoKit
     private var operation: Task<Void, Never>?
     private var active = true
     private var runToken = UUID()
-    private let previewText = "I found a strange device near the portal."
+    // Natural speech budget for the 3–30 second embedding diagnostic; actual audio bounds
+    // are still checked. Do not pad or loop short output to manufacture evidence.
+    private let previewText = "Please open the blue notebook and write down these instructions. Close the window, bring a glass of water, and place the book on the table."
     init(root: URL? = nil,
          asrBundle: URL? = Bundle.main.url(forResource: "ParakeetASR", withExtension: nil),
          f5Bundle: URL? = Bundle.main.url(forResource: "F5TTS", withExtension: nil),

@@ -8,6 +8,8 @@ import Metal
     enum Failure: Error { case arguments, fixture, timeout, pipeline, evidence, preservation }
     struct Report: Codable {
         let sourceCommit: String
+        let fixtureKind: String
+        let visualFrameCount: Int
         let fixtureSHA256: String
         let sourceRetainedSHA256: String
         let importedIDs: [String]
@@ -35,19 +37,28 @@ import Metal
         }
     }
     @MainActor static func main() async throws {
-        guard CommandLine.arguments.count==7, MTLCreateSystemDefaultDevice() != nil else { throw Failure.arguments }
+        guard CommandLine.arguments.count==8, MTLCreateSystemDefaultDevice() != nil else { throw Failure.arguments }
         let resources=URL(fileURLWithPath:CommandLine.arguments[1],isDirectory:true)
         let fixture=URL(fileURLWithPath:CommandLine.arguments[2])
         let priorCollection=URL(fileURLWithPath:CommandLine.arguments[3],isDirectory:true)
         let work=URL(fileURLWithPath:CommandLine.arguments[4],isDirectory:true).resolvingSymlinksInPath()
         let report=URL(fileURLWithPath:CommandLine.arguments[5])
         let commit=CommandLine.arguments[6]
+        let fixtureKind=CommandLine.arguments[7]
+        guard ["audio","video"].contains(fixtureKind) else { throw Failure.arguments }
         guard commit.range(of:"^[a-f0-9]{40}$",options:.regularExpression) != nil,
               !FileManager.default.fileExists(atPath:work.path) else { throw Failure.arguments }
         try FileManager.default.createDirectory(at:work,withIntermediateDirectories:true)
-        let decoded=try AVAudioFile(forReading:fixture)
-        let seconds=Double(decoded.length)/decoded.processingFormat.sampleRate
-        guard (8...60).contains(seconds),decoded.processingFormat.channelCount==1 else { throw Failure.fixture }
+        let fixtureAsset=AVURLAsset(url:fixture)
+        let seconds=try await fixtureAsset.load(.duration).seconds
+        let audioTracks=try await fixtureAsset.loadTracks(withMediaType:.audio)
+        let videoTracks=try await fixtureAsset.loadTracks(withMediaType:.video)
+        guard (8...60).contains(seconds),audioTracks.count==1,
+              videoTracks.count == (fixtureKind == "video" ? 1 : 0) else { throw Failure.fixture }
+        if fixtureKind == "audio" {
+            let decoded=try AVAudioFile(forReading:fixture)
+            guard decoded.processingFormat.channelCount==1 else { throw Failure.fixture }
+        }
         let fixtureHash=try digest(fixture)
         let support=work.appendingPathComponent("Support",isDirectory:true)
         let store=CharacterFolderStore(root:support.appendingPathComponent("CharacterReferences",isDirectory:true))
@@ -80,6 +91,14 @@ import Metal
                   let ids=completed.speakerVoiceIDs,!ids.isEmpty, !audio.processingInUse,!library.busy else { throw Failure.pipeline }
             let folder=retained.deletingLastPathComponent()
             let files=try FileManager.default.contentsOfDirectory(atPath:folder.path)
+            guard let visual=completed.visualEvidence,visual.sourceSHA256 == fixtureHash else { throw Failure.evidence }
+            if fixtureKind == "video" {
+                guard !visual.audioOnly,!visual.frames.isEmpty,visual.unavailableFrames == 0,
+                      visual.frames.allSatisfy({ $0.lines.contains { $0.text.uppercased().contains("VISIBLE LABEL") && $0.text.uppercased().contains("DEMO") } }) else { throw Failure.evidence }
+                for frame in visual.frames { _ = try LocalVisualEvidence.frameData(frame,folder:folder) }
+            } else {
+                guard visual.audioOnly,visual.frames.isEmpty else { throw Failure.evidence }
+            }
             guard let similarity=completed.matchingSimilarity,
                   similarity.report.referenceSHA256 == (try digest(folder.appendingPathComponent(similarity.referenceFile))),
                   similarity.report.generatedSHA256 == (try digest(folder.appendingPathComponent(similarity.previewFile))) else { throw Failure.evidence }
@@ -125,7 +144,7 @@ import Metal
             let finalSpeech=work.appendingPathComponent("new-speech.wav")
             try FileManager.default.copyItem(at:freshSpeech,to:finalSpeech)
             try JSONEncoder().encode(detail).write(to:work.appendingPathComponent("new-speech-asr.json"),options:.atomic)
-            let result=Report(sourceCommit:commit,fixtureSHA256:fixtureHash,sourceRetainedSHA256:try digest(retained),importedIDs:expected.sorted(),events:completed.events,cancellationRetainedSource:true,resumeCompleted:true,freshStoreReloadPreservedIDs:true,priorProfilePreserved:true,newSpeechSHA256:try digest(finalSpeech),newSpeechWordErrorRate:wer,evidenceFiles:files.sorted())
+            let result=Report(sourceCommit:commit,fixtureKind:fixtureKind,visualFrameCount:visual.frames.count,fixtureSHA256:fixtureHash,sourceRetainedSHA256:try digest(retained),importedIDs:expected.sorted(),events:completed.events,cancellationRetainedSource:true,resumeCompleted:true,freshStoreReloadPreservedIDs:true,priorProfilePreserved:true,newSpeechSHA256:try digest(finalSpeech),newSpeechWordErrorRate:wer,evidenceFiles:files.sorted())
             let encoder=JSONEncoder();encoder.outputFormatting=[.prettyPrinted,.sortedKeys]
             try encoder.encode(result).write(to:report,options:.atomic)
             print("Actual local coordinator completed with retained source, cancellation/resume and persisted imports. iPhone behavior and likeness are unverified.")

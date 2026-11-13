@@ -31,3 +31,11 @@ class LocalPipelineDiagnosticTests(unittest.TestCase):
   main=(ROOT/'.github/workflows/voicematrix-049-candidate.yml').read_text()
   self.assertIn('  local-pipeline:\n    needs: resolve\n',main)
   self.assertIn('      use-frozen: true',main)
+
+ def test_real_video_case_is_separate_and_required(self):
+  s=(ROOT/'.github/workflows/local-pipeline-diagnostic.yml').read_text()
+  for term in ['fixture: [audio, video]', 'CreateVideoFixture.swift', 'matrix.fixture', 'Actual-local-video-pipeline-evidence']:
+   self.assertIn(term,s)
+  s=(ROOT/'probes/native-local-studio/Diagnostic.swift').read_text()
+  for term in ['fixtureKind', 'visualFrameCount', 'completed.visualEvidence', 'LocalVisualEvidence.frameData', 'VISIBLE LABEL', '!visual.audioOnly', 'visual.sourceSHA256 == fixtureHash']:
+   self.assertIn(term,s)

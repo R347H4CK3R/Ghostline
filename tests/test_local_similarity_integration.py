@@ -24,3 +24,14 @@ class LocalSimilarityIntegrationTests(unittest.TestCase):
   self.assertIn('local.validatedSimilarity()',ui)
 
   self.assertIn("try await LocalVisualEvidence.verifySource(retained,sha256:expectedHash)",s)
+
+class PreviewSpeechBudgetTests(unittest.TestCase):
+ def test_preview_has_natural_speech_budget_for_similarity_not_padding(self):
+  import re
+  source=(ROOT/'VoiceMatrix/LocalVideoStudio.swift').read_text()
+  passage=re.search(r'private let previewText = "([^"]+)"',source).group(1)
+  words=re.findall(r"\b[A-Za-z]+\b",passage)
+  self.assertGreaterEqual(len(words),24)
+  self.assertLessEqual(len(words),40)
+  # The actual native gate, not a word count, proves the generated 3–30 second duration.
+  self.assertGreater(len(set(word.lower() for word in words)),len(words)*.7)
