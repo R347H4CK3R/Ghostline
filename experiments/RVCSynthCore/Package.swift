@@ -13,7 +13,8 @@ let package = Package(
             url: "https://download.onnxruntime.ai/pod-archive-onnxruntime-c-1.24.2.zip",
             checksum: "f7100a992d2a8135168c8afd831e6a58b465349101982aa58b3e11d36e600b54"),
         .target(name: "RVCSynthCore", dependencies: ["onnxruntime"],
-            path: "Sources/RVCSynthCore", publicHeadersPath: "include"),
+            path: "Sources/RVCSynthCore", publicHeadersPath: "include",
+            linkerSettings: [.linkedFramework("Foundation"), .linkedFramework("CoreML")]),
         .executableTarget(name: "RVCContractDiagnostic", dependencies: ["RVCSynthCore"],
             path: "Tests")
     ],
