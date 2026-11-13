@@ -32,6 +32,10 @@ import CoreText
         let source=root.appendingPathComponent("synthetic.mov");try await movie(source)
         let sourceBytes=try Data(contentsOf:source), hash=LocalVisualEvidence.digest(sourceBytes)
         let groups=[LocalSpeakerPolicy.Speaker(speaker:"00",windows:[.init(start:0.2,end:1.8)])]
+        let beforeWrongHash=try FileManager.default.contentsOfDirectory(atPath:root.path)
+        do { _=try await LocalVisualEvidence.analyze(source:source,sourceSHA256:String(repeating:"0",count:64),groups:groups,folder:root) { _,_ in };fatalError("Wrong supplied source hash accepted") } catch LocalVisualEvidence.Failure.invalidSource {}
+        let afterWrongHash=try FileManager.default.contentsOfDirectory(atPath:root.path)
+        precondition(afterWrongHash == beforeWrongHash)
         let report=try await LocalVisualEvidence.analyze(source:source,sourceSHA256:hash,groups:groups,folder:root) { _,_ in }
         precondition(!report.audioOnly && report.frames.count == 1 && report.unavailableFrames == 0)
         let frame=report.frames[0]
@@ -51,6 +55,15 @@ import CoreText
         do { _=try LocalVisualEvidence.frameURL(frame,folder:root);fatalError("Changed frame accepted") } catch {}
         let malformed=LocalVisualEvidence.Frame(id:UUID(),speaker:"00",requestedSeconds:1,actualSeconds:1,file:"../source.mov",sha256:hash,lines:[])
         do { _=try LocalVisualEvidence.frameURL(malformed,folder:root);fatalError("Path traversal accepted") } catch {}
+        do {
+            _=try await LocalVisualEvidence.analyze(source:source,sourceSHA256:hash,groups:groups,folder:root) { _,_ in
+                try? Data("changed during extraction".utf8).write(to:source)
+            }
+            fatalError("Changed source accepted")
+        } catch LocalVisualEvidence.Failure.invalidSource {}
+        let changedBytes=try Data(contentsOf:source)
+        precondition(changedBytes == Data("changed during extraction".utf8))
+        try sourceBytes.write(to:source)
         let audio=root.appendingPathComponent("audio.wav")
         do {
             let format=AVAudioFormat(standardFormatWithSampleRate:16_000,channels:1)!

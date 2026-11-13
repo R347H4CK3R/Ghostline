@@ -29,7 +29,7 @@ enum LocalVisualEvidence {
     }
     enum Failure: Error { case invalidSource, invalidEvidence, resourceBound }
     static func digest(_ data: Data) -> String { SHA256.hash(data:data).map { String(format:"%02x",$0) }.joined() }
-    static func frameURL(_ frame: Frame, folder: URL) throws -> URL {
+    static func frameData(_ frame: Frame, folder: URL) throws -> Data {
         guard frame.file == "visual-" + frame.id.uuidString.lowercased() + ".jpg",
               frame.sha256.range(of:"^[a-f0-9]{64}$",options:.regularExpression) != nil,
               frame.speaker.range(of:"^[A-Za-z0-9_-]{1,40}$",options:.regularExpression) != nil,
@@ -47,7 +47,26 @@ enum LocalVisualEvidence {
               let properties = CGImageSourceCopyPropertiesAtIndex(image,0,nil) as? [CFString:Any],
               let w = properties[kCGImagePropertyPixelWidth] as? Int, let h = properties[kCGImagePropertyPixelHeight] as? Int,
               (1...640).contains(w), (1...640).contains(h) else { throw Failure.invalidEvidence }
-        return url
+        return data
+    }
+    static func frameURL(_ frame: Frame, folder: URL) throws -> URL {
+        _ = try frameData(frame,folder:folder)
+        return folder.appendingPathComponent(frame.file)
+    }
+    private static func sourceDigest(_ source: URL) throws -> String {
+        let values=try source.resourceValues(forKeys:[.isRegularFileKey,.isSymbolicLinkKey,.fileSizeKey])
+        guard values.isRegularFile == true, values.isSymbolicLink != true,
+              let size=values.fileSize, (1...536_870_912).contains(size) else { throw Failure.invalidSource }
+        let file=try FileHandle(forReadingFrom:source);defer { try? file.close() }
+        var hash=SHA256(), count=0
+        while let data=try file.read(upToCount:1_048_576), !data.isEmpty {
+            try Task.checkCancellation();count += data.count
+            guard count <= size else { throw Failure.invalidSource }
+            hash.update(data:data)
+        }
+        try Task.checkCancellation()
+        guard count == size else { throw Failure.invalidSource }
+        return hash.finalize().map { String(format:"%02x",$0) }.joined()
     }
     static func validate(_ report: Report, sourceSHA256: String, folder: URL, groups: [LocalSpeakerPolicy.Speaker]) throws {
         guard report.version == 1, report.sourceSHA256 == sourceSHA256,
@@ -81,9 +100,13 @@ enum LocalVisualEvidence {
               directory.isDirectory == true, directory.isSymbolicLink != true, groups.count <= 32 else { throw Failure.invalidSource }
         let worker = Task.detached(priority:.utility) {
             try Task.checkCancellation()
+            guard try sourceDigest(source) == sourceSHA256 else { throw Failure.invalidSource }
             let asset = AVURLAsset(url:source)
             let tracks = try await asset.loadTracks(withMediaType:.video)
-            guard !tracks.isEmpty else { return Report(version:1,sourceSHA256:sourceSHA256,audioOnly:true,requestedCount:0,omittedSpeakers:0,unavailableFrames:0,frames:[]) }
+            guard !tracks.isEmpty else {
+                guard try sourceDigest(source) == sourceSHA256 else { throw Failure.invalidSource }
+                return Report(version:1,sourceSHA256:sourceSHA256,audioOnly:true,requestedCount:0,omittedSpeakers:0,unavailableFrames:0,frames:[])
+            }
             guard tracks.count == 1 else { throw Failure.invalidSource }
             let duration = try await asset.load(.duration).seconds
             guard duration.isFinite, (0.1...1800).contains(duration) else { throw Failure.resourceBound }
@@ -131,6 +154,7 @@ enum LocalVisualEvidence {
                     catch { try Task.checkCancellation(); unavailable += 1 }
                     progress(index+1,selected.count)
                 }
+                guard try sourceDigest(source) == sourceSHA256 else { throw Failure.invalidSource }
                 let report=Report(version:1,sourceSHA256:sourceSHA256,audioOnly:false,requestedCount:selected.count,omittedSpeakers:max(0,groups.count-selected.count),unavailableFrames:unavailable,frames:frames)
                 try validate(report,sourceSHA256:sourceSHA256,folder:folder,groups:groups)
                 return report

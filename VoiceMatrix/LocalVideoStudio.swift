@@ -101,10 +101,10 @@ import CryptoKit
         }
         return try LocalStudioJournal.read(folder:folder,offset:offset)
     }
-    func visualFrameURL(_ frame: LocalVisualEvidence.Frame) -> URL? {
+    func visualFrameData(_ frame: LocalVisualEvidence.Frame) -> Data? {
         guard let report=current?.visualEvidence, report.sourceSHA256 == current?.sourceSHA256,
               report.frames.contains(where: { $0.id == frame.id && $0.sha256 == frame.sha256 }) else { return nil }
-        return try? LocalVisualEvidence.frameURL(frame,folder:folder)
+        return try? LocalVisualEvidence.frameData(frame,folder:folder)
     }
     func selectHistory(_ job: Job) { guard !busy else { return }; current = job; notice = job.message }
     func setActive(_ value: Bool) { active = value; if !value, busy { cancel() } }

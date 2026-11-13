@@ -76,7 +76,7 @@ struct LocalVideoStudioView: View {
                         ForEach(evidence.frames) { frame in
                             VStack(alignment:.leading,spacing:6) {
                                 Text("Unidentified speaker \(frame.speaker) · frame at \(frame.actualSeconds, specifier: "%.2f") s").font(.caption.bold())
-                                if let url=local.visualFrameURL(frame), let image=UIImage(contentsOfFile:url.path) {
+                                if let data=local.visualFrameData(frame), let image=UIImage(data:data) {
                                     Image(uiImage:image).resizable().scaledToFit().frame(maxHeight:240)
                                         .accessibilityLabel("Sampled video frame; speaker identity unverified")
                                     ForEach(Array(frame.lines.enumerated()),id:\.offset) { _, line in
