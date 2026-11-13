@@ -9,6 +9,9 @@ import CryptoKit
   let service=SpeakerSimilarityService()
   let same=try await service.compare(referenceWAV:reference,generatedWAV:reference,bundle:bundle)
   guard abs(same.cosineSimilarity-1)<0.0001,same.referenceSHA256==same.generatedSHA256,!same.likenessVerified,!same.identityVerified else {throw Failure.incorrectResult}
+  var prefixed=Data([0]);prefixed.append(reference)
+  let sliced=try await service.compare(referenceWAV:prefixed.dropFirst(),generatedWAV:reference,bundle:bundle)
+  guard sliced.referenceSHA256==same.referenceSHA256,abs(sliced.cosineSimilarity-1)<0.0001 else {throw Failure.incorrectResult}
   let different=try await service.compare(referenceWAV:reference,generatedWAV:generated,bundle:bundle)
   guard different.referenceSHA256 != different.generatedSHA256,(-1...1).contains(different.cosineSimilarity),!different.likenessVerified else {throw Failure.incorrectResult}
   let cancelled=Task {try Task.checkCancellation();return try await service.compare(referenceWAV:reference,generatedWAV:generated,bundle:bundle)}
@@ -22,6 +25,7 @@ import CryptoKit
    let distinctInput:SpeakerSimilarityService.Report
    let cancellationRejected=true
    let invalidWAVRejected=true
+   let slicedDataVerified=true
    let sourcesUnchanged=true
    let physicalIPhoneVerified=false
    let likenessVerified=false

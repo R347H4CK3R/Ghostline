@@ -64,7 +64,8 @@ actor SpeakerSimilarityService {
         return manager
     }
     /// Strict in-memory PCM16 WAV parsing avoids hash/decode path races or temporary source copies.
-    private static func samples(_ data:Data, maximumSeconds:Double) throws -> [Float] {
+    private static func samples(_ source:Data, maximumSeconds:Double) throws -> [Float] {
+        let data=Data(source) // Normalize sliced Data indices before bounded RIFF access.
         guard (44...4_194_304).contains(data.count) else { throw Failure.resourceBound }
         func tag(_ n:Int)->String { String(decoding:data[n..<n+4],as:UTF8.self) }
         func u16(_ n:Int)->Int { Int(data[n]) | Int(data[n+1])<<8 }
