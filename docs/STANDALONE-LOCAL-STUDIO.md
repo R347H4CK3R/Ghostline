@@ -56,3 +56,26 @@ This is an actual coordinator regression, not a simulation, but it is not physic
 The same-source aggregate run `43307802670` also passed the actual local-coordinator steps using its shared frozen dependency graph. Its downloaded evidence archive SHA-256 is `0ce384d15454c4e8cd9191e3dd25c7c877b73bd4e496b7941f4c7d3fe8cb29d3`; source retention, cancellation/resume, prior-profile preservation, fresh-store reload and zero word error on new speech were verified again. Other required release gates are evaluated separately.
 
 The next development package uses version 0.4.9 build 2, distinct from released build 1. It is not 1.0.0 and does not claim complete character likeness, RVC training or physical-device acceptance. Any publication requires a fresh build and all exact-source gates; an old IPA must not be relabeled.
+
+## Individual speaker audio receipts
+
+New successful speaker imports and deduplicated-reference reuse retain an independent
+receipt for that speaker's exact accepted reference and spoken-word-checked preview.
+Each receipt binds both filenames, SHA-256 values and the imported voice ID. Selecting
+another candidate never rewrites a previously saved speaker's pair. The result list now
+exposes separate reference and preview playback controls per speaker, after processing
+has stopped. These are preview-only references, not trained RVC models or identified
+characters.
+
+Playback requests validate both bounded regular files, reject symlinks, changed hashes,
+unsafe paths and mismatched attempt names, and leave all files intact on failure. Checks
+run on an explicit button action rather than each live-log refresh. This validates
+private-container file snapshots, not a hostile-filesystem race-free sandbox. Existing
+jobs without these optional receipts still load; no earlier file/voice is removed and no
+unproven per-speaker pairing is retroactively invented.
+
+Native unit coverage exercises two independent speaker pairs, reload, tampering and
+cross-pair rejection. The actual audio/video production coordinator additionally reopens
+the persisted job and requires each imported speaker's pair to validate and decode as
+nonempty audio. These native checks require exact-source CI before claiming success;
+Python wiring assertions alone do not establish playback on an iPhone.

@@ -1,4 +1,4 @@
-import json, threading, unittest, urllib.error, urllib.request, uuid
+import json, threading, time, unittest, urllib.error, urllib.request, uuid
 from unittest.mock import patch
 from tests import test_private_voice_transfer as fixtures
 from tools.private_voices import PrivateVoices
@@ -33,13 +33,28 @@ class SyncActivityTests(unittest.TestCase):
    self.assertEqual(response.headers['X-VoiceMatrix-Sync-ID'],identifier);catalog=json.load(response)
   for row in catalog['files']:
    with self.request('/voices/'+catalog['revision']+'/'+row['path'],identifier) as response:response.read()
-  with self.request('/voice-sync/'+identifier) as response:status=json.load(response)
+  # Receiving Content-Length bytes may precede the server's post-write log append.
+  # Poll the actual completion condition, never manufacture a completed event.
+  deadline=time.monotonic()+3
+  while True:
+   with self.request('/voice-sync/'+identifier) as response:status=json.load(response)
+   if status['events'][-1]['stage']=='file_sent' and status['events'][-1]['completed']==len(catalog['files']):break
+   if time.monotonic()>=deadline:self.fail('Transfer completion was not recorded within the deadline')
+   time.sleep(.01)
   stages=[e['stage'] for e in status['events']]
   self.assertIn('catalog_ready',stages);self.assertEqual(stages[-1],'file_sent')
   self.assertEqual(status['events'][-1]['completed'],3)
   serialized=json.dumps(status)
   for secret in ['original-test','Private fixture','A reference sentence','reference.wav',catalog['revision'],'x'*48]:self.assertNotIn(secret,serialized)
   with self.request('/sync-log') as response:self.assertIn(b'Live voice sync log',response.read())
+ def test_transfer_log_waits_for_delayed_post_write_event(self):
+  from tools.sync_activity import SyncActivity
+  original=SyncActivity.add
+  def delayed(activity, identifier, stage, *args, **kwargs):
+   if stage=='file_sent':time.sleep(.1)
+   return original(activity,identifier,stage,*args,**kwargs)
+  with patch.object(SyncActivity,'add',delayed):
+   self.test_transfer_log_has_counts_but_no_private_content()
  def test_activity_requires_auth_and_valid_random_id(self):
   for path in ['/voice-sync','/voice-sync/'+str(uuid.uuid4()),'/sync-log']:
    with self.assertRaises(urllib.error.HTTPError) as error:self.request(path,authorized=False)

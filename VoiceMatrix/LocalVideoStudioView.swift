@@ -74,7 +74,22 @@ struct LocalVideoStudioView: View {
                 if let outcomes = local.current?.speakerOutcomes, !outcomes.isEmpty {
                     Text("Speaker results").font(.headline)
                     ForEach(outcomes.keys.sorted(), id: \.self) { speaker in
-                        Text("Unidentified speaker \(speaker): \(outcomes[speaker] ?? "Pending")").font(.caption)
+                        DisclosureGroup("Unidentified speaker " + speaker) {
+                            Text(outcomes[speaker] ?? "Pending").font(.caption)
+                            if local.current?.speakerAssets?[speaker] != nil {
+                                Text("Preview-only reference; not a trained RVC model. Identity and likeness are unverified.").font(.caption).foregroundStyle(.secondary)
+                                Button("Listen to this speaker's reference") {
+                                    audio.stop()
+                                    if let url=local.speakerAssetURL(speaker, preview: false) { audio.play(url) }
+                                }.disabled(local.busy)
+                                Button("Listen to this speaker's generated preview") {
+                                    audio.stop()
+                                    if let url=local.speakerAssetURL(speaker, preview: true) { audio.play(url) }
+                                }.disabled(local.busy)
+                            } else {
+                                Text("No accepted per-speaker preview receipt is available for this job. Existing library voices and retained attempts are unchanged.").font(.caption).foregroundStyle(.secondary)
+                            }
+                        }.accessibilityIdentifier("local-video-speaker-" + speaker)
                     }
                 }
                 if let evidence = local.current?.visualEvidence {

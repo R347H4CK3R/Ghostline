@@ -89,6 +89,16 @@ import Metal
             try await settle(studio)
             guard studio.current?.completed == true,let completed=studio.current,
                   let ids=completed.speakerVoiceIDs,!ids.isEmpty, !audio.processingInUse,!library.busy else { throw Failure.pipeline }
+            let reopenedStudio=LocalVideoStudio(root:work.appendingPathComponent("Jobs",isDirectory:true),asrBundle:nil,f5Bundle:nil,speakerBundle:nil)
+            guard reopenedStudio.current?.id == completed.id else { throw Failure.preservation }
+            for (speaker,id) in ids {
+                guard completed.speakerAssets?[speaker]?.voiceID == id,
+                      let reference=reopenedStudio.speakerAssetURL(speaker,preview:false),
+                      let preview=reopenedStudio.speakerAssetURL(speaker,preview:true) else { throw Failure.evidence }
+                let referenceAudio=try AVAudioFile(forReading:reference)
+                let previewAudio=try AVAudioFile(forReading:preview)
+                guard referenceAudio.length>0,previewAudio.length>0 else { throw Failure.evidence }
+            }
             let folder=retained.deletingLastPathComponent()
             let files=try FileManager.default.contentsOfDirectory(atPath:folder.path)
             guard let visual=completed.visualEvidence,visual.sourceSHA256 == fixtureHash else { throw Failure.evidence }

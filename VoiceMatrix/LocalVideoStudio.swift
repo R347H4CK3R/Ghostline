@@ -11,6 +11,14 @@ import CryptoKit
         let measured: Date
         let report: SpeakerSimilarityService.Report
     }
+    /// Stored only after import/reuse succeeds; hashes bind this speaker's accepted pair.
+    struct SpeakerAssets: Codable {
+        let voiceID: String
+        let referenceFile: String
+        let referenceSHA256: String
+        let previewFile: String
+        let previewSHA256: String
+    }
     struct Job: Codable, Identifiable {
         let id: UUID
         let created: Date
@@ -29,6 +37,7 @@ import CryptoKit
         var previewFile: String?
         var voiceID: String?
         var speakerVoiceIDs: [String:String]?
+        var speakerAssets: [String:SpeakerAssets]?
         var speakerOutcomes: [String:String]?
         var qualityPolicyVersions: [String:Int]?
         var completed = false
@@ -145,6 +154,41 @@ import CryptoKit
             }
             return evidence
         } catch { return nil }
+    }
+    /// Validate both retained files on explicit playback, not on every live-log refresh.
+    /// Private app storage is trusted against concurrent hostile replacement after this read.
+    func speakerAssetURL(_ speaker: String, preview: Bool) -> URL? {
+        guard !busy, let assets=current?.speakerAssets?[speaker],
+              current?.speakerVoiceIDs?[speaker] == assets.voiceID else {
+            notice="No accepted per-speaker audio receipt is available. Older jobs keep their existing files and library voices."
+            return nil
+        }
+        guard assets.referenceFile.range(of:"^reference-[A-Za-z0-9_-]+\\.wav$",options:.regularExpression) != nil,
+              assets.previewFile == "preview-" + assets.referenceFile.dropFirst("reference-".count) else {
+            notice="Speaker audio pairing is invalid. Retained files were not changed."
+            return nil
+        }
+        do {
+            for (name,expected) in [(assets.referenceFile,assets.referenceSHA256),(assets.previewFile,assets.previewSHA256)] {
+                guard expected.range(of:"^[a-f0-9]{64}$",options:.regularExpression) != nil else { throw LocalError.preview }
+                let url=folder.appendingPathComponent(name)
+                let values=try url.resourceValues(forKeys:[.isRegularFileKey,.isSymbolicLinkKey,.fileSizeKey])
+                guard values.isRegularFile == true,values.isSymbolicLink != true,(44...4_194_304).contains(values.fileSize ?? 0) else { throw LocalError.preview }
+                let bytes=try Data(contentsOf:url)
+                guard bytes.count == values.fileSize,Self.hash(bytes) == expected else { throw LocalError.preview }
+            }
+            notice="Verified retained audio files for speaker " + speaker + ". Word checks passed when saved; likeness and identity are unverified."
+            return folder.appendingPathComponent(preview ? assets.previewFile : assets.referenceFile)
+        } catch {
+            notice="Speaker audio is missing or changed; playback was stopped. The retained files and library voices were not deleted."
+            return nil
+        }
+    }
+    private func recordSpeakerAssets(_ speaker: String, voiceID: String, referenceSHA256: String, previewSHA256: String) throws {
+        guard let referenceFile=current?.referenceFile,let previewFile=current?.matchingPreviewFile,
+              current?.speakerVoiceIDs?[speaker] == voiceID else { throw LocalError.preview }
+        if current?.speakerAssets == nil { current?.speakerAssets=[:] }
+        current?.speakerAssets?[speaker]=SpeakerAssets(voiceID:voiceID,referenceFile:referenceFile,referenceSHA256:referenceSHA256,previewFile:previewFile,previewSHA256:previewSHA256)
     }
     func selectHistory(_ job: Job) { guard !busy else { return }; current = job; notice = job.message }
     func setActive(_ value: Bool) { active = value; if !value, busy { cancel() } }
@@ -454,6 +498,7 @@ import CryptoKit
                             library.selectedID = existing.id
                             current?.voiceID = existing.id
                             current?.speakerVoiceIDs?[speaker.speaker] = existing.id
+                            try recordSpeakerAssets(speaker.speaker, voiceID: existing.id, referenceSHA256: Self.hash(clip.wave), previewSHA256: previewEvidence.inputSHA256)
                             current?.qualityPolicyVersions?[speaker.speaker] = LocalSoundQualityPolicy.version
                             current?.speakerOutcomes?[speaker.speaker] = "Saved reference; word check passed; likeness unverified"
                             imported = true; saved += 1
@@ -473,6 +518,7 @@ import CryptoKit
                         guard let savedProfile = library.profiles.first(where: { $0.id == id }) else { throw LocalError.candidate }
                         current?.voiceID = id
                         current?.speakerVoiceIDs?[speaker.speaker] = id
+                        try recordSpeakerAssets(speaker.speaker, voiceID: id, referenceSHA256: Self.hash(clip.wave), previewSHA256: previewEvidence.inputSHA256)
                         current?.qualityPolicyVersions?[speaker.speaker] = LocalSoundQualityPolicy.version
                         current?.speakerOutcomes?[speaker.speaker] = "Saved reference; word check passed; likeness unverified"
                         imported = true; saved += 1
