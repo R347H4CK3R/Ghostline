@@ -3,7 +3,11 @@ import XCTest
 // Runs after empty-state tests. Imports a neutral synthetic collection through
 // the real store; the availability-only build cannot perform neural synthesis.
 @MainActor final class CharacterWorkflowUITests: XCTestCase {
+    // Run43363051642 completed every assertion at134.276s but exceeded the120s
+    // default during second-launch playback. Keep this multi-launch flow bounded;
+    // do not change the global budget, polling limits or any functional assertion.
     func testImportSelectListenAndKeepVoicesAfterRelaunch() {
+        executionTimeAllowance = 180
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = ["-tutorialSeen", "YES", "-ui-test-import"]
