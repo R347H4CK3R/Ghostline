@@ -81,7 +81,7 @@ enum LocalSpeakerDiarization {
         }
         return try await withTaskCancellationHandler { try await worker.value } onCancel: { worker.cancel() }
     }
-    private static func verify(_ root: URL) throws {
+    static func verify(_ root: URL) throws {
         let lockURL = root.appendingPathComponent("resource-lock.json")
         guard let data = try? Data(contentsOf:lockURL), data.count <= 65_536,
               SHA256.hash(data:data).map({String(format:"%02x",$0)}).joined() == "137ad0aba1483d0ba3c74cb5380ab05f5cd76a5eb47aa69b9de41c353315e7e0",

@@ -1,0 +1,9 @@
+# Native reference/preview similarity diagnostic
+
+This isolated service compares two immutable mono PCM16 WAV byte snapshots (3–30 seconds each) on-device. It neither accepts a voice nor verifies a character/person's identity or perceptual likeness. It does not label cosine as a percentage or apply an invented quality threshold.
+
+`SpeakerSimilarityService.compare(referenceWAV:generatedWAV:bundle:progress:)` decodes/resamples the exact hashed bytes in memory, checks the existing pinned diarization bundle, and obtains two raw 256-dimensional vectors through FluidAudio's public `embedSpans`. It initializes the manager with bundled models explicitly, so no runtime model download is used. Calls are sequential within one service instance, with cancellation propagated into detached work and checked between model batches. A busy instance rejects additional calls. The output report binds both WAV hashes, model revision, algorithm and measured durations. Existing voices/files are never modified. No embeddings are serialized.
+
+Similarity can be affected by language, words, noise, processing and synthesis. Even a high score is not proof of recognizable character likeness. User listening and separately designed, calibrated tests remain necessary. No UI or automatic retry/admission decision uses the result in this change.
+
+The dedicated diagnostic compiles the actual production service on Apple Silicon and processes two original installed-system synthetic speech fixtures with network access denied. It checks identical-input numerical self-consistency, finite distinct-input output, cancellation, malformed input rejection and unchanged source bytes. Its presence is not a passing run; physical iPhone testing is separate. The pure Swift test covers dimensions, nonfinite/zero vectors, extreme scales, orthogonality and polarity. Linux environments without Swift explicitly skip native behavior rather than substituting source-contract checks.

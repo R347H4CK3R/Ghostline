@@ -1,0 +1,27 @@
+name: SpeakerSimilarityDiagnostic
+packages:
+  FluidAudio:
+    url: https://github.com/FluidInference/FluidAudio.git
+    revision: ee78635d23d52379117554ba72358b65a0612447
+settings:
+  base:
+    MACOSX_DEPLOYMENT_TARGET: '15.0'
+    SWIFT_VERSION: '5.0'
+    CODE_SIGNING_ALLOWED: false
+targets:
+  SpeakerSimilarityDiagnostic:
+    type: tool
+    platform: macOS
+    sources:
+    - path: Diagnostic.swift
+    - path: ../../VoiceMatrix/SpeakerSimilarityService.swift
+    - path: ../../VoiceMatrix/SpeakerSimilarityPolicy.swift
+    - path: ../../VoiceMatrix/LocalSpeakerDiarization.swift
+    - path: ../../VoiceMatrix/LocalSpeakerPolicy.swift
+    dependencies:
+    - package: FluidAudio
+schemes:
+  SpeakerSimilarityDiagnostic:
+    build:
+      targets:
+        SpeakerSimilarityDiagnostic: all
