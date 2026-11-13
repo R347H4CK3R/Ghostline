@@ -17,3 +17,12 @@ for variant in ['valid','wrong_input','dynamic_input','missing_input','extra_inp
   nodes=[h.make_node('Identity',['excitation_noise'],['audio'])];shape=[1,40000,1]
  model=h.make_model(h.make_graph(nodes,'synthetic-contract',inputs,[h.make_tensor_value_info('audio',T.FLOAT,shape)],[scale]),opset_imports=[h.make_opsetid('',17)],ir_version=9)
  onnx.checker.check_model(model);onnx.save(model,root/(variant+'.onnx'))
+
+# Larger fixed-frame boundary, still original algebra only.
+model=onnx.load(root/'valid.onnx')
+for value in list(model.graph.input)+list(model.graph.output):
+ for dim in value.type.tensor_type.shape.dim:
+  if dim.dim_value==100:dim.dim_value=300
+  elif dim.dim_value==40000:dim.dim_value=120000
+onnx.checker.check_model(model)
+onnx.save(model,root/'valid300.onnx')

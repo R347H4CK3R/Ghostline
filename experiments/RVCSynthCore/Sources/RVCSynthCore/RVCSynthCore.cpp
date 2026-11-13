@@ -5,6 +5,7 @@
 #include <onnxruntime_c_api.h>
 #endif
 #include <array>
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -60,6 +61,9 @@ struct RVCCancel {std::atomic<bool> requested{false};};
 struct RVCSynthSession {
  OrtEnv* env=nullptr;OrtSessionOptions* options=nullptr;OrtSession* session=nullptr;OrtMemoryInfo* memory=nullptr;
  std::mutex mutex;
+ size_t frames=100;
+ std::array<Spec,8> inputSpecs;
+ Spec outputSpec=audio;
  ~RVCSynthSession(){
   if(memory)api()->ReleaseMemoryInfo(memory);
   if(session)api()->ReleaseSession(session);
@@ -69,13 +73,27 @@ struct RVCSynthSession {
 };
 extern "C" const char* rvc_synth_runtime_version(){return OrtGetApiBase()->GetVersionString();}
 extern "C" RVCStatus rvc_synth_create(const void* model,size_t bytes,RVCSynthSession** result){
+ return rvc_synth_create_for_frames(model,bytes,100,result);
+}
+extern "C" RVCStatus rvc_synth_create_for_frames(const void* model,size_t bytes,size_t frames,RVCSynthSession** result){
  if(!result)return RVC_INVALID_ARGUMENT;
  *result=nullptr;
- if(!model || !bytes || bytes>128u*1024u*1024u)return RVC_INVALID_ARGUMENT;
+ if(!model || !bytes || bytes>128u*1024u*1024u || frames<1 || frames>1000)return RVC_INVALID_ARGUMENT;
  // Pin the tested API/binary boundary; no silently substituted runtime.
  if(std::strcmp(rvc_synth_runtime_version(),"1.24.2"))return RVC_RUNTIME_ERROR;
  try{
   auto s=std::make_unique<RVCSynthSession>();
+  s->frames=frames;
+  std::copy(std::begin(specs),std::end(specs),s->inputSpecs.begin());
+  for(auto& spec:s->inputSpecs){
+   spec.count=1;
+   for(size_t axis=0;axis<spec.rank;++axis){
+    if(spec.shape[axis]==100)spec.shape[axis]=static_cast<int64_t>(frames);
+    else if(spec.shape[axis]==40000)spec.shape[axis]=static_cast<int64_t>(frames*400);
+    spec.count*=static_cast<size_t>(spec.shape[axis]);
+   }
+  }
+  s->outputSpec.shape[2]=static_cast<int64_t>(frames*400);s->outputSpec.count=frames*400;
   checked(api()->CreateEnv(ORT_LOGGING_LEVEL_FATAL,"rvc-synth",&s->env));
   checked(api()->CreateSessionOptions(&s->options));
   checked(api()->SetIntraOpNumThreads(s->options,1));checked(api()->SetInterOpNumThreads(s->options,1));
@@ -87,8 +105,8 @@ extern "C" RVCStatus rvc_synth_create(const void* model,size_t bytes,RVCSynthSes
   checked(api()->SessionGetInputCount(s->session,&inputs));checked(api()->SessionGetOutputCount(s->session,&outputs));
   checked(api()->SessionGetOverridableInitializerCount(s->session,&initializers));
   if(inputs!=8 || outputs!=1 || initializers!=0)throw Failure{RVC_INVALID_MODEL};
-  for(size_t i=0;i<8;++i)metadata(s->session,true,i,specs[i]);
-  metadata(s->session,false,0,audio);
+  for(size_t i=0;i<8;++i)metadata(s->session,true,i,s->inputSpecs[i]);
+  metadata(s->session,false,0,s->outputSpec);
   checked(api()->CreateCpuMemoryInfo(OrtArenaAllocator,OrtMemTypeDefault,&s->memory));
   *result=s.release();return RVC_OK;
  }catch(Failure e){return e.status;}catch(...){return RVC_RUNTIME_ERROR;}
@@ -100,7 +118,7 @@ extern "C" void rvc_cancel_destroy(RVCCancel* c){delete c;}
 extern "C" RVCStatus rvc_synth_run(RVCSynthSession* s,const RVCTensor* tensors,size_t count,
  float* output,size_t outputCount,RVCCancel* cancel,uint32_t timeout){
  if(!s || !cancel || !timeout || timeout>10000)return RVC_INVALID_ARGUMENT;
- if(!tensors || count!=8 || !output || outputCount!=40000)return RVC_INVALID_TENSOR;
+ if(!tensors || count!=8 || !output || outputCount!=s->outputSpec.count)return RVC_INVALID_TENSOR;
  std::unique_lock<std::mutex> lock(s->mutex,std::try_to_lock);if(!lock.owns_lock())return RVC_BUSY;
  if(cancel->requested.load())return RVC_CANCELLED;
  struct Values {
@@ -108,19 +126,19 @@ extern "C" RVCStatus rvc_synth_run(RVCSynthSession* s,const RVCTensor* tensors,s
   ~Values(){for(auto* v:inputs)if(v)api()->ReleaseValue(v);if(output)api()->ReleaseValue(output);if(run)api()->ReleaseRunOptions(run);}
  } values;
  try{
-  for(size_t i=0;i<8;++i)validate(tensors[i],specs[i]);
+  for(size_t i=0;i<8;++i)validate(tensors[i],s->inputSpecs[i]);
   auto length=*static_cast<const int64_t*>(tensors[1].data);
-  if(length<1 || length>100 || *static_cast<const int64_t*>(tensors[4].data)!=0)throw Failure{RVC_INVALID_TENSOR};
-  for(size_t i=0;i<100;++i){
+  if(length<1 || length>static_cast<int64_t>(s->frames) || *static_cast<const int64_t*>(tensors[4].data)!=0)throw Failure{RVC_INVALID_TENSOR};
+  for(size_t i=0;i<s->frames;++i){
    auto p=static_cast<const int64_t*>(tensors[2].data)[i];auto hz=static_cast<const float*>(tensors[3].data)[i];
    if(p<1 || p>255 || hz<0 || hz>20000)throw Failure{RVC_INVALID_TENSOR};
   }
   const char* names[8];
-  for(size_t i=0;i<8;++i){const auto& t=tensors[i];names[i]=specs[i].name;
+  for(size_t i=0;i<8;++i){const auto& t=tensors[i];names[i]=s->inputSpecs[i].name;
    checked(api()->CreateTensorWithDataAsOrtValue(s->memory,const_cast<void*>(t.data),t.bytes,t.shape,t.rank,dtype(t.type),&values.inputs[i]));
   }
-  std::vector<float> scratch(40000);
-  checked(api()->CreateTensorWithDataAsOrtValue(s->memory,scratch.data(),scratch.size()*sizeof(float),audio.shape.data(),3,ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,&values.output));
+  std::vector<float> scratch(s->outputSpec.count);
+  checked(api()->CreateTensorWithDataAsOrtValue(s->memory,scratch.data(),scratch.size()*sizeof(float),s->outputSpec.shape.data(),3,ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,&values.output));
   checked(api()->CreateRunOptions(&values.run));
   std::atomic<bool> done{false};std::atomic<int> interrupted{0};
   auto deadline=std::chrono::steady_clock::now()+std::chrono::milliseconds(timeout);
