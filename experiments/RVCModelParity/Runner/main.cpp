@@ -11,6 +11,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <cstring>
+#include "pitch.h"
 const OrtApi* api(){return OrtGetApiBase()->GetApi(ORT_API_VERSION);}
 void check(OrtStatus* s){if(s){std::string m=api()->GetErrorMessage(s);api()->ReleaseStatus(s);throw std::runtime_error(m);}}
 std::vector<float> read(const std::string& p,size_t count){
@@ -46,8 +47,27 @@ void run(const std::string& root,const std::string& name,std::vector<int64_t> in
  }
  api()->ReleaseMemoryInfo(memory);api()->ReleaseSession(session);api()->ReleaseSessionOptions(options);api()->ReleaseEnv(env);
 }
+void pitchChecks(const std::string& root){
+ OrtEnv* env=nullptr;OrtSessionOptions* options=nullptr;OrtSession* session=nullptr;OrtMemoryInfo* memory=nullptr;
+ check(api()->CreateEnv(ORT_LOGGING_LEVEL_WARNING,"actual-pitch",&env));check(api()->CreateSessionOptions(&options));check(api()->SetIntraOpNumThreads(options,2));check(api()->DisableCpuMemArena(options));check(api()->DisableMemPattern(options));
+ check(api()->CreateSession(env,(root+"/torchcrepe-tiny-16frames.onnx").c_str(),options,&session));shape(session,true,{16,1024});shape(session,false,{16,360});check(api()->CreateCpuMemoryInfo(OrtArenaAllocator,OrtMemTypeDefault,&memory));
+ for(float frequency:{0.f,110.f,220.f,440.f}){
+  std::vector<float> audio(8000),framed(16*1024),energy(16),pitch(16),confidence(16);
+  for(size_t i=0;i<audio.size();++i)audio[i]=.2f*std::sin(2*3.141592653589793*frequency*i/16000);
+  if(!rvc_pitch_frames(audio.data(),audio.size(),10,16,framed.data(),energy.data()))throw std::runtime_error("Native framing failed");
+  int64_t dims[]={16,1024};OrtValue* in=nullptr;OrtValue* out=nullptr;check(api()->CreateTensorWithDataAsOrtValue(memory,framed.data(),framed.size()*4,dims,2,ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,&in));
+  const char* innames[]={"input"};const char* outnames[]={"output"};const OrtValue* inputs[]={in};check(api()->Run(session,nullptr,innames,inputs,1,outnames,1,&out));
+  float* salience=nullptr;check(api()->GetTensorMutableData(out,reinterpret_cast<void**>(&salience)));
+  if(!rvc_pitch_decode(salience,16,energy.data(),50,1100,.1f,.001f,pitch.data(),confidence.data()))throw std::runtime_error("Native pitch decode failed");
+  for(float estimate:pitch)if(frequency==0?estimate!=0:std::abs(estimate-frequency)>frequency*.03f)throw std::runtime_error("Actual pitch control failed");
+  std::cout<<"Actual waveform->native frames->CREPE->native pitch: target="<<frequency<<" first="<<pitch[0]<<std::endl;
+  api()->ReleaseValue(out);api()->ReleaseValue(in);
+ }
+ api()->ReleaseMemoryInfo(memory);api()->ReleaseSession(session);api()->ReleaseSessionOptions(options);api()->ReleaseEnv(env);
+}
 int main(int argc,char** argv){try{
  if(argc!=2)throw std::runtime_error("Expected artifact directory");
  run(argv[1],"official-hubert-48000",{1,48000},{1,149,768});run(argv[1],"torchcrepe-tiny-16frames",{16,1024},{16,360});
+ pitchChecks(argv[1]);
  std::cout<<"Actual public model parity passed; not RVC voice compatibility or physical iPhone verification"<<std::endl;return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<std::endl;return 1;}}

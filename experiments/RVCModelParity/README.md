@@ -41,3 +41,23 @@ Local run: install the versions in the workflow, then
 `python export_models.py <new-artifact-directory> <source-commit-sha>`.
 Verify with `python artifacts.py <directory> <same-sha>` and run
 `swift run RVCModelParity <directory>` on macOS.
+
+## Native pitch candidate (not old PM frontend parity)
+
+The native C ABI now frames mono16k audio into1024sample windows/160hop,
+512zero-padding, mean removal and sample-standard-deviation normalization.
+Count is bounded at48k samples and16frames per batch; all outputs are staged,
+nonfinite/clipped input and overlapping outputs rejected. Mean-removed AC RMS
+also rejects silence/DC rather than trusting pitch-model hallucinations.
+
+A deterministic9-bin salience-weighted decoder implements explicit50–1100Hz,
+confidence0.1/AC-RMS0.001 synthetic-control settings. These are engineering
+settings, not verified human-voice accuracy thresholds. It does not implement
+Torchcrepe's default Viterbi/dither or the old RVC PM extractor; do not describe it
+as bit-exact replacement. Different tasks may require tuned thresholds.
+
+The native actual-model diagnostic runs silence and110/220/440Hz controls through
+native framing -> real CREPE ONNX -> native decoded pitch, requiring0 for silence
+and all16estimates within3% for each tone. Synthetic tones establish a functioning
+pitch path, not reliable pitch in real speech/music or character likeness. iPhone
+ARM64 core compilation is separate from physical-device model execution.
