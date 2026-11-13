@@ -12,6 +12,12 @@ class LocalStudioSourceTests(unittest.TestCase):
   s=self.read('VoiceMatrix/LocalVideoStudio.swift')
   for text in ['LaptopConnection','URLSession','removeItem','shutil','trainedModel": true']:self.assertNotIn(text,s)
   for text in ['sourceSHA256','importLocalGeneratedCollection','wordErrorRate','<= 0.1','keepWarm: false','Task.detached','thermalState']:self.assertIn(text,s)
+ def test_preview_is_paired_and_published_only_after_word_verification(self):
+  s=self.read('VoiceMatrix/LocalVideoStudio.swift')
+  self.assertIn('current?.matchingPreviewFile.map',s)
+  self.assertIn('current?.selectReference(reference.lastPathComponent)',s)
+  publish=s.index('current?.previewFile = preview.lastPathComponent')
+  self.assertGreater(publish,s.index('wordErrorRate(expected: previewText'))
  def test_local_failed_generation_is_retained_without_changing_legacy_default(self):
   self.assertIn('preserveIncomplete: true',self.read('VoiceMatrix/LocalVideoStudio.swift'))
   engine=self.read('VoiceMatrix/F5ReferenceEngine.swift')

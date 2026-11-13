@@ -1,6 +1,22 @@
 import XCTest
 @testable import VoiceMatrix
 final class LocalStudioEvidenceTests: XCTestCase {
+    @MainActor func testNewCandidateCannotReusePreviousSpeakersPreview() {
+        let now = Date()
+        var job = LocalVideoStudio.Job(id: UUID(), created: now, updated: now,
+                                      stage: "Testing", message: "Synthetic state")
+        job.referenceFile = "reference-one.wav"
+        job.previewFile = "preview-one.wav"
+        XCTAssertEqual(job.matchingPreviewFile, "preview-one.wav")
+        job.selectReference("reference-two.wav")
+        XCTAssertNil(job.previewFile)
+        XCTAssertNil(job.matchingPreviewFile)
+        // Older saved jobs may already contain an inconsistent pair.
+        job.previewFile = "preview-one.wav"
+        XCTAssertNil(job.matchingPreviewFile)
+        job.previewFile = "preview-two.wav"
+        XCTAssertEqual(job.matchingPreviewFile, "preview-two.wav")
+    }
     func testMissingFirstWordFailsTenPercentGate() {
         XCTAssertGreaterThan(LocalStudioEvidence.wordErrorRate(expected: "I found a strange device near the portal.", actual: "Found a strange device near the portal."), 0.1)
         XCTAssertEqual(LocalStudioEvidence.wordErrorRate(expected: "Hello, WORLD!", actual: "hello world"), 0)

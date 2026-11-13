@@ -25,6 +25,19 @@ import CryptoKit
         var qualityPolicyVersions: [String:Int]?
         var completed = false
         var events: [Event] = []
+
+        // Do not compare a new speaker/reference against an earlier attempt's audio.
+        var matchingPreviewFile: String? {
+            guard let referenceFile, let previewFile,
+                  referenceFile.hasPrefix("reference-"), previewFile.hasPrefix("preview-"),
+                  referenceFile.dropFirst("reference-".count) == previewFile.dropFirst("preview-".count)
+            else { return nil }
+            return previewFile
+        }
+        mutating func selectReference(_ file: String) {
+            referenceFile = file
+            previewFile = nil
+        }
     }
     @Published private(set) var current: Job?
     @Published private(set) var history: [Job] = []
@@ -51,7 +64,7 @@ import CryptoKit
         if current?.completed == false { notice = "Previous work was retained. Resume to continue while this app is open." }
     }
     var reference: URL? { current?.referenceFile.map { folder.appendingPathComponent($0) } }
-    var preview: URL? { current?.previewFile.map { folder.appendingPathComponent($0) } }
+    var preview: URL? { current?.matchingPreviewFile.map { folder.appendingPathComponent($0) } }
     private var folder: URL { root.appendingPathComponent(current!.id.uuidString.lowercased(), isDirectory: true) }
     private static func hash(_ data: Data) -> String { SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined() }
     private func reloadHistory() {
@@ -274,7 +287,7 @@ import CryptoKit
                         let attempt = UUID().uuidString.lowercased()
                         let reference = jobFolder.appendingPathComponent("reference-" + attempt + ".wav")
                         try clip.wave.write(to: reference, options: .atomic)
-                        current?.referenceFile = reference.lastPathComponent
+                        current?.selectReference(reference.lastPathComponent)
                         try update("Screening candidate", "Checking speaker \(speaker.speaker) for music, singing and speech evidence on this iPhone.")
                         let quality: LocalSoundQuality.Evidence
                         do {
@@ -315,7 +328,6 @@ import CryptoKit
                             Task { @MainActor in guard let self, self.runToken == run, self.busy, self.current?.stage == "Generating preview", self.current?.referenceFile == reference.lastPathComponent else { return }; try? self.update("Generating preview", "Generating speech part \(part) of \(total).", log: false) }
                         }
                         await engine.finishRequest(keepWarm: false)
-                        current?.previewFile = preview.lastPathComponent
                         try update("Verifying preview", "Checking the generated words locally. This does not verify likeness.")
                         let recognized: String
                         do { recognized = try await transcriber.transcribe(preview) }
@@ -327,6 +339,7 @@ import CryptoKit
                             if previews >= 3 { break }; continue
                         }
                         try check()
+                        current?.previewFile = preview.lastPathComponent
                         if let existing = library.profiles.first(where: { $0.referenceSHA256 == Self.hash(clip.wave) && $0.referenceText == transcript }) {
                             library.selectedID = existing.id
                             current?.voiceID = existing.id
