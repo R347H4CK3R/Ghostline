@@ -82,7 +82,7 @@ jobs:
         cp -R native-build/Build/Products/Release-iphoneos/VoiceMatrix.app Payload/
         cp source-proof.json Payload/VoiceMatrix.app/VoiceMatrix-Source-Proof.json
         python3 tools/package_ipa.py Payload VoiceMatrix-0.4.9-character-test.ipa
-        python3 tools/character_package.py inspect VoiceMatrix-0.4.9-character-test.ipa --expected-version 0.4.9 --expected-build 2 --dependency-proof dependency-notices.json > character-inspection.json
+        python3 tools/character_package.py inspect VoiceMatrix-0.4.9-character-test.ipa --expected-version 0.4.9 --expected-build 3 --dependency-proof dependency-notices.json > character-inspection.json
         python3 tools/bundle_diarization.py --inspect-ipa VoiceMatrix-0.4.9-character-test.ipa
         python3 tools/bundle_asr.py --inspect-ipa VoiceMatrix-0.4.9-character-test.ipa
         shasum -a 256 VoiceMatrix-0.4.9-character-test.ipa > character-ipa.sha256
@@ -316,7 +316,7 @@ jobs:
         import json,os,pathlib
         from tools.verify_character_kit import verify
         root=pathlib.Path('release-evidence')
-        report=verify(root/'ipa',root/'speech',root/'conversion',os.environ['GITHUB_SHA'],'0.4.9',expected_build='2')
+        report=verify(root/'ipa',root/'speech',root/'conversion',os.environ['GITHUB_SHA'],'0.4.9',expected_build='3')
         report.update(status='candidate-verified-not-published',workflowRun=int(os.environ['GITHUB_RUN_ID']))
         (root/'candidate-verification.json').write_text(json.dumps(report,indent=2)+chr(10))
         print(json.dumps(report,indent=2))
