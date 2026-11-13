@@ -6,9 +6,19 @@
       "name": "VoiceMatrix",
       "bundleIdentifier": "com.voicematrix.app",
       "developerName": "VoiceMatrix",
-      "localizedDescription": "Standalone local-studio test: bundled speaker analysis, transcription, reference preview, automatic import and retained live logs. No laptop required for this path. Tested with synthetic neutral speech on Apple Silicon and iOS simulator; physical iPhone behavior, character likeness, broad video-site support and RVC training remain unverified. Not finished 1.0.0. Existing voices and source media retained.",
+      "localizedDescription": "Preview/reference pairing correction; failed word-check previews stay unpublished. Standalone local-studio test: bundled speaker analysis, transcription, reference preview, automatic import and retained live logs. No laptop required for this path. Tested with synthetic neutral speech on Apple Silicon and iOS simulator; physical iPhone behavior, character likeness, broad video-site support and RVC training remain unverified. Not finished 1.0.0. Existing voices and source media retained.",
       "iconURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
       "versions": [
+        {
+          "version": "0.4.9",
+          "buildVersion": "3",
+          "date": "2026-11-13",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build3/VoiceMatrix-0.4.9-build3.ipa",
+          "localizedDescription": "Preview/reference pairing correction; failed word-check previews stay unpublished. Standalone local-studio test: bundled speaker analysis, transcription, reference preview, automatic import and retained live logs. No laptop required for this path. Tested with synthetic neutral speech on Apple Silicon and iOS simulator; physical iPhone behavior, character likeness, broad video-site support and RVC training remain unverified. Not finished 1.0.0. Existing voices and source media retained.",
+          "minOSVersion": "26.0",
+          "size": 1305715047,
+          "sha256": "390314b3270e5eea38fc1cb4b54233d3a71bae5438cb9ab6594fa10c97a95f75"
+        },
         {
           "version": "0.4.9",
           "buildVersion": "2",
