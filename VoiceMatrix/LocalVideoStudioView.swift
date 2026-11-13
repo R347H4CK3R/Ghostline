@@ -79,11 +79,11 @@ struct LocalVideoStudioView: View {
                                 if let url=local.visualFrameURL(frame), let image=UIImage(contentsOfFile:url.path) {
                                     Image(uiImage:image).resizable().scaledToFit().frame(maxHeight:240)
                                         .accessibilityLabel("Sampled video frame; speaker identity unverified")
-                                } else { Text("Retained frame missing or changed; not displayed.").font(.caption) }
-                                ForEach(Array(frame.lines.enumerated()),id:\.offset) { _, line in
-                                    Text("Visible text: \(line.text) · OCR \(Int(line.confidence * 100))%").font(.caption).textSelection(.enabled)
-                                }
-                                if frame.lines.isEmpty { Text("No readable English text detected in this frame.").font(.caption) }
+                                    ForEach(Array(frame.lines.enumerated()),id:\.offset) { _, line in
+                                        Text("Visible text: \(line.text) · OCR \(Int(line.confidence * 100))%").font(.caption).textSelection(.enabled)
+                                    }
+                                    if frame.lines.isEmpty { Text("No readable English text detected in this frame.").font(.caption) }
+                                } else { Text("Retained frame missing or changed; frame and OCR evidence not displayed.").font(.caption) }
                             }
                         }
                         if evidence.omittedSpeakers > 0 { Text("\(evidence.omittedSpeakers) speaker groups were not sampled to limit resource use.").font(.caption) }

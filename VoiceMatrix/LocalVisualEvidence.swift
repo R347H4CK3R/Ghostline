@@ -31,7 +31,13 @@ enum LocalVisualEvidence {
     static func digest(_ data: Data) -> String { SHA256.hash(data:data).map { String(format:"%02x",$0) }.joined() }
     static func frameURL(_ frame: Frame, folder: URL) throws -> URL {
         guard frame.file == "visual-" + frame.id.uuidString.lowercased() + ".jpg",
-              frame.sha256.range(of:"^[a-f0-9]{64}$",options:.regularExpression) != nil else { throw Failure.invalidEvidence }
+              frame.sha256.range(of:"^[a-f0-9]{64}$",options:.regularExpression) != nil,
+              frame.speaker.range(of:"^[A-Za-z0-9_-]{1,40}$",options:.regularExpression) != nil,
+              frame.requestedSeconds.isFinite, frame.actualSeconds.isFinite,
+              (0...1800).contains(frame.requestedSeconds), (0...1800.05).contains(frame.actualSeconds),
+              abs(frame.actualSeconds-frame.requestedSeconds) <= 0.15,
+              frame.lines.count <= 8,
+              frame.lines.allSatisfy({ !$0.text.isEmpty && $0.text.count <= 160 && $0.confidence.isFinite && (0...1).contains($0.confidence) }) else { throw Failure.invalidEvidence }
         let url = folder.appendingPathComponent(frame.file)
         let v = try url.resourceValues(forKeys:[.isRegularFileKey,.isSymbolicLinkKey,.fileSizeKey])
         guard v.isRegularFile == true, v.isSymbolicLink != true, (1...250_000).contains(v.fileSize ?? 0) else { throw Failure.invalidEvidence }

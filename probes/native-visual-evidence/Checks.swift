@@ -44,6 +44,8 @@ import CoreText
         try LocalVisualEvidence.validate(copy,sourceSHA256:hash,folder:root,groups:groups)
         do { try LocalVisualEvidence.validate(copy,sourceSHA256:String(repeating:"0",count:64),folder:root,groups:groups);fatalError("Wrong source accepted") } catch {}
         do { try LocalVisualEvidence.validate(copy,sourceSHA256:hash,folder:root,groups:[.init(speaker:"wrong",windows:[.init(start:0.2,end:1.8)])]);fatalError("Wrong speaker group accepted") } catch {}
+        let badConfidence=LocalVisualEvidence.Frame(id:frame.id,speaker:frame.speaker,requestedSeconds:frame.requestedSeconds,actualSeconds:frame.actualSeconds,file:frame.file,sha256:frame.sha256,lines:[.init(text:"DEMO",confidence:1e20)])
+        do { _=try LocalVisualEvidence.frameURL(badConfidence,folder:root);fatalError("Unsafe displayed confidence accepted") } catch {}
         let frameURL=try LocalVisualEvidence.frameURL(frame,folder:root)
         try Data("changed".utf8).write(to:frameURL)
         do { _=try LocalVisualEvidence.frameURL(frame,folder:root);fatalError("Changed frame accepted") } catch {}
