@@ -14,9 +14,16 @@ import CryptoKit
   guard sliced.referenceSHA256==same.referenceSHA256,abs(sliced.cosineSimilarity-1)<0.0001 else {throw Failure.incorrectResult}
   let different=try await service.compare(referenceWAV:reference,generatedWAV:generated,bundle:bundle)
   guard different.referenceSHA256 != different.generatedSHA256,(-1...1).contains(different.cosineSimilarity),!different.likenessVerified else {throw Failure.incorrectResult}
-  let cancelled=Task {try Task.checkCancellation();return try await service.compare(referenceWAV:reference,generatedWAV:generated,bundle:bundle)}
+  let (started,signal)=AsyncStream<Void>.makeStream()
+  let cancelled=Task {try await service.compare(referenceWAV:reference,generatedWAV:generated,bundle:bundle,progress:{_ in _ = signal.yield(())})}
+  var iterator=started.makeAsyncIterator()
+  guard await iterator.next() != nil else {throw Failure.cancellation}
   cancelled.cancel()
   do {_ = try await cancelled.value;throw Failure.cancellation} catch is CancellationError {}
+  signal.finish()
+  let recovered=try await service.compare(referenceWAV:reference,generatedWAV:reference,bundle:bundle)
+  guard abs(recovered.cosineSimilarity-1)<0.0001 else {throw Failure.incorrectResult}
+  do {_ = try await service.compare(referenceWAV:reference,generatedWAV:generated,bundle:bundle.appendingPathComponent("missing-model-bundle"));throw Failure.incorrectResult} catch LocalSpeakerDiarization.Failure.invalidBundle {}
   do {_ = try await service.compare(referenceWAV:Data(),generatedWAV:generated,bundle:bundle);throw Failure.incorrectResult} catch SpeakerSimilarityService.Failure.resourceBound {}
   guard try Data(contentsOf:one)==reference,try Data(contentsOf:two)==generated else {throw Failure.fixture}
   struct Evidence:Encodable {
@@ -24,6 +31,8 @@ import CryptoKit
    let sameInput:SpeakerSimilarityService.Report
    let distinctInput:SpeakerSimilarityService.Report
    let cancellationRejected=true
+   let cancellationRecoveryVerified=true
+   let missingBundleRejected=true
    let invalidWAVRejected=true
    let slicedDataVerified=true
    let sourcesUnchanged=true
