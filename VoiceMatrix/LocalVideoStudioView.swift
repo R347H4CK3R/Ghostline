@@ -26,6 +26,20 @@ struct LocalVideoStudioView: View {
                 TextField("YouTube or supported HTTPS media URL", text: $sourceURL)
                     .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
                     .textFieldStyle(.roundedBorder).disabled(local.busy).accessibilityIdentifier("local-video-url")
+                PasteButton(payloadType: String.self) { values in
+                    authorized = false
+                    guard values.count == 1, let raw = values.first, raw.utf8.count <= 16_384 else {
+                        selectionError = "Clipboard must contain one supported video URL of at most 16,384 bytes."
+                        return
+                    }
+                    do {
+                        sourceURL = try LocalMediaURLPolicy.input(raw).absoluteString
+                        selected = nil
+                        selectionError = nil
+                    } catch { selectionError = error.localizedDescription }
+                }.buttonStyle(.bordered).disabled(local.busy)
+                    .accessibilityLabel("Paste video URL from Clipboard")
+                    .accessibilityIdentifier("local-video-paste")
                 Text("URL acquisition needs internet to contact the source website. Public YouTube pages with direct supported streams, and direct media on upload.wikimedia.org or archive.org, are supported candidates. Sign-in, age checks, encrypted signatures and challenges are not bypassed; those sources need local-file import.").font(.footnote).foregroundStyle(.secondary)
                 Toggle("I am authorized to use this media and its voices", isOn: $authorized).disabled(local.busy)
                 Button("Generate speaker references") {

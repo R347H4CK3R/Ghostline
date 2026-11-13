@@ -18,3 +18,11 @@ class VisualEvidenceTests(unittest.TestCase):
   self.assertIn('Visible text is not a verified character name',view)
   workflow=(ROOT/'.github/workflows/native-visual-evidence.yml').read_text()
   self.assertIn('probes/native-visual-evidence/Checks.swift',workflow)
+
+ def test_paste_is_explicit_bounded_and_does_not_poll_clipboard(self):
+  view=(ROOT/'VoiceMatrix/LocalVideoStudioView.swift').read_text()
+  for text in ['PasteButton(payloadType: String.self)', 'values.count == 1', 'raw.utf8.count <= 16_384', 'LocalMediaURLPolicy.input(raw)', 'local-video-paste']:
+   self.assertIn(text,view)
+  self.assertNotIn('UIPasteboard',view)
+  self.assertNotIn('hasStrings',view)
+  self.assertIn('set -euo pipefail',(ROOT/'.github/workflows/native-visual-evidence.yml').read_text())

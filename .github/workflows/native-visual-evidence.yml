@@ -16,6 +16,7 @@ jobs:
       run: swiftc -swift-version 5 -parse-as-library VoiceMatrix/LocalSpeakerPolicy.swift VoiceMatrix/LocalVisualEvidence.swift probes/native-visual-evidence/Checks.swift -o /tmp/visual-evidence-check
     - name: Extract real video frames and run Vision OCR without networking
       run: |
+        set -euo pipefail
         sandbox-exec -p '(version 1)(allow default)(deny network*)' /tmp/visual-evidence-check | tee visual-evidence.log
     - uses: actions/upload-artifact@v4
       if: always()
