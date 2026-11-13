@@ -17,6 +17,7 @@ import CryptoKit
         var sourceSHA256: String?
         var analysisFile: String?
         var analysisSHA256: String?
+        var visualEvidence: LocalVisualEvidence.Report?
         var referenceFile: String?
         var previewFile: String?
         var voiceID: String?
@@ -99,6 +100,11 @@ import CryptoKit
             return LocalStudioJournal.Page(events:entries.map(LocalStudioJournal.sanitized),offset:offset,total:current.events.count)
         }
         return try LocalStudioJournal.read(folder:folder,offset:offset)
+    }
+    func visualFrameURL(_ frame: LocalVisualEvidence.Frame) -> URL? {
+        guard let report=current?.visualEvidence, report.sourceSHA256 == current?.sourceSHA256,
+              report.frames.contains(where: { $0.id == frame.id && $0.sha256 == frame.sha256 }) else { return nil }
+        return try? LocalVisualEvidence.frameURL(frame,folder:folder)
     }
     func selectHistory(_ job: Job) { guard !busy else { return }; current = job; notice = job.message }
     func setActive(_ value: Bool) { active = value; if !value, busy { cancel() } }
@@ -265,6 +271,27 @@ import CryptoKit
                 let groups = analysis.speakerWindows
                 guard !groups.isEmpty else { throw LocalError.candidate }
                 try update("Speaker groups found", "Found \(groups.count) tentative speaker groups. Detected overlaps are excluded; music separation and character names are not verified.")
+                if let report = current?.visualEvidence,
+                   (try? LocalVisualEvidence.validate(report,sourceSHA256:expectedHash,folder:jobFolder,groups:groups)) != nil {
+                    try update("Visual evidence retained", "Reusing source-bound frames and visible text. They do not establish a character identity.")
+                } else {
+                    try update("Inspecting video frames", "Sampling up to 12 speaker-timed frames locally. Visible characters may not be the speakers; OCR text is not a verified name.")
+                    do {
+                        let report = try await LocalVisualEvidence.analyze(source:retained,sourceSHA256:expectedHash,groups:groups,folder:jobFolder) { [weak self] done,total in
+                            Task { @MainActor in
+                                guard let self, self.runToken == run, self.busy, self.current?.stage == "Inspecting video frames" else { return }
+                                try? self.update("Inspecting video frames", "Inspected \(done) of \(total) sampled video frames.",log:false)
+                            }
+                        }
+                        try check()
+                        current?.visualEvidence = report
+                        try update("Visual evidence retained", report.audioOnly ? "Audio-only source: no visible character evidence. Speaker labels stay unidentified." : "Retained \(report.frames.count) sampled frames; \(report.unavailableFrames) unavailable; \(report.omittedSpeakers) speakers outside the sampling bound. Identity remains unverified.")
+                    } catch is CancellationError { throw CancellationError() }
+                    catch {
+                        try check()
+                        try update("Visual evidence unavailable", "Video frames could not be inspected safely. Continuing audio analysis without names or visible-character claims; existing media is retained.")
+                    }
+                }
                 guard let bundle = f5Bundle else { throw LocalError.engine }
                 if current?.speakerVoiceIDs == nil { current?.speakerVoiceIDs = [:] }
                 if current?.speakerOutcomes == nil { current?.speakerOutcomes = [:] }

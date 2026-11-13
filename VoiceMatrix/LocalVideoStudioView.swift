@@ -1,3 +1,4 @@
+import UIKit
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -53,6 +54,27 @@ struct LocalVideoStudioView: View {
                     ForEach(outcomes.keys.sorted(), id: \.self) { speaker in
                         Text("Unidentified speaker \(speaker): \(outcomes[speaker] ?? "Pending")").font(.caption)
                     }
+                }
+                if let evidence = local.current?.visualEvidence {
+                    DisclosureGroup("Sampled visual evidence") {
+                        Text("Visible text is not a verified character name. These frames coincide with a tentative speaker turn, but the actual speaker may be off screen. OCR confidence measures text recognition, not identity.").font(.caption)
+                        if evidence.audioOnly { Text("Audio-only source; no frames available.").font(.caption) }
+                        ForEach(evidence.frames) { frame in
+                            VStack(alignment:.leading,spacing:6) {
+                                Text("Unidentified speaker \(frame.speaker) · frame at \(frame.actualSeconds, specifier: "%.2f") s").font(.caption.bold())
+                                if let url=local.visualFrameURL(frame), let image=UIImage(contentsOfFile:url.path) {
+                                    Image(uiImage:image).resizable().scaledToFit().frame(maxHeight:240)
+                                        .accessibilityLabel("Sampled video frame; speaker identity unverified")
+                                } else { Text("Retained frame missing or changed; not displayed.").font(.caption) }
+                                ForEach(Array(frame.lines.enumerated()),id:\.offset) { _, line in
+                                    Text("Visible text: \(line.text) · OCR \(Int(line.confidence * 100))%").font(.caption).textSelection(.enabled)
+                                }
+                                if frame.lines.isEmpty { Text("No readable English text detected in this frame.").font(.caption) }
+                            }
+                        }
+                        if evidence.omittedSpeakers > 0 { Text("\(evidence.omittedSpeakers) speaker groups were not sampled to limit resource use.").font(.caption) }
+                        if evidence.unavailableFrames > 0 { Text("\(evidence.unavailableFrames) requested frames were unavailable.").font(.caption) }
+                    }.accessibilityIdentifier("local-video-visual-evidence")
                 }
                 Divider()
                 Text("Live processing log").font(.headline)
