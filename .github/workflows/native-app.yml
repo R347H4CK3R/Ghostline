@@ -31,6 +31,7 @@ jobs:
         retention-days: 7
 'on':
   push:
+    branches-ignore: [codex/strata-build5]
     paths:
     - VoiceMatrix/**
     - project.yml

@@ -1,6 +1,7 @@
 name: Native reference pack validation parity
 on:
   push:
+    branches-ignore: [codex/strata-build5]
     paths: ['tools/voice_pack.py', 'VoiceMatrix/CharacterFolderStore.swift', 'tests/test_native_pack_parity.py', 'tests/prepare_pack_parity.py', 'tests/native/PackParityChecks.swift', '.github/workflows/native-pack-parity.yml']
   workflow_dispatch:
 permissions:

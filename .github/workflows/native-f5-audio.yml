@@ -1,6 +1,7 @@
 name: Native F5 offline audio benchmark
 on:
   push:
+    branches-ignore: [codex/strata-build5]
     paths: ['.github/workflows/native-f5-audio.yml', 'probes/native-f5/Benchmark.swift', 'probes/native-f5/benchmark.yml']
   workflow_dispatch:
 permissions:

@@ -1,6 +1,7 @@
 name: Current no-stock character UI smoke
 on:
   push:
+    branches-ignore: [codex/strata-build5]
     paths:
       - 'VoiceMatrix/F5ReferenceEngine.swift'
       - 'VoiceMatrix/F5SpeechChunks.swift'

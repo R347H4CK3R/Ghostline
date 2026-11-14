@@ -1,6 +1,7 @@
 name: Laptop queue recovery checks
 on:
   push:
+    branches-ignore: [codex/strata-build5]
     paths: ['tools/video_queue.py', 'tools/queue_transport.py', 'tests/test_video_queue.py', 'tests/test_queue_recovery.py', 'tests/test_queue_transport.py', '.github/workflows/queue-recovery.yml']
   workflow_dispatch:
 permissions:

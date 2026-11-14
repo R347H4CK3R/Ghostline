@@ -1,6 +1,7 @@
 name: Native queue UI checks
 on:
   push:
+    branches-ignore: [codex/strata-build5]
     paths:
       - 'project.yml'
       - 'VoiceMatrix/VideoQueueView.swift'

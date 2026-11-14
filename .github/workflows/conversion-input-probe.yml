@@ -20,6 +20,7 @@ jobs:
         if-no-files-found: error
 'on':
   push:
+    branches-ignore: [codex/strata-build5]
     paths:
     - .github/workflows/conversion-input-probe.yml
   workflow_dispatch: null

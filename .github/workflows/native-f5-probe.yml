@@ -1,6 +1,7 @@
 name: Native F5 reference engine probe
 on:
   push:
+    branches-ignore: [codex/strata-build5]
     paths: ['.github/workflows/native-f5-probe.yml', 'probes/native-f5/**']
   workflow_dispatch:
 permissions:

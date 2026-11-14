@@ -1,6 +1,7 @@
 name: Master Voices incremental publishing
 on:
   push:
+    branches-ignore: [codex/strata-build5]
     paths: ['tools/master_voices.py', 'tools/voice_studio.py', 'tools/voice_pack.py', 'tests/test_master_publish.py', 'tests/prepare_master_publish.py', 'tests/native/MasterPublishChecks.swift', '.github/workflows/master-publish.yml']
   workflow_dispatch:
 permissions:

@@ -1,0 +1,47 @@
+name: Mirror inspected VoiceMatrix build 5 for Strata
+'on':
+  push:
+    branches: [codex/strata-build5]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and verify the built development release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download voicematrix-v0.4.9-build5 --repo R347H4CK3R/VoiceMatrix-Development --dir artifact
+          gh release view voicematrix-v0.4.9-build5 --repo R347H4CK3R/VoiceMatrix-Development --json body --jq .body > release-notes.md
+          python3 - <<'PY'
+          import pathlib,json,hashlib,zipfile,plistlib
+          root=pathlib.Path('artifact')
+          m=json.loads((root/'release-metadata.json').read_text())
+          p=root/'VoiceMatrix-0.4.9-build5.ipa'
+          assert m['sourceCommit']=='528e1355714182a5619c04fe6bf975043aa0c9a1'
+          assert m['packagingRun']==43649541927
+          assert m['version']=='0.4.9' and m['buildVersion']=='5'
+          assert m['physicalDeviceVerified'] is False and m['productionVoiceQualityVerified'] is False
+          assert p.stat().st_size==m['size'] and 0<m['size']<=2_000_000_000
+          assert hashlib.file_digest(p.open('rb'),'sha256').hexdigest()==m['sha256']
+          with zipfile.ZipFile(p) as z:
+              info=plistlib.loads(z.read('Payload/VoiceMatrix.app/Info.plist'))
+              assert info['CFBundleIdentifier']=='com.voicematrix.app'
+              assert info['CFBundleShortVersionString']=='0.4.9' and info['CFBundleVersion']=='5'
+              proof=json.loads(z.read('Payload/VoiceMatrix.app/VoiceMatrix-Source-Proof.json'))
+              assert proof['sourceCommit']==m['sourceCommit']
+          print(json.dumps(m))
+          PY
+      - name: Publish the exact same inspected IPA for Strata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view voicematrix-v0.4.9-build5 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Existing release will not be overwritten.'
+            exit 1
+          fi
+          gh release create voicematrix-v0.4.9-build5 artifact/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "VoiceMatrix 0.4.9 build 5 — development preview" --notes-file release-notes.md --prerelease
