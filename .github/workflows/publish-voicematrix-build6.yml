@@ -1,0 +1,92 @@
+name: Publish VoiceMatrix build 6 to Strata
+'on':
+  push:
+    branches: [codex/publish-build6]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Wait for the requested exact-source build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import subprocess,json,time
+          for attempt in range(90):
+              p=subprocess.run(['gh','api','repos/R347H4CK3R/VoiceMatrix-Development/actions/runs/43659967649'],capture_output=True,text=True,check=True)
+              d=json.loads(p.stdout)
+              assert d['head_sha']=='9c3023043fd57e53e238bf1ffcf7d87959991df1'
+              print(d['status'],d.get('conclusion'),flush=True)
+              if d['status']=='completed':
+                  assert d['conclusion']=='success', 'Packaging failed; no feed update will be made'
+                  break
+              time.sleep(45)
+          else: raise SystemExit('Build has not completed; feed remains unchanged')
+          PY
+      - name: Download and verify the actual published IPA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download voicematrix-v0.4.9-build6 --repo R347H4CK3R/VoiceMatrix-Development --pattern VoiceMatrix-0.4.9-build6.ipa --pattern release-metadata.json --pattern character-inspection.json --pattern source-proof.json --pattern packaging-status.json --dir artifact
+          python3 - <<'PY'
+          import json,pathlib,hashlib,zipfile,plistlib
+          root=pathlib.Path('artifact');p=root/'VoiceMatrix-0.4.9-build6.ipa'
+          m=json.loads((root/'release-metadata.json').read_text())
+          assert m['sourceCommit']=='9c3023043fd57e53e238bf1ffcf7d87959991df1'
+          assert m['packagingRun']==43659967649 and m['buildVersion']=='6' and m['version']=='0.4.9'
+          assert p.stat().st_size==m['size'] and hashlib.file_digest(p.open('rb'),'sha256').hexdigest()==m['sha256']
+          with zipfile.ZipFile(p) as z:
+              info=plistlib.loads(z.read('Payload/VoiceMatrix.app/Info.plist'))
+              assert info['CFBundleIdentifier']=='com.voicematrix.app'
+              assert info['CFBundleShortVersionString']=='0.4.9' and str(info['CFBundleVersion'])=='6'
+          assert json.loads((root/'source-proof.json').read_text())['sourceCommit']==m['sourceCommit']
+          PY
+      - name: Publish Ghostline-hosted preview and update both feeds
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git pull --ff-only origin main
+          cat > artifact/notes.md <<'NOTES'
+          VoiceMatrix 0.4.9 build 6 — unfinished development preview, published at the user's request.
+          Unsigned IPA for iOS 26 and later. Requires signing through the user's sideloading setup.
+          
+          Includes current committed evaluation controls, optional pitch refinement, pinned evaluation-model admission and bounded retrieval infrastructure. Existing voices and workflows retained. The new large-index phone importer is not included; experimental RVC needs compatible separately imported packs.
+          
+          Compiled and package-inspected only. Mac verification tests were skipped. Physical-iPhone behavior, memory/performance, human listening and intended voice identity remain unverified. Not a finished standalone 1.0.0 release.
+          NOTES
+          gh release create voicematrix-v0.4.9-build6 artifact/VoiceMatrix-0.4.9-build6.ipa artifact/release-metadata.json artifact/character-inspection.json artifact/source-proof.json artifact/packaging-status.json --repo "$GITHUB_REPOSITORY" --target "$(git rev-parse HEAD)" --title "VoiceMatrix 0.4.9 build 6 — unfinished preview" --notes-file artifact/notes.md --prerelease
+          python3 - <<'PY'
+          import json,pathlib,datetime,urllib.request
+          m=json.loads(pathlib.Path('artifact/release-metadata.json').read_text())
+          url='https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build6/VoiceMatrix-0.4.9-build6.ipa'
+          with urllib.request.urlopen(urllib.request.Request(url,method='HEAD'),timeout=60) as r: assert r.status==200
+          item=dict(version='0.4.9',buildVersion='6',date=datetime.datetime.now(datetime.timezone.utc).date().isoformat(),downloadURL=url,localizedDescription='Unfinished development preview published at user request. Updated evaluation controls, optional pitch refinement and bounded retrieval infrastructure. Compatible external packs required for experimental RVC; the new large-index phone importer is not included. Compiled and package-inspected only; Mac verification tests skipped. Physical-iPhone operation, listening quality and intended voice identity remain unverified. Not a completed 1.0.0. Existing voices retained.',minOSVersion='26.0',size=m['size'],sha256=m['sha256'])
+          for name in ('source.json','strata-source.json'):
+              p=pathlib.Path(name);d=json.loads(p.read_text())
+              apps=[a for a in d['apps'] if a['bundleIdentifier']=='com.voicematrix.app']
+              assert len(apps)==1
+              app=apps[0];old=app['versions']
+              assert not any(v['version']=='0.4.9' and str(v.get('buildVersion'))=='6' for v in old)
+              app['versions']=[item]+old
+              p.write_text(json.dumps(d,indent=2)+'\n')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add source.json strata-source.json
+          git commit -m "Publish requested VoiceMatrix build 6 unfinished preview"
+          git push origin HEAD:main
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoiceMatrix-build6-publication-evidence
+          path: |
+            artifact/release-metadata.json
+            source.json
+            strata-source.json
+          if-no-files-found: error
