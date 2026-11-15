@@ -1,0 +1,34 @@
+name: Resume verified VoiceMatrix build8 draft only
+'on':
+  push:
+    branches: [publish/voicematrix-build8-recovery]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-voicematrix-build8-preview
+  cancel-in-progress: false
+jobs:
+  recover:
+    if: github.repository == 'R347H4CK3R/Ghostline'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - run: python3 -m unittest discover -s tests -p 'test_*preview8.py' -v
+    - name: Verify exact existing draft, publish, and verify catalogs
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -o pipefail
+        python3 tools/recover_preview8.py | tee preview8-recovery.log
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: VoiceMatrix-build8-recovery-evidence
+        path: preview8-recovery.log
