@@ -1,0 +1,48 @@
+name: Publish inspected unfinished VoiceMatrix build9 preview
+'on':
+  push:
+    branches:
+    - publish/voicematrix-build9-preview
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-voicematrix-build9-preview
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.repository == 'R347H4CK3R/Ghostline'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: actions/checkout@v4
+      with:
+        repository: R347H4CK3R/VoiceMatrix-Development
+        ref: 9c3407118de70e8e0b7352c1d590beb6525de464
+        path: package-source
+        persist-credentials: false
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Test preservation and fail-closed release guards
+      run: python3 -m unittest discover -s tests -p test_publish_preview9.py -v
+    - name: Verify exact package then create new prerelease and atomically update catalogs
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: 'set -o pipefail
+
+        python3 tools/publish_preview9.py | tee preview9-publication.log'
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: VoiceMatrix-build9-publication-evidence
+        path: 'preview9-publication.log
+
+          preview9-evidence/*.json
+
+          preview9-evidence/*.sha256'
+        if-no-files-found: warn
+        retention-days: 14
