@@ -11,6 +11,16 @@
       "versions": [
         {
           "version": "0.4.9",
+          "buildVersion": "8",
+          "date": "2026-11-15",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build8/VoiceMatrix-0.4.9-build8.ipa",
+          "localizedDescription": "Unfinished preview: MP3/AIFF import, retained-source integrity checks, transcription and screening repairs. Native macOS audio/video fixture pipelines and simulator checks passed; not physical-iPhone or likeness verification. Existing voices retained. Experimental RVC needs compatible imported packs; music separation and reliable overlapping-speaker extraction remain incomplete. Requires sideload signing; not finished 1.0.0.",
+          "minOSVersion": "26.0",
+          "size": 1314419227,
+          "sha256": "c9fb738468f9fb7e0497c6735440416753a81273a1bfa4309985df06a4869284"
+        },
+        {
+          "version": "0.4.9",
           "buildVersion": "7",
           "date": "2026-11-15",
           "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build7/VoiceMatrix-0.4.9-build7.ipa",
