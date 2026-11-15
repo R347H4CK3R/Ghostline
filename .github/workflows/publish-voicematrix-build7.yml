@@ -1,0 +1,92 @@
+name: Publish VoiceMatrix build 7 to Strata
+'on':
+  push:
+    branches:
+    - codex/publish-build7
+  workflow_dispatch: null
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: main
+    - name: Wait for the requested exact-source build
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: "python3 - <<'PY'\nimport subprocess,json,time\nfor attempt in range(90):\n\
+        \    p=subprocess.run(['gh','api','repos/R347H4CK3R/VoiceMatrix-Development/actions/runs/43676875745'],capture_output=True,text=True,check=True)\n\
+        \    d=json.loads(p.stdout)\n    assert d['head_sha']=='e5eaf98da5ac5e69505dc74847cd8821298e0a2b'\n\
+        \    print(d['status'],d.get('conclusion'),flush=True)\n    if d['status']=='completed':\n\
+        \        assert d['conclusion']=='success', 'Packaging failed; no feed update\
+        \ will be made'\n        break\n    time.sleep(45)\nelse: raise SystemExit('Build\
+        \ has not completed; feed remains unchanged')\nPY\n"
+    - name: Download and verify the actual published IPA
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: "gh release download voicematrix-v0.4.9-build7 --repo R347H4CK3R/VoiceMatrix-Development\
+        \ --pattern VoiceMatrix-0.4.9-build7.ipa --pattern release-metadata.json --pattern\
+        \ character-inspection.json --pattern source-proof.json --pattern packaging-status.json\
+        \ --dir artifact\npython3 - <<'PY'\nimport json,pathlib,hashlib,zipfile,plistlib\n\
+        root=pathlib.Path('artifact');p=root/'VoiceMatrix-0.4.9-build7.ipa'\nm=json.loads((root/'release-metadata.json').read_text())\n\
+        assert m['sourceCommit']=='e5eaf98da5ac5e69505dc74847cd8821298e0a2b'\nassert\
+        \ m['packagingRun']==43676875745 and m['buildVersion']=='7' and m['version']=='0.4.9'\n\
+        assert p.stat().st_size==m['size'] and hashlib.file_digest(p.open('rb'),'sha256').hexdigest()==m['sha256']\n\
+        with zipfile.ZipFile(p) as z:\n    info=plistlib.loads(z.read('Payload/VoiceMatrix.app/Info.plist'))\n\
+        \    assert info['CFBundleIdentifier']=='com.voicematrix.app'\n    assert\
+        \ info['CFBundleShortVersionString']=='0.4.9' and str(info['CFBundleVersion'])=='7'\n\
+        assert json.loads((root/'source-proof.json').read_text())['sourceCommit']==m['sourceCommit']\n\
+        PY\n"
+    - name: Publish Ghostline-hosted preview and update both feeds
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: "git pull --ff-only origin main\ncat > artifact/notes.md <<'NOTES'\nVoiceMatrix\
+        \ 0.4.9 build 7 \u2014 unfinished development preview, published at the user's\
+        \ request.\nUnsigned IPA for iOS 26 and later. Requires signing through the\
+        \ user's sideloading setup.\n\nIncludes recording/import to reference profiles,\
+        \ video-to-voice improvements, bounded file-backed RVC retrieval, cancellation\
+        \ and integrity checks, and extraction fixes. Existing voices retained. No\
+        \ stock celebrity voices or trained RVC profiles bundled; experimental RVC\
+        \ requires compatible imported packs. Music separation and overlapping-speaker\
+        \ extraction remain incomplete.\n\nActual CoreML speaker processing passed\
+        \ a real two-speaker fixture on macOS. Packaging is gated by real AVFoundation\
+        \ extraction tests and asset inspection. Physical-iPhone operation, full generation,\
+        \ memory/performance, human listening and likeness remain unverified. Not\
+        \ a completed standalone 1.0.0.\n\nNOTES\ngh release create voicematrix-v0.4.9-build7\
+        \ artifact/VoiceMatrix-0.4.9-build7.ipa artifact/release-metadata.json artifact/character-inspection.json\
+        \ artifact/source-proof.json artifact/packaging-status.json --repo \"$GITHUB_REPOSITORY\"\
+        \ --target \"$(git rev-parse HEAD)\" --title \"VoiceMatrix 0.4.9 build 7 \u2014\
+        \ unfinished preview\" --notes-file artifact/notes.md --prerelease\npython3\
+        \ - <<'PY'\nimport json,pathlib,datetime,urllib.request\nm=json.loads(pathlib.Path('artifact/release-metadata.json').read_text())\n\
+        url='https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build7/VoiceMatrix-0.4.9-build7.ipa'\n\
+        with urllib.request.urlopen(urllib.request.Request(url,method='HEAD'),timeout=60)\
+        \ as r: assert r.status==200\nitem=dict(version='0.4.9',buildVersion='7',date=datetime.datetime.now(datetime.timezone.utc).date().isoformat(),downloadURL=url,localizedDescription='Unfinished\
+        \ preview: recording/import to reference profiles, video-to-voice improvements,\
+        \ bounded file-backed retrieval and extraction fixes. Existing voices retained.\
+        \ Experimental RVC needs compatible imported packs. Real CoreML two-speaker\
+        \ and AVFoundation extraction checks on macOS; physical-iPhone operation,\
+        \ full generation and listening quality unverified. Requires sideload signing;\
+        \ not finished 1.0.0.',minOSVersion='26.0',size=m['size'],sha256=m['sha256'])\n\
+        for name in ('source.json','strata-source.json'):\n    p=pathlib.Path(name);d=json.loads(p.read_text())\n\
+        \    apps=[a for a in d['apps'] if a['bundleIdentifier']=='com.voicematrix.app']\n\
+        \    assert len(apps)==1\n    app=apps[0];old=app['versions']\n    assert\
+        \ not any(v['version']=='0.4.9' and str(v.get('buildVersion'))=='7' for v\
+        \ in old)\n    app['versions']=[item]+old\n    p.write_text(json.dumps(d,indent=2)+'\\\
+        n')\nPY\ngit config user.name \"github-actions[bot]\"\ngit config user.email\
+        \ \"41898282+github-actions[bot]@users.noreply.github.com\"\ngit add source.json\
+        \ strata-source.json\ngit commit -m \"Publish requested VoiceMatrix build\
+        \ 7 unfinished preview\"\ngit push origin HEAD:main\n"
+    - uses: actions/upload-artifact@v4
+      with:
+        name: VoiceMatrix-build7-publication-evidence
+        path: 'artifact/release-metadata.json
+
+          source.json
+
+          strata-source.json
+
+          '
+        if-no-files-found: error
