@@ -1,5 +1,5 @@
 {
-  "name": "VoiceMatrix — LiveContainer",
+  "name": "VoiceMatrix \u2014 LiveContainer",
   "identifier": "com.voicematrix.source",
   "apps": [
     {
@@ -9,6 +9,16 @@
       "localizedDescription": "Development preview: native on-device diagnostic RVC pack import, audio conversion, live percentage and log, cancellation, playback and export. Requires separately imported diagnostic encoder, voice and retrieval packs. Compiled for iPhone and package-inspected; Mac verification tests skipped by request. Physical-iPhone performance, listening quality and intended voice identity remain unverified. Not a completed 1.0.0. Existing voices and user storage retained.",
       "iconURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
       "versions": [
+        {
+          "version": "0.4.9",
+          "buildVersion": "6",
+          "date": "2026-11-15",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build6/VoiceMatrix-0.4.9-build6.ipa",
+          "localizedDescription": "Unfinished development preview published at user request. Updated evaluation controls, optional pitch refinement and bounded retrieval infrastructure. Compatible external packs required for experimental RVC; the new large-index phone importer is not included. Compiled and package-inspected only; Mac verification tests skipped. Physical-iPhone operation, listening quality and intended voice identity remain unverified. Not a completed 1.0.0. Existing voices retained.",
+          "minOSVersion": "26.0",
+          "size": 1314340621,
+          "sha256": "3921a0b0bc4701b660dcd7c6c32553f3bb7567a428575e83e006e786140422f1"
+        },
         {
           "version": "0.4.9",
           "buildVersion": "5",
