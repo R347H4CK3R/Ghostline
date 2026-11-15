@@ -1,0 +1,163 @@
+{
+  "name": "VoiceMatrix \u2014 Strata",
+  "identifier": "com.voicematrix.strata-source",
+  "apps": [
+    {
+      "name": "VoiceMatrix",
+      "bundleIdentifier": "com.voicematrix.app",
+      "developerName": "VoiceMatrix",
+      "localizedDescription": "Development preview: native on-device diagnostic RVC pack import, audio conversion, live percentage and log, cancellation, playback and export. Requires separately imported diagnostic encoder, voice and retrieval packs. Compiled for iPhone and package-inspected; Mac verification tests skipped by request. Physical-iPhone performance, listening quality and intended voice identity remain unverified. Not a completed 1.0.0. Existing voices and user storage retained.",
+      "iconURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
+      "versions": [
+        {
+          "version": "0.4.9",
+          "buildVersion": "7",
+          "date": "2026-11-15",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build7/VoiceMatrix-0.4.9-build7.ipa",
+          "localizedDescription": "Unfinished preview: recording/import to reference profiles, video-to-voice improvements, bounded file-backed retrieval and extraction fixes. Existing voices retained. Experimental RVC needs compatible imported packs. Real CoreML two-speaker and AVFoundation extraction checks on macOS; physical-iPhone operation, full generation and listening quality unverified. Requires sideload signing; not finished 1.0.0.",
+          "minOSVersion": "26.0",
+          "size": 1314415309,
+          "sha256": "b96922a202f9d53af4b0e8cb980409654870ce2759118d2f52f6fc1db8252443"
+        },
+        {
+          "version": "0.4.9",
+          "buildVersion": "6",
+          "date": "2026-11-15",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build6/VoiceMatrix-0.4.9-build6.ipa",
+          "localizedDescription": "Unfinished development preview published at user request. Updated evaluation controls, optional pitch refinement and bounded retrieval infrastructure. Compatible external packs required for experimental RVC; the new large-index phone importer is not included. Compiled and package-inspected only; Mac verification tests skipped. Physical-iPhone operation, listening quality and intended voice identity remain unverified. Not a completed 1.0.0. Existing voices retained.",
+          "minOSVersion": "26.0",
+          "size": 1314340621,
+          "sha256": "3921a0b0bc4701b660dcd7c6c32553f3bb7567a428575e83e006e786140422f1"
+        },
+        {
+          "version": "0.4.9",
+          "buildVersion": "5",
+          "date": "2026-11-14",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build5/VoiceMatrix-0.4.9-build5.ipa",
+          "localizedDescription": "Development preview: native on-device diagnostic RVC pack import, audio conversion, live percentage and log, cancellation, playback and export. Requires separately imported diagnostic encoder, voice and retrieval packs. Compiled for iPhone and package-inspected; Mac verification tests skipped by request. Physical-iPhone performance, listening quality and intended voice identity remain unverified. Not a completed 1.0.0. Existing voices and user storage retained.",
+          "minOSVersion": "26.0",
+          "size": 1314312631,
+          "sha256": "5e182d2ee28fd1c3a8d063aaefe55c6113820ac44207db4acd59394276f78263"
+        },
+        {
+          "version": "0.4.9",
+          "buildVersion": "3",
+          "date": "2026-11-13",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build3/VoiceMatrix-0.4.9-build3.ipa",
+          "localizedDescription": "Preview/reference pairing correction; failed word-check previews stay unpublished. Standalone local-studio test: bundled speaker analysis, transcription, reference preview, automatic import and retained live logs. No laptop required for this path. Tested with synthetic neutral speech on Apple Silicon and iOS simulator; physical iPhone behavior, character likeness, broad video-site support and RVC training remain unverified. Not finished 1.0.0. Existing voices and source media retained.",
+          "minOSVersion": "26.0",
+          "size": 1305715047,
+          "sha256": "390314b3270e5eea38fc1cb4b54233d3a71bae5438cb9ab6594fa10c97a95f75"
+        },
+        {
+          "version": "0.4.9",
+          "buildVersion": "2",
+          "date": "2026-11-13",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build2/VoiceMatrix-0.4.9-build2.ipa",
+          "localizedDescription": "Standalone local-studio test: bundled speaker analysis, transcription, reference preview, automatic import and retained live logs. No laptop required for this path. Tested with synthetic neutral speech on Apple Silicon and iOS simulator; physical iPhone behavior, character likeness, broad video-site support and RVC training remain unverified. Not finished 1.0.0. Existing voices and source media retained.",
+          "minOSVersion": "26.0",
+          "size": 1305715123,
+          "sha256": "0457d3aeb8a38199d327db0f1f0206b7c4fa352618b63bfe6f9a54ea85af5ffd"
+        },
+        {
+          "version": "0.4.9",
+          "buildVersion": "1",
+          "date": "2026-11-12",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9/VoiceMatrix-0.4.9.ipa",
+          "localizedDescription": "Live private video workflow: verified receipt, real worker stages, waiting/review and failure history. Separate voice sync evidence. Existing private voices/audio, queues and offline engines preserved; no stock voices. Physical iPhone sync remains unverified.",
+          "minOSVersion": "26.0",
+          "size": 731336684,
+          "sha256": "d4fd0bbfda9ad453d8df33a32c02499308b79cda890932733337c3c86e4db7d4"
+        },
+        {
+          "version": "0.4.8",
+          "buildVersion": "1",
+          "date": "2026-11-12",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.8/VoiceMatrix-0.4.8.ipa",
+          "localizedDescription": "Live private video workflow: verified receipt, real worker stages, waiting/review and failure history. Separate voice sync evidence. Existing private voices/audio, queues and offline engines preserved; no stock voices. Physical iPhone sync remains unverified.",
+          "minOSVersion": "26.0",
+          "size": 731244571,
+          "sha256": "21bd2d6e7ea4f2da1646e50c698f0b62ef3470dfca01670685da73831920b189"
+        },
+        {
+          "version": "0.4.7",
+          "buildVersion": "1",
+          "date": "2026-11-12",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.7/VoiceMatrix-0.4.7.ipa",
+          "localizedDescription": "Live private voice sync activity: laptop receipt and checking, download progress, validation and saved completion. Explicit stop, failure and up-to-date states. Existing private voices/audio and offline engines preserved; no stock voices. Physical iPhone sync remains unverified.",
+          "minOSVersion": "26.0",
+          "size": 731161976,
+          "sha256": "590eff59107e555076418c80682f1a3be823ba4b461b5d85ff8c4129cf25fb29"
+        },
+        {
+          "version": "0.4.6",
+          "buildVersion": "1",
+          "date": "2026-11-09",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.6/VoiceMatrix-0.4.6.ipa",
+          "localizedDescription": "Faster repeat offline speech through bounded model reuse. Hosted Mac median 9.9% saving with identical paired audio; iPhone speed and memory remain unverified. Explicit public suggestions and existing private voice storage preserved. No stock voices.",
+          "minOSVersion": "26.0",
+          "size": 731114673,
+          "sha256": "27cc1a45d92529bf1acd5f3c1383f8e278fb990cd6114baa3df3b1bef0c17aef"
+        },
+        {
+          "version": "0.4.5",
+          "buildVersion": "1",
+          "date": "2026-11-09",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.5/VoiceMatrix-0.4.5.ipa",
+          "localizedDescription": "Long speech with a practical 30-minute raw-audio budget; saved/shared speed, pitch, volume and pause controls; explicitly public suggestion drafts. Imported data preserved, no bundled stock voices. Native and simulator checks passed; physical iPhone evaluation remains pending.",
+          "minOSVersion": "26.0",
+          "size": 731110554,
+          "sha256": "377d7b9d1c09dcbd023e5f2ea3199f2d2bc96a0684180c4a9a0a66b08e0ab7b0"
+        },
+        {
+          "version": "0.4.4",
+          "buildVersion": "1",
+          "date": "2026-11-08",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.4/VoiceMatrix-0.4.4.ipa",
+          "localizedDescription": "A refreshed voice studio with one-tap character selection, searchable voices, clearer speech controls and collection management. Working audio engines and private storage are unchanged. No bundled stock or character voices. Native and simulator checks passed; physical iPhone interface and likeness checks remain pending.",
+          "minOSVersion": "26.0",
+          "size": 731078368,
+          "sha256": "274ca2b0f64d0a884358f04e624f30f454830be0d7921bd02eeaa2a9c2c64059"
+        },
+        {
+          "version": "0.4.3",
+          "buildVersion": "1",
+          "date": "2026-11-08",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.3/VoiceMatrix-0.4.3.ipa",
+          "localizedDescription": "Playback controls and diagnostics, character-selection guidance, and in-app update checks/downloads with Strata handoff. No stock voices or private character audio bundled. Native/simulator checks passed; physical iPhone sound and character likeness remain unverified.",
+          "minOSVersion": "26.0",
+          "size": 731052434,
+          "sha256": "7c01b000cfe07c73b29a9800ed5f17eebc001cdf6b6741c39767df547c03ab4a"
+        },
+        {
+          "version": "0.4.1",
+          "buildVersion": "1",
+          "date": "2026-11-08",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.1-character-test-1/VoiceMatrix-0.4.1-character-test.ipa",
+          "localizedDescription": "Private laptop voice sync with cached offline character speech and neural recording conversion. Changed existing references are preserved pending review. No characters or stock voices bundled. Native diagnostic audio checks passed; character likeness and physical iPhone tests remain pending.",
+          "minOSVersion": "26.0",
+          "size": 731005708
+        },
+        {
+          "version": "0.4.0",
+          "buildVersion": "1",
+          "date": "2026-11-08",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.0-character-test-1/VoiceMatrix-0.4.0-character-test.ipa",
+          "localizedDescription": "Separate character-folder import, fully offline new-text speech and neural recording conversion. No characters or stock voices bundled. Native diagnostic audio checks passed; character likeness and physical iPhone tests remain pending.",
+          "minOSVersion": "26.0",
+          "size": 730977029
+        },
+        {
+          "version": "0.3.0",
+          "buildVersion": "5",
+          "date": "2026-11-07",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.3.0-studio-1/VoiceMatrix-v0.3.0-experimental.ipa",
+          "localizedDescription": "537 bundled profiles. Real offline neural conversion and speech; automated simulator audio checks, no near-indistinguishable claim.",
+          "minOSVersion": "26.0",
+          "size": 205958246
+        }
+      ]
+    }
+  ],
+  "sourceURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/strata-source.json"
+}
