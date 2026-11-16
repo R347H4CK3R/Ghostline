@@ -11,6 +11,16 @@
       "versions": [
         {
           "version": "0.4.9",
+          "buildVersion": "10",
+          "date": "2026-11-16",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build10/VoiceMatrix-0.4.9-build10.ipa",
+          "localizedDescription": "Unfinished preview: locally word-checked catalog speech and retained speech history with explicit review, save/share and confirmed deletion. Controlled simulator and native pipeline checks passed. Physical-iPhone behavior and likeness unverified; overlapping-speaker extraction, music separation and full RVC training incomplete. Not finished 1.0.0.",
+          "minOSVersion": "26.0",
+          "size": 1314595724,
+          "sha256": "8adee1c45510ac22557b77ed0bbb7d32346cbc39a11efaf9bcea16f9e43622fd"
+        },
+        {
+          "version": "0.4.9",
           "buildVersion": "9",
           "date": "2026-11-15",
           "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build9/VoiceMatrix-0.4.9-build9.ipa",
