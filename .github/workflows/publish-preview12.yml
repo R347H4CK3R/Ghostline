@@ -1,0 +1,50 @@
+name: Publish inspected unfinished VoiceMatrix build12 preview
+'on':
+  push:
+    branches:
+    - publish/voicematrix-build12-preview
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-voicematrix-build12-preview
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.repository == 'R347H4CK3R/Ghostline'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - name: Require reviewed immutable publication pins
+      run: python3 -c 'from tools.publish_preview12 import require_pins; require_pins()'
+    - uses: actions/checkout@v4
+      with:
+        repository: R347H4CK3R/VoiceMatrix-Development
+        ref: bffea881caea28cbfcd20e9cfbf8dd5da0075a8b
+        path: package-source
+        persist-credentials: false
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Test preservation and fail-closed release guards
+      run: python3 -m unittest discover -s tests -p test_publish_preview12.py -v
+    - name: Verify exact package then create new prerelease and atomically update catalogs
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: 'set -o pipefail
+
+        python3 tools/publish_preview12.py | tee preview12-publication.log'
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: VoiceMatrix-build12-publication-evidence
+        path: 'preview12-publication.log
+
+          preview12-evidence/*.json
+
+          preview12-evidence/*.sha256'
+        if-no-files-found: warn
+        retention-days: 14
