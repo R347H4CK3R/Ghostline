@@ -11,6 +11,16 @@
       "versions": [
         {
           "version": "0.4.9",
+          "buildVersion": "12",
+          "date": "2026-11-16",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build12/VoiceMatrix-0.4.9-build12.ipa",
+          "localizedDescription": "Unfinished preview: conservative overlap screening rejects affected reference clips and validates retained analysis before reuse. Existing library voices and source files preserved. Passing screening does not prove clean single-speaker audio. Physical-iPhone behavior and likeness unverified; music separation and full RVC training incomplete. Not finished 1.0.0.",
+          "minOSVersion": "26.0",
+          "size": 1314609660,
+          "sha256": "c4dd8a0424af6459e432322e483115524319b05c463a3a646c7a6690c128c2dd"
+        },
+        {
+          "version": "0.4.9",
           "buildVersion": "11",
           "date": "2026-11-16",
           "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.9-build11/VoiceMatrix-0.4.9-build11.ipa",
