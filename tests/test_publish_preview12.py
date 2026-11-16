@@ -306,3 +306,12 @@ class WorkflowTests(unittest.TestCase):
   checkout=next(i for i,s in enumerate(steps) if s.get('with',{}).get('repository')==m.DEV)
   self.assertLess(guard,checkout)
   self.assertEqual(w['jobs']['publish']['runs-on'],'ubuntu-latest')
+
+class PublisherDependencyTests(unittest.TestCase):
+ def test_yaml_dependency_is_installed_before_tests(self):
+  import yaml
+  w=yaml.safe_load((pathlib.Path(__file__).resolve().parents[1]/".github/workflows/publish-preview12.yml").read_text())
+  steps=w["jobs"]["publish"]["steps"]
+  install=next(i for i,s in enumerate(steps) if "pip install PyYAML==6.0.2" in s.get("run",""))
+  tests=next(i for i,s in enumerate(steps) if "unittest discover" in s.get("run",""))
+  self.assertLess(install,tests)

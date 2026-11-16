@@ -29,6 +29,8 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.12'
+    - name: Install publisher test dependency
+      run: python3 -m pip install PyYAML==6.0.2
     - name: Test preservation and fail-closed release guards
       run: python3 -m unittest discover -s tests -p test_publish_preview12.py -v
     - name: Verify exact package then create new prerelease and atomically update catalogs
