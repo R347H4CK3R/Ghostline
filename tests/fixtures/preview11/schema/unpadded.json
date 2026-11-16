@@ -1,0 +1,58 @@
+{
+  "inputs": [
+    {
+      "voiceID": "local-e7cad787-6713-4320-83cc-4b68ffabe124-s1",
+      "file": "new-speech-local-e7cad787-6713-4320-83cc-4b68ffabe124-s1.wav",
+      "sha256": "4386d8e9ca61126e465e60424c85ad1e0555fabe44e9ded9b9759bd8e340ea61",
+      "expected": "Please close the window and bring the notebook."
+    },
+    {
+      "voiceID": "local-e7cad787-6713-4320-83cc-4b68ffabe124-s2",
+      "file": "new-speech-local-e7cad787-6713-4320-83cc-4b68ffabe124-s2.wav",
+      "sha256": "5aa1ab44404d48458be99ef3f640e85561dd3df5bd016a7353572aaa9a81482c",
+      "expected": "Please close the window and bring the notebook."
+    }
+  ],
+  "outcomes": [
+    {
+      "accepted": true,
+      "actual": "Please close the window and bring the notebook.",
+      "evidence": {
+        "confidenceMeaning": "Uncalibrated mean token softmax, not transcript accuracy",
+        "inputSHA256": "4386d8e9ca61126e465e60424c85ad1e0555fabe44e9ded9b9759bd8e340ea61",
+        "meanTokenConfidence": 0.9738051,
+        "modelRevision": "7dd20fe6b1797d35f5e3307e8b1732d9a178edfe",
+        "schemaVersion": 2,
+        "tokenCount": 17,
+        "transcriptSHA256": "7d9f9f3d9dac918385baf5bbe3824f1183d6bcf256af8f30ff534b6bd2fd7175"
+      },
+      "expected": "Please close the window and bring the notebook.",
+      "file": "new-speech-local-e7cad787-6713-4320-83cc-4b68ffabe124-s1.wav",
+      "inputSHA256": "4386d8e9ca61126e465e60424c85ad1e0555fabe44e9ded9b9759bd8e340ea61",
+      "voiceID": "local-e7cad787-6713-4320-83cc-4b68ffabe124-s1",
+      "wordErrorRate": 0
+    },
+    {
+      "accepted": true,
+      "actual": "Please close the window and bring the notebook.",
+      "evidence": {
+        "confidenceMeaning": "Uncalibrated mean token softmax, not transcript accuracy",
+        "inputSHA256": "5aa1ab44404d48458be99ef3f640e85561dd3df5bd016a7353572aaa9a81482c",
+        "meanTokenConfidence": 0.9817038,
+        "modelRevision": "7dd20fe6b1797d35f5e3307e8b1732d9a178edfe",
+        "schemaVersion": 2,
+        "tokenCount": 17,
+        "transcriptSHA256": "7d9f9f3d9dac918385baf5bbe3824f1183d6bcf256af8f30ff534b6bd2fd7175"
+      },
+      "expected": "Please close the window and bring the notebook.",
+      "file": "new-speech-local-e7cad787-6713-4320-83cc-4b68ffabe124-s2.wav",
+      "inputSHA256": "5aa1ab44404d48458be99ef3f640e85561dd3df5bd016a7353572aaa9a81482c",
+      "voiceID": "local-e7cad787-6713-4320-83cc-4b68ffabe124-s2",
+      "wordErrorRate": 0
+    }
+  ],
+  "fixtureProvenance": {
+    "artifactSHA256": "154bd2594327081fb6a99052d79f43e9ef53f1f2615e1628f404facc9f182812",
+    "purpose": "Actual Swift JSON encoder schema regression only; not release evidence approval"
+  }
+}
