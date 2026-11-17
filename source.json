@@ -6,9 +6,19 @@
       "name": "VoiceMatrix",
       "bundleIdentifier": "com.voicematrix.app",
       "developerName": "VoiceMatrix",
-      "localizedDescription": "Development preview: native on-device diagnostic RVC pack import, audio conversion, live percentage and log, cancellation, playback and export. Requires separately imported diagnostic encoder, voice and retrieval packs. Compiled for iPhone and package-inspected; Mac verification tests skipped by request. Physical-iPhone performance, listening quality and intended voice identity remain unverified. Not a completed 1.0.0. Existing voices and user storage retained.",
+      "localizedDescription": "Unfinished preview: embedded on-device yt-dlp for supported public YouTube sources; clearer on-device voice tools, optional manual laptop queue, source-bound recording consent and actionable video-import diagnostics. YouTube pages without downloadable media remain unsupported; import a local video instead. Existing voices/files preserved. Physical-iPhone behavior and likeness unverified; full RVC training and music separation incomplete.",
       "iconURL": "https://raw.githubusercontent.com/R347H4CK3R/Ghostline/main/Assets.xcassets/AppIcon.appiconset/AppIcon.png",
       "versions": [
+        {
+          "version": "0.4.11",
+          "buildVersion": "14",
+          "date": "2026-11-17",
+          "downloadURL": "https://github.com/R347H4CK3R/Ghostline/releases/download/voicematrix-v0.4.11-build14/VoiceMatrix-0.4.11-build14.ipa",
+          "localizedDescription": "Unfinished preview: embedded on-device yt-dlp for supported public YouTube sources; clearer on-device voice tools, optional manual laptop queue, source-bound recording consent and actionable video-import diagnostics. YouTube pages without downloadable media remain unsupported; import a local video instead. Existing voices/files preserved. Physical-iPhone behavior and likeness unverified; full RVC training and music separation incomplete.",
+          "minOSVersion": "26.0",
+          "size": 1330393160,
+          "sha256": "08114861763b10f1678fef69d4ced631f84f123c2b9766c085780e8006e59d79"
+        },
         {
           "version": "0.4.9",
           "buildVersion": "12",
