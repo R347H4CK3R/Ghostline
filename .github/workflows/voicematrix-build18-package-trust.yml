@@ -1,4 +1,4 @@
-name: Exact VoiceMatrix production build shape without models
+name: Exact VoiceMatrix native duplicate ownership without models
 on:
   push:
     branches: [verification/voicematrix-build18-package-trust]
@@ -13,16 +13,16 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: R347H4CK3R/VoiceMatrix-Development
-          ref: 685f07b182b898a6c33adc87637ab0e089389ffc
+          ref: 58a62fce45563929ec49af9c97dd83ddda871df7
           persist-credentials: false
           fetch-depth: 1
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.12.10"
-      - name: Compile authentic iPhoneOS app shape without models
+      - name: Identify native duplicate output producers without models
         env:
-          VM_SOURCE_SHA: 685f07b182b898a6c33adc87637ab0e089389ffc
-          VM_SOURCE_TREE: 9c9f61cc6f0df00572e31805f06abcfe7acbfd81
+          VM_SOURCE_SHA: 58a62fce45563929ec49af9c97dd83ddda871df7
+          VM_SOURCE_TREE: 405dac4790b52102b549bd7ec2283e990a00219f
         run: |
           set -euo pipefail
           umask 077
@@ -40,4 +40,4 @@ jobs:
           [[ "$(shasum -a 256 "$scratch/xcodegen" | awk '{print $1}')" == a450f63bdd650c280cfce0fef6c94dbb19c5bf8dc32811361fd5d2e912718503 ]] || guard generator-executable
           chmod 0700 "$scratch/xcodegen"
           unset GH_TOKEN GITHUB_TOKEN SSH_AUTH_SOCK SSH_AGENT_PID
-          bash probes/physical-audit/product-plan/run_mlx_mirror.sh "$VM_SOURCE_SHA" "$scratch/xcodegen" production-shape
+          bash probes/physical-audit/product-plan/run_mlx_mirror.sh "$VM_SOURCE_SHA" "$scratch/xcodegen" production-ownership
