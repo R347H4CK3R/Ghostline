@@ -1,4 +1,4 @@
-name: Exact VoiceMatrix native resource copy isolation
+name: Exact VoiceMatrix absent optional resource repair check
 on:
   push:
     branches: [verification/voicematrix-build18-package-trust]
@@ -8,21 +8,21 @@ jobs:
   native:
     if: github.repository == 'R347H4CK3R/Ghostline' && github.ref == 'refs/heads/verification/voicematrix-build18-package-trust' && github.event.repository.private == false && github.run_attempt == 1
     runs-on: macos-26
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: R347H4CK3R/VoiceMatrix-Development
-          ref: 8584deede7d4a0703a6a9bd9b552e92fd2984821
+          ref: a2114176caf551e9f0681e8f01f31cceeaaaa22b
           persist-credentials: false
           fetch-depth: 1
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.12.10"
-      - name: Trace exact native resource copy without model or package inputs
+      - name: Verify corrected authentic Release build without model inputs
         env:
-          VM_SOURCE_SHA: 8584deede7d4a0703a6a9bd9b552e92fd2984821
-          VM_SOURCE_TREE: 9d8b51b4300ebb7bbf29919384592de97cf3e6bd
+          VM_SOURCE_SHA: a2114176caf551e9f0681e8f01f31cceeaaaa22b
+          VM_SOURCE_TREE: f3d3869e18b4da078d6ab36bdcbf703e2128d057
         run: |
           set -euo pipefail
           umask 077
@@ -40,4 +40,4 @@ jobs:
           generator="$scratch/xcodegen/bin/xcodegen"
           [[ "$(shasum -a 256 "$generator" | awk '{print $1}')" == a450f63bdd650c280cfce0fef6c94dbb19c5bf8dc32811361fd5d2e912718503 ]] || guard generator-executable
           unset GH_TOKEN GITHUB_TOKEN SSH_AUTH_SOCK SSH_AGENT_PID
-          bash probes/physical-audit/product-plan/run_resource_only.sh "$VM_SOURCE_SHA" "$generator"
+          bash probes/physical-audit/product-plan/run_mlx_mirror.sh "$VM_SOURCE_SHA" "$generator" production-corrected
