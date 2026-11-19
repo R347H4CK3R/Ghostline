@@ -1,4 +1,4 @@
-name: Exact VoiceMatrix native duplicate ownership without models
+name: Exact VoiceMatrix XcodeGen distribution proof without models
 on:
   push:
     branches: [verification/voicematrix-build18-package-trust]
@@ -13,16 +13,16 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: R347H4CK3R/VoiceMatrix-Development
-          ref: 982a67ab1e2d318d5c125b5b2cb296c93ddeff03
+          ref: 17277772fda5887c9eafdec0db7713d71e548496
           persist-credentials: false
           fetch-depth: 1
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.12.10"
-      - name: Identify native duplicate output producers without models
+      - name: Build authentic app shape with exact XcodeGen presets without models
         env:
-          VM_SOURCE_SHA: 982a67ab1e2d318d5c125b5b2cb296c93ddeff03
-          VM_SOURCE_TREE: f3d7781aee869b77664a61e4883f37d00e9b5c71
+          VM_SOURCE_SHA: 17277772fda5887c9eafdec0db7713d71e548496
+          VM_SOURCE_TREE: f1054af386cb57b36679270726c911ce4876a9cb
         run: |
           set -euo pipefail
           umask 077
@@ -36,8 +36,8 @@ jobs:
           curl --fail --silent --location --proto '=https' --proto-redir '=https' --tlsv1.2 --max-time 120 --max-filesize 30000000 \
             https://github.com/yonaskolb/XcodeGen/releases/download/2.44.1/xcodegen.zip -o "$scratch/xcodegen.zip" || guard fetch-generator
           [[ "$(shasum -a 256 "$scratch/xcodegen.zip" | awk '{print $1}')" == a2e905fb68446e9bb4008cdfe2e13e3f176d0cbcca828b71770f8e53fca91b73 ]] || guard generator-archive
-          unzip -p "$scratch/xcodegen.zip" 'xcodegen/bin/xcodegen' > "$scratch/xcodegen" || guard generator-extract
-          [[ "$(shasum -a 256 "$scratch/xcodegen" | awk '{print $1}')" == a450f63bdd650c280cfce0fef6c94dbb19c5bf8dc32811361fd5d2e912718503 ]] || guard generator-executable
-          chmod 0700 "$scratch/xcodegen"
+          python3 probes/physical-audit/product-plan/install_xcodegen.py install "$scratch/xcodegen.zip" "$scratch" || guard generator-exact-install
+          generator="$scratch/xcodegen/bin/xcodegen"
+          [[ "$(shasum -a 256 "$generator" | awk '{print $1}')" == a450f63bdd650c280cfce0fef6c94dbb19c5bf8dc32811361fd5d2e912718503 ]] || guard generator-executable
           unset GH_TOKEN GITHUB_TOKEN SSH_AUTH_SOCK SSH_AGENT_PID
-          bash probes/physical-audit/product-plan/run_mlx_mirror.sh "$VM_SOURCE_SHA" "$scratch/xcodegen" production-ownership
+          bash probes/physical-audit/product-plan/run_mlx_mirror.sh "$VM_SOURCE_SHA" "$generator" production-corrected
