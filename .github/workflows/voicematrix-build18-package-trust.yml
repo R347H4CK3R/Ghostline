@@ -1,4 +1,4 @@
-name: Exact VoiceMatrix Debug parity diagnostic without models
+name: Exact VoiceMatrix native resource copy isolation
 on:
   push:
     branches: [verification/voicematrix-build18-package-trust]
@@ -8,21 +8,21 @@ jobs:
   native:
     if: github.repository == 'R347H4CK3R/Ghostline' && github.ref == 'refs/heads/verification/voicematrix-build18-package-trust' && github.event.repository.private == false && github.run_attempt == 1
     runs-on: macos-26
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: R347H4CK3R/VoiceMatrix-Development
-          ref: 459b4760fb51aa8a29385860e698fc89a1f9056a
+          ref: 8584deede7d4a0703a6a9bd9b552e92fd2984821
           persist-credentials: false
           fetch-depth: 1
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.12.10"
-      - name: Diagnose native app Debug parity without models
+      - name: Trace exact native resource copy without model or package inputs
         env:
-          VM_SOURCE_SHA: 459b4760fb51aa8a29385860e698fc89a1f9056a
-          VM_SOURCE_TREE: d79678b883ee2b64810c7397856669b18060c01e
+          VM_SOURCE_SHA: 8584deede7d4a0703a6a9bd9b552e92fd2984821
+          VM_SOURCE_TREE: 9d8b51b4300ebb7bbf29919384592de97cf3e6bd
         run: |
           set -euo pipefail
           umask 077
@@ -40,4 +40,4 @@ jobs:
           generator="$scratch/xcodegen/bin/xcodegen"
           [[ "$(shasum -a 256 "$generator" | awk '{print $1}')" == a450f63bdd650c280cfce0fef6c94dbb19c5bf8dc32811361fd5d2e912718503 ]] || guard generator-executable
           unset GH_TOKEN GITHUB_TOKEN SSH_AUTH_SOCK SSH_AGENT_PID
-          bash probes/physical-audit/product-plan/run_mlx_mirror.sh "$VM_SOURCE_SHA" "$generator" production-debug-parity
+          bash probes/physical-audit/product-plan/run_resource_only.sh "$VM_SOURCE_SHA" "$generator"
