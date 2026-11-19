@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: R347H4CK3R/VoiceMatrix-Development
-          ref: 87dce888cd6db8530609ab6c13b740c8e4852ae1
+          ref: 5eeb1ff766dac302f21418bea177a619eeb7c7f4
           persist-credentials: false
           fetch-depth: 1
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -21,8 +21,8 @@ jobs:
           python-version: "3.12.10"
       - name: Compile and verify only the generic iPhoneOS dependency link probe
         env:
-          VM_SOURCE_SHA: 87dce888cd6db8530609ab6c13b740c8e4852ae1
-          VM_SOURCE_TREE: 27f145c0d4cf149cced9b284bdad578f497797da
+          VM_SOURCE_SHA: 5eeb1ff766dac302f21418bea177a619eeb7c7f4
+          VM_SOURCE_TREE: e3ce2f9bd142f9aa51c048694aa8d716664e67a8
         run: |
           set -euo pipefail
           umask 077
